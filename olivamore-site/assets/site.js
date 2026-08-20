@@ -181,7 +181,7 @@
       </div>
       <div class="foot-bottom">
         <span>${T.rights}</span>
-        <span><a href="gizlilik.html">${T.privacy}</a> · <a href="kullanim-sartlari.html">${T.terms}</a> · <a href="gizlilik.html">${T.kvkk}</a> · <a href="panel.html" style="opacity:.55;">${EN ? 'Admin' : 'Yönetim'}</a></span>
+        <span><a href="gizlilik.html">${T.kvkk}</a> · <a href="kullanim-sartlari.html">${T.terms}</a> · <a href="mesafeli-satis.html">${EN ? 'Distance Sales Agreement' : 'Mesafeli Satış Sözleşmesi'}</a> · <a href="cerez-politikasi.html">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a> · <a href="panel.html" style="opacity:.55;">${EN ? 'Admin' : 'Yönetim'}</a></span>
       </div>
     </div>
   </footer>
@@ -631,7 +631,7 @@
     if (!localStorage.getItem('om-cookie-ok')) {
       const cb = document.createElement('div');
       cb.className = 'cookie-bar show';
-      cb.innerHTML = `<p>${T.cookieText}</p><button class="btn btn-dark" id="cookie-ok">${T.cookieOk}</button>`;
+      cb.innerHTML = `<p>${T.cookieText} <a href="cerez-politikasi.html" style="text-decoration:underline;">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a></p><button class="btn btn-dark" id="cookie-ok">${T.cookieOk}</button>`;
       document.body.appendChild(cb);
       document.getElementById('cookie-ok').addEventListener('click', () => {
         localStorage.setItem('om-cookie-ok', '1');
