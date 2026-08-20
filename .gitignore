@@ -1,0 +1,19 @@
+# Ham medya arşivi — repoya girmez (boyut + telif)
+Kütüphane/
+Kutuphane/
+
+# Eski/geçici paketler
+olivamore-site.zip
+*.zip
+panel-canli.html
+
+# Sunucu sırları (asla commit edilmez)
+env.json
+.htpasswd
+olivamore-data/
+
+# Sistem çöpleri
+Thumbs.db
+.DS_Store
+desktop.ini
+ziXeuh1P/

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasat Pasaportu: Şişendeki Yağın Hikâyesi | Olivamore</title>
+<meta name="description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe, çeşit ve lab-test değerleriyle şişendeki yağın tüm hikâyesini gör.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="ureticiler">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="kicker">İzlenebilirlik</div>
+    <h1>Hasat Pasaportu</h1>
+    <p class="lead">Etiketin arkasındaki parti numarasını gir; şişendeki yağın hangi bahçeden, hangi hasattan geldiğini, lab değerleriyle birlikte gör.</p>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="container">
+    <div class="pp-search">
+      <input type="text" id="pp-input" placeholder="Parti No · örn. AYV-2510" maxlength="12">
+      <button class="btn btn-dark" id="pp-btn">Sorgula</button>
+    </div>
+    <div class="pp-samples">
+      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Örnekler:</span>
+      <button class="chip" data-kod="AYV-2510">AYV-2510</button>
+      <button class="chip" data-kod="TRL-2510">TRL-2510</button>
+      <button class="chip" data-kod="OLG-2511">OLG-2511</button>
+    </div>
+
+    <!-- SONUÇ KARTI -->
+    <div class="pp-card" id="pp-card">
+      <div class="pp-head">
+        <h2 id="pp-urun"></h2>
+        <span class="pp-kod" id="pp-kod"></span>
+      </div>
+      <div class="pp-body">
+        <div class="pp-grid">
+          <div class="pp-row"><b>Hasat tarihi</b><span id="pp-hasat"></span></div>
+          <div class="pp-row"><b>Soğuk sıkım</b><span id="pp-sikim"></span></div>
+          <div class="pp-row"><b>Zeytin çeşidi</b><span id="pp-cesit"></span></div>
+          <div class="pp-row"><b>Bahçe / parsel</b><span id="pp-parsel"></span></div>
+          <div class="pp-row"><b>Asidite (FFA)</b><span id="pp-asidite"></span></div>
+          <div class="pp-row"><b>Polifenol</b><span id="pp-polifenol"></span></div>
+          <div class="pp-row"><b>Peroksit</b><span id="pp-peroksit"></span></div>
+          <div class="pp-row"><b>Lab-test</b><span id="pp-lab"></span></div>
+        </div>
+
+        <div class="tasting" style="margin:0 0 22px;">
+          <h4>Bu partinin tadım notu</h4>
+          <p style="font-size:.95rem;color:var(--ink-soft);" id="pp-tadim"></p>
+        </div>
+
+        <div class="producer-mini" style="margin:0 0 22px;">
+          <div class="avatar" id="pp-avatar"></div>
+          <div>
+            <b style="font-weight:400;" id="pp-uretici"></b>
+            <p style="font-size:.85rem;color:var(--ink-soft);">Zeytinler elle toplandı, iki elemeden geçip ozonlu suyla yıkandı, aynı gün 20-22°C'de Oleapenol'de sıkıldı; havuz yağıyla karışmadı.</p>
+            <a class="link-arrow" style="font-size:.85rem;" href="ureticiler.html">Üreticiyi tanı →</a>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a class="btn btn-gold" id="pp-link" href="urun.html">Bu Yağın Sayfası</a>
+          <a class="btn btn-outline" href="ureticiler.html#izlenebilirlik">İzlenebilirlik Zinciri</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- BULUNAMADI -->
+    <div class="pp-empty" id="pp-empty">
+      <h3 style="font-weight:700;margin-bottom:8px;">Bu parti numarasını bulamadık</h3>
+      <p>Numara etiketin arka yüzünde, analiz değerlerinin altındadır (örn. AYV-2510). Yine de bulamazsan <a class="link-arrow" href="iletisim.html">bize yaz</a>, raporu e-postana gönderelim.</p>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  /* [PARTİLER] Varsayılan parti veritabanı — panelden (Partiler sekmesi)
+     eklenen partiler bununla birleştirilir. Canlıda backend'den gelir. */
+  var BATCHES = [
+    { kod: 'AYV-2510', urun: 'Ayvalık Erken Hasat', hasat: '3–9 Ekim 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · Kuzey Parsel', asidite: '%0,35', polifenol: '412 mg/kg', peroksit: '6,57 meq O₂/kg', lab: 'Kasım 2025 · bağımsız lab', tadim: 'Yumuşak ve meyvemsi; yeşil elma tazeliği, zarif bir bitiş. Kahvaltının ve çiğ kullanımın yağı.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun.html' },
+    { kod: 'TRL-2510', urun: 'Trilye Erken Hasat', hasat: '10–16 Ekim 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Gemlik (Trilye)', parsel: 'Ayvalık · Gemlik cinsi parsel, eski ağaçlar', asidite: '%0,12', polifenol: '486 mg/kg', peroksit: '6,75 meq O₂/kg', lab: 'Kasım 2025 · bağımsız lab', tadim: 'Yoğun ve karakterli; boğazda biberimsi bir final. Izgara sebzenin ve keskin salataların yağı.', uretici: 'Olivamore Bahçeleri, Ayvalık', avatar: 'OB', href: 'urun-trilye.html' },
+    { kod: 'OLG-2511', urun: 'Olgun Hasat', hasat: '18–26 Kasım 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · Güney Parsel', asidite: '%0,28', polifenol: '295 mg/kg', peroksit: '8,1 meq O₂/kg', lab: 'Aralık 2025 · bağımsız lab', tadim: 'Yumuşak acılık, dengeli ve dolgun gövde. Sıcak yemeklerin, zeytinyağlıların ve fırının yağı.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun.html' }
+  ];
+  // Panelden eklenen partileri birleştir (aynı kod panelinkiyle değişir)
+  try {
+    var C = JSON.parse(localStorage.getItem('om-admin') || '{}');
+    (C.batches || []).forEach(function (b) {
+      var i = BATCHES.findIndex(function (x) { return x.kod === b.kod; });
+      if (i >= 0) BATCHES[i] = b; else BATCHES.push(b);
+    });
+  } catch (e) {}
+
+  function show(kod) {
+    kod = (kod || '').trim().toUpperCase();
+    var card = document.getElementById('pp-card');
+    var empty = document.getElementById('pp-empty');
+    var b = BATCHES.find(function (x) { return x.kod === kod; });
+    if (!b) {
+      card.classList.remove('on');
+      empty.classList.add('on');
+      return;
+    }
+    empty.classList.remove('on');
+    document.getElementById('pp-urun').textContent = b.urun;
+    document.getElementById('pp-kod').textContent = b.kod;
+    document.getElementById('pp-hasat').textContent = b.hasat;
+    document.getElementById('pp-sikim').textContent = b.sikim;
+    document.getElementById('pp-cesit').textContent = b.cesit;
+    document.getElementById('pp-parsel').textContent = b.parsel;
+    document.getElementById('pp-asidite').textContent = b.asidite;
+    document.getElementById('pp-polifenol').textContent = b.polifenol;
+    document.getElementById('pp-peroksit').textContent = b.peroksit;
+    document.getElementById('pp-lab').textContent = b.lab;
+    document.getElementById('pp-tadim').textContent = b.tadim;
+    document.getElementById('pp-uretici').textContent = b.uretici;
+    document.getElementById('pp-avatar').textContent = b.avatar || b.uretici.slice(0, 2).toUpperCase();
+    document.getElementById('pp-link').href = b.href || 'urun.html';
+    card.classList.add('on');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('pp-btn').addEventListener('click', function () {
+    show(document.getElementById('pp-input').value);
+  });
+  document.getElementById('pp-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') show(this.value);
+  });
+  document.querySelectorAll('.pp-samples .chip').forEach(function (c) {
+    c.addEventListener('click', function () {
+      document.getElementById('pp-input').value = c.dataset.kod;
+      show(c.dataset.kod);
+    });
+  });
+
+  // QR hedefi: ?parti=AYV-2510 ile gelindiyse doğrudan göster
+  var q = new URLSearchParams(location.search).get('parti');
+  if (q) { document.getElementById('pp-input').value = q.toUpperCase(); show(q); }
+});
+</script>
+</body>
+</html>

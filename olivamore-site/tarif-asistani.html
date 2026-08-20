@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarif Asistanı: Elindeki Malzemelerle Ne Pişirsen? | Olivamore</title>
+<meta name="description" content="Elindeki malzemeleri yaz, sana uygun bir zeytinyağlı tarif üretelim ve o yemeğe en çok yakışan Olivamore yağını önerelim.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="ogren">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="kicker">Tarif Asistanı</div>
+    <h1>Elindekilerle ne pişirsen?</h1>
+    <p class="lead">Buzdolabında ne varsa yaz, sana uygun bir tarif üretelim ve o yemeğe en çok yakışan Olivamore yağını söyleyelim.</p>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="container ra-wrap">
+
+    <div class="ra-input">
+      <label for="ra-text" style="display:block;font-weight:700;margin-bottom:10px;">Malzemelerin neler?</label>
+      <textarea id="ra-text" placeholder="Örn: domates, yumurta, biber, beyaz peynir..."></textarea>
+      <div class="ra-chips" id="ra-chips">
+        <button class="chip" data-ing="domates">domates</button>
+        <button class="chip" data-ing="yumurta">yumurta</button>
+        <button class="chip" data-ing="biber">biber</button>
+        <button class="chip" data-ing="soğan">soğan</button>
+        <button class="chip" data-ing="sarımsak">sarımsak</button>
+        <button class="chip" data-ing="patlıcan">patlıcan</button>
+        <button class="chip" data-ing="kabak">kabak</button>
+        <button class="chip" data-ing="taze fasulye">taze fasulye</button>
+        <button class="chip" data-ing="nohut">nohut</button>
+        <button class="chip" data-ing="mercimek">mercimek</button>
+        <button class="chip" data-ing="makarna">makarna</button>
+        <button class="chip" data-ing="levrek">levrek</button>
+        <button class="chip" data-ing="roka">roka</button>
+        <button class="chip" data-ing="enginar">enginar</button>
+        <button class="chip" data-ing="yoğurt">yoğurt</button>
+        <button class="chip" data-ing="limon">limon</button>
+      </div>
+      <div class="ra-actions">
+        <button class="btn btn-dark" id="ra-go">Tarif Üret</button>
+        <button class="btn btn-outline" id="ra-again" style="display:none;">Başka Tarif Dene</button>
+      </div>
+      <div class="ra-thinking" id="ra-thinking"><span class="ra-dot"></span><span id="ra-status">Malzemeler inceleniyor...</span></div>
+    </div>
+
+    <div class="ra-result" id="ra-result">
+      <div class="ra-recipe">
+        <div class="kicker" id="ra-kicker">Sana Özel Tarif</div>
+        <h2 id="ra-name"></h2>
+        <div class="ra-meta"><span id="ra-time"></span><span id="ra-serves"></span><span id="ra-level"></span></div>
+        <div class="ra-cols">
+          <div>
+            <h3>Malzemeler</h3>
+            <ul id="ra-ings"></ul>
+          </div>
+          <div>
+            <h3>Hazırlanışı</h3>
+            <ol id="ra-steps"></ol>
+          </div>
+        </div>
+        <div class="ra-match" id="ra-matchline"></div>
+      </div>
+
+      <div class="ra-oil">
+        <img id="ra-oil-img" src="assets/img/ayvalik-500.jpg" alt="">
+        <div style="flex:1;">
+          <div class="kicker">Bu Yemeğin Yağı</div>
+          <h4 id="ra-oil-name"></h4>
+          <p id="ra-oil-why"></p>
+        </div>
+        <a class="btn btn-gold" id="ra-oil-link" href="urun.html">Ürünü Gör</a>
+      </div>
+
+      <form class="ra-mail" data-demo="Tarif e-postana gönderildi ✓">
+        <input type="email" placeholder="Tarifi e-postana gönderelim" required>
+        <button class="btn btn-dark" type="submit">Gönder</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  /* ---- Yağ profilleri ---- */
+  var OILS = {
+    ayvalik: { name: 'Ayvalık Erken Hasat', img: 'assets/img/ayvalik-500.jpg', href: 'urun.html' },
+    trilye:  { name: 'Trilye Erken Hasat',  img: 'assets/img/trilye-750.jpg',  href: 'urun-trilye.html' }
+  };
+
+  /* ---- Mini tarif motoru ---- */
+  var DB = [
+    { name: 'Bahçe Usulü Menemen', tags: ['domates', 'yumurta', 'biber', 'soğan'], min: 2,
+      time: '20 dk', serves: '2 kişilik', level: 'Kolay',
+      pantry: ['3 yemek kaşığı Olivamore Ayvalık', 'tuz, pul biber'],
+      steps: ['Soğanı ve biberi ince doğra, zeytinyağında orta ateşte 4-5 dakika yumuşat.', 'Rendelenmiş domatesi ekle, suyunu çekene kadar 8-10 dakika pişir.', 'Yumurtaları teker teker kır; dilersen karıştır, dilersen göz göz bırak.', 'Kısık ateşte 3 dakika pişir, ocaktan alınca üzerine bir tur çiğ zeytinyağı gezdir.'],
+      oil: 'ayvalik', why: 'Yumurtalı, hafif bir kahvaltı klasiği. Ayvalık\'ın yumuşak, meyvemsi profili domatesin tatlılığını bastırmadan taşır.' },
+    { name: 'Közlenmiş Patlıcanlı Şakşuka', tags: ['patlıcan', 'domates', 'biber', 'sarımsak'], min: 2,
+      time: '35 dk', serves: '4 kişilik', level: 'Orta',
+      pantry: ['4 yemek kaşığı Olivamore Trilye', 'tuz, sirke'],
+      steps: ['Patlıcanları küp doğra, tuzlu suda 15 dakika beklet, kurula.', 'Bol zeytinyağında altın rengi alana kadar kızart, süzgece al.', 'Aynı tavada sarımsak ve rendelenmiş domatesi sosa dönüştür.', 'Patlıcanları sosla buluştur; ılık ya da soğuk, üzerine çiğ Trilye gezdirerek servis et.'],
+      oil: 'trilye', why: 'Közlü, karakterli bir meze. Trilye\'nin yoğun ve biberimsi profili patlıcanın dumanlı tadıyla omuz omuza gider.' },
+    { name: 'Fırında Levrek, Limonlu Zeytinyağı Sosuyla', tags: ['levrek', 'balık', 'limon', 'sarımsak'], min: 1,
+      time: '30 dk', serves: '2 kişilik', level: 'Kolay',
+      pantry: ['4 yemek kaşığı Olivamore Ayvalık', 'tuz, karabiber, kekik'],
+      steps: ['Fırını 200°C\'ye ısıt. Levreği tuzla, içine limon dilimleri yerleştir.', 'Yağlı kâğıda al, üzerine zeytinyağı gezdir, 20 dakika pişir.', 'Sos için: 3 kaşık zeytinyağını limon suyu ve ezilmiş sarımsakla çırp.', 'Fırından çıkan balığın üzerine sosu dök, kekikle bitir.'],
+      oil: 'ayvalik', why: 'Narin beyaz etli balıkta amaç aromayı örtmek değil, parlatmak. Ayvalık\'ın zarif meyvemsiliği tam bu iş için.' },
+    { name: 'Zeytinyağlı Taze Fasulye', tags: ['taze fasulye', 'fasulye', 'domates', 'soğan'], min: 1,
+      time: '45 dk', serves: '4 kişilik', level: 'Kolay',
+      pantry: ['5 yemek kaşığı Olivamore Ayvalık', 'tuz, şeker (1 tatlı kaşığı)'],
+      steps: ['Soğanı yarım ay doğra, zeytinyağında pembeleşene kadar kavur.', 'Ayıklanmış fasulyeleri ekle, 5 dakika çevir.', 'Rendelenmiş domates, tuz, şeker ve yarım çay bardağı sıcak su ekle.', 'Kapağı kapat, kısık ateşte 30-35 dakika pişir. Mutlaka soğuk servis et, servis öncesi bir tur çiğ yağ gezdir.'],
+      oil: 'ayvalik', why: 'Zeytinyağlıların altın kuralı: yemeğin kendisi kadar iyi bir yağ. Soğuyunca aroması açılan Ayvalık, klasik zeytinyağlıların doğal eşi.' },
+    { name: 'Nohutlu Ispanak Kavurması', tags: ['nohut', 'ıspanak', 'soğan', 'sarımsak'], min: 1,
+      time: '25 dk', serves: '2-3 kişilik', level: 'Kolay',
+      pantry: ['3 yemek kaşığı Olivamore Trilye', 'tuz, kimyon, pul biber'],
+      steps: ['Soğanı ve sarımsağı zeytinyağında kavur.', 'Haşlanmış nohutları ekle, kimyonla 5 dakika çevir.', 'Ispanağı (ya da elindeki yeşilliği) ilave et, sönene kadar pişir.', 'Üzerine yoğurt ve bir tur çiğ Trilye ile servis et.'],
+      oil: 'trilye', why: 'Baklagilin toprak tonları güçlü bir yağ ister. Trilye\'nin yoğun profili nohudun dolgunluğuna denk düşer.' },
+    { name: 'Kırmızı Mercimek Çorbası, Kızgın Yağlı', tags: ['mercimek', 'soğan', 'havuç', 'patates'], min: 1,
+      time: '30 dk', serves: '4 kişilik', level: 'Kolay',
+      pantry: ['4 yemek kaşığı Olivamore Ayvalık', 'tuz, pul biber, nane'],
+      steps: ['Soğanı zeytinyağında kavur; varsa havuç ve patatesi ekle.', 'Yıkanmış mercimeği ve 5 su bardağı sıcak suyu ilave et.', 'Sebzeler yumuşayınca blenderdan geçir, tuzunu ayarla.', 'Servis kâsesinde: bir kaşık zeytinyağını pul biber ve naneyle kızdırıp üzerine gezdir.'],
+      oil: 'ayvalik', why: 'Çorbanın ipeksi dokusuna eşlik edecek yumuşak bir yağ gerek. Kızgın Ayvalık + pul biber, sofranın en eski numarası.' },
+    { name: 'Roka, Parmesan ve Erken Hasat Salatası', tags: ['roka', 'parmesan', 'limon', 'ceviz'], min: 1,
+      time: '10 dk', serves: '2 kişilik', level: 'Çok kolay',
+      pantry: ['3 yemek kaşığı Olivamore Trilye', 'tuz, limon suyu'],
+      steps: ['Rokayı yıka, iyice kurula (sos tutması için kuru olmalı).', 'Limon suyu, tuz ve zeytinyağını çırparak sos yap.', 'Sosu servisten hemen önce rokayla harmanla.', 'Üzerine parmesan tıraşla, dilersen ceviz serpiştir.'],
+      oil: 'trilye', why: 'Üç malzemelik salatada saklanacak yer yok: yağın kendisi başrol. Trilye\'nin biberimsi bitişi rokanın keskinliğiyle kafiyeli.' },
+    { name: 'Zeytinyağlı Enginar', tags: ['enginar', 'havuç', 'patates', 'bezelye', 'limon'], min: 1,
+      time: '40 dk', serves: '4 kişilik', level: 'Orta',
+      pantry: ['5 yemek kaşığı Olivamore Ayvalık', 'tuz, şeker, dereotu'],
+      steps: ['Enginarları limonlu suda beklet, kararmalarını önle.', 'Küp doğranmış havuç ve patatesi zeytinyağında 5 dakika çevir.', 'Enginar çanaklarını tencereye diz, içlerini sebzeyle doldur.', 'Limonlu, hafif şekerli su ekleyip kısık ateşte 25 dakika pişir. Soğuk, bol dereotuyla servis et; en son çiğ yağ gezdir.'],
+      oil: 'ayvalik', why: 'Klasik zeytinyağlıların inceliği yumuşak bir yağ ister; yağı en sona, ocaktan alınca eklemek aromayı korur.' },
+    { name: 'Sarımsaklı Zeytinyağlı Makarna (Ege Usulü)', tags: ['makarna', 'sarımsak', 'limon', 'peynir'], min: 1,
+      time: '15 dk', serves: '2 kişilik', level: 'Çok kolay',
+      pantry: ['4 yemek kaşığı Olivamore Trilye', 'tuz, pul biber, maydanoz'],
+      steps: ['Makarnayı bol tuzlu suda haşla; bir kepçe haşlama suyunu ayır.', 'Geniş tavada zeytinyağını kısık ateşte ısıt, ince dilim sarımsakları altın rengine getir.', 'Pul biberi ekle, ateşi kapat. Makarnayı ve bir miktar haşlama suyunu tavaya al, çalkalayarak sosla.', 'Limon kabuğu rendesi ve maydanozla bitir; servista bir tur daha çiğ yağ.'],
+      oil: 'trilye', why: 'Yağ burada sos demek. Trilye\'nin yoğun gövdesi sarımsağın tatlılığını taşıyıp biberimsi bir final bırakır.' },
+    { name: 'Yoğurtlu Çılbır, Kızgın Zeytinyağıyla', tags: ['yumurta', 'yoğurt', 'sarımsak'], min: 2,
+      time: '15 dk', serves: '2 kişilik', level: 'Kolay',
+      pantry: ['3 yemek kaşığı Olivamore Ayvalık', 'tuz, pul biber, sirke'],
+      steps: ['Sarımsaklı yoğurdu oda sıcaklığında hazırla, tabaklara yay.', 'Kaynayan sirkeli suda yumurtaları poşe et (3-4 dakika).', 'Yumurtaları yoğurdun üzerine al.', 'Zeytinyağını pul biberle kızdır, üzerlerine gezdir. Hemen servis et.'],
+      oil: 'ayvalik', why: 'Yoğurdun ekşiliği ile poşe yumurtanın kremasında dengeyi yumuşak bir yağ kurar; kızgın Ayvalık ikisini birbirine bağlar.' },
+    { name: 'Kabak Mücveri, Otlu Yoğurtla', tags: ['kabak', 'yumurta', 'un', 'dereotu', 'peynir'], min: 1,
+      time: '25 dk', serves: '3-4 kişilik', level: 'Kolay',
+      pantry: ['4 yemek kaşığı Olivamore Ayvalık', 'tuz, karabiber'],
+      steps: ['Kabakları rendele, tuzlayıp 10 dakika beklet ve suyunu iyice sık.', 'Yumurta, un, beyaz peynir ve dereotuyla harmanla.', 'Zeytinyağını tavada ısıt, harçtan kaşıkla dökerek iki yüzünü kızart.', 'Kâğıt havluda dinlendir; sarımsaklı yoğurtla servis et.'],
+      oil: 'ayvalik', why: 'Kızartmada bile sızma kullanmaktan korkma: ~207°C duman noktası fazlasıyla yeter. Ayvalık hafif harca hafiflik katar.' }
+  ];
+
+  /* Hiçbir tarif eşleşmezse: eldeki malzemeyle jenerik fırın sebze */
+  function fallback(ings) {
+    var list = ings.length ? ings.slice(0, 5) : ['mevsim sebzeleri'];
+    return {
+      name: 'Fırında Zeytinyağlı ' + list[0].charAt(0).toUpperCase() + list[0].slice(1),
+      tags: list, min: 0, time: '35 dk', serves: '2-4 kişilik', level: 'Kolay',
+      pantry: ['4 yemek kaşığı Olivamore Trilye', 'tuz, karabiber, kekik'],
+      steps: [
+        'Fırını 200°C\'ye ısıt. ' + list.join(', ') + ' malzemelerini benzer boylarda iri parçalara doğra.',
+        'Geniş bir tepsiye tek kat yay; üzerine zeytinyağı, tuz, karabiber ve kekik ekleyip elle harmanla.',
+        'Kenarları karamelize olana kadar 25-30 dakika pişir, yarıda bir kez çevir.',
+        'Fırından çıkınca bir tur daha çiğ zeytinyağı gezdir; ılık servis et.'
+      ],
+      oil: 'trilye', why: 'Fırının karamel tatları güçlü bir yağla dengelenir. Trilye\'nin karakteri kavrulmuş sebzeye derinlik katar.'
+    };
+  }
+
+  /* ---- Yardımcılar ---- */
+  var tx = document.getElementById('ra-text');
+  function norm(s) { return s.toLocaleLowerCase('tr').trim(); }
+  function getIngs() {
+    return norm(tx.value).split(/[,\n;]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  function score(r, text) {
+    var hits = [];
+    r.tags.forEach(function (t) { if (text.indexOf(t) !== -1) hits.push(t); });
+    return { hits: hits, ok: hits.length >= r.min && hits.length > 0 };
+  }
+
+  var lastRanked = [], lastIdx = 0;
+
+  function generate(nextVariant) {
+    var text = norm(tx.value);
+    var ings = getIngs();
+    if (!nextVariant) {
+      lastRanked = DB.map(function (r) { var s = score(r, text); return { r: r, hits: s.hits, ok: s.ok }; })
+        .filter(function (x) { return x.ok; })
+        .sort(function (a, b) { return b.hits.length - a.hits.length; });
+      lastIdx = 0;
+    } else {
+      lastIdx++;
+    }
+    var pick = lastRanked[lastIdx % Math.max(lastRanked.length, 1)];
+    var recipe, hits;
+    if (pick) { recipe = pick.r; hits = pick.hits; }
+    else { recipe = fallback(ings); hits = ings; }
+    render(recipe, hits);
+  }
+
+  function render(r, hits) {
+    document.getElementById('ra-name').textContent = r.name;
+    document.getElementById('ra-time').textContent = '⏱ ' + r.time;
+    document.getElementById('ra-serves').textContent = 'Porsiyon: ' + r.serves;
+    document.getElementById('ra-level').textContent = '✦ ' + r.level;
+
+    var ingsEl = document.getElementById('ra-ings');
+    ingsEl.innerHTML = '';
+    hits.concat(r.pantry).forEach(function (i) {
+      var li = document.createElement('li'); li.textContent = i; ingsEl.appendChild(li);
+    });
+
+    var stepsEl = document.getElementById('ra-steps');
+    stepsEl.innerHTML = '';
+    r.steps.forEach(function (s) {
+      var li = document.createElement('li'); li.textContent = s; stepsEl.appendChild(li);
+    });
+
+    document.getElementById('ra-matchline').innerHTML =
+      hits.length ? 'Malzemelerinden <b>' + hits.length + '</b> tanesi bu tarifle eşleşti: ' + hits.join(', ') : '';
+
+    var oil = OILS[r.oil];
+    document.getElementById('ra-oil-img').src = oil.img;
+    document.getElementById('ra-oil-name').textContent = oil.name;
+    document.getElementById('ra-oil-why').textContent = r.why;
+    document.getElementById('ra-oil-link').href = oil.href;
+
+    document.getElementById('ra-result').classList.add('show');
+    document.getElementById('ra-again').style.display = lastRanked.length > 1 ? 'inline-flex' : 'none';
+  }
+
+  /* ---- "Düşünüyor" animasyonu ---- */
+  var THINK = ['Malzemeler inceleniyor...', 'Mutfak arşivi taranıyor...', 'Yağ eşleştirmesi yapılıyor...'];
+  function withThinking(fn) {
+    var th = document.getElementById('ra-thinking');
+    var st = document.getElementById('ra-status');
+    var res = document.getElementById('ra-result');
+    res.classList.remove('show');
+    th.classList.add('show');
+    var i = 0;
+    st.textContent = THINK[0];
+    var iv = setInterval(function () { i++; st.textContent = THINK[i % THINK.length]; }, 550);
+    setTimeout(function () {
+      clearInterval(iv);
+      th.classList.remove('show');
+      fn();
+      document.getElementById('ra-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1600);
+  }
+
+  /* ---- Olaylar ---- */
+  document.getElementById('ra-chips').addEventListener('click', function (e) {
+    e.stopPropagation(); // site.js'in tekli chip seçimini devre dışı bırak (çoklu seçim)
+    var c = e.target.closest('.chip');
+    if (!c) return;
+    var cur = tx.value.trim();
+    if (norm(cur).indexOf(c.dataset.ing) === -1) {
+      tx.value = cur ? cur.replace(/,\s*$/, '') + ', ' + c.dataset.ing : c.dataset.ing;
+    }
+    c.classList.add('on');
+  });
+  document.getElementById('ra-go').addEventListener('click', function () {
+    if (!tx.value.trim()) { tx.focus(); tx.placeholder = 'Önce birkaç malzeme yaz ya da aşağıdan seç ↓'; return; }
+    withThinking(function () { generate(false); });
+  });
+  document.getElementById('ra-again').addEventListener('click', function () {
+    withThinking(function () { generate(true); });
+  });
+});
+</script>
+</body>
+</html>

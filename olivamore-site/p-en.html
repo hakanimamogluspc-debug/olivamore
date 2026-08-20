@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product | Olivamore</title>
+<meta name="description" content="Olivamore product detail.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<style>
+.dp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.dp-media{position:sticky;top:110px}
+.dp-main{background:#FBFAF8;border:1px solid var(--line);border-radius:18px;padding:30px;display:flex;align-items:center;justify-content:center;min-height:420px}
+.dp-main img{max-width:100%;max-height:460px;object-fit:contain}
+.dp-thumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.dp-thumbs img{width:72px;height:72px;object-fit:cover;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:#fff;transition:border-color .2s}
+.dp-thumbs img.on,.dp-thumbs img:hover{border-color:var(--gold)}
+.dp-yakinda{display:inline-block;background:var(--gold-pale,#F6F0E3);border:1px solid var(--gold);color:var(--ink);border-radius:10px;padding:12px 18px;font-weight:600;font-size:.92rem}
+@media(max-width:900px){.dp-wrap{grid-template-columns:1fr;gap:30px}.dp-media{position:static}.dp-main{min-height:300px}.dp-main img{max-height:320px}}
+</style>
+</head>
+<body data-page="koleksiyon" data-lang="en">
+<div id="om-header"></div>
+
+<section class="block tight">
+  <div class="container">
+    <p style="margin-bottom:18px;"><a class="link-arrow" href="koleksiyon-en.html">← Back to the collection</a></p>
+    <div class="dp-wrap" id="dp" style="display:none;">
+      <div class="dp-media">
+        <div class="dp-main"><img id="gallery-img" src="" alt=""></div>
+        <div class="dp-thumbs" id="dp-thumbs"></div>
+      </div>
+      <div class="buy">
+        <div class="kicker" id="dp-rol"></div>
+        <h1 id="dp-ad" style="font-family:Fraunces,serif;font-weight:300;font-size:clamp(1.8rem,3.5vw,2.5rem);margin:8px 0 12px;"></h1>
+        <p class="sub" id="dp-not" style="color:var(--ink-soft);line-height:1.7;margin-bottom:20px;"></p>
+        <div style="margin-bottom:20px;"><span class="price" id="fiyat-tek" style="font-size:1.6rem;font-weight:700;"></span> <small id="dp-birim" style="color:var(--ink-soft);"></small></div>
+        <button class="btn btn-dark" style="width:100%;" id="sepet-btn" data-add>Add to Bag</button>
+        <span class="dp-yakinda" id="dp-yakinda" style="display:none;width:100%;text-align:center;">Price coming soon — available shortly</span>
+        <div class="pay-badges" style="margin-top:16px;"><span>iyzico</span><span>VISA</span><span>Mastercard</span><span>Troy</span><span>256-bit SSL</span></div>
+        <div class="cert-row" style="margin-top:22px;">
+          <div class="cert"><img src="assets/img/icon-dogal.svg" alt="">100% Natural</div>
+          <div class="cert"><img src="assets/img/icon-analiz.svg" alt="">Lab Report</div>
+          <div class="cert"><img src="assets/img/icon-surdurulebilir.svg" alt="">Sustainable Farming</div>
+        </div>
+        <div class="acc" style="margin-top:26px;">
+          <div class="acc-item">
+            <button class="acc-head">Shipping &amp; returns <span class="pm">+</span></button>
+            <div class="acc-body"><p>Free shipping on orders over ₺500. Unopened products can be returned within 14 days.</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-head">Storage <span class="pm">+</span></button>
+            <div class="acc-body"><p>Keep in a cool, dark, dry place with the cap closed. Light, heat and air are freshness's three enemies.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="dp-bos" style="display:none;text-align:center;padding:60px 0;">
+      <h2>Product not found</h2>
+      <p class="lead" style="margin:12px 0 22px;">The product you're looking for may not be live.</p>
+      <a class="btn btn-gold" href="koleksiyon-en.html">All Products</a>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var ROLLER = { serin: 'Finishing Olive Oil', ocak: 'Cooking Olive Oil', zeytin: 'Natural Olives', eksi: 'Vinegars', hediye: 'Sets' };
+  var id = new URLSearchParams(location.search).get('id') || '';
+  fetch('/api/config', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (cfg) {
+      var p = ((cfg && cfg.products) || []).find(function (x) { return x.id === id && x.visible !== false; });
+      if (!p) { document.getElementById('dp-bos').style.display = 'block'; return; }
+      document.title = (p.nameEN || p.nameTR) + ' | Olivamore';
+      document.getElementById('dp').style.display = 'grid';
+      document.getElementById('dp-rol').textContent = ROLLER[p.role] || 'Olivamore';
+      document.getElementById('dp-ad').textContent = p.nameEN || p.nameTR;
+      document.getElementById('dp-not').textContent = p.noteEN || p.noteTR || '';
+      document.getElementById('dp-birim').textContent = p.unitEN || p.unitTR || '';
+      var img = document.getElementById('gallery-img');
+      img.src = p.img || 'assets/img/ayvalik-500.jpg';
+      img.alt = p.nameEN || p.nameTR;
+      var hepsi = [p.img].concat(p.galeri || []).filter(Boolean);
+      var th = document.getElementById('dp-thumbs');
+      if (hepsi.length > 1) {
+        hepsi.forEach(function (y, i) {
+          var t = document.createElement('img');
+          t.src = y; t.alt = ''; if (i === 0) t.className = 'on';
+          t.addEventListener('click', function () {
+            img.src = y;
+            th.querySelectorAll('img').forEach(function (x) { x.classList.remove('on'); });
+            t.classList.add('on');
+          });
+          th.appendChild(t);
+        });
+      }
+      var btn = document.getElementById('sepet-btn');
+      if (p.price > 0) {
+        var f = p.price.toLocaleString('tr-TR');
+        document.getElementById('fiyat-tek').textContent = '₺' + f;
+        btn.textContent = 'Add to Bag · ₺' + f;
+      } else {
+        document.getElementById('fiyat-tek').textContent = '';
+        btn.style.display = 'none';
+        document.getElementById('dp-yakinda').style.display = 'inline-block';
+      }
+    })
+    .catch(function () { document.getElementById('dp-bos').style.display = 'block'; });
+});
+</script>
+</body>
+</html>

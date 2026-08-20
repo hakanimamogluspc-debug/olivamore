@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Assistant: What to Cook with What You Have? | Olivamore</title>
+<meta name="description" content="Type the ingredients you have, and we'll generate a fitting olive oil recipe and recommend the Olivamore oil that suits the dish best.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="ogren" data-lang="en">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="kicker">Recipe Assistant</div>
+    <h1>What to cook with what you have?</h1>
+    <p class="lead">Type whatever is in your fridge; we'll generate a recipe for you and tell you which Olivamore oil suits the dish best.</p>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="container ra-wrap">
+
+    <div class="ra-input">
+      <label for="ra-text" style="display:block;font-weight:700;margin-bottom:10px;">What are your ingredients?</label>
+      <textarea id="ra-text" placeholder="E.g.: tomato, egg, pepper, feta cheese..."></textarea>
+      <div class="ra-chips" id="ra-chips">
+        <button class="chip" data-ing="tomato">tomato</button>
+        <button class="chip" data-ing="egg">egg</button>
+        <button class="chip" data-ing="pepper">pepper</button>
+        <button class="chip" data-ing="onion">onion</button>
+        <button class="chip" data-ing="garlic">garlic</button>
+        <button class="chip" data-ing="eggplant">eggplant</button>
+        <button class="chip" data-ing="zucchini">zucchini</button>
+        <button class="chip" data-ing="green beans">green beans</button>
+        <button class="chip" data-ing="chickpeas">chickpeas</button>
+        <button class="chip" data-ing="lentils">lentils</button>
+        <button class="chip" data-ing="pasta">pasta</button>
+        <button class="chip" data-ing="sea bass">sea bass</button>
+        <button class="chip" data-ing="arugula">arugula</button>
+        <button class="chip" data-ing="artichoke">artichoke</button>
+        <button class="chip" data-ing="yogurt">yogurt</button>
+        <button class="chip" data-ing="lemon">lemon</button>
+      </div>
+      <div class="ra-actions">
+        <button class="btn btn-dark" id="ra-go">Generate Recipe</button>
+        <button class="btn btn-outline" id="ra-again" style="display:none;">Try Another Recipe</button>
+      </div>
+      <div class="ra-thinking" id="ra-thinking"><span class="ra-dot"></span><span id="ra-status">Reviewing your ingredients...</span></div>
+    </div>
+
+    <div class="ra-result" id="ra-result">
+      <div class="ra-recipe">
+        <div class="kicker" id="ra-kicker">A Recipe Just for You</div>
+        <h2 id="ra-name"></h2>
+        <div class="ra-meta"><span id="ra-time"></span><span id="ra-serves"></span><span id="ra-level"></span></div>
+        <div class="ra-cols">
+          <div>
+            <h3>Ingredients</h3>
+            <ul id="ra-ings"></ul>
+          </div>
+          <div>
+            <h3>Method</h3>
+            <ol id="ra-steps"></ol>
+          </div>
+        </div>
+        <div class="ra-match" id="ra-matchline"></div>
+      </div>
+
+      <div class="ra-oil">
+        <img id="ra-oil-img" src="assets/img/ayvalik-500.jpg" alt="">
+        <div style="flex:1;">
+          <div class="kicker">The Oil for This Dish</div>
+          <h4 id="ra-oil-name"></h4>
+          <p id="ra-oil-why"></p>
+        </div>
+        <a class="btn btn-gold" id="ra-oil-link" href="urun-en.html">View Product</a>
+      </div>
+
+      <form class="ra-mail" data-demo="Recipe sent to your inbox ✓">
+        <input type="email" placeholder="Send this recipe to my inbox" required>
+        <button class="btn btn-dark" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var OILS = {
+    ayvalik: { name: 'Ayvalık Early Harvest', img: 'assets/img/ayvalik-500.jpg', href: 'urun-en.html' },
+    trilye:  { name: 'Trilye Early Harvest',  img: 'assets/img/trilye-750.jpg',  href: 'urun-trilye-en.html' }
+  };
+
+  var DB = [
+    { name: 'Garden-Style Menemen', tags: ['tomato', 'egg', 'pepper', 'onion'], min: 2,
+      time: '20 min', serves: 'Serves 2', level: 'Easy',
+      pantry: ['3 tbsp Olivamore Ayvalık', 'salt, chili flakes'],
+      steps: ['Finely chop the onion and pepper; soften in olive oil over medium heat for 4-5 minutes.', 'Add grated tomato and cook 8-10 minutes until the juices reduce.', 'Crack in the eggs one by one; stir them in, or leave them sunny.', 'Cook 3 minutes on low heat; finish with a swirl of raw olive oil off the heat.'],
+      oil: 'ayvalik', why: 'A light, eggy breakfast classic. Ayvalık\'s smooth, fruity profile carries the tomato\'s sweetness without overpowering it.' },
+    { name: 'Charred Eggplant Şakşuka', tags: ['eggplant', 'tomato', 'pepper', 'garlic'], min: 2,
+      time: '35 min', serves: 'Serves 4', level: 'Medium',
+      pantry: ['4 tbsp Olivamore Trilye', 'salt, vinegar'],
+      steps: ['Cube the eggplant, soak in salted water for 15 minutes, pat dry.', 'Fry in generous olive oil until golden; drain.', 'In the same pan, cook garlic and grated tomato into a sauce.', 'Fold the eggplant into the sauce; serve warm or cold with raw Trilye drizzled on top.'],
+      oil: 'trilye', why: 'A smoky meze with character. Trilye\'s intense, peppery profile stands shoulder to shoulder with the eggplant\'s charred notes.' },
+    { name: 'Baked Sea Bass with Lemon-Olive Oil Sauce', tags: ['sea bass', 'fish', 'lemon', 'garlic'], min: 1,
+      time: '30 min', serves: 'Serves 2', level: 'Easy',
+      pantry: ['4 tbsp Olivamore Ayvalık', 'salt, black pepper, thyme'],
+      steps: ['Heat the oven to 200°C. Salt the sea bass and tuck lemon slices inside.', 'Place on parchment, drizzle with olive oil, bake 20 minutes.', 'For the sauce: whisk 3 tbsp olive oil with lemon juice and crushed garlic.', 'Pour the sauce over the baked fish; finish with thyme.'],
+      oil: 'ayvalik', why: 'With delicate white fish the goal is to brighten, not to mask. Ayvalık\'s elegant fruitiness is made for the job.' },
+    { name: 'Green Beans Braised in Olive Oil', tags: ['green beans', 'beans', 'tomato', 'onion'], min: 1,
+      time: '45 min', serves: 'Serves 4', level: 'Easy',
+      pantry: ['5 tbsp Olivamore Ayvalık', 'salt, 1 tsp sugar'],
+      steps: ['Slice the onion into half-moons; sauté in olive oil until translucent.', 'Add the trimmed beans and stir for 5 minutes.', 'Add grated tomato, salt, sugar and half a cup of hot water.', 'Cover and simmer 30-35 minutes. Serve cold, always, with a swirl of raw oil before serving.'],
+      oil: 'ayvalik', why: 'The golden rule of Turkish olive oil dishes: an oil as good as the dish itself. Ayvalık\'s aroma opens up as it cools — the natural partner of the classics.' },
+    { name: 'Chickpea &amp; Spinach Sauté', tags: ['chickpeas', 'spinach', 'onion', 'garlic'], min: 1,
+      time: '25 min', serves: 'Serves 2-3', level: 'Easy',
+      pantry: ['3 tbsp Olivamore Trilye', 'salt, cumin, chili flakes'],
+      steps: ['Sauté the onion and garlic in olive oil.', 'Add cooked chickpeas and toss with cumin for 5 minutes.', 'Add the spinach (or whatever greens you have) and cook until wilted.', 'Serve with yogurt and a swirl of raw Trilye.'],
+      oil: 'trilye', why: 'Legumes\' earthy tones ask for a robust oil. Trilye\'s intensity matches the chickpea\'s fullness.' },
+    { name: 'Red Lentil Soup with Sizzling Oil', tags: ['lentils', 'onion', 'carrot', 'potato'], min: 1,
+      time: '30 min', serves: 'Serves 4', level: 'Easy',
+      pantry: ['4 tbsp Olivamore Ayvalık', 'salt, chili flakes, dried mint'],
+      steps: ['Sauté the onion in olive oil; add carrot and potato if you have them.', 'Add rinsed lentils and 5 cups of hot water.', 'When the vegetables soften, blend until silky; season.', 'At the table: sizzle a spoonful of olive oil with chili flakes and mint, and pour it over each bowl.'],
+      oil: 'ayvalik', why: 'A silky soup wants a smooth companion. Sizzling Ayvalık with chili flakes is the oldest trick of the Turkish table.' },
+    { name: 'Arugula, Parmesan &amp; Early Harvest Salad', tags: ['arugula', 'parmesan', 'lemon', 'walnut'], min: 1,
+      time: '10 min', serves: 'Serves 2', level: 'Very easy',
+      pantry: ['3 tbsp Olivamore Trilye', 'salt, lemon juice'],
+      steps: ['Wash the arugula and dry it thoroughly (dressing clings to dry leaves).', 'Whisk lemon juice, salt and olive oil into a dressing.', 'Toss with the arugula just before serving.', 'Shave parmesan on top; scatter walnuts if you like.'],
+      oil: 'trilye', why: 'In a three-ingredient salad there is nowhere to hide: the oil is the lead. Trilye\'s peppery finish rhymes with arugula\'s bite.' },
+    { name: 'Artichokes Braised in Olive Oil', tags: ['artichoke', 'carrot', 'potato', 'peas', 'lemon'], min: 1,
+      time: '40 min', serves: 'Serves 4', level: 'Medium',
+      pantry: ['5 tbsp Olivamore Ayvalık', 'salt, sugar, dill'],
+      steps: ['Keep the artichokes in lemon water to prevent browning.', 'Sauté diced carrot and potato in olive oil for 5 minutes.', 'Arrange the artichoke bottoms in the pot and fill them with the vegetables.', 'Add lightly sweetened lemon water; simmer 25 minutes. Serve cold with plenty of dill; finish with raw oil.'],
+      oil: 'ayvalik', why: 'The finesse of classic olive oil dishes calls for a gentle oil; adding it raw at the end, off the heat, preserves the aroma.' },
+    { name: 'Garlic &amp; Olive Oil Pasta (Aegean Style)', tags: ['pasta', 'garlic', 'lemon', 'cheese'], min: 1,
+      time: '15 min', serves: 'Serves 2', level: 'Very easy',
+      pantry: ['4 tbsp Olivamore Trilye', 'salt, chili flakes, parsley'],
+      steps: ['Boil the pasta in well-salted water; reserve a ladle of the cooking water.', 'In a wide pan, warm the olive oil on low heat and turn thin garlic slices golden.', 'Add chili flakes, kill the heat. Toss in the pasta with a splash of cooking water; swirl into a sauce.', 'Finish with lemon zest and parsley; one more swirl of raw oil at the table.'],
+      oil: 'trilye', why: 'Here the oil IS the sauce. Trilye\'s full body carries the garlic\'s sweetness and leaves a peppery finish.' },
+    { name: 'Çılbır: Poached Eggs on Yogurt', tags: ['egg', 'yogurt', 'garlic'], min: 2,
+      time: '15 min', serves: 'Serves 2', level: 'Easy',
+      pantry: ['3 tbsp Olivamore Ayvalık', 'salt, chili flakes, vinegar'],
+      steps: ['Prepare garlicky yogurt at room temperature; spread onto plates.', 'Poach the eggs in barely simmering water with vinegar (3-4 minutes).', 'Lift the eggs onto the yogurt.', 'Sizzle the olive oil with chili flakes and pour it over. Serve immediately.'],
+      oil: 'ayvalik', why: 'A gentle oil balances the yogurt\'s tang and the poached egg\'s cream; sizzling Ayvalık ties the two together.' },
+    { name: 'Zucchini Fritters with Herbed Yogurt', tags: ['zucchini', 'egg', 'flour', 'dill', 'cheese'], min: 1,
+      time: '25 min', serves: 'Serves 3-4', level: 'Easy',
+      pantry: ['4 tbsp Olivamore Ayvalık', 'salt, black pepper'],
+      steps: ['Grate the zucchini, salt it, rest 10 minutes and squeeze out the water thoroughly.', 'Mix with egg, flour, white cheese and dill.', 'Heat the olive oil in a pan; drop spoonfuls of batter and fry both sides.', 'Rest on paper towels; serve with garlicky yogurt.'],
+      oil: 'ayvalik', why: 'Don\'t fear frying with extra virgin: a ~207°C smoke point is more than enough. Ayvalık keeps the light batter light.' }
+  ];
+
+  function fallback(ings) {
+    var list = ings.length ? ings.slice(0, 5) : ['seasonal vegetables'];
+    return {
+      name: 'Oven-Roasted ' + list[0].charAt(0).toUpperCase() + list[0].slice(1) + ' in Olive Oil',
+      tags: list, min: 0, time: '35 min', serves: 'Serves 2-4', level: 'Easy',
+      pantry: ['4 tbsp Olivamore Trilye', 'salt, black pepper, thyme'],
+      steps: [
+        'Heat the oven to 200°C. Cut your ' + list.join(', ') + ' into evenly sized large pieces.',
+        'Spread in a single layer on a wide tray; add olive oil, salt, pepper and thyme, and toss by hand.',
+        'Roast 25-30 minutes until the edges caramelize, turning once halfway.',
+        'Out of the oven, add one more swirl of raw olive oil; serve warm.'
+      ],
+      oil: 'trilye', why: 'The oven\'s caramel notes want a robust oil. Trilye\'s character adds depth to roasted vegetables.'
+    };
+  }
+
+  var tx = document.getElementById('ra-text');
+  function norm(s) { return s.toLowerCase().trim(); }
+  function getIngs() {
+    return norm(tx.value).split(/[,\n;]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  function score(r, text) {
+    var hits = [];
+    r.tags.forEach(function (t) { if (text.indexOf(t) !== -1) hits.push(t); });
+    return { hits: hits, ok: hits.length >= r.min && hits.length > 0 };
+  }
+
+  var lastRanked = [], lastIdx = 0;
+
+  function generate(nextVariant) {
+    var text = norm(tx.value);
+    var ings = getIngs();
+    if (!nextVariant) {
+      lastRanked = DB.map(function (r) { var s = score(r, text); return { r: r, hits: s.hits, ok: s.ok }; })
+        .filter(function (x) { return x.ok; })
+        .sort(function (a, b) { return b.hits.length - a.hits.length; });
+      lastIdx = 0;
+    } else {
+      lastIdx++;
+    }
+    var pick = lastRanked[lastIdx % Math.max(lastRanked.length, 1)];
+    var recipe, hits;
+    if (pick) { recipe = pick.r; hits = pick.hits; }
+    else { recipe = fallback(ings); hits = ings; }
+    render(recipe, hits);
+  }
+
+  function render(r, hits) {
+    document.getElementById('ra-name').innerHTML = r.name;
+    document.getElementById('ra-time').textContent = '⏱ ' + r.time;
+    document.getElementById('ra-serves').textContent = 'Serves: ' + r.serves;
+    document.getElementById('ra-level').textContent = '✦ ' + r.level;
+
+    var ingsEl = document.getElementById('ra-ings');
+    ingsEl.innerHTML = '';
+    hits.concat(r.pantry).forEach(function (i) {
+      var li = document.createElement('li'); li.textContent = i; ingsEl.appendChild(li);
+    });
+
+    var stepsEl = document.getElementById('ra-steps');
+    stepsEl.innerHTML = '';
+    r.steps.forEach(function (s) {
+      var li = document.createElement('li'); li.textContent = s; stepsEl.appendChild(li);
+    });
+
+    document.getElementById('ra-matchline').innerHTML =
+      hits.length ? '<b>' + hits.length + '</b> of your ingredients matched this recipe: ' + hits.join(', ') : '';
+
+    var oil = OILS[r.oil];
+    document.getElementById('ra-oil-img').src = oil.img;
+    document.getElementById('ra-oil-name').textContent = oil.name;
+    document.getElementById('ra-oil-why').textContent = r.why;
+    document.getElementById('ra-oil-link').href = oil.href;
+
+    document.getElementById('ra-result').classList.add('show');
+    document.getElementById('ra-again').style.display = lastRanked.length > 1 ? 'inline-flex' : 'none';
+  }
+
+  var THINK = ['Reviewing your ingredients...', 'Searching the kitchen archive...', 'Pairing the right oil...'];
+  function withThinking(fn) {
+    var th = document.getElementById('ra-thinking');
+    var st = document.getElementById('ra-status');
+    var res = document.getElementById('ra-result');
+    res.classList.remove('show');
+    th.classList.add('show');
+    var i = 0;
+    st.textContent = THINK[0];
+    var iv = setInterval(function () { i++; st.textContent = THINK[i % THINK.length]; }, 550);
+    setTimeout(function () {
+      clearInterval(iv);
+      th.classList.remove('show');
+      fn();
+      document.getElementById('ra-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1600);
+  }
+
+  document.getElementById('ra-chips').addEventListener('click', function (e) {
+    e.stopPropagation(); // allow multi-select (bypass site.js single-select chips)
+    var c = e.target.closest('.chip');
+    if (!c) return;
+    var cur = tx.value.trim();
+    if (norm(cur).indexOf(c.dataset.ing) === -1) {
+      tx.value = cur ? cur.replace(/,\s*$/, '') + ', ' + c.dataset.ing : c.dataset.ing;
+    }
+    c.classList.add('on');
+  });
+  document.getElementById('ra-go').addEventListener('click', function () {
+    if (!tx.value.trim()) { tx.focus(); tx.placeholder = 'Type a few ingredients first, or pick from below ↓'; return; }
+    withThinking(function () { generate(false); });
+  });
+  document.getElementById('ra-again').addEventListener('click', function () {
+    withThinking(function () { generate(true); });
+  });
+});
+</script>
+</body>
+</html>

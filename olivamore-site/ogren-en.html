@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn: Olive Oil Guides, Healthy Living &amp; Recipes | Olivamore</title>
+<meta name="description" content="What is extra virgin? What do polyphenols do? When are olives harvested? Clear Q&A-style guides, healthy living articles and seasonal recipes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="ogren" data-lang="en">
+<div id="om-header"></div>
+
+<!-- VIDEO BANNER (original aspect, no text) -->
+<div class="ogren-video">
+  <video id="ov-video" src="assets/img/ogren-banner.mp4" autoplay muted loop playsinline aria-label="Olivamore brand video"></video>
+  <div class="ov-text" id="ov-text">
+    <h1>Get to know olive oil</h1>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var v = document.getElementById('ov-video'), t = document.getElementById('ov-text');
+    v.addEventListener('timeupdate', function () {
+      if (v.currentTime >= 7.5) t.classList.add('show');
+      else if (v.currentTime < 1) t.classList.remove('show');
+    });
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!document.getElementById('seq-img')) return; // switched to video banner; legacy sequence code disabled
+    var N = 30, kareler = [], gorsel = document.getElementById('seq-img'), hero = document.getElementById('ogren-hero');
+    for (var i = 0; i < N; i++) {
+      var im = new Image();
+      im.src = 'assets/img/ezgif/kare-' + ('0' + i).slice(-2) + '.jpg';
+      kareler.push(im);
+    }
+    var idx = 0;
+    function git(i) {
+      i = Math.max(0, Math.min(N - 1, i));
+      if (i !== idx) { idx = i; gorsel.src = kareler[i].src; }
+    }
+    // SCROLL-DRIVEN: banner pins; scrolling advances frames.
+    // The page cannot continue until the animation completes.
+    var seq = document.getElementById('ogren-seq');
+    function kaydir() {
+      var r = seq.getBoundingClientRect();
+      var toplam = seq.offsetHeight - window.innerHeight;
+      var p = Math.min(1, Math.max(0, -r.top / toplam));
+      git(Math.round(p * (N - 1)));
+    }
+    window.addEventListener('scroll', kaydir, { passive: true });
+    window.addEventListener('resize', kaydir);
+    kaydir();
+  });
+</script>
+
+<!-- RECIPE ASSISTANT PROMO -->
+<section class="block tight" style="padding-bottom:0;" id="sec-tarif-promo">
+  <div class="container split">
+    <div class="split-art photo-cover" style="min-height:380px;">
+      <img src="assets/img/tarif-promo.jpg" alt="A table prepared with Olivamore">
+    </div>
+    <div>
+      <div class="kicker">New · AI-Powered</div>
+      <h2>What to cook with what you have?</h2>
+      <p class="lead" style="margin-top:16px;">Type your ingredients; we'll generate a recipe just for you and recommend the Olivamore that suits the dish best.</p>
+      <p style="margin-top:30px;"><a class="btn btn-gold" href="tarif-asistani-en.html">Try the Recipe Assistant</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- GUIDES -->
+<section class="block tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Guides</div><h2>The big questions, answered</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-naturel-nedir.jpg" alt="Extra virgin olive oil bottle and olive branch"></div>
+        <div class="card-body"><span class="blog-tag">Guide</span><h3>What is extra virgin olive oil? How is it different?</h3><p class="card-note">Extra virgin, virgin, refined: what the terms on the market shelf really mean.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-polifenol.jpg" alt="Polyphenols in olive oil"></div>
+        <div class="card-body"><span class="blog-tag">Guide</span><h3>What do polyphenols in olive oil do?</h3><p class="card-note">That peppery feel in the throat isn't a flaw. The antioxidant content, translated into tasting language.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-hasat.jpg" alt="Olive harvest"></div>
+        <div class="card-body"><span class="blog-tag">Guide</span><h3>When are olives harvested?</h3><p class="card-note">Early harvest and ripe harvest: same tree, two different oils. Why do color, aroma and price change?</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-raf-omru.jpg" alt="Olive oil storage conditions"></div>
+        <div class="card-body"><span class="blog-tag">Guide</span><h3>Does olive oil go bad? Shelf life and storage</h3><p class="card-note">Light, heat and air: the oil's three enemies. Keep it fresh for months with proper storage.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-hatalar.jpg" alt="Common mistakes in olive oil consumption"></div>
+        <div class="card-body"><span class="blog-tag">Guide</span><h3>Common olive oil mistakes and the facts</h3><p class="card-note">Including "you can't cook with olive oil": we bust the most common myths with data.</p></div>
+      </a>
+      <a class="blog-card" href="urun-en.html">
+        <div class="blog-thumb"><img src="assets/img/ayvalik-500.jpg" alt="Ayvalık Early Harvest 500ml" style="object-fit:contain;padding:10px;background:#fff;"></div>
+        <div class="card-body"><span class="blog-tag">Apply</span><h3>Taste what you read: Ayvalık Early Harvest</h3><p class="card-note">Every value we explain in the guides is on this bottle's label. Compare for yourself.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- HEALTHY LIVING -->
+<section class="block alt tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Table Culture</div><h2>Good living, good tables</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-akdeniz.jpg" alt="Mediterranean diet table"></div>
+        <div class="card-body"><span class="blog-tag">Living</span><h3>The role of olives and olive oil in the Mediterranean diet</h3><p class="card-note">Why are olives always at the center of the UNESCO-listed way of life?</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-detoks.jpg" alt="A spoonful of olive oil to start the day"></div>
+        <div class="card-body"><span class="blog-tag">Living</span><h3>A morning spoonful of olive oil: what tradition says, what research says</h3><p class="card-note">The origins of the tradition, and what studies have and haven't shown so far.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-cilt.jpg" alt="Skin care with olive oil"></div>
+        <div class="card-body"><span class="blog-tag">Living</span><h3>From the kitchen to the bathroom: traditional uses of olive oil</h3><p class="card-note">From soap-making heritage to care rituals; what are vitamin E and squalene, and where are they found?</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- VINEGAR WORLD -->
+<section class="block tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Vinegar World</div><h2>Naturally fermented vinegars</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-alic-sirkesi.jpg" alt="Hawthorn vinegar"></div>
+        <div class="card-body"><span class="blog-tag">Vinegar</span><h3>What is hawthorn vinegar?</h3><p class="card-note">From Anatolia's little-known fruit, a sharp, lively flavor born of natural fermentation.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-fermantasyon.jpg" alt="Naturally fermented vinegars"></div>
+        <div class="card-body"><span class="blog-tag">Vinegar</span><h3>Naturally fermented vinegar: what sets live vinegar apart?</h3><p class="card-note">The difference between pasteurized vinegar and live vinegar is bigger than you think.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- RECIPES -->
+<section class="block alt tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Recipes</div><h2>Bring the oil to the table</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-levrek.jpg" alt="Crispy sea bass with samphire"></div>
+        <div class="card-body"><span class="blog-tag">Recipe</span><h3>Crispy sea bass with samphire</h3><p class="card-note">The Aegean's iconic duo. Finish the samphire with early harvest extra virgin.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-visneli-salata.jpg" alt="Sour cherry salad with fresh curd"></div>
+        <div class="card-body"><span class="blog-tag">Recipe</span><h3>Sour cherry salad with fresh curd</h3><p class="card-note">Sweet-tart cherries, fresh curd and the intensely fruity Trilye: the surprise of the summer table.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/story-sofra.jpg" alt="A table set with Olivamore products"></div>
+        <div class="card-body"><span class="blog-tag">Table</span><h3>Setting the table with Olivamore</h3><p class="card-note">From olive oil to pomegranate molasses, fermented olives to natural soap; meet the product family.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harvest Passport: The Story of the Oil in Your Bottle | Olivamore</title>
+<meta name="description" content="Enter the batch number on your label; see the full story of the oil in your bottle with harvest date, grove, variety and lab-test values.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="ureticiler" data-lang="en">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="kicker">Traceability</div>
+    <h1>Harvest Passport</h1>
+    <p class="lead">Enter the batch number on the back of your label; see which grove and which harvest the oil in your bottle came from, together with its lab values.</p>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="container">
+    <div class="pp-search">
+      <input type="text" id="pp-input" placeholder="Batch No · e.g. AYV-2510" maxlength="12">
+      <button class="btn btn-dark" id="pp-btn">Look Up</button>
+    </div>
+    <div class="pp-samples">
+      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Examples:</span>
+      <button class="chip" data-kod="AYV-2510">AYV-2510</button>
+      <button class="chip" data-kod="TRL-2510">TRL-2510</button>
+      <button class="chip" data-kod="OLG-2511">OLG-2511</button>
+    </div>
+
+    <!-- RESULT CARD -->
+    <div class="pp-card" id="pp-card">
+      <div class="pp-head">
+        <h2 id="pp-urun"></h2>
+        <span class="pp-kod" id="pp-kod"></span>
+      </div>
+      <div class="pp-body">
+        <div class="pp-grid">
+          <div class="pp-row"><b>Harvest date</b><span id="pp-hasat"></span></div>
+          <div class="pp-row"><b>Cold pressed</b><span id="pp-sikim"></span></div>
+          <div class="pp-row"><b>Olive variety</b><span id="pp-cesit"></span></div>
+          <div class="pp-row"><b>Grove / parcel</b><span id="pp-parsel"></span></div>
+          <div class="pp-row"><b>Acidity (FFA)</b><span id="pp-asidite"></span></div>
+          <div class="pp-row"><b>Polyphenols</b><span id="pp-polifenol"></span></div>
+          <div class="pp-row"><b>Peroxide</b><span id="pp-peroksit"></span></div>
+          <div class="pp-row"><b>Lab test</b><span id="pp-lab"></span></div>
+        </div>
+
+        <div class="tasting" style="margin:0 0 22px;">
+          <h4>Tasting note for this batch</h4>
+          <p style="font-size:.95rem;color:var(--ink-soft);" id="pp-tadim"></p>
+        </div>
+
+        <div class="producer-mini" style="margin:0 0 22px;">
+          <div class="avatar" id="pp-avatar"></div>
+          <div>
+            <b style="font-weight:400;" id="pp-uretici"></b>
+            <p style="font-size:.85rem;color:var(--ink-soft);">Hand-picked olives, double-sorted and washed with ozonated water, pressed the same day at 20-22°C in our Oleapenol press; never blended into bulk pools.</p>
+            <a class="link-arrow" style="font-size:.85rem;" href="ureticiler-en.html">Meet the producer →</a>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a class="btn btn-gold" id="pp-link" href="urun-en.html">This Oil's Page</a>
+          <a class="btn btn-outline" href="ureticiler-en.html#izlenebilirlik">The Traceability Chain</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOT FOUND -->
+    <div class="pp-empty" id="pp-empty">
+      <h3 style="font-weight:700;margin-bottom:8px;">We couldn't find that batch number</h3>
+      <p>The number is on the back of the label, below the analysis values (e.g. AYV-2510). If you still can't find it, <a class="link-arrow" href="iletisim-en.html">write to us</a> and we'll email you the report.</p>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  /* [BATCHES] Default batch database — batches added from the admin panel
+     (Partiler tab) are merged in. In production this comes from the backend. */
+  var BATCHES = [
+    { kod: 'AYV-2510', urun: 'Ayvalık Early Harvest', hasat: 'October 3–9, 2025 · by hand', sikim: 'Same day · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · North Parcel', asidite: '0.35%', polifenol: '412 mg/kg', peroksit: '6.57 meq O₂/kg', lab: 'November 2025 · independent lab', tadim: 'Smooth and fruity; green-apple freshness with an elegant finish. The oil of breakfast and raw use.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun-en.html' },
+    { kod: 'TRL-2510', urun: 'Trilye Early Harvest', hasat: 'October 10–16, 2025 · by hand', sikim: 'Same day · 20-22°C · Oleapenol', cesit: 'Gemlik (Trilye)', parsel: 'Ayvalık · Gemlik-variety parcel, old trees', asidite: '0.12%', polifenol: '486 mg/kg', peroksit: '6.75 meq O₂/kg', lab: 'November 2025 · independent lab', tadim: 'Intense and full of character; a peppery finish in the throat. The oil of grilled vegetables and sharp salads.', uretici: 'Olivamore Groves, Ayvalık', avatar: 'OB', href: 'urun-trilye-en.html' },
+    { kod: 'OLG-2511', urun: 'Ripe Harvest', hasat: 'November 18–26, 2025 · by hand', sikim: 'Same day · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · South Parcel', asidite: '0.28%', polifenol: '295 mg/kg', peroksit: '8.1 meq O₂/kg', lab: 'December 2025 · independent lab', tadim: 'Gentle bitterness, balanced and full body. The oil of hot dishes, braises and the oven.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun-en.html' }
+  ];
+  try {
+    var C = JSON.parse(localStorage.getItem('om-admin') || '{}');
+    (C.batches || []).forEach(function (b) {
+      var i = BATCHES.findIndex(function (x) { return x.kod === b.kod; });
+      if (i >= 0) BATCHES[i] = b; else BATCHES.push(b);
+    });
+  } catch (e) {}
+
+  function show(kod) {
+    kod = (kod || '').trim().toUpperCase();
+    var card = document.getElementById('pp-card');
+    var empty = document.getElementById('pp-empty');
+    var b = BATCHES.find(function (x) { return x.kod === kod; });
+    if (!b) {
+      card.classList.remove('on');
+      empty.classList.add('on');
+      return;
+    }
+    empty.classList.remove('on');
+    document.getElementById('pp-urun').textContent = b.urun;
+    document.getElementById('pp-kod').textContent = b.kod;
+    document.getElementById('pp-hasat').textContent = b.hasat;
+    document.getElementById('pp-sikim').textContent = b.sikim;
+    document.getElementById('pp-cesit').textContent = b.cesit;
+    document.getElementById('pp-parsel').textContent = b.parsel;
+    document.getElementById('pp-asidite').textContent = b.asidite;
+    document.getElementById('pp-polifenol').textContent = b.polifenol;
+    document.getElementById('pp-peroksit').textContent = b.peroksit;
+    document.getElementById('pp-lab').textContent = b.lab;
+    document.getElementById('pp-tadim').textContent = b.tadim;
+    document.getElementById('pp-uretici').textContent = b.uretici;
+    document.getElementById('pp-avatar').textContent = b.avatar || b.uretici.slice(0, 2).toUpperCase();
+    document.getElementById('pp-link').href = b.href || 'urun-en.html';
+    card.classList.add('on');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('pp-btn').addEventListener('click', function () {
+    show(document.getElementById('pp-input').value);
+  });
+  document.getElementById('pp-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') show(this.value);
+  });
+  document.querySelectorAll('.pp-samples .chip').forEach(function (c) {
+    c.addEventListener('click', function () {
+      document.getElementById('pp-input').value = c.dataset.kod;
+      show(c.dataset.kod);
+    });
+  });
+
+  var q = new URLSearchParams(location.search).get('parti');
+  if (q) { document.getElementById('pp-input').value = q.toUpperCase(); show(q); }
+});
+</script>
+</body>
+</html>

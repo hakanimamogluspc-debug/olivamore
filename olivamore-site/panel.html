@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yönetim Paneli | Olivamore</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#BFA25D;--ink:#1E1C19;--soft:#4A463F;--line:#ECEAE6;--bg:#F7F6F3;--ok:#3d7a3d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Figtree','Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+a{color:inherit;text-decoration:none}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* Kenar çubuğu */
+.side{background:var(--ink);color:#CFC9BC;padding:26px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+@media(max-width:860px){.side{position:static;height:auto;flex-direction:row;align-items:center;gap:10px;overflow-x:auto;padding:14px 16px}}
+.side .brand{color:#fff;font-weight:700;letter-spacing:.22em;font-size:.92rem}
+.side .brand-sub{font-size:.7rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:30px}
+@media(max-width:860px){.side .brand-sub{display:none}.side .brand{flex-shrink:0;margin-right:8px}}
+.side nav{display:flex;flex-direction:column;gap:2px}
+@media(max-width:860px){.side nav{flex-direction:row}}
+.side nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;font-size:.9rem;cursor:pointer;white-space:nowrap;transition:all .2s}
+.side nav a:hover,.side nav a.on{background:rgba(191,162,93,.16);color:#fff}
+.side .foot{margin-top:auto;font-size:.7rem;color:#7d776b;padding-top:20px}
+@media(max-width:860px){.side .foot{display:none}}
+
+/* İçerik */
+.main{padding:30px 36px 110px;max-width:1060px}
+@media(max-width:860px){.main{padding:20px 16px 110px}}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.topbar h1{font-size:1.45rem;font-weight:700}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;font:inherit;font-size:.86rem;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .2s}
+.btn-dark{background:var(--ink);color:#fff}.btn-dark:hover{background:#000}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:#A68A4B}
+.btn-ghost{border-color:var(--line);background:#fff;color:var(--ink)}.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:#fff;border-color:#e3c4c4;color:#a33}.btn-danger:hover{background:#a33;color:#fff;border-color:#a33}
+.btn-sm{padding:7px 14px;font-size:.78rem}
+
+.view{display:none}
+.view.on{display:block}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(30,28,25,.06);padding:24px;margin-bottom:22px}
+.panel h2{font-size:1.02rem;font-weight:700;margin-bottom:4px}
+.panel .desc{font-size:.8rem;color:var(--soft);margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);margin-bottom:5px}
+input[type=text],input[type=number],textarea,select{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit;font-size:.9rem;background:#fff;transition:border .2s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
+.field{margin-bottom:13px}
+
+/* Dashboard */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:820px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(30,28,25,.06)}
+.stat .num{font-size:1.7rem;font-weight:700;color:var(--gold)}
+.stat .lbl{font-size:.78rem;color:var(--soft)}
+
+/* Kayıt kartları (ürün / blog) */
+.item{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:#fff;overflow:hidden}
+.item summary{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;list-style:none}
+.item summary::-webkit-details-marker{display:none}
+.item summary img{width:46px;height:46px;object-fit:contain;background:#fafaf8;border:1px solid var(--line);border-radius:8px;flex-shrink:0}
+.item summary .t{flex:1;min-width:0}
+.item summary .t b{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item summary .t span{font-size:.75rem;color:var(--soft)}
+.item summary .pill{font-size:.68rem;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--soft);flex-shrink:0}
+.item summary .pill.hid{border-color:#e3c4c4;color:#a33}
+.item .body{padding:16px;border-top:1px solid var(--line);background:#FBFAF8}
+.imgpick{display:flex;gap:10px;align-items:center}
+.imgpick img{width:56px;height:56px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;flex-shrink:0}
+.imgpick select{flex:1}
+.row-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.chk{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--soft);cursor:pointer}
+.chk input{width:auto}
+
+/* Modül anahtarları */
+.mods{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.mods{grid-template-columns:1fr}}
+.mod{display:flex;justify-content:space-between;align-items:center;gap:14px;border:1px solid var(--line);border-radius:12px;padding:15px 18px;background:#fff}
+.mod .t b{display:block;font-size:.9rem}
+.mod .t span{font-size:.76rem;color:var(--soft)}
+.sw{position:relative;width:46px;height:26px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sw i{position:absolute;inset:0;background:#d8d5cd;border-radius:999px;transition:.25s;cursor:pointer}
+.sw i::before{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.sw input:checked+i{background:var(--gold)}
+.sw input:checked+i::before{transform:translateX(20px)}
+
+/* Kaydet çubuğu */
+.savebar{position:fixed;bottom:0;left:240px;right:0;background:#fff;border-top:1px solid var(--line);padding:13px 36px;display:flex;gap:12px;align-items:center;z-index:50;box-shadow:0 -6px 20px rgba(30,28,25,.06)}
+@media(max-width:860px){.savebar{left:0;padding:11px 16px}}
+.savebar .status{margin-right:auto;font-size:.8rem;color:var(--soft)}
+.savebar .status.ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:.86rem;opacity:0;transition:all .3s;z-index:99;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.note{background:rgba(191,162,93,.1);border:1px solid rgba(191,162,93,.35);border-radius:10px;padding:11px 15px;font-size:.8rem;color:var(--soft);margin-bottom:20px}
+.note b{color:var(--ink)}
+.pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
+textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="side">
+    <div class="brand">OLIVAMORE</div>
+    <div class="brand-sub">İçerik Yönetim Sistemi</div>
+    <nav id="nav">
+      <a data-view="dash" class="on">◈ Panel</a>
+      <a data-view="pages">▤ Sayfalar</a>
+      <a data-view="products">◧ Ürünler</a>
+      <a data-view="blogs">✎ Blog</a>
+      <a data-view="batches">◉ Partiler</a>
+      <a data-view="orders">▦ Siparişler</a>
+      <a data-view="coupons">⛁ Kuponlar</a>
+      <a data-view="library">🖼 Görseller</a>
+      <a data-view="msgs">✉ Mesajlar</a>
+      <a data-view="mods">⚙ Modüller</a>
+      <a data-view="settings">✦ Ayarlar</a>
+    </nav>
+    <div class="foot">Demo CMS · localStorage<br>Canlıda: Shopify Admin API</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="view-title">Panel</h1>
+      <div class="actions">
+        <a class="btn btn-ghost" href="index.html" target="_blank">Siteyi Görüntüle ↗</a>
+        <button class="btn btn-danger btn-sm" id="btn-reset">Varsayılanlara Dön</button>
+      </div>
+    </div>
+
+    <!-- ============ PANEL (DASHBOARD) ============ -->
+    <section class="view on" id="view-dash">
+      <div class="stats">
+        <div class="stat"><div class="num" id="st-products">–</div><div class="lbl">Yayında ürün</div></div>
+        <div class="stat"><div class="num" id="st-blogs">–</div><div class="lbl">Yayında blog yazısı</div></div>
+        <div class="stat"><div class="num" id="st-pages">15</div><div class="lbl">Sayfa (TR + EN)</div></div>
+        <div class="stat"><div class="num" id="st-mods">–</div><div class="lbl">Aktif modül</div></div>
+      </div>
+      <div class="panel">
+        <h2>Hoş geldin</h2>
+        <div class="desc">Bu panelden sitenin tüm içeriğini yönetebilirsin. Değişiklikler "Kaydet ve Yayınla" ile siteye (TR + EN) anında yansır.</div>
+        <div class="grid3">
+          <button class="btn btn-ghost" data-goto="products">◧ Ürünleri düzenle</button>
+          <button class="btn btn-ghost" data-goto="blogs">✎ Blog yazılarını yönet</button>
+          <button class="btn btn-ghost" data-goto="mods">⚙ Modülleri aç/kapa</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Yedekleme</h2>
+        <div class="desc">Tüm içerik ayarlarını JSON olarak dışa aktar / içe aktar (ör. başka bilgisayara taşımak için).</div>
+        <textarea class="json" id="json-io" placeholder="Dışa aktar'a bas veya buraya JSON yapıştırıp İçe aktar'a bas..."></textarea>
+        <div class="row-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-export">Dışa Aktar</button>
+          <button class="btn btn-ghost btn-sm" id="btn-import">İçe Aktar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SAYFALAR ============ -->
+    <section class="view" id="view-pages">
+      <div class="note"><b>Sayfa metinleri:</b> Her sayfanın üst bölümündeki başlık ve tanıtım yazısı. Ana sayfa hero'su <b>Ayarlar</b> sekmesinde.</div>
+      <div id="pages-list"></div>
+    </section>
+
+    <!-- ============ ÜRÜNLER ============ -->
+    <section class="view" id="view-products">
+      <div class="note"><b>Ürünler:</b> Koleksiyon sayfasındaki tüm kartlar ve ana sayfa vitrini buradan yönetilir. <b>Vitrin sırası</b> 1-4 arası olan ürünler ana sayfada gösterilir (0 = vitrinde değil).</div>
+      <div id="products-list"></div>
+      <button class="btn btn-dark" id="btn-add-product">+ Yeni Ürün Ekle</button>
+      <button class="btn btn-outline" id="btn-export-products" style="margin-left:10px;">⬇ Excel'e Aktar (CSV)</button>
+
+      <div class="panel" style="margin-top:22px;">
+        <h2>Ürün sayfası (PDP) ek boyut fiyatı</h2>
+        <div class="desc">Ayvalık ürün sayfasındaki 750 ml seçeneği (kartı olmayan boyut).</div>
+        <div class="grid3"><div class="field"><label>Ayvalık 750 ml (₺)</label><input type="number" id="f-pdp750"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ BLOG ============ -->
+    <section class="view" id="view-blogs">
+      <div class="note"><b>Blog:</b> Öğren sayfasındaki 4 bölüm (Rehberler, Sağlıklı Yaşam, Sirke Dünyası, Tarifler) ve ana sayfa blog önizlemesi buradan yönetilir.</div>
+      <div id="blogs-list"></div>
+      <button class="btn btn-dark" id="btn-add-blog">+ Yeni Yazı Ekle</button>
+    </section>
+
+    <!-- ============ PARTİLER (HASAT PASAPORTU) ============ -->
+    <section class="view" id="view-batches">
+      <div class="note"><b>Hasat Pasaportu:</b> Buradaki partiler pasaport.html'de sorgulanabilir (QR kod etikete <code>olivamore.de/pasaport.html?parti=KOD</code> adresiyle basılır). Not: panelden eklenen partiler bu tarayıcıda görünür; canlıda backend'e bağlanır.</div>
+      <div id="batches-list"></div>
+      <button class="btn btn-dark" id="btn-add-batch">+ Yeni Parti Ekle</button>
+    </section>
+
+    <!-- ============ SİPARİŞLER ============ -->
+    <section class="view" id="view-orders">
+      <div class="note"><b>Siparişler:</b> Sepetten gelen gerçek siparişler. Durumu güncelle: yeni → hazırlanıyor → kargolandı → tamamlandı. Kargo takip numarasını girip "kargolandı" yap.</div>
+      <div id="orders-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
+    </section>
+
+    <!-- ============ MESAJLAR ============ -->
+    <section class="view" id="view-msgs">
+      <div class="note"><b>Mesajlar:</b> İletişim formundan gelenler. Bülten kayıtları da altta.</div>
+      <div id="msgs-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
+      <div class="panel" style="margin-top:20px;"><h2>Bülten Kayıtları</h2><div id="bulten-list" style="font-size:.85rem;color:var(--soft);">Yükleniyor...</div></div>
+    </section>
+
+    <!-- ============ MODÜLLER ============ -->
+    <!-- ============ GÖRSEL KÜTÜPHANESİ ============ -->
+    <section class="view" id="view-library">
+      <div class="note"><b>Görsel Kütüphanesi:</b> Buraya yüklediklerin sunucuya dosya olarak kaydedilir ve tüm görsel seçicilerde ("🖼 Galeri") anında görünür. Görseller otomatik küçültülür; sayfa hızını etkilemez.</div>
+      <div class="panel" style="margin-bottom:16px;">
+        <label class="btn btn-gold" style="cursor:pointer;">+ Görsel Yükle (çoklu seçebilirsin)<input type="file" id="lib-file" accept="image/*" multiple style="display:none;"></label>
+        <span id="lib-durum" style="margin-left:12px;font-size:.85rem;color:#8a8377;"></span>
+      </div>
+      <div id="lib-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;"></div>
+    </section>
+
+    <!-- ============ KUPONLAR ============ -->
+    <section class="view" id="view-coupons">
+      <div class="note"><b>Kuponlar:</b> Kod sepette girilir; indirim yalnız kapsamdaki ürünlerin KDV hariç tutarına uygulanır. Tarih boş bırakılırsa süresizdir. Doğrulama sunucuda yapılır.</div>
+      <div id="coupons-list"></div>
+      <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
+    </section>
+
+    <section class="view" id="view-mods">
+      <div class="note"><b>Modüller:</b> Kapattığın modül sitede gizlenir; ona giden menü linkleri ve butonlar da otomatik kaldırılır.</div>
+      <div class="mods" id="mods-list"></div>
+    </section>
+
+    <!-- ============ AYARLAR ============ -->
+    <section class="view" id="view-settings">
+      <div class="panel">
+        <h2>Duyuru Şeridi</h2>
+        <div class="desc">Tüm sayfaların en üstündeki bant. &lt;b&gt; etiketi kullanılabilir.</div>
+        <div class="field"><label>Türkçe</label><input type="text" id="f-announceTR"></div>
+        <div class="field"><label>İngilizce</label><input type="text" id="f-announceEN"></div>
+      </div>
+      <div class="panel">
+        <h2>Ana Sayfa Hero</h2>
+        <div class="grid2">
+          <div class="field"><label>Başlık (TR)</label><input type="text" id="f-heroTitleTR"></div>
+          <div class="field"><label>Başlık (EN)</label><input type="text" id="f-heroTitleEN"></div>
+        </div>
+        <div class="field"><label>Tanıtım Metni (TR)</label><textarea id="f-heroLeadTR" rows="3"></textarea></div>
+        <div class="field"><label>Tanıtım Metni (EN)</label><textarea id="f-heroLeadEN" rows="3"></textarea></div>
+      </div>
+      <div class="panel">
+        <h2>Hediye Kutusu Oluşturucu</h2>
+        <div class="grid2">
+          <div class="field"><label>3'lü Kutu Fiyatı (₺)</label><input type="number" id="f-gift3"></div>
+          <div class="field"><label>5'li Kutu Fiyatı (₺)</label><input type="number" id="f-gift5"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="savebar">
+  <span class="status" id="save-status">Kaydedilmemiş değişiklik yok</span>
+  <button class="btn btn-gold" id="btn-save">Kaydet ve Yayınla</button>
+</div>
+<div class="toast" id="toast">Kaydedildi ✓</div>
+
+<script>
+(function () {
+  var KEY = 'om-admin';
+
+  /* ================== GÖRSEL KÜTÜPHANESİ ================== */
+  var IMAGES = [
+    'assets/img/ayvalik-250.jpg', 'assets/img/ayvalik-500.jpg', 'assets/img/ayvalik-2l.jpg', 'assets/img/ayvalik-5l.jpg',
+    'assets/img/trilye-750.jpg', 'assets/img/trilye-2l.jpg', 'assets/img/kutulu-750.jpg',
+    'assets/img/hediye-seti-5li.jpg', 'assets/img/hediye-seti-3lu.jpg',
+    'assets/img/story-hasat.jpg', 'assets/img/story-agac.jpg', 'assets/img/story-sofra.jpg',
+    'assets/img/yemek-balik.jpg', 'assets/img/yemek-kahvalti.jpg', 'assets/img/yemek-salata.jpg', 'assets/img/yemek-enginar.jpg',
+    'assets/img/ayvalik-750.jpg', 'assets/img/trilye-250.jpg', 'assets/img/trilye-500.jpg', 'assets/img/trilye-5l.jpg', 'assets/img/kutulu-500.jpg',
+    'assets/img/cesnili-mandalina.jpg', 'assets/img/cesnili-acibiber.jpg', 'assets/img/cesnili-bergamot.jpg', 'assets/img/cesnili-kekik.jpg',
+    'assets/img/zeytin-siyah.jpg', 'assets/img/zeytin-yesil.jpg',
+    'assets/img/sirke-balsamik.jpg', 'assets/img/sirke-alic.jpg', 'assets/img/sirke-elma.jpg', 'assets/img/sirke-uzum.jpg', 'assets/img/sirke-nar.jpg',
+    'assets/img/foto-ayvalik-tenekeler.jpg', 'assets/img/foto-ayvalik-5l-acili.jpg', 'assets/img/foto-kutulu-hero.jpg', 'assets/img/foto-kutulu-500.jpg',
+    'assets/img/foto-trilye-2l-acili.jpg', 'assets/img/foto-trilye-tenekeler.jpg', 'assets/img/foto-trilye-seri.jpg',
+    'assets/img/foto-hediye-setleri.jpg', 'assets/img/foto-sirkeler.jpg', 'assets/img/foto-sirkeler-2.jpg',
+    'assets/img/fd-ayvalik.jpg', 'assets/img/fd-trilye.jpg', 'assets/img/fd-olgun.jpg', 'assets/img/fd-mandalina.jpg', 'assets/img/fd-bergamot.jpg', 'assets/img/fd-kekik.jpg', 'assets/img/fd-acibiber.jpg',
+    'assets/img/es-ayvalik-1.jpg', 'assets/img/es-ayvalik-2.jpg', 'assets/img/es-ayvalik-3.jpg',
+    'assets/img/es-trilye-1.jpg', 'assets/img/es-trilye-2.jpg', 'assets/img/es-trilye-3.jpg',
+    'assets/img/es-olgun-1.jpg', 'assets/img/es-olgun-2.jpg', 'assets/img/es-olgun-3.jpg',
+    'assets/img/es-mandalina-1.jpg', 'assets/img/es-mandalina-2.jpg', 'assets/img/es-mandalina-3.jpg',
+    'assets/img/es-bergamot-1.jpg', 'assets/img/es-bergamot-2.jpg', 'assets/img/es-bergamot-3.jpg',
+    'assets/img/es-kekik-1.jpg', 'assets/img/es-kekik-2.jpg', 'assets/img/es-kekik-3.jpg',
+    'assets/img/es-acibiber-1.jpg', 'assets/img/es-acibiber-2.jpg', 'assets/img/es-acibiber-3.jpg',
+    'assets/img/sozluk-sol.jpg', 'assets/img/sozluk-sag.jpg', 'assets/img/club-1.jpg',
+    'assets/img/blog-naturel-nedir.jpg', 'assets/img/blog-polifenol.jpg', 'assets/img/blog-hasat.jpg',
+    'assets/img/blog-raf-omru.jpg', 'assets/img/blog-hatalar.jpg', 'assets/img/blog-akdeniz.jpg',
+    'assets/img/blog-detoks.jpg', 'assets/img/blog-cilt.jpg', 'assets/img/blog-alic-sirkesi.jpg',
+    'assets/img/blog-fermantasyon.jpg', 'assets/img/blog-levrek.jpg', 'assets/img/blog-visneli-salata.jpg',
+    'assets/img/hakkimizda-banner.jpg', 'assets/img/hero-bg.jpg', 'assets/img/slider.jpg'
+  ];
+
+  /* ================== VARSAYILAN İÇERİK ================== */
+  var DEFAULTS = {
+    announceTR: 'Yeni hasat geldi: <b>500 TL üzeri kargo bedava</b> · Club üyelerine her zaman ücretsiz kargo',
+    announceEN: 'The new harvest is here: <b>free shipping over 500 TL</b> · Club members always ship free',
+    heroTitleTR: 'Doğal Olarak Ödüllü', heroTitleEN: 'Naturally Awarded',
+    heroLeadTR: "Ayvalık'taki kendi bahçelerimizden, Edremit ve Gemlik cinsi zeytinlerden erken hasat, soğuk sıkım naturel sızma zeytinyağı. Her şişe tek bir hasadın, tek bir bahçenin izini taşır.",
+    heroLeadEN: 'Early harvest, cold-pressed extra virgin olive oil from our own groves in Ayvalık, from Edremit and Gemlik variety olives. Every bottle carries the trace of a single harvest, a single grove.',
+    gift3: 690, gift5: 1050,
+    pdp: { ay750: 1250 },
+    modules: { announce: true, trust: true, club: true, reviews: true, newsletter: true, hediyelik: true, blogPreview: true, hediye: true, tarif: true },
+    pages: {
+      'koleksiyon': { tTR: 'Sızma Zeytinyağı', tEN: 'Extra Virgin Olive Oil', lTR: "Hepsi tek bahçeden, hepsi izlenebilir, hepsi hasat tarihli. Ayvalık'ın yumuşak dokusundan Trilye'nin yoğun karakterine, hangisiyle başlayacağını aşağıda seç.", lEN: "All from single groves, all traceable, all harvest-dated. From Ayvalık's smooth texture to Trilye's intense character, pick where to start below." },
+      'kulup': { tTR: 'Olivamore Club', tEN: 'Olivamore Club', lTR: 'Zeytinyağını bir alışveriş değil, bir keşif yap. Her ay seçtiğimiz bir yağ, hikâyesi ve o yağa göre bir tarifle birlikte kapında.', lEN: 'Make olive oil a discovery, not a purchase. Every month, an oil we select arrives at your door with its story and a recipe chosen for it.' },
+      'ureticiler': { tTR: 'Arkasında kim var, biliyoruz', tEN: "We know who's behind it", lTR: "Çoğu zeytinyağı isimsizdir; nereden geldiği kaybolur. Bizde her yağın bir adresi var: Ayvalık'taki kendi bahçelerimiz ve gerektiğinde yanımızdaki üreticiler. İster misin, birlikte geriye doğru izleyelim.", lEN: "Most olive oil is anonymous; where it came from gets lost. Every oil of ours has an address: our own groves in Ayvalık and, when needed, the growers beside us. Come on, let's trace it backwards together." },
+      'hikayemiz': { tTR: 'Neden Olivamore?', tEN: 'Why Olivamore?', lTR: "Ayvalık'ta, dedemizin diktiği ağaçların arasında başladı her şey.", lEN: 'It all began in Ayvalık, among the trees our grandfather planted.' },
+      'ogren': { tTR: 'Zeytinyağını tanı', tEN: 'Get to know olive oil', lTR: 'Reklam dili yok, net cevaplar var. Rehberler, sağlıklı yaşam yazıları ve tarifler; hepsi kendi hasadımızın verileriyle.', lEN: 'No advertising language, just clear answers. Guides, healthy living articles and recipes; all backed by data from our own harvest.' },
+      'sss': { tTR: 'Sık sorulan sorular', tEN: 'Frequently asked questions', lTR: 'Aradığını bulamazsan bize yaz, gerçek bir insan cevaplar.', lEN: "Can't find what you're looking for? Write to us, a real person will answer." },
+      'iletisim': { tTR: 'Bize yaz', tEN: 'Write to us', lTR: 'Soru, öneri, sipariş takibi ya da toptan satış, hepsine gerçek bir insan cevap verir, genellikle aynı gün.', lEN: 'Questions, suggestions, order tracking or wholesale: a real person answers them all, usually the same day.' },
+      'hediye-olustur': { tTR: 'Kendi hediye setini oluştur', tEN: 'Build your own gift set', lTR: 'Kutunu seç, şişelerini sen belirle, notunu yaz. Biz şık kutusunda hazırlayıp gönderelim.', lEN: "Choose your box, pick your bottles, write your note. We'll prepare it in an elegant box and ship it." },
+      'tarif-asistani': { tTR: 'Elindekilerle ne pişirsen?', tEN: 'What to cook with what you have?', lTR: 'Buzdolabında ne varsa yaz, sana uygun bir tarif üretelim ve o yemeğe en çok yakışan Olivamore yağını söyleyelim.', lEN: "Type whatever is in your fridge; we'll generate a recipe for you and tell you which Olivamore oil suits the dish best." }
+    },
+    products: [
+      { id: 'ay500', type: 'product', role: 'serin', nameTR: 'Ayvalık Erken Hasat', nameEN: 'Ayvalık Early Harvest', noteTR: 'Yumuşak, meyvemsi. Ekim hasadı, soğuk sıkım. Cam şişe.', noteEN: 'Smooth, fruity. October harvest, cold pressed. Glass bottle.', price: 850, unitTR: '/ 500ml', unitEN: '/ 500ml', badgeTR: 'Çok Satan', badgeEN: 'Bestseller', img: 'assets/img/ayvalik-500.jpg', href: 'urun.html', featured: 1, visible: true },
+      { id: 'tr750', type: 'product', role: 'serin', nameTR: 'Trilye Erken Hasat', nameEN: 'Trilye Early Harvest', noteTR: 'Yoğun, meyvemsi. Karakterli bir erken hasat. Cam şişe.', noteEN: 'Intense, fruity. An early harvest with character. Glass bottle.', price: 950, unitTR: '/ 750ml', unitEN: '/ 750ml', badgeTR: '', badgeEN: '', img: 'assets/img/trilye-750.jpg', href: 'urun-trilye.html', featured: 2, visible: true },
+      { id: 'ay250', type: 'product', role: 'serin', nameTR: 'Ayvalık 250 ml', nameEN: 'Ayvalık 250 ml', noteTR: 'Tanışma boyu. Aynı hasat, aynı özen. Cam şişe.', noteEN: 'The introduction size. Same harvest, same care. Glass bottle.', price: 425, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: '', badgeEN: '', img: 'assets/img/ayvalik-250.jpg', href: 'urun.html', featured: 3, visible: true },
+      { id: 'kutu750', type: 'product', role: 'hediye', nameTR: 'Hediye Kutulu 750 ml', nameEN: 'Gift Box 750 ml', noteTR: 'Şık silindir kutusunda, karta yazılmış notunla hediyeye hazır.', noteEN: 'In an elegant cylinder box with your handwritten note, ready to gift.', price: 1190, unitTR: '/ 750ml', unitEN: '/ 750ml', badgeTR: 'Hediyelik', badgeEN: 'Gift', img: 'assets/img/kutulu-750.jpg', href: 'urun.html', featured: 4, visible: true },
+      { id: 'custom-set', type: 'builder', role: 'hediye', nameTR: 'Kendi Setini Oluştur', nameEN: 'Build Your Own Set', noteTR: 'Kutunu seç, 100 ml şişelerini sen belirle, notunu yaz.', noteEN: 'Choose your box, pick your 100 ml bottles, write your note.', price: 690, unitTR: '', unitEN: '', badgeTR: 'Kişiye Özel', badgeEN: 'Personalized', img: 'assets/img/hediye-seti-3lu.jpg', href: 'hediye-olustur.html', featured: 0, visible: true },
+      { id: 'ay2l', type: 'product', role: 'serin', nameTR: 'Ayvalık 2 lt Teneke', nameEN: 'Ayvalık 2 lt Tin', noteTR: 'Mutfağın günlük dostu. Işık geçirmez teneke, aynı erken hasat.', noteEN: "The kitchen's everyday companion. Light-proof tin, same early harvest.", price: 1950, unitTR: '/ 2lt', unitEN: '/ 2lt', badgeTR: '', badgeEN: '', img: 'assets/img/ayvalik-2l.jpg', href: 'urun.html', featured: 0, visible: true },
+      { id: 'tr2l', type: 'product', role: 'serin', nameTR: 'Trilye 2 lt Teneke', nameEN: 'Trilye 2 lt Tin', noteTR: 'Yoğun profili sevenlere büyük boy. Işık geçirmez teneke.', noteEN: 'The big size for lovers of the intense profile. Light-proof tin.', price: 1990, unitTR: '/ 2lt', unitEN: '/ 2lt', badgeTR: '', badgeEN: '', img: 'assets/img/trilye-2l.jpg', href: 'urun-trilye.html', featured: 0, visible: true },
+      { id: 'ay5l', type: 'product', role: 'serin', nameTR: 'Ayvalık 5 lt Teneke', nameEN: 'Ayvalık 5 lt Tin', noteTR: 'Kalabalık sofralar ve gerçek zeytinyağı tüketenler için.', noteEN: 'For crowded tables and true olive oil consumers.', price: 4400, unitTR: '/ 5lt', unitEN: '/ 5lt', badgeTR: '', badgeEN: '', img: 'assets/img/ayvalik-5l.jpg', href: 'urun.html', featured: 0, visible: true },
+      { id: 'og5l', type: 'product', role: 'ocak', nameTR: 'Olgun Hasat 5 lt Teneke', nameEN: 'Ripe Harvest 5 lt Tin', noteTR: 'Sıcak yemeklerin, zeytinyağlıların ve fırının günlük yağı. Yumuşak acılık, dengeli gövde.', noteEN: 'The everyday oil for hot dishes, braises and the oven. Gentle bitterness, balanced body.', price: 3900, unitTR: '/ 5lt', unitEN: '/ 5lt', badgeTR: 'Yeni', badgeEN: 'New', img: 'assets/img/ayvalik-5l.jpg', href: 'urun.html', featured: 0, visible: true },
+      { id: 'ay750', type: 'product', role: 'serin', nameTR: 'Ayvalık 750 ml', nameEN: 'Ayvalık 750 ml', noteTR: 'Büyük sofraların cam şişesi. Aynı erken hasat, aynı özen.', noteEN: 'The glass bottle for bigger tables. Same early harvest, same care.', price: 1250, unitTR: '/ 750ml', unitEN: '/ 750ml', badgeTR: '', badgeEN: '', img: 'assets/img/ayvalik-750.jpg', href: 'urun.html', featured: 0, visible: true },
+      { id: 'tr250', type: 'product', role: 'serin', nameTR: 'Trilye 250 ml', nameEN: 'Trilye 250 ml', noteTR: 'Karakterli profille tanışma boyu. Cam şişe.', noteEN: 'The introduction size to the intense profile. Glass bottle.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: '', badgeEN: '', img: 'assets/img/trilye-250.jpg', href: 'urun-trilye.html', featured: 0, visible: true },
+      { id: 'tr500', type: 'product', role: 'serin', nameTR: 'Trilye 500 ml', nameEN: 'Trilye 500 ml', noteTR: 'Yoğun, biberimsi finalin günlük boyu. Cam şişe.', noteEN: 'The everyday size of the intense, peppery finish. Glass bottle.', price: 0, unitTR: '/ 500ml', unitEN: '/ 500ml', badgeTR: '', badgeEN: '', img: 'assets/img/trilye-500.jpg', href: 'urun-trilye.html', featured: 0, visible: true },
+      { id: 'tr5l', type: 'product', role: 'serin', nameTR: 'Trilye 5 lt Teneke', nameEN: 'Trilye 5 lt Tin', noteTR: 'Karakterli profili bol tüketenlere. Işık geçirmez teneke.', noteEN: 'For heavy users of the characterful profile. Light-proof tin.', price: 0, unitTR: '/ 5lt', unitEN: '/ 5lt', badgeTR: '', badgeEN: '', img: 'assets/img/trilye-5l.jpg', href: 'urun-trilye.html', featured: 0, visible: true, galeri: ['assets/img/foto-trilye-tenekeler.jpg'] },
+      { id: 'kutu500', type: 'product', role: 'hediye', nameTR: 'Hediye Kutulu 500 ml', nameEN: 'Gift Box 500 ml', noteTR: 'Silindir kutusunda 500 ml Ayvalık; nota hazır.', noteEN: 'A 500 ml Ayvalık in its cylinder box; ready for your note.', price: 0, unitTR: '/ 500ml', unitEN: '/ 500ml', badgeTR: 'Hediyelik', badgeEN: 'Gift', img: 'assets/img/kutulu-500.jpg', href: 'urun.html', featured: 0, visible: true, galeri: ['assets/img/foto-kutulu-500.jpg'] },
+      { id: 'ces-mand', type: 'product', role: 'serin', nameTR: 'Bodrum Mandalina Çeşnili', nameEN: 'Bodrum Mandarin Infused', noteTR: 'Mandalina kabuğuyla çeşnilendirilmiş sızma. Salataya, tatlıya, balığa.', noteEN: 'Extra virgin infused with mandarin zest. For salads, desserts and fish.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: 'Çeşnili', badgeEN: 'Infused', img: 'assets/img/cesnili-mandalina.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'ces-bib', type: 'product', role: 'serin', nameTR: 'Acı Biberli Çeşnili', nameEN: 'Hot Pepper Infused', noteTR: 'Isıyı seven tabaklara: pizza, makarna, közlenmiş sebze.', noteEN: 'For plates that like heat: pizza, pasta, charred vegetables.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: 'Çeşnili', badgeEN: 'Infused', img: 'assets/img/cesnili-acibiber.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'ces-berg', type: 'product', role: 'serin', nameTR: 'Bergamot Çeşnili', nameEN: 'Bergamot Infused', noteTR: 'Ege\'nin parfümü: beyaz balığa, yoğurtlu mezelere, tatlılara.', noteEN: 'The Aegean\'s perfume: white fish, yogurt mezes, desserts.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: 'Çeşnili', badgeEN: 'Infused', img: 'assets/img/cesnili-bergamot.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'ces-kek', type: 'product', role: 'serin', nameTR: 'Kekik Çeşnili', nameEN: 'Thyme Infused', noteTR: 'Izgaraların ve fırın patatesin eşlikçisi. Dağ kekiğiyle.', noteEN: 'The companion of grills and roast potatoes. With mountain thyme.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: 'Çeşnili', badgeEN: 'Infused', img: 'assets/img/cesnili-kekik.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'zey-siyah', type: 'product', role: 'zeytin', nameTR: 'Siyah Zeytin', nameEN: 'Black Olives', noteTR: 'Doğal fermantasyon, az tuz. Kahvaltının klasiği.', noteEN: 'Natural fermentation, less salt. The breakfast classic.', price: 0, unitTR: '/ 350-500g', unitEN: '/ 350-500g', badgeTR: '', badgeEN: '', img: 'assets/img/zeytin-siyah.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'zey-yesil', type: 'product', role: 'zeytin', nameTR: 'Yeşil Zeytin', nameEN: 'Green Olives', noteTR: 'Çıtır, taze, aromatik. Meze tabağının vazgeçilmezi.', noteEN: 'Crisp, fresh, aromatic. The meze plate essential.', price: 0, unitTR: '/ 350-500g', unitEN: '/ 350-500g', badgeTR: '', badgeEN: '', img: 'assets/img/zeytin-yesil.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'sir-bal', type: 'product', role: 'eksi', nameTR: 'Balsamik Sirke', nameEN: 'Balsamic Vinegar', noteTR: 'Yoğun, tatlı-ekşi denge. Salata ve peynir tabağına.', noteEN: 'Dense, sweet-sour balance. For salads and cheese boards.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: '', badgeEN: '', img: 'assets/img/sirke-balsamik.jpg', href: 'koleksiyon.html', featured: 0, visible: true, galeri: ['assets/img/foto-sirkeler.jpg'] },
+      { id: 'sir-alic', type: 'product', role: 'eksi', nameTR: 'Organik Alıç Sirkesi', nameEN: 'Organic Hawthorn Vinegar', noteTR: 'Anadolu alıcından, yavaş fermantasyon.', noteEN: 'From Anatolian hawthorn, slow fermented.', price: 0, unitTR: '/ 500ml', unitEN: '/ 500ml', badgeTR: 'Organik', badgeEN: 'Organic', img: 'assets/img/sirke-alic.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'sir-elma', type: 'product', role: 'eksi', nameTR: 'Organik Elma Sirkesi', nameEN: 'Organic Apple Vinegar', noteTR: 'Anaç, günlük sirke. Salatadan turşuya.', noteEN: 'The everyday staple. From salads to pickles.', price: 0, unitTR: '/ 500ml', unitEN: '/ 500ml', badgeTR: 'Organik', badgeEN: 'Organic', img: 'assets/img/sirke-elma.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'sir-uzum', type: 'product', role: 'eksi', nameTR: 'Organik Üzüm Sirkesi', nameEN: 'Organic Grape Vinegar', noteTR: 'Geleneksel küp fermantasyonu, derin aroma.', noteEN: 'Traditional vat fermentation, deep aroma.', price: 0, unitTR: '/ 500ml', unitEN: '/ 500ml', badgeTR: 'Organik', badgeEN: 'Organic', img: 'assets/img/sirke-uzum.jpg', href: 'koleksiyon.html', featured: 0, visible: true, galeri: ['assets/img/foto-sirkeler-2.jpg'] },
+      { id: 'sir-nar', type: 'product', role: 'eksi', nameTR: 'Organik Nar Ekşisi', nameEN: 'Organic Pomegranate Molasses', noteTR: 'Şekersiz, yalnız nar. Kısır ve salataların ruhu.', noteEN: 'No sugar, only pomegranate. The soul of salads.', price: 0, unitTR: '/ 250ml', unitEN: '/ 250ml', badgeTR: 'Organik', badgeEN: 'Organic', img: 'assets/img/sirke-nar.jpg', href: 'koleksiyon.html', featured: 0, visible: true },
+      { id: 'club', type: 'club', role: '', nameTR: 'Olivamore Club', nameEN: 'Olivamore Club', noteTR: 'Her ay farklı bir yağ + tadım notu + tarif kartı.', noteEN: 'A different oil every month + tasting note + recipe card.', price: 540, unitTR: "/ ay'dan", unitEN: '/ from per month', badgeTR: 'Abonelik', badgeEN: 'Subscription', img: '', href: 'kulup.html', featured: 0, visible: true }
+    ],
+    blogs: [
+      { id: 'b1', section: 'rehber', tagTR: 'Rehber', tagEN: 'Guide', titleTR: 'Naturel sızma zeytinyağı nedir? Diğerlerinden farkı ne?', titleEN: 'What is extra virgin olive oil? How is it different?', noteTR: 'Sızma, naturel, riviera: market rafındaki terimlerin gerçek karşılıkları.', noteEN: 'Extra virgin, virgin, refined: what the terms on the market shelf really mean.', img: 'assets/img/blog-naturel-nedir.jpg', href: '', visible: true },
+      { id: 'b2', section: 'rehber', tagTR: 'Rehber', tagEN: 'Guide', titleTR: 'Zeytinyağında polifenol ne işe yarar?', titleEN: 'What do polyphenols in olive oil do?', noteTR: 'Boğazdaki o yakma hissi bir kusur değil. Antioksidan içeriğinin tadım diliyle çevirisi.', noteEN: "That peppery feel in the throat isn't a flaw. The antioxidant content, translated into tasting language.", img: 'assets/img/blog-polifenol.jpg', href: '', visible: true },
+      { id: 'b3', section: 'rehber', tagTR: 'Rehber', tagEN: 'Guide', titleTR: 'Zeytin hasadı ne zaman yapılır?', titleEN: 'When are olives harvested?', noteTR: 'Erken hasat ve olgun hasat: aynı ağaç, iki farklı yağ. Renk, aroma ve fiyat neden değişiyor?', noteEN: 'Early harvest and ripe harvest: same tree, two different oils. Why do color, aroma and price change?', img: 'assets/img/blog-hasat.jpg', href: '', visible: true },
+      { id: 'b4', section: 'rehber', tagTR: 'Rehber', tagEN: 'Guide', titleTR: 'Zeytinyağı bozulur mu? Raf ömrü ve saklama koşulları', titleEN: 'Does olive oil go bad? Shelf life and storage', noteTR: 'Işık, ısı ve hava: yağın üç düşmanı. Doğru saklamayla tazeliği aylarca koru.', noteEN: "Light, heat and air: the oil's three enemies. Keep it fresh for months with proper storage.", img: 'assets/img/blog-raf-omru.jpg', href: '', visible: true },
+      { id: 'b5', section: 'rehber', tagTR: 'Rehber', tagEN: 'Guide', titleTR: 'Zeytinyağı tüketiminde sık yapılan hatalar ve doğruları', titleEN: 'Common olive oil mistakes and the facts', noteTR: '"Zeytinyağıyla pişirilmez" dahil, en yaygın efsaneleri verilerle çözüyoruz.', noteEN: 'Including "you can\'t cook with olive oil": we bust the most common myths with data.', img: 'assets/img/blog-hatalar.jpg', href: '', visible: true },
+      { id: 'b6', section: 'rehber', tagTR: 'Uygula', tagEN: 'Apply', titleTR: 'Okuduğunu tat: Ayvalık Erken Hasat', titleEN: 'Taste what you read: Ayvalık Early Harvest', noteTR: 'Rehberlerde anlattığımız her değer bu şişenin etiketinde. Kendin karşılaştır.', noteEN: "Every value we explain in the guides is on this bottle's label. Compare for yourself.", img: 'assets/img/ayvalik-500.jpg', href: 'urun.html', visible: true },
+      { id: 'b7', section: 'yasam', tagTR: 'Yaşam', tagEN: 'Living', titleTR: 'Akdeniz diyetinde zeytin ve zeytinyağının rolü', titleEN: 'The role of olives and olive oil in the Mediterranean diet', noteTR: 'UNESCO listesindeki yaşam biçiminin merkezinde neden hep zeytin var?', noteEN: 'Why are olives always at the center of the UNESCO-listed way of life?', img: 'assets/img/blog-akdeniz.jpg', href: '', visible: true },
+      { id: 'b8', section: 'yasam', tagTR: 'Yaşam', tagEN: 'Living', titleTR: 'Güne 1 kaşık zeytinyağı: gelenek ne diyor, araştırma ne diyor?', titleEN: 'A morning spoonful of olive oil: what tradition says, what research says', noteTR: 'Aç karnına zeytinyağı geleneğinin kökeni ve araştırmaların bugüne kadar söyledikleri.', noteEN: "The origins of the tradition, and what studies have and haven't shown so far.", img: 'assets/img/blog-detoks.jpg', href: '', visible: true },
+      { id: 'b9', section: 'yasam', tagTR: 'Yaşam', tagEN: 'Living', titleTR: 'Mutfaktan banyoya: zeytinyağının geleneksel kullanımları', titleEN: 'From the kitchen to the bathroom: traditional uses of olive oil', noteTR: 'Sabun geleneğinden bakım ritüellerine; E vitamini ve skualen nedir, nerede bulunur?', noteEN: 'From soap-making heritage to care rituals; what are vitamin E and squalene, and where are they found?', img: 'assets/img/blog-cilt.jpg', href: '', visible: true },
+      { id: 'b10', section: 'sirke', tagTR: 'Sirke', tagEN: 'Vinegar', titleTR: 'Alıç sirkesi nedir?', titleEN: 'What is hawthorn vinegar?', noteTR: "Anadolu'nun az bilinen meyvesinden, doğal fermantasyonla gelen keskin, canlı bir lezzet.", noteEN: "From Anatolia's little-known fruit, a sharp, lively flavor born of natural fermentation.", img: 'assets/img/blog-alic-sirkesi.jpg', href: '', visible: true },
+      { id: 'b11', section: 'sirke', tagTR: 'Sirke', tagEN: 'Vinegar', titleTR: 'Doğal fermente sirke: canlı sirke pastörizeden nasıl ayrılır?', titleEN: 'Naturally fermented vinegar: what sets live vinegar apart?', noteTR: 'Pastörize sirke ile canlı sirke arasındaki fark, sandığından büyük.', noteEN: 'The difference between pasteurized vinegar and live vinegar is bigger than you think.', img: 'assets/img/blog-fermantasyon.jpg', href: '', visible: true },
+      { id: 'b12', section: 'tarif', tagTR: 'Tarif', tagEN: 'Recipe', titleTR: 'Çıtır levrekli deniz börülcesi', titleEN: 'Crispy sea bass with samphire', noteTR: "Ege'nin ikonik ikilisi. Deniz börülcesini erken hasat sızmayla bitir.", noteEN: "The Aegean's iconic duo. Finish the samphire with early harvest extra virgin.", img: 'assets/img/blog-levrek.jpg', href: '', visible: true },
+      { id: 'b13', section: 'tarif', tagTR: 'Tarif', tagEN: 'Recipe', titleTR: 'Vişneli lorlu salata', titleEN: 'Sour cherry salad with fresh curd', noteTR: 'Tatlı-ekşi vişne, taze lor ve yoğun meyvemsi Trilye: yaz sofrasının sürprizi.', noteEN: 'Sweet-tart cherries, fresh curd and the intensely fruity Trilye: the surprise of the summer table.', img: 'assets/img/blog-visneli-salata.jpg', href: '', visible: true },
+      { id: 'b14', section: 'tarif', tagTR: 'Sofra', tagEN: 'Table', titleTR: 'Olivamore ile sofra kurmak', titleEN: 'Setting the table with Olivamore', noteTR: 'Zeytinyağından nar ekşisine, fermente zeytinden doğal sabuna; ürün ailesiyle tanış.', noteEN: 'From olive oil to pomegranate molasses, fermented olives to natural soap; meet the product family.', img: 'assets/img/story-sofra.jpg', href: '', visible: true }
+    ]
+  };
+
+  DEFAULTS.batches = [
+    { kod: 'AYV-2510', urun: 'Ayvalık Erken Hasat', hasat: '3–9 Ekim 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · Kuzey Parsel', asidite: '%0,35', polifenol: '412 mg/kg', peroksit: '6,57 meq O₂/kg', lab: 'Kasım 2025 · bağımsız lab', tadim: 'Yumuşak ve meyvemsi; yeşil elma tazeliği, zarif bir bitiş. Kahvaltının ve çiğ kullanımın yağı.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun.html' },
+    { kod: 'TRL-2510', urun: 'Trilye Erken Hasat', hasat: '10–16 Ekim 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Gemlik (Trilye)', parsel: 'Ayvalık · Gemlik cinsi parsel, eski ağaçlar', asidite: '%0,12', polifenol: '486 mg/kg', peroksit: '6,75 meq O₂/kg', lab: 'Kasım 2025 · bağımsız lab', tadim: 'Yoğun ve karakterli; boğazda biberimsi bir final. Izgara sebzenin ve keskin salataların yağı.', uretici: 'Olivamore Bahçeleri, Ayvalık', avatar: 'OB', href: 'urun-trilye.html' },
+    { kod: 'OLG-2511', urun: 'Olgun Hasat', hasat: '18–26 Kasım 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · Güney Parsel', asidite: '%0,28', polifenol: '295 mg/kg', peroksit: '8,1 meq O₂/kg', lab: 'Aralık 2025 · bağımsız lab', tadim: 'Yumuşak acılık, dengeli ve dolgun gövde. Sıcak yemeklerin, zeytinyağlıların ve fırının yağı.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun.html' }
+  ];
+
+  var PAGE_NAMES = { 'koleksiyon': 'Koleksiyon', 'kulup': 'Club', 'ureticiler': 'Üreticiler', 'hikayemiz': 'Hikâyemiz', 'ogren': 'Öğren', 'sss': 'SSS', 'iletisim': 'İletişim', 'hediye-olustur': 'Hediye Oluşturucu', 'tarif-asistani': 'Tarif Asistanı' };
+  var MOD_NAMES = {
+    announce: ['Duyuru Şeridi', 'Tüm sayfaların üstündeki bant'],
+    trust: ['Güven Şeridi', 'Ana sayfa: 5 rozetli siyah şerit'],
+    club: ['Club Tanıtımı', 'Ana sayfa: abonelik bölümü'],
+    reviews: ['Yorumlar', 'Ana sayfa: müşteri yorumları'],
+    newsletter: ['Bülten Kaydı', 'Ana sayfa: e-posta toplama'],
+    hediyelik: ['Hediyelik Bölümü', 'Ana sayfa: hediye seti tanıtımı'],
+    blogPreview: ['Blog Önizleme', 'Ana sayfa: son yazılar'],
+    hediye: ['Hediye Kutusu Oluşturucu', 'Araç + tüm giriş linkleri'],
+    tarif: ['Tarif Asistanı', 'Araç + tüm giriş linkleri']
+  };
+
+  /* ================== YÜKLE / KAYDET ================== */
+  var MODE = 'local'; // 'api' = sunucu CMS (canlı), 'local' = tarayıcı (yerel önizleme)
+
+  function deep(o) { return JSON.parse(JSON.stringify(o)); }
+  function load(savedInput) {
+    var saved = savedInput || {};
+    if (!savedInput) {
+      try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+    }
+    var c = deep(DEFAULTS);
+    ['announceTR','announceEN','heroTitleTR','heroTitleEN','heroLeadTR','heroLeadEN','gift3','gift5'].forEach(function (k) { if (saved[k] !== undefined) c[k] = saved[k]; });
+    if (saved.pdp) c.pdp = Object.assign(c.pdp, saved.pdp);
+    if (saved.modules) c.modules = Object.assign(c.modules, saved.modules);
+    if (saved.pages) Object.keys(c.pages).forEach(function (k) { if (saved.pages[k]) c.pages[k] = Object.assign(c.pages[k], saved.pages[k]); });
+    if (saved.products) c.products = saved.products;
+    if (saved.blogs) c.blogs = saved.blogs;
+    if (saved.batches) c.batches = saved.batches;
+    return c;
+  }
+  var C = load();
+
+  var status = document.getElementById('save-status');
+  function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
+
+  /* ================== GÖRÜNÜM GEÇİŞİ ================== */
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  function show(v) {
+    document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
+    document.getElementById('view-' + v).classList.add('on');
+    document.querySelectorAll('#nav a').forEach(function (a) { a.classList.toggle('on', a.dataset.view === v); });
+    document.getElementById('view-title').textContent = TITLES[v];
+    window.scrollTo(0, 0);
+  }
+  document.getElementById('nav').addEventListener('click', function (e) {
+    var a = e.target.closest('a'); if (a) show(a.dataset.view);
+  });
+  document.querySelectorAll('[data-goto]').forEach(function (b) {
+    b.addEventListener('click', function () { show(b.dataset.goto); });
+  });
+
+  /* ================== YARDIMCI: görsel seçici (kütüphane + bilgisayardan yükleme) ================== */
+  function imgPicker(val, cls) {
+    var isData = val && val.indexOf('data:') === 0;
+    var opts = IMAGES.map(function (i) {
+      return '<option value="' + i + '"' + (!isData && i === val ? ' selected' : '') + '>' + i.replace('assets/img/', '') + '</option>';
+    }).join('');
+    return '<div class="imgpick">' +
+      '<img class="' + cls + '-prev" src="' + (val || 'assets/img/ayvalik-500.jpg') + '" alt="">' +
+      '<select class="' + cls + '"><option value="">— kütüphaneden seç —</option>' + opts + '</select>' +
+      '<input type="hidden" class="' + cls + '-data" value="' + (isData ? val : '') + '">' +
+      '<button type="button" class="btn btn-ghost btn-sm ip-gal" style="white-space:nowrap;">🖼 Galeri</button>' +
+      '<label class="btn btn-ghost btn-sm" style="cursor:pointer;white-space:nowrap;">Bilgisayardan Yükle' +
+      '<input type="file" class="' + cls + '-file" accept="image/*" style="display:none;"></label>' +
+      '</div>';
+  }
+
+  /* Yüklenen görseli küçült (uzun kenar 1000px) ve JPEG data-URI'ye çevir */
+  function resizeImage(file, cb) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        var MAX = 1000;
+        var w = img.width, h = img.height;
+        if (Math.max(w, h) > MAX) {
+          var oran = MAX / Math.max(w, h);
+          w = Math.round(w * oran); h = Math.round(h * oran);
+        }
+        var cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        var ctx = cv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); // PNG şeffaflığı beyaza
+        ctx.drawImage(img, 0, 0, w, h);
+        cb(cv.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* Görsel seçici olayları (ürün + blog listelerinde ortak) */
+  ['products-list', 'blogs-list'].forEach(function (hostId) {
+    var host = document.getElementById(hostId);
+    // Bilgisayardan dosya seçildi
+    host.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.type === 'file' && t.files && t.files[0]) {
+        var pick = t.closest('.imgpick');
+        resizeImage(t.files[0], function (dataUrl) {
+          pick.querySelector('input[type=hidden]').value = dataUrl;
+          pick.querySelector('select').value = '';
+          pick.querySelector('img').src = dataUrl;
+          dirty();
+        });
+      }
+      // Kütüphaneden seçildi → yüklenen görseli iptal et
+      if (t.tagName === 'SELECT' && t.closest('.imgpick')) {
+        var pk = t.closest('.imgpick');
+        if (t.value) {
+          pk.querySelector('input[type=hidden]').value = '';
+          pk.querySelector('img').src = t.value;
+        }
+      }
+    });
+  });
+
+  /* ---- Galeri satırı (ürün ek görselleri) ---- */
+  function galItem(val) {
+    var isData = val && val.indexOf('data:') === 0;
+    var opts = IMAGES.map(function (i) {
+      return '<option value="' + i + '"' + (!isData && i === val ? ' selected' : '') + '>' + i.replace('assets/img/', '') + '</option>';
+    }).join('');
+    return '<div class="gal-item" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">' +
+      '<img src="' + (val || 'assets/img/story-sofra.jpg') + '" style="width:44px;height:44px;object-fit:cover;border:1px solid var(--line);border-radius:8px;background:#fff;flex-shrink:0;">' +
+      '<select class="g-sel" style="flex:1;"><option value="">— kütüphaneden seç —</option>' + opts + '</select>' +
+      '<input type="hidden" class="g-val" value="' + (val || '') + '">' +
+      '<button type="button" class="btn btn-ghost btn-sm ip-gal">🖼</button>' +
+      '<label class="btn btn-ghost btn-sm" style="cursor:pointer;">Yükle<input type="file" class="g-file" accept="image/*" style="display:none;"></label>' +
+      '<button type="button" class="btn btn-danger btn-sm g-del">✕</button></div>';
+  }
+  document.getElementById('products-list').addEventListener('click', function (e) {
+    if (e.target.classList.contains('p-gal-add')) {
+      e.target.previousElementSibling.insertAdjacentHTML('beforeend', galItem(''));
+      dirty();
+    }
+    if (e.target.classList.contains('g-del')) {
+      e.target.closest('.gal-item').remove();
+      dirty();
+    }
+  });
+  document.getElementById('products-list').addEventListener('change', function (e) {
+    var gi = e.target.closest('.gal-item');
+    if (!gi) return;
+    if (e.target.classList.contains('g-sel') && e.target.value) {
+      gi.querySelector('.g-val').value = e.target.value;
+      gi.querySelector('img').src = e.target.value;
+      dirty();
+    }
+    if (e.target.classList.contains('g-file') && e.target.files && e.target.files[0]) {
+      resizeImage(e.target.files[0], function (dataUrl) {
+        gi.querySelector('.g-val').value = dataUrl;
+        gi.querySelector('select').value = '';
+        gi.querySelector('img').src = dataUrl;
+        dirty();
+      });
+    }
+  });
+
+  /* ================== SAYFALAR ================== */
+  function renderPages() {
+    var host = document.getElementById('pages-list');
+    host.innerHTML = Object.keys(PAGE_NAMES).map(function (k) {
+      var p = C.pages[k];
+      return '<div class="panel pagecard" data-page="' + k + '">' +
+        '<h3>' + PAGE_NAMES[k] + '</h3>' +
+        '<div class="grid2">' +
+        '<div class="field"><label>Başlık (TR)</label><input type="text" class="pg-tTR" value="' + esc(p.tTR) + '"></div>' +
+        '<div class="field"><label>Başlık (EN)</label><input type="text" class="pg-tEN" value="' + esc(p.tEN) + '"></div>' +
+        '</div>' +
+        '<div class="field"><label>Tanıtım (TR)</label><textarea class="pg-lTR" rows="2">' + esc(p.lTR) + '</textarea></div>' +
+        '<div class="field"><label>Tanıtım (EN)</label><textarea class="pg-lEN" rows="2">' + esc(p.lEN) + '</textarea></div>' +
+        '</div>';
+    }).join('');
+  }
+  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+  /* ================== ÜRÜNLER ================== */
+  function productItem(p, i) {
+    var badge = p.visible === false ? '<span class="pill hid">Gizli</span>' : (p.featured > 0 ? '<span class="pill">Vitrin #' + p.featured + '</span>' : '');
+    return '<details class="item" data-idx="' + i + '">' +
+      '<summary>' + (p.type === 'club' ? '<img src="assets/logo-mark.svg">' : '<img src="' + p.img + '">') +
+      '<div class="t"><b>' + esc(p.nameTR) + '</b><span>₺' + Number(p.price).toLocaleString('tr-TR') + ' ' + esc(p.unitTR) + '</span></div>' + badge + '</summary>' +
+      '<div class="body">' +
+      '<div class="grid2">' +
+      '<div class="field"><label>Ürün Adı (TR)</label><input type="text" class="p-nameTR" value="' + esc(p.nameTR) + '"></div>' +
+      '<div class="field"><label>Ürün Adı (EN)</label><input type="text" class="p-nameEN" value="' + esc(p.nameEN) + '"></div>' +
+      '</div>' +
+      '<div class="grid2">' +
+      '<div class="field"><label>Açıklama (TR)</label><textarea class="p-noteTR" rows="2">' + esc(p.noteTR) + '</textarea></div>' +
+      '<div class="field"><label>Açıklama (EN)</label><textarea class="p-noteEN" rows="2">' + esc(p.noteEN) + '</textarea></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Ürün Fiyatı — Sabit, KDV Hariç (₺)</label><input type="number" step="0.01" class="p-price" value="' + p.price + '"></div>' +
+      '<div class="field"><label>KDV Oranı (sepette eklenir)</label><select class="p-kdv">' +
+      [0, 1, 10, 20].map(function (k) { var cur = (p.kdv == null ? 1 : p.kdv); return '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + (k === 0 ? 'KDV Dahil (fiyata işli)' : '%' + k) + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div class="field"><label>Sepette: +KDV ile</label><div class="p-gross" style="padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#FBFAF8;font-weight:700;">₺' + Math.round(p.price * (1 + (p.kdv == null ? 1 : p.kdv) / 100)).toLocaleString('tr-TR') + '</div></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Birim (TR, ör. / 500ml)</label><input type="text" class="p-unitTR" value="' + esc(p.unitTR) + '"></div>' +
+      '<div class="field"><label>Birim (EN)</label><input type="text" class="p-unitEN" value="' + esc(p.unitEN) + '"></div>' +
+      '<div class="field"></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Rozet (TR, boş = yok)</label><input type="text" class="p-badgeTR" value="' + esc(p.badgeTR) + '"></div>' +
+      '<div class="field"><label>Rozet (EN)</label><input type="text" class="p-badgeEN" value="' + esc(p.badgeEN) + '"></div>' +
+      '<div class="field"><label>Vitrin sırası (0-4)</label><input type="number" class="p-featured" min="0" max="4" value="' + (p.featured || 0) + '"></div>' +
+      '</div>' +
+      '<div class="field"><label>Rol (koleksiyon filtresi)</label><select class="p-role">' +
+      [['', 'Yok (yalnız Tümü\'nde görünür)'], ['serin', 'Serin Sofra'], ['ocak', 'Ocak Başı'], ['eksi', 'Ekşi Denge'], ['hediye', 'Hediyelik']].map(function (r) {
+        return '<option value="' + r[0] + '"' + ((p.role || '') === r[0] ? ' selected' : '') + '>' + r[1] + '</option>';
+      }).join('') + '</select></div>' +
+      (p.type !== 'club' ? '<div class="field"><label>Ürün Görseli</label>' + imgPicker(p.img, 'p-img') + '</div>' : '') +
+      '<div class="field"><label>Ek Görseller — yemek / kanıt / detay (ilki, kartta hover görseli olur)</label>' +
+      '<div class="galeri">' + (p.galeri || []).map(galItem).join('') + '</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm p-gal-add">+ Görsel Ekle</button></div>' +
+      '<div class="field"><label>Bağlantı (tıklanınca gidilecek sayfa)</label><select class="p-href">' +
+      ['urun.html', 'urun-trilye.html', 'koleksiyon.html#hediyelik', 'hediye-olustur.html', 'kulup.html'].map(function (h) {
+        return '<option value="' + h + '"' + (h === p.href ? ' selected' : '') + '>' + h + '</option>';
+      }).join('') + '</select></div>' +
+      '<div class="row-actions">' +
+      '<label class="chk"><input type="checkbox" class="p-visible"' + (p.visible !== false ? ' checked' : '') + '> Sitede göster</label>' +
+      '<button class="btn btn-danger btn-sm p-del" type="button">Ürünü Sil</button>' +
+      '</div></div></details>';
+  }
+  function renderProducts() {
+    document.getElementById('products-list').innerHTML = C.products.map(productItem).join('');
+    document.getElementById('f-pdp750').value = C.pdp.ay750;
+    refreshStats();
+  }
+  // KDV hariç fiyat / oran değişince satış fiyatını canlı hesapla
+  document.getElementById('products-list').addEventListener('input', function (e) {
+    var d = e.target.closest('.item');
+    if (!d) return;
+    if (e.target.classList.contains('p-price') || e.target.classList.contains('p-kdv')) {
+      var net = parseFloat(d.querySelector('.p-price').value) || 0;
+      var k = parseInt(d.querySelector('.p-kdv').value, 10); if (isNaN(k)) k = 1;
+      d.querySelector('.p-gross').textContent = '₺' + Math.round(net * (1 + k / 100)).toLocaleString('tr-TR');
+    }
+  });
+  document.getElementById('products-list').addEventListener('click', function (e) {
+    if (e.target.classList.contains('p-del')) {
+      var d = e.target.closest('.item');
+      if (confirm('Bu ürün silinecek. Emin misin?')) { C.products.splice(+d.dataset.idx, 1); syncProductsFromDOM(); renderProducts(); dirty(); }
+    }
+  });
+  // Ürünleri kategorileriyle birlikte Excel-uyumlu CSV olarak dışa aktar
+  document.getElementById('btn-export-products').addEventListener('click', function () {
+    syncProductsFromDOM();
+    var KATEGORI = { serin: 'Bitirme Zeytinyağı', ocak: 'Pişirme Zeytinyağı', zeytin: 'Doğal Zeytinler', eksi: 'Sirkeler', hediye: 'Setler' };
+    var h = function (v) {
+      v = (v === undefined || v === null) ? '' : String(v);
+      return '"' + v.replace(/"/g, '""') + '"';
+    };
+    var satirlar = [['ID', 'Ürün Adı (TR)', 'Ürün Adı (EN)', 'Kategori', 'Fiyat (KDV Hariç ₺)', 'KDV', 'Birim', 'Rozet', 'Açıklama (TR)', 'Açıklama (EN)', 'Görsel', 'Ek Görseller', 'Görünür', 'Tip'].map(h).join(';')];
+    (C.products || []).forEach(function (p) {
+      satirlar.push([
+        p.id, p.nameTR, p.nameEN,
+        KATEGORI[p.role] || (p.type === 'club' ? 'Abonelik' : p.type === 'builder' ? 'Set Oluşturucu' : ''),
+        p.price || 0,
+        (p.kdv === 0 ? 'Dahil' : '%' + (p.kdv == null ? 1 : p.kdv)),
+        p.unitTR, p.badgeTR, p.noteTR, p.noteEN, p.img,
+        (p.galeri || []).join(' | '),
+        p.visible === false ? 'Hayır' : 'Evet',
+        p.type || 'product'
+      ].map(h).join(';'));
+    });
+    // UTF-8 BOM: Türkçe karakterler Excel'de doğru açılsın
+    var blob = new Blob(['﻿' + satirlar.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'olivamore-urunler-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('btn-add-product').addEventListener('click', function () {
+    syncProductsFromDOM();
+    C.products.push({ id: 'p' + Date.now(), type: 'product', nameTR: 'Yeni Ürün', nameEN: 'New Product', noteTR: '', noteEN: '', price: 0, unitTR: '', unitEN: '', badgeTR: '', badgeEN: '', img: 'assets/img/ayvalik-500.jpg', href: 'urun.html', featured: 0, visible: true });
+    renderProducts(); dirty();
+    var items = document.querySelectorAll('#products-list .item');
+    items[items.length - 1].open = true;
+  });
+  function syncProductsFromDOM() {
+    document.querySelectorAll('#products-list .item').forEach(function (d) {
+      var p = C.products[+d.dataset.idx];
+      if (!p) return;
+      var g = function (c) { var el = d.querySelector('.' + c); return el ? el.value : undefined; };
+      p.nameTR = g('p-nameTR'); p.nameEN = g('p-nameEN');
+      p.noteTR = g('p-noteTR'); p.noteEN = g('p-noteEN');
+      p.price = parseFloat(g('p-price')) || 0; // sabit fiyat (KDV hariç) — sitede bu görünür
+      var kdvSec = parseInt(g('p-kdv'), 10); p.kdv = isNaN(kdvSec) ? 1 : kdvSec; // 0 = KDV dahil
+      p.unitTR = g('p-unitTR'); p.unitEN = g('p-unitEN');
+      p.badgeTR = g('p-badgeTR'); p.badgeEN = g('p-badgeEN');
+      p.featured = parseInt(g('p-featured'), 10) || 0;
+      p.role = g('p-role') || '';
+      var imgData = g('p-img-data'); var img = g('p-img');
+      if (imgData) p.img = imgData; else if (img) p.img = img;
+      p.galeri = [].map.call(d.querySelectorAll('.gal-item .g-val'), function (x) { return x.value; }).filter(Boolean);
+      p.href = g('p-href');
+      p.visible = d.querySelector('.p-visible').checked;
+    });
+  }
+
+  /* ================== BLOG ================== */
+  var SECTIONS = { rehber: 'Rehberler', yasam: 'Sağlıklı Yaşam', sirke: 'Sirke Dünyası', tarif: 'Tarifler' };
+  function blogItem(b, i) {
+    var badge = b.visible === false ? '<span class="pill hid">Gizli</span>' : '<span class="pill">' + SECTIONS[b.section] + '</span>';
+    return '<details class="item" data-idx="' + i + '">' +
+      '<summary><img src="' + b.img + '"><div class="t"><b>' + esc(b.titleTR) + '</b><span>' + esc(b.tagTR) + '</span></div>' + badge + '</summary>' +
+      '<div class="body">' +
+      '<div class="grid2">' +
+      '<div class="field"><label>Başlık (TR)</label><input type="text" class="b-titleTR" value="' + esc(b.titleTR) + '"></div>' +
+      '<div class="field"><label>Başlık (EN)</label><input type="text" class="b-titleEN" value="' + esc(b.titleEN) + '"></div>' +
+      '</div>' +
+      '<div class="grid2">' +
+      '<div class="field"><label>Özet (TR)</label><textarea class="b-noteTR" rows="2">' + esc(b.noteTR) + '</textarea></div>' +
+      '<div class="field"><label>Özet (EN)</label><textarea class="b-noteEN" rows="2">' + esc(b.noteEN) + '</textarea></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Bölüm</label><select class="b-section">' +
+      Object.keys(SECTIONS).map(function (s) { return '<option value="' + s + '"' + (s === b.section ? ' selected' : '') + '>' + SECTIONS[s] + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div class="field"><label>Etiket (TR)</label><input type="text" class="b-tagTR" value="' + esc(b.tagTR) + '"></div>' +
+      '<div class="field"><label>Etiket (EN)</label><input type="text" class="b-tagEN" value="' + esc(b.tagEN) + '"></div>' +
+      '</div>' +
+      '<div class="field"><label>Kapak Görseli</label>' + imgPicker(b.img, 'b-img') + '</div>' +
+      '<div class="row-actions">' +
+      '<label class="chk"><input type="checkbox" class="b-visible"' + (b.visible !== false ? ' checked' : '') + '> Sitede göster</label>' +
+      '<button class="btn btn-danger btn-sm b-del" type="button">Yazıyı Sil</button>' +
+      '</div></div></details>';
+  }
+  function renderBlogs() {
+    document.getElementById('blogs-list').innerHTML = C.blogs.map(blogItem).join('');
+    refreshStats();
+  }
+  document.getElementById('blogs-list').addEventListener('click', function (e) {
+    if (e.target.classList.contains('b-del')) {
+      var d = e.target.closest('.item');
+      if (confirm('Bu yazı silinecek. Emin misin?')) { C.blogs.splice(+d.dataset.idx, 1); syncBlogsFromDOM(); renderBlogs(); dirty(); }
+    }
+  });
+  document.getElementById('btn-add-blog').addEventListener('click', function () {
+    syncBlogsFromDOM();
+    C.blogs.push({ id: 'b' + Date.now(), section: 'rehber', tagTR: 'Rehber', tagEN: 'Guide', titleTR: 'Yeni Yazı', titleEN: 'New Post', noteTR: '', noteEN: '', img: 'assets/img/blog-hasat.jpg', href: '', visible: true });
+    renderBlogs(); dirty();
+    var items = document.querySelectorAll('#blogs-list .item');
+    items[items.length - 1].open = true;
+  });
+  function syncBlogsFromDOM() {
+    document.querySelectorAll('#blogs-list .item').forEach(function (d) {
+      var b = C.blogs[+d.dataset.idx];
+      if (!b) return;
+      var g = function (c) { var el = d.querySelector('.' + c); return el ? el.value : undefined; };
+      b.titleTR = g('b-titleTR'); b.titleEN = g('b-titleEN');
+      b.noteTR = g('b-noteTR'); b.noteEN = g('b-noteEN');
+      b.section = g('b-section');
+      b.tagTR = g('b-tagTR'); b.tagEN = g('b-tagEN');
+      var imgData = g('b-img-data'); var img = g('b-img');
+      if (imgData) b.img = imgData; else if (img) b.img = img;
+      b.visible = d.querySelector('.b-visible').checked;
+    });
+  }
+
+  /* ================== PARTİLER ================== */
+  function batchItem(b, i) {
+    return '<details class="item" data-idx="' + i + '">' +
+      '<summary><div class="t" style="margin-left:4px;"><b>' + esc(b.kod) + ' · ' + esc(b.urun) + '</b><span>' + esc(b.hasat) + '</span></div><span class="pill">' + esc(b.asidite) + ' · ' + esc(b.polifenol) + '</span></summary>' +
+      '<div class="body">' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Parti Kodu</label><input type="text" class="bt-kod" value="' + esc(b.kod) + '"></div>' +
+      '<div class="field"><label>Ürün</label><input type="text" class="bt-urun" value="' + esc(b.urun) + '"></div>' +
+      '<div class="field"><label>Ürün Sayfası</label><select class="bt-href">' +
+      ['urun.html', 'urun-trilye.html'].map(function (h) { return '<option value="' + h + '"' + (h === b.href ? ' selected' : '') + '>' + h + '</option>'; }).join('') +
+      '</select></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Hasat</label><input type="text" class="bt-hasat" value="' + esc(b.hasat) + '"></div>' +
+      '<div class="field"><label>Sıkım</label><input type="text" class="bt-sikim" value="' + esc(b.sikim) + '"></div>' +
+      '<div class="field"><label>Çeşit</label><input type="text" class="bt-cesit" value="' + esc(b.cesit) + '"></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Bahçe / Parsel</label><input type="text" class="bt-parsel" value="' + esc(b.parsel) + '"></div>' +
+      '<div class="field"><label>Asidite</label><input type="text" class="bt-asidite" value="' + esc(b.asidite) + '"></div>' +
+      '<div class="field"><label>Polifenol</label><input type="text" class="bt-polifenol" value="' + esc(b.polifenol) + '"></div>' +
+      '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Peroksit</label><input type="text" class="bt-peroksit" value="' + esc(b.peroksit) + '"></div>' +
+      '<div class="field"><label>Lab-test</label><input type="text" class="bt-lab" value="' + esc(b.lab) + '"></div>' +
+      '<div class="field"><label>Üretici</label><input type="text" class="bt-uretici" value="' + esc(b.uretici) + '"></div>' +
+      '</div>' +
+      '<div class="field"><label>Tadım Notu</label><textarea class="bt-tadim" rows="2">' + esc(b.tadim) + '</textarea></div>' +
+      '<div class="row-actions"><button class="btn btn-danger btn-sm bt-del" type="button">Partiyi Sil</button></div>' +
+      '</div></details>';
+  }
+  function renderBatches() {
+    document.getElementById('batches-list').innerHTML = C.batches.map(batchItem).join('');
+  }
+  document.getElementById('batches-list').addEventListener('click', function (e) {
+    if (e.target.classList.contains('bt-del')) {
+      var d = e.target.closest('.item');
+      if (confirm('Bu parti silinecek. Emin misin?')) { C.batches.splice(+d.dataset.idx, 1); syncBatchesFromDOM(); renderBatches(); dirty(); }
+    }
+  });
+  document.getElementById('btn-add-batch').addEventListener('click', function () {
+    syncBatchesFromDOM();
+    C.batches.push({ kod: 'YENI-' + String(Date.now()).slice(-4), urun: 'Yeni Parti', hasat: '', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: '', parsel: '', asidite: '', polifenol: '', peroksit: '', lab: '', tadim: '', uretici: '', avatar: '', href: 'urun.html' });
+    renderBatches(); dirty();
+    var items = document.querySelectorAll('#batches-list .item');
+    items[items.length - 1].open = true;
+  });
+  function syncBatchesFromDOM() {
+    document.querySelectorAll('#batches-list .item').forEach(function (d) {
+      var b = C.batches[+d.dataset.idx];
+      if (!b) return;
+      var g = function (c) { var el = d.querySelector('.' + c); return el ? el.value : ''; };
+      b.kod = g('bt-kod').toUpperCase(); b.urun = g('bt-urun'); b.href = g('bt-href');
+      b.hasat = g('bt-hasat'); b.sikim = g('bt-sikim'); b.cesit = g('bt-cesit');
+      b.parsel = g('bt-parsel'); b.asidite = g('bt-asidite'); b.polifenol = g('bt-polifenol');
+      b.peroksit = g('bt-peroksit'); b.lab = g('bt-lab'); b.uretici = g('bt-uretici');
+      b.tadim = g('bt-tadim');
+      b.avatar = (b.uretici || 'OM').slice(0, 2).toUpperCase();
+    });
+  }
+
+  /* ================== MODÜLLER ================== */
+  function renderMods() {
+    document.getElementById('mods-list').innerHTML = Object.keys(MOD_NAMES).map(function (k) {
+      return '<div class="mod"><div class="t"><b>' + MOD_NAMES[k][0] + '</b><span>' + MOD_NAMES[k][1] + '</span></div>' +
+        '<label class="sw"><input type="checkbox" data-mod="' + k + '"' + (C.modules[k] !== false ? ' checked' : '') + '><i></i></label></div>';
+    }).join('');
+    refreshStats();
+  }
+  document.getElementById('mods-list').addEventListener('change', function (e) {
+    var m = e.target.dataset.mod;
+    if (m) { C.modules[m] = e.target.checked; refreshStats(); dirty(); }
+  });
+
+  /* ================== AYARLAR ================== */
+  function fillSettings() {
+    document.getElementById('f-announceTR').value = C.announceTR;
+    document.getElementById('f-announceEN').value = C.announceEN;
+    document.getElementById('f-heroTitleTR').value = C.heroTitleTR;
+    document.getElementById('f-heroTitleEN').value = C.heroTitleEN;
+    document.getElementById('f-heroLeadTR').value = C.heroLeadTR;
+    document.getElementById('f-heroLeadEN').value = C.heroLeadEN;
+    document.getElementById('f-gift3').value = C.gift3;
+    document.getElementById('f-gift5').value = C.gift5;
+  }
+
+  /* ================== İSTATİSTİK ================== */
+  function refreshStats() {
+    document.getElementById('st-products').textContent = C.products.filter(function (p) { return p.visible !== false; }).length;
+    document.getElementById('st-blogs').textContent = C.blogs.filter(function (b) { return b.visible !== false; }).length;
+    document.getElementById('st-mods').textContent = Object.keys(C.modules).filter(function (k) { return C.modules[k] !== false; }).length + '/' + Object.keys(MOD_NAMES).length;
+  }
+
+  /* ================== KAYDET / SIFIRLA / YEDEK ================== */
+  document.getElementById('btn-save').addEventListener('click', function () {
+    syncProductsFromDOM();
+    syncBlogsFromDOM();
+    syncBatchesFromDOM();
+    syncCouponsFromDOM();
+    document.querySelectorAll('#pages-list .pagecard').forEach(function (d) {
+      var p = C.pages[d.dataset.page];
+      p.tTR = d.querySelector('.pg-tTR').value; p.tEN = d.querySelector('.pg-tEN').value;
+      p.lTR = d.querySelector('.pg-lTR').value; p.lEN = d.querySelector('.pg-lEN').value;
+    });
+    C.announceTR = document.getElementById('f-announceTR').value;
+    C.announceEN = document.getElementById('f-announceEN').value;
+    C.heroTitleTR = document.getElementById('f-heroTitleTR').value;
+    C.heroTitleEN = document.getElementById('f-heroTitleEN').value;
+    C.heroLeadTR = document.getElementById('f-heroLeadTR').value;
+    C.heroLeadEN = document.getElementById('f-heroLeadEN').value;
+    C.gift3 = parseInt(document.getElementById('f-gift3').value, 10) || 0;
+    C.gift5 = parseInt(document.getElementById('f-gift5').value, 10) || 0;
+    C.pdp.ay750 = parseInt(document.getElementById('f-pdp750').value, 10) || 0;
+    if (MODE === 'api') {
+      // Sunucuya kaydet → TÜM ziyaretçilere ve cihazlara yansır
+      fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(C) })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); })
+        .then(function () {
+          status.textContent = 'Sunucuya kaydedildi, tüm ziyaretçilerde yayında ✓';
+          status.classList.add('ok');
+          var t = document.getElementById('toast');
+          t.classList.add('show');
+          setTimeout(function () { t.classList.remove('show'); }, 2000);
+        })
+        .catch(function (e) { alert('Sunucuya kaydedilemedi: ' + e.message); });
+      try { localStorage.setItem(KEY, JSON.stringify(C)); } catch (e) {}
+      refreshStats();
+      return;
+    }
+    try {
+      localStorage.setItem(KEY, JSON.stringify(C));
+    } catch (err) {
+      alert('Kayıt alanı doldu: yüklenen görseller tarayıcı sınırını aştı.\nBirkaç üründe "kütüphaneden seç" kullanmayı dene ya da kalıcı görselleri sunucuya yükletelim.');
+      return;
+    }
+    status.textContent = 'Tüm değişiklikler yayında ✓ (yerel mod: yalnız bu tarayıcı)';
+    status.classList.add('ok');
+    refreshStats();
+    var t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2000);
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', function () {
+    if (!confirm('Tüm içerik varsayılanlara dönecek. Emin misin?')) return;
+    localStorage.removeItem(KEY);
+    C = load();
+    renderAll();
+    status.textContent = 'Varsayılanlara dönüldü';
+    status.classList.remove('ok');
+  });
+
+  document.getElementById('btn-export').addEventListener('click', function () {
+    syncProductsFromDOM(); syncBlogsFromDOM();
+    document.getElementById('json-io').value = JSON.stringify(C, null, 2);
+  });
+  document.getElementById('btn-import').addEventListener('click', function () {
+    try {
+      var v = JSON.parse(document.getElementById('json-io').value);
+      localStorage.setItem(KEY, JSON.stringify(v));
+      C = load();
+      renderAll();
+      dirty();
+      alert('İçe aktarıldı. Kaydet ve Yayınla ile onayla.');
+    } catch (e) { alert('Geçersiz JSON'); }
+  });
+
+  /* ================== DEĞİŞİKLİK TAKİBİ ================== */
+  document.querySelector('.main').addEventListener('input', dirty);
+
+  /* ================== SİPARİŞLER & MESAJLAR ================== */
+  var DURUMLAR = ['yeni', 'hazırlanıyor', 'kargolandı', 'tamamlandı', 'iptal'];
+  function fmtTarih(t) { try { return new Date(t).toLocaleString('tr-TR'); } catch (e) { return t; } }
+  function renderOrders() {
+    fetch('/api/admin/siparisler')
+      .then(function (r) { return r.json(); })
+      .then(function (liste) {
+        var host = document.getElementById('orders-list');
+        if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Henüz sipariş yok.</p>'; return; }
+        host.innerHTML = liste.map(function (s) {
+          return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ₺' + Number(s.toplam).toLocaleString('tr-TR') + ' · ' + esc(s.musteri.ad) + '</b>' +
+            '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + '</span></div><span class="pill">' + esc(s.durum) + '</span></summary>' +
+            '<div class="body"><p style="font-size:.85rem;margin-bottom:8px;">' +
+            s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad) + ' (₺' + k.fiyat + (typeof k.kdv === 'number' ? (k.kdv ? ' +KDV %' + k.kdv : ' · KDV dahil') : '') + ')'; }).join('<br>') +
+            (s.kdvToplam !== undefined ? '<br><b>Ara: ₺' + Number(s.araToplam || 0).toLocaleString('tr-TR') + ' · KDV: ₺' + Number(s.kdvToplam).toLocaleString('tr-TR') + ' · Kargo: ' + (s.kargo ? '₺' + s.kargo : 'Bedava') + ' · Toplam: ₺' + Number(s.toplam).toLocaleString('tr-TR') + '</b>' : '') + '</p>' +
+            '<p style="font-size:.82rem;color:var(--soft);margin-bottom:12px;">' + esc(s.musteri.telefon) + ' · ' + esc(s.musteri.eposta) + '<br>' + esc(s.musteri.adres) +
+            (s.musteri.not ? '<br>Not: ' + esc(s.musteri.not) : '') + '</p>' +
+            '<div class="row-actions"><select class="ord-durum" data-no="' + s.no + '">' +
+            DURUMLAR.map(function (d) { return '<option' + (d === s.durum ? ' selected' : '') + '>' + d + '</option>'; }).join('') +
+            '</select><input type="text" class="ord-kargo" data-no="' + s.no + '" placeholder="Kargo takip no" value="' + esc(s.kargoNo || '') + '" style="max-width:200px;">' +
+            '<button class="btn btn-ghost btn-sm ord-kaydet" data-no="' + s.no + '" type="button">Güncelle</button></div></div></details>';
+        }).join('');
+      })
+      .catch(function () { document.getElementById('orders-list').innerHTML = '<p style="color:var(--soft);">Sipariş listesi yalnız canlı sunucuda (olivamore.de/panel.html) görünür.</p>'; });
+  }
+  document.getElementById('orders-list').addEventListener('click', function (e) {
+    if (!e.target.classList.contains('ord-kaydet')) return;
+    var no = e.target.dataset.no;
+    var durum = document.querySelector('.ord-durum[data-no="' + no + '"]').value;
+    var kargo = document.querySelector('.ord-kargo[data-no="' + no + '"]').value;
+    fetch('/api/admin/siparis-durum', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, durum: durum, kargoNo: kargo }) })
+      .then(function () { renderOrders(); });
+  });
+  function renderMsgs() {
+    fetch('/api/admin/mesajlar')
+      .then(function (r) { return r.json(); })
+      .then(function (liste) {
+        var host = document.getElementById('msgs-list');
+        host.innerHTML = liste.length ? liste.map(function (m) {
+          return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + esc(m.ad) + ' · ' + esc(m.konu || '-') + '</b><span>' + fmtTarih(m.tarih) + ' · ' + esc(m.eposta) + '</span></div></summary>' +
+            '<div class="body"><p style="font-size:.9rem;white-space:pre-wrap;">' + esc(m.mesaj) + '</p></div></details>';
+        }).join('') : '<p style="color:var(--soft);">Henüz mesaj yok.</p>';
+      })
+      .catch(function () { document.getElementById('msgs-list').innerHTML = '<p style="color:var(--soft);">Mesajlar yalnız canlı sunucuda görünür.</p>'; });
+    fetch('/api/admin/bulten')
+      .then(function (r) { return r.json(); })
+      .then(function (liste) {
+        document.getElementById('bulten-list').innerHTML = liste.length
+          ? liste.map(function (b) { return esc(b.eposta) + ' <span style="opacity:.6;">(' + fmtTarih(b.tarih) + ')</span>'; }).join('<br>')
+          : 'Henüz kayıt yok.';
+      })
+      .catch(function () { document.getElementById('bulten-list').textContent = 'Yalnız canlı sunucuda görünür.'; });
+  }
+  document.querySelector('[data-view="orders"]').addEventListener('click', renderOrders);
+  document.querySelector('[data-view="msgs"]').addEventListener('click', renderMsgs);
+
+  /* ================== KUPONLAR ================== */
+  var ROLLER = { serin: 'Bitirme Zeytinyağı', ocak: 'Pişirme Zeytinyağı', zeytin: 'Doğal Zeytinler', eksi: 'Sirkeler', hediye: 'Setler' };
+  function couponItem(c, i) {
+    var rolCb = Object.keys(ROLLER).map(function (r) {
+      return '<label style="margin-right:12px;font-size:.85rem;"><input type="checkbox" class="c-rol" value="' + r + '"' + ((c.roller || []).indexOf(r) !== -1 ? ' checked' : '') + '> ' + ROLLER[r] + '</label>';
+    }).join('');
+    var urunOpts = (C.products || []).filter(function (p) { return p.type === 'product'; }).map(function (p) {
+      return '<option value="' + p.id + '"' + ((c.urunler || []).indexOf(p.id) !== -1 ? ' selected' : '') + '>' + p.nameTR + '</option>';
+    }).join('');
+    return '<div class="item" data-idx="' + i + '" style="margin-bottom:16px;">' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Kupon Kodu</label><input type="text" class="c-kod" value="' + (c.kod || '') + '" style="text-transform:uppercase;" placeholder="HOSGELDIN10"></div>' +
+      '<div class="field"><label>Tip</label><select class="c-tip"><option value="yuzde"' + (c.tip !== 'tutar' ? ' selected' : '') + '>% İndirim</option><option value="tutar"' + (c.tip === 'tutar' ? ' selected' : '') + '>₺ Tutar İndirim</option></select></div>' +
+      '<div class="field"><label>Değer</label><input type="number" class="c-deger" value="' + (c.deger || 10) + '" min="0"></div>' +
+      '</div><div class="grid3">' +
+      '<div class="field"><label>Min. Sepet (₺, 0=yok)</label><input type="number" class="c-min" value="' + (c.min || 0) + '" min="0"></div>' +
+      '<div class="field"><label>Başlangıç</label><input type="date" class="c-bas" value="' + (c.baslangic || '') + '"></div>' +
+      '<div class="field"><label>Bitiş</label><input type="date" class="c-bit" value="' + (c.bitis || '') + '"></div>' +
+      '</div><div class="grid3">' +
+      '<div class="field"><label>Kullanım Limiti (0=sınırsız)</label><input type="number" class="c-limit" value="' + (c.limit || 0) + '" min="0"></div>' +
+      '<div class="field"><label>Kapsam</label><select class="c-kapsam"><option value="hepsi"' + (!c.kapsam || c.kapsam === 'hepsi' ? ' selected' : '') + '>Tüm Ürünler</option><option value="rol"' + (c.kapsam === 'rol' ? ' selected' : '') + '>Kategoriler</option><option value="urun"' + (c.kapsam === 'urun' ? ' selected' : '') + '>Seçili Ürünler</option></select></div>' +
+      '<div class="field"><label>Durum</label><div style="padding-top:8px;"><label style="margin-right:14px;"><input type="checkbox" class="c-aktif"' + (c.aktif !== false ? ' checked' : '') + '> Aktif</label><label><input type="checkbox" class="c-kargo"' + (c.ucretsizKargo ? ' checked' : '') + '> Ücretsiz kargo</label></div></div>' +
+      '</div>' +
+      '<div class="field c-rol-alan" style="' + (c.kapsam === 'rol' ? '' : 'display:none;') + '"><label>Geçerli Kategoriler</label><div>' + rolCb + '</div></div>' +
+      '<div class="field c-urun-alan" style="' + (c.kapsam === 'urun' ? '' : 'display:none;') + '"><label>Geçerli Ürünler (Ctrl ile çoklu seç)</label><select class="c-urunler" multiple size="5" style="width:100%;">' + urunOpts + '</select></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><span style="font-size:.8rem;color:#8a8377;">' + (c.kullanildi || 0) + ' kez kullanıldı</span><button type="button" class="btn btn-danger btn-sm c-sil">Kuponu Sil</button></div>' +
+      '</div>';
+  }
+  function renderCoupons() {
+    var el = document.getElementById('coupons-list');
+    if (!el) return;
+    C.coupons = C.coupons || [];
+    el.innerHTML = C.coupons.length ? C.coupons.map(couponItem).join('') : '<div class="note">Henüz kupon yok. "+ Yeni Kupon" ile ekle.</div>';
+  }
+  function syncCouponsFromDOM() {
+    var el = document.getElementById('coupons-list');
+    if (!el || !C.coupons) return;
+    el.querySelectorAll('.item').forEach(function (d) {
+      var c = C.coupons[+d.dataset.idx]; if (!c) return;
+      var g = function (cl) { var x = d.querySelector('.' + cl); return x ? x.value : ''; };
+      c.kod = g('c-kod').toUpperCase().replace(/\s/g, '');
+      c.tip = g('c-tip'); c.deger = parseFloat(g('c-deger')) || 0;
+      c.min = parseFloat(g('c-min')) || 0;
+      c.baslangic = g('c-bas'); c.bitis = g('c-bit');
+      c.limit = parseInt(g('c-limit'), 10) || 0;
+      c.kapsam = g('c-kapsam');
+      c.aktif = d.querySelector('.c-aktif').checked;
+      c.ucretsizKargo = d.querySelector('.c-kargo').checked;
+      c.roller = [].map.call(d.querySelectorAll('.c-rol:checked'), function (x) { return x.value; });
+      c.urunler = [].map.call(d.querySelectorAll('.c-urunler option:checked'), function (x) { return x.value; });
+    });
+  }
+  document.getElementById('btn-add-coupon').addEventListener('click', function () {
+    syncCouponsFromDOM();
+    C.coupons = C.coupons || [];
+    C.coupons.push({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
+    renderCoupons(); dirty();
+  });
+  document.getElementById('coupons-list').addEventListener('click', function (e) {
+    if (e.target.classList.contains('c-sil')) {
+      var d = e.target.closest('.item');
+      if (confirm('Bu kupon silinecek. Emin misin?')) { syncCouponsFromDOM(); C.coupons.splice(+d.dataset.idx, 1); renderCoupons(); dirty(); }
+    }
+  });
+  document.getElementById('coupons-list').addEventListener('change', function (e) {
+    if (e.target.classList.contains('c-kapsam')) {
+      var d = e.target.closest('.item');
+      d.querySelector('.c-rol-alan').style.display = e.target.value === 'rol' ? '' : 'none';
+      d.querySelector('.c-urun-alan').style.display = e.target.value === 'urun' ? '' : 'none';
+    }
+    dirty();
+  });
+
+  /* ================== GÖRSEL KÜTÜPHANESİ (dosya bazlı) ================== */
+  function renderLibrary() {
+    var g = document.getElementById('lib-grid');
+    if (!g) return;
+    g.innerHTML = IMAGES.map(function (i) {
+      return '<div style="text-align:center;">' +
+        '<img src="' + i + '" loading="lazy" style="width:100%;height:120px;object-fit:contain;background:#f6f3ec;border:1px solid #e8e2d5;border-radius:10px;">' +
+        '<div style="font-size:.68rem;color:#8a8377;margin:6px 0 4px;word-break:break-all;">' + i.replace('assets/img/', '') + '</div>' +
+        (MODE === 'api' ? '<button type="button" class="btn btn-danger btn-sm lib-sil" data-yol="' + i + '">Sil</button>' : '') +
+        '</div>';
+    }).join('');
+  }
+  function libYenile(cb) {
+    if (MODE !== 'api') { renderLibrary(); if (cb) cb(); return; }
+    fetch('/api/admin/gorseller')
+      .then(function (r) { return r.json(); })
+      .then(function (l) {
+        if (Array.isArray(l) && l.length) { IMAGES.length = 0; l.forEach(function (x) { IMAGES.push(x); }); }
+        var mg = document.getElementById('im-grid'); if (mg) mg.innerHTML = ''; // modal önbelleğini tazele
+        renderLibrary(); if (cb) cb();
+      })
+      .catch(function () { renderLibrary(); if (cb) cb(); });
+  }
+  document.getElementById('lib-file').addEventListener('change', function () {
+    if (MODE !== 'api') { alert('Görsel yükleme yalnız canlı sunucuda (Sunucu CMS aktifken) çalışır.'); this.value = ''; return; }
+    var fl = [].slice.call(this.files);
+    if (!fl.length) return;
+    var durum = document.getElementById('lib-durum'), i = 0;
+    (function sirada() {
+      if (i >= fl.length) { durum.textContent = '✓ ' + fl.length + ' görsel yüklendi'; libYenile(renderAll); return; }
+      var f = fl[i];
+      durum.textContent = (i + 1) + '/' + fl.length + ' yükleniyor: ' + f.name;
+      resizeImage(f, function (dataUrl) {
+        fetch('/api/admin/gorsel-yukle', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ad: f.name.replace(/\.[^.]+$/, ''), veri: dataUrl })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (s) {
+            if (!s.tamam) { durum.textContent = 'Hata (' + f.name + '): ' + (s.hata || '?'); return; }
+            i++; sirada();
+          })
+          .catch(function () { durum.textContent = 'Bağlantı hatası: ' + f.name; });
+      });
+    })();
+    this.value = '';
+  });
+  document.getElementById('lib-grid').addEventListener('click', function (e) {
+    var b = e.target.closest('.lib-sil');
+    if (!b) return;
+    if (!confirm(b.dataset.yol.replace('assets/img/', '') + ' sunucudan silinecek. Bu görseli kullanan sayfalarda kırık görüntü oluşur. Emin misin?')) return;
+    fetch('/api/admin/gorsel-sil', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ad: b.dataset.yol })
+    }).then(function () { libYenile(renderAll); });
+  });
+
+  /* ================== GÖRSEL GALERİ MODALI ================== */
+  document.body.insertAdjacentHTML('beforeend',
+    '<div id="img-modal" style="position:fixed;inset:0;background:rgba(20,18,15,.62);z-index:400;display:none;align-items:center;justify-content:center;">' +
+    '<div style="background:#fff;border-radius:14px;max-width:880px;width:94%;max-height:82vh;overflow:auto;padding:20px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><b>Görsel Kütüphanesi</b><button type="button" class="btn btn-ghost btn-sm" id="im-close">✕ Kapat</button></div>' +
+    '<div id="im-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;"></div>' +
+    '</div></div>');
+  var imTarget = null;
+  function openImgModal(target) {
+    imTarget = target;
+    var g = document.getElementById('im-grid');
+    if (!g.childElementCount) {
+      g.innerHTML = IMAGES.map(function (i) {
+        return '<div style="cursor:pointer;text-align:center;" data-pick="' + i + '">' +
+          '<img src="' + i + '" loading="lazy" style="width:100%;height:110px;object-fit:contain;background:#f6f3ec;border:1px solid #e8e2d5;border-radius:8px;">' +
+          '<div style="font-size:.68rem;color:#8a8377;margin-top:4px;word-break:break-all;">' + i.replace('assets/img/', '') + '</div></div>';
+      }).join('');
+    }
+    document.getElementById('img-modal').style.display = 'flex';
+  }
+  document.getElementById('im-close') && document.addEventListener('click', function (e) {
+    if (e.target.id === 'im-close' || e.target.id === 'img-modal') {
+      document.getElementById('img-modal').style.display = 'none';
+    }
+    var pick = e.target.closest('[data-pick]');
+    if (pick && imTarget) {
+      var yol = pick.getAttribute('data-pick');
+      var sel = imTarget.querySelector('select');
+      var hid = imTarget.querySelector('input[type="hidden"]');
+      var prev = imTarget.querySelector('img');
+      if (sel) sel.value = yol;
+      if (hid) hid.value = imTarget.classList.contains('gal-item') ? yol : '';
+      if (prev) prev.src = yol;
+      document.getElementById('img-modal').style.display = 'none';
+      dirty();
+    }
+    var galBtn = e.target.closest('.ip-gal');
+    if (galBtn) openImgModal(galBtn.closest('.imgpick') || galBtn.closest('.gal-item'));
+  });
+
+  /* ================== BAŞLAT ================== */
+  function renderAll() {
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+  }
+  // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
+  fetch('/api/config', { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function (cfg) {
+      MODE = 'api';
+      C = load(cfg && Object.keys(cfg).length ? cfg : undefined);
+      // Varsayılanlarda olup kayıtlı config'te olmayan yeni ürünleri birleştir (id ile)
+      DEFAULTS.products.forEach(function (d) {
+        if (!(C.products || []).some(function (p) { return p.id === d.id; })) {
+          C.products.push(JSON.parse(JSON.stringify(d)));
+        }
+      });
+      document.querySelector('.side .foot').innerHTML = 'Sunucu CMS aktif ✓<br>Kayıtlar tüm ziyaretçilere yansır.';
+      libYenile(renderAll); // kütüphaneyi sunucudan çek, sonra her şeyi çiz
+    })
+    .catch(function () { renderAll(); });
+})();
+</script>
+</body>
+</html>

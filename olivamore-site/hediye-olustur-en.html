@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own Gift Set | Olivamore</title>
+<meta name="description" content="Choose your box, pick your 100 ml bottles, write your note. A personal gift set with Ayvalık, Trilye, Bodrum, balsamic, pomegranate molasses and hawthorn vinegar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="shop" data-lang="en">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="index-en.html">Home</a><span class="sep">›</span><a href="koleksiyon-en.html">Extra Virgin Olive Oil</a><span class="sep">›</span>Build Your Own Set</div>
+    <h1>Build your own gift set</h1>
+    <p class="lead">Choose your box, pick your bottles, write your note. We'll prepare it in an elegant box and ship it.</p>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="container gb-wrap">
+
+    <!-- LEFT: VISUAL -->
+    <div class="gb-visual">
+      <div class="photo-frame"><img id="gb-img" src="assets/img/hediye-seti-5li.jpg" alt="Olivamore gift set box with 100 ml bottles"></div>
+      <p style="font-size:.85rem;color:var(--ink-soft);margin-top:12px;">All sets ship in elegant cylinder bottles and a gift box with a carry bag. Your handwritten note card goes inside the box.</p>
+    </div>
+
+    <!-- RIGHT: BUILDER -->
+    <div>
+      <div class="gb-step">
+        <h3>1. Choose your box</h3>
+        <div class="hint">How many bottles should we prepare?</div>
+        <div class="gb-box sizes">
+          <button class="size" data-cap="3" data-price="690" data-img="assets/img/hediye-seti-3lu.jpg">Box of 3<small>3 × 100 ml · ₺690</small></button>
+          <button class="size on" data-cap="5" data-price="1.050" data-img="assets/img/hediye-seti-5li.jpg">Box of 5<small>5 × 100 ml · ₺1.050</small></button>
+        </div>
+      </div>
+
+      <div class="gb-step">
+        <h3>2. Pick your bottles</h3>
+        <div class="hint">You can add more than one of the same flavor.</div>
+        <div class="gb-flavors">
+          <div class="gb-flavor" data-code="AY"><span><b>Ayvalık Early Harvest</b><small>Smooth, fruity extra virgin</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="TR"><span><b>Trilye Early Harvest</b><small>Intense extra virgin with character</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="BD"><span><b>Bodrum</b><small>Balanced, sunny profile</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="BL"><span><b>Balsamic Vinegar</b><small>Naturally fermented, intense</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="NR"><span><b>Pomegranate Molasses</b><small>Additive-free, sweet-tart</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="AL"><span><b>Hawthorn Vinegar</b><small>Anatolia's sharp, lively flavor</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+        </div>
+      </div>
+
+      <div class="gb-step">
+        <h3>3. Your box</h3>
+        <div class="hint" id="gb-hint">0 / 5 bottles selected</div>
+        <div class="gb-slots" id="gb-slots"></div>
+      </div>
+
+      <div class="gb-step gb-note">
+        <h3>4. Your gift note <span style="font-weight:400;color:var(--ink-soft);font-size:.85rem;">(optional)</span></h3>
+        <textarea rows="3" placeholder="The note you'd like handwritten on the card..."></textarea>
+      </div>
+
+      <div class="gb-summary">
+        <div>
+          <div class="gb-price" id="gb-price">₺1.050</div>
+          <div class="gb-state" id="gb-state">Fill the box to add it to your bag</div>
+        </div>
+        <button class="btn btn-dark" id="gb-add" data-add disabled>Add to Bag</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- READY-MADE SETS -->
+<section class="block alt tight">
+  <div class="container">
+    <div class="sec-head center"><h2>Can't decide? We have ready-made sets</h2></div>
+    <div class="prod-grid three">
+      <a class="card" href="koleksiyon-en.html#hediyelik">
+        <div class="prod-img photo"><span class="badge">Gift</span><img src="assets/img/hediye-seti-5li.jpg" alt="Gift set of 5"><button class="add-bag" data-add>Add to Bag <span>→</span></button></div>
+        <div class="card-body"><div class="card-row"><h3>Tasting Set of 5</h3><span class="price">₺1.050 <small>/ 100ml×5</small></span></div><p class="card-note">Ayvalık, Bodrum, Balsamic, Pomegranate, Trilye. The best-loved five.</p></div>
+      </a>
+      <a class="card" href="koleksiyon-en.html#hediyelik">
+        <div class="prod-img photo"><img src="assets/img/hediye-seti-3lu.jpg" alt="Gift set of 3"><button class="add-bag" data-add>Add to Bag <span>→</span></button></div>
+        <div class="card-body"><div class="card-row"><h3>Set of 3 with Bag</h3><span class="price">₺690 <small>/ 100ml×3</small></span></div><p class="card-note">A classic trio in an elegant box with a carry bag.</p></div>
+      </a>
+      <a class="card" href="koleksiyon-en.html#hediyelik">
+        <div class="prod-img photo"><img src="assets/img/kutulu-750.jpg" alt="Gift-boxed 750ml"><button class="add-bag" data-add>Add to Bag <span>→</span></button></div>
+        <div class="card-body"><div class="card-row"><h3>Gift Box 750 ml</h3><span class="price">₺1.190 <small>/ 750ml</small></span></div><p class="card-note">One bottle, big impression. In its cylinder box.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // read initial values from the selected box (includes admin panel overrides)
+    var selBox = document.querySelector('.gb-box .size.on');
+    var cap = selBox ? parseInt(selBox.dataset.cap, 10) : 5;
+    var price = selBox ? selBox.dataset.price : '1.050';
+    var counts = {};
+    var slots = document.getElementById('gb-slots');
+    var hint = document.getElementById('gb-hint');
+    var priceEl = document.getElementById('gb-price');
+    var stateEl = document.getElementById('gb-state');
+    var addBtn = document.getElementById('gb-add');
+
+    function total() {
+      var t = 0;
+      for (var k in counts) t += counts[k];
+      return t;
+    }
+    function render() {
+      var t = total();
+      slots.innerHTML = '';
+      var codes = [];
+      document.querySelectorAll('.gb-flavor').forEach(function (f) {
+        var c = counts[f.dataset.code] || 0;
+        for (var i = 0; i < c; i++) codes.push(f.dataset.code);
+      });
+      for (var i = 0; i < cap; i++) {
+        var d = document.createElement('div');
+        d.className = 'gb-slot' + (codes[i] ? ' full' : '');
+        d.textContent = codes[i] || '';
+        slots.appendChild(d);
+      }
+      hint.textContent = t + ' / ' + cap + ' bottles selected';
+      priceEl.textContent = '₺' + price;
+      addBtn.disabled = (t !== cap);
+      stateEl.textContent = t === cap
+        ? 'Your box is ready ✓'
+        : 'Fill the box to add it to your bag';
+      document.querySelectorAll('.gb-flavor .plus').forEach(function (b) { b.disabled = (t >= cap); });
+      document.querySelectorAll('.gb-flavor').forEach(function (f) {
+        f.querySelector('.n').textContent = counts[f.dataset.code] || 0;
+        f.querySelector('.minus').disabled = !(counts[f.dataset.code] > 0);
+      });
+    }
+
+    document.querySelectorAll('.gb-box .size').forEach(function (b) {
+      b.addEventListener('click', function () {
+        cap = parseInt(b.dataset.cap, 10);
+        price = b.dataset.price;
+        document.getElementById('gb-img').src = b.dataset.img;
+        while (total() > cap) {
+          for (var k in counts) { if (counts[k] > 0) { counts[k]--; break; } }
+        }
+        render();
+      });
+    });
+
+    document.querySelectorAll('.gb-flavor').forEach(function (f) {
+      var code = f.dataset.code;
+      f.querySelector('.plus').addEventListener('click', function () {
+        if (total() < cap) { counts[code] = (counts[code] || 0) + 1; render(); }
+      });
+      f.querySelector('.minus').addEventListener('click', function () {
+        if (counts[code] > 0) { counts[code]--; render(); }
+      });
+    });
+
+    render();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palate Quiz: Your Palate Map in 10 Questions | Olivamore</title>
+<meta name="description" content="Map your palate in 10 short questions and see your palate-match share across seven Olivamore oils. No right or wrong answers; about 90 seconds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<style>
+.dm-bars{margin:26px auto 6px;max-width:440px;text-align:left}
+.dm-row{margin-bottom:12px}
+.dm-row .t{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px}
+.dm-row .t b{font-weight:700}
+.dm-row .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.dm-row .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));width:0;transition:width .9s ease}
+.qz-result .qz-img{border:2px solid var(--gold);border-radius:16px;padding:16px;background:#fff;box-shadow:0 14px 32px rgba(191,162,93,.22)}
+.dm-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
+.dm-badge{border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.82rem;background:#fff}
+.dm-badge b{color:var(--gold)}
+.dm-note{font-size:.76rem;color:var(--ink-soft);max-width:520px;margin:18px auto 0;line-height:1.6}
+.dm-low{background:var(--gold-pale,#F6F0E3);border:1px solid var(--gold);border-radius:12px;padding:14px 18px;font-size:.88rem;max-width:460px;margin:16px auto 0}
+</style>
+</head>
+<body data-page="ogren" data-lang="en">
+<div id="om-header"></div>
+
+<section class="block tight">
+  <div class="container">
+    <div class="sec-head center">
+      <div class="kicker">Palate Compass · V3</div>
+      <h2>Your palate map in 10 questions</h2>
+      <p class="lead">No right or wrong answers; pick what's usually closest to your taste. About 90 seconds.</p>
+    </div>
+
+    <div class="qz-wrap">
+      <div class="qz-progress" id="qz-progress"></div>
+      <div class="qz-card" id="qz-card">
+        <div class="qz-no" id="qz-no"></div>
+        <h2 id="qz-q"></h2>
+        <p class="card-note" id="qz-note" style="display:none;margin:-12px 0 18px;"></p>
+        <div class="qz-opts" id="qz-opts"></div>
+        <button class="qz-back" id="qz-back" style="display:none;">← Previous question</button>
+      </div>
+
+      <div class="qz-result" id="qz-result">
+        <h2>Your palate map is ready</h2>
+        <p class="lead" style="margin-bottom:22px;">Your palate doesn't fit into a single oil. Based on your answers, here are your closest matches and the alternatives worth exploring.</p>
+        <img class="qz-img" id="dm-img" src="" alt="">
+        <div class="qz-profil" id="dm-pay"></div>
+        <h2 id="dm-ad" style="margin-top:0;"></h2>
+        <p style="color:var(--ink-soft);max-width:460px;margin:8px auto 16px;" id="dm-desc"></p>
+        <a class="btn btn-gold" id="dm-link" href="#">View Product</a>
+        <div class="dm-badges">
+          <span class="dm-badge">Close alternative: <b id="dm-alt"></b></span>
+          <span class="dm-badge">Discovery pick: <b id="dm-kesif"></b></span>
+        </div>
+        <div class="dm-low" id="dm-low" style="display:none;">Your top two matches are nearly tied. Instead of a single bottle, <a class="link-arrow" href="hediye-olustur-en.html">building a two-bottle discovery set</a> is the truer start for your palate.</div>
+        <div class="dm-bars" id="dm-bars"></div>
+        <p class="dm-note">These percentages are your <b>palate-match share</b>; they are not content ratios or definitive tasting results. They show the relative fit between your answers and the current Olivamore range. The tasting experience can vary by harvest, batch and the dish you use.</p>
+        <p style="margin-top:20px;"><button class="qz-back" id="dm-restart" style="display:inline;">Retake the quiz</button></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var P = [
+    { k:'AYV', ad:'Ayvalık Early Harvest', img:'assets/img/ayvalik-500.jpg', href:'urun-en.html',
+      d:'Your answers lean toward a smooth, fruity, balanced profile. Try its green-apple freshness at breakfast, on delicate salads and with white fish.' },
+    { k:'TRI', ad:'Trilye Early Harvest', img:'assets/img/trilye-750.jpg', href:'urun-trilye-en.html',
+      d:'Your answers point to pronounced taste and a longer natural pepperiness in the throat. Try it on arugula salads, charred vegetables or fresh bread.' },
+    { k:'OLG', ad:'Ripe Harvest', img:'assets/img/ayvalik-5l.jpg', href:'p-en.html?id=og5l',
+      d:'Your answers point to an everyday, balanced, stove-friendly oil. It partners your kitchen in braises, lentil soup and roasted vegetables.' },
+    { k:'MAN', ad:'Bodrum Mandarin Infused', img:'assets/img/cesnili-mandalina.jpg', href:'p-en.html?id=ces-mand',
+      d:'Your palate is open to a fresh, fruity citrus direction. Try the scent of mandarin zest on salads, fish and desserts.' },
+    { k:'BER', ad:'Bergamot Infused', img:'assets/img/cesnili-bergamot.jpg', href:'p-en.html?id=ces-berg',
+      d:'A perfumed, distinctive citrus character suits you. Try it on white fish, yogurt mezes and desserts.' },
+    { k:'KEK', ad:'Thyme Infused', img:'assets/img/cesnili-kekik.jpg', href:'p-en.html?id=ces-kek',
+      d:'Herbal aromas stand out on your palate map. Try the mountain-thyme infusion on grills and roast potatoes.' },
+    { k:'ACI', ad:'Hot Pepper Infused', img:'assets/img/cesnili-acibiber.jpg', href:'p-en.html?id=ces-bib',
+      d:'You have a heat-loving palate. Try the chili infusion on pizza, pasta and charred vegetables.' }
+  ];
+
+  var Q = [
+    { w:0.10, t:'How present should the olive oil be on your plate?', o:['Barely there','Light but noticeable','Pronounced','Strongly up front'],
+      m:[[3,0,3,2,1,1,0],[3,2,3,2,2,2,1],[2,3,1,2,3,3,2],[1,3,0,1,2,2,3]] },
+    { w:0.12, t:'If you could beam one scent into your kitchen, which would it be?', o:['Fresh-cut grass and green almond','Ripe apple and pear','Freshly peeled citrus zest','Mediterranean herbs rubbed in the palm'],
+      m:[[3,3,2,1,1,2,1],[3,2,2,1,1,1,1],[1,1,1,3,3,1,0],[1,2,1,0,1,3,1]] },
+    { w:0.09, t:'On the citrus side, which is closer to you?', o:['A fruity scent recalling mandarin zest','A bergamot scent recalling Earl Grey',"The type doesn't matter; a fresh citrus aroma",'Citrus is not my priority'],
+      m:[[1,0,1,3,2,0,0],[1,0,0,2,3,0,0],[2,1,1,3,3,2,1],[3,3,3,0,0,3,3]] },
+    { w:0.08, t:'How much room should Mediterranean herbs take on your plate?', o:['No noticeable herb aroma','Faintly in the background','Herbs like thyme clearly present','Herbal aroma in the lead role'],
+      m:[[3,2,3,3,3,0,2],[2,2,2,2,2,2,2],[1,2,1,0,1,3,1],[0,2,0,0,0,3,1]] },
+    { w:0.11, t:'How pronounced should the bitterness the oil leaves on your palate be?', n:"We mean the olive's natural bitterness here, not chili heat.", o:['Not at all','Faintly felt','Pronounced','Strong and lasting'],
+      m:[[3,0,3,2,2,2,2],[3,2,3,2,2,2,2],[2,3,1,2,2,2,2],[1,3,0,1,1,2,2]] },
+    { w:0.10, t:'How pronounced should the natural pepperiness in the throat be?', n:"This isn't chili; it's the oil's natural throat sensation.", o:['Not at all','Light and short','Pronounced but short','Strong and lasting'],
+      m:[[3,0,3,2,2,2,2],[3,2,3,2,2,2,2],[2,3,1,2,2,2,2],[1,3,0,1,1,2,2]] },
+    { w:0.12, t:'Where do you turn the chili dial?', n:"Now we're asking about real chili heat, not the oil's natural pepperiness.", o:['No heat','A gentle warmth','Medium heat','Distinct, lasting heat'],
+      m:[[3,3,3,3,3,2,0],[2,2,2,2,2,3,2],[1,2,1,1,1,2,3],[0,2,0,0,0,1,3]] },
+    { w:0.10, t:'What is the first job you expect from this bottle?', o:['Cooking on the stove','Marinating or prepping for the oven','Preparing cold plates and salads','A finishing touch at serving'],
+      m:[[2,1,3,0,0,1,1],[2,2,3,1,1,2,1],[3,2,2,3,2,2,1],[3,3,1,3,3,3,3]] },
+    { w:0.11, t:'Next to which plate would you first open the new bottle?', o:['Breakfast, salad or meze','Braised vegetables or legumes','Fish, chicken or meat','Pasta, pizza or sandwich'],
+      m:[[3,2,2,3,3,1,1],[2,3,3,1,1,2,2],[3,2,2,2,3,3,2],[2,3,2,0,1,2,3]] },
+    { w:0.07, t:'How much novelty do you look for in a new bottle?', o:['Classic tastes I know','A small twist on the classic','A clearly new taste','An unusual, experimental taste'],
+      m:[[3,3,3,1,0,1,1],[2,2,1,2,1,3,3],[1,1,1,3,2,2,3],[0,1,0,3,3,1,3]] }
+  ];
+  var DISP = [0,1,2,3,4,7,5,8,6,9];
+
+  var cevap = new Array(Q.length).fill(-1);
+  var adim = 0;
+  var oturum = Math.floor(Math.random() * 7);
+
+  var prog = document.getElementById('qz-progress');
+  DISP.forEach(function () { prog.appendChild(document.createElement('i')); });
+
+  function goster() {
+    var qi = DISP[adim], q = Q[qi];
+    document.getElementById('qz-no').textContent = 'Question ' + (adim + 1) + ' / ' + DISP.length;
+    document.getElementById('qz-q').textContent = q.t;
+    var not = document.getElementById('qz-note');
+    if (q.n) { not.textContent = q.n; not.style.display = 'block'; } else { not.style.display = 'none'; }
+    var ops = document.getElementById('qz-opts');
+    ops.innerHTML = '';
+    q.o.forEach(function (txt, oi) {
+      var b = document.createElement('button');
+      b.className = 'qz-opt'; b.type = 'button'; b.textContent = txt;
+      b.addEventListener('click', function () {
+        cevap[qi] = oi;
+        prog.children[adim].classList.add('done');
+        if (adim < DISP.length - 1) { adim++; goster(); } else { bitir(); }
+      });
+      ops.appendChild(b);
+    });
+    document.getElementById('qz-back').style.display = adim > 0 ? 'inline' : 'none';
+    prog.querySelectorAll('i').forEach(function (el, i) { el.classList.toggle('done', i < adim); });
+  }
+  document.getElementById('qz-back').addEventListener('click', function () { if (adim > 0) { adim--; goster(); } });
+
+  function bitir() {
+    if (cevap.indexOf(-1) !== -1) return;
+    var N = P.length;
+    var s = P.map(function (_, i) {
+      return Q.reduce(function (t, q, qi) { return t + q.w * (q.m[cevap[qi]][i] - 1.5); }, 0);
+    });
+    var ex = s.map(function (v) { return Math.exp(v / 0.75); });
+    var tp = ex.reduce(function (a, b) { return a + b; }, 0);
+    var p = ex.map(function (e) { return 100 * (0.80 * e / tp + 0.20 / N); });
+    var alt = p.map(Math.floor);
+    var eksik = 100 - alt.reduce(function (a, b) { return a + b; }, 0);
+    var kal = p.map(function (v, i) { return { i: i, k: v - Math.floor(v) }; })
+      .sort(function (a, b) { return b.k - a.k || ((a.i + oturum) % 7) - ((b.i + oturum) % 7); });
+    for (var j = 0; j < eksik; j++) alt[kal[j].i]++;
+    var sira = p.map(function (v, i) { return { i: i, p: v, tam: alt[i] }; })
+      .sort(function (a, b) { return b.p - a.p; });
+    var bas = sira[0], ikinci = sira[1], ucuncu = sira[2];
+
+    document.getElementById('qz-card').style.display = 'none';
+    prog.style.display = 'none';
+    var r = document.getElementById('qz-result');
+    r.classList.add('on');
+    document.getElementById('dm-img').src = P[bas.i].img;
+    document.getElementById('dm-img').alt = P[bas.i].ad;
+    document.getElementById('dm-pay').textContent = bas.tam + '% palate-match share';
+    document.getElementById('dm-ad').textContent = P[bas.i].ad;
+    document.getElementById('dm-desc').textContent = P[bas.i].d;
+    document.getElementById('dm-link').href = P[bas.i].href;
+    document.getElementById('dm-alt').textContent = P[ikinci.i].ad + ' ' + ikinci.tam + '%';
+    document.getElementById('dm-kesif').textContent = P[ucuncu.i].ad + ' ' + ucuncu.tam + '%';
+    document.getElementById('dm-low').style.display = (bas.p - ikinci.p < 3) ? 'block' : 'none';
+    var bars = document.getElementById('dm-bars');
+    bars.innerHTML = '<h3 style="font-size:1rem;margin-bottom:14px;">Your full palate map</h3>';
+    sira.forEach(function (x) {
+      var d = document.createElement('div');
+      d.className = 'dm-row';
+      d.innerHTML = '<div class="t"><span>' + P[x.i].ad + '</span><b>' + x.tam + '%</b></div><div class="bar"><i></i></div>';
+      bars.appendChild(d);
+      setTimeout(function () { d.querySelector('i').style.width = x.tam + '%'; }, 60);
+    });
+    r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('dm-restart').addEventListener('click', function () {
+    cevap = new Array(Q.length).fill(-1); adim = 0;
+    document.getElementById('qz-result').classList.remove('on');
+    document.getElementById('qz-card').style.display = '';
+    prog.style.display = '';
+    goster();
+  });
+
+  goster();
+});
+</script>
+</body>
+</html>

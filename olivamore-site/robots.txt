@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /panel.html
+Sitemap: https://olivamore.de/sitemap.xml

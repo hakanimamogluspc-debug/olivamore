@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Bag | Olivamore</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<style>
+.cart-wrap{display:grid;grid-template-columns:1.3fr .7fr;gap:44px;align-items:start}
+@media(max-width:860px){.cart-wrap{grid-template-columns:1fr}}
+.cart-item{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(30,28,25,.05)}
+.cart-item img{width:64px;height:80px;object-fit:contain;flex-shrink:0;background:#fff}
+.cart-item .t{flex:1;min-width:0}
+.cart-item .t b{font-weight:700;font-size:.95rem;display:block}
+.cart-item .t span{font-size:.85rem;color:var(--ink-soft)}
+.cart-qty{display:flex;align-items:center;gap:8px}
+.cart-qty button{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;font-size:1rem}
+.cart-qty button:hover{border-color:var(--gold);color:var(--gold)}
+.cart-del{background:none;border:none;color:#a33;font-size:.78rem;cursor:pointer;margin-top:4px}
+.cart-sum{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(30,28,25,.08);padding:26px;position:sticky;top:100px}
+.cart-sum h3{font-size:1.05rem;font-weight:700;margin-bottom:16px}
+.sum-row{display:flex;justify-content:space-between;font-size:.92rem;padding:8px 0;border-bottom:1px dashed var(--line)}
+.sum-row.total{font-size:1.15rem;font-weight:700;border-bottom:none;padding-top:14px}
+.cart-empty{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+.pay-opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;font-size:.9rem}
+.pay-opt input{margin-top:4px}
+.pay-opt small{display:block;color:var(--ink-soft);font-size:.78rem}
+.pay-opt.dis{opacity:.5;cursor:default}
+#co-ok{display:none;text-align:center;padding:60px 20px}
+#co-ok h2{margin:14px 0 10px}
+</style>
+</head>
+<body data-page="shop" data-lang="en">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="kicker">My Bag</div>
+    <h1>The box headed to your table</h1>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="container">
+
+    <div id="co-ok">
+      <div class="kicker">Thank You</div>
+      <h2>Your order is in: <span id="co-no" style="color:var(--gold);"></span></h2>
+      <p class="lead" style="margin:0 auto 10px;">We've emailed you the bank transfer details and your order summary. We ship as soon as the payment is confirmed.</p>
+      <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:26px;">Any issue? <a class="link-arrow" href="iletisim-en.html">Write to us</a> with your order number.</p>
+      <a class="btn btn-dark" href="koleksiyon-en.html">Continue Shopping</a>
+    </div>
+
+    <div class="cart-wrap" id="cart-wrap">
+      <div>
+        <div id="cart-items"></div>
+        <div class="cart-empty" id="cart-empty" style="display:none;">
+          <h3 style="font-weight:700;margin-bottom:8px;">Your bag is empty for now</h3>
+          <p>Not sure where to start? <a class="link-arrow" href="damak-testi-en.html">Take the palate quiz</a>.</p>
+          <p style="margin-top:20px;"><a class="btn btn-dark" href="koleksiyon-en.html">See the Products</a></p>
+        </div>
+      </div>
+
+      <div class="cart-sum" id="cart-sum">
+        <h3>Order Summary</h3>
+        <div class="sum-row"><span>Subtotal</span><span id="sum-ara">₺0</span></div>
+        <div class="sum-row" id="row-kupon" style="display:none;color:#2e7d32;"><span>Coupon (<span id="kupon-lbl"></span>)</span><span id="sum-kupon">-₺0</span></div>
+        <div class="sum-row"><span>Shipping</span><span id="sum-kargo">₺0</span></div>
+        <div class="sum-row"><span>VAT</span><span id="sum-kdv">₺0</span></div>
+        <div class="sum-row total"><span>Total</span><span id="sum-toplam">₺0</span></div>
+
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <input type="text" id="kupon-kod" placeholder="Coupon code" style="flex:1;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;text-transform:uppercase;">
+          <button class="btn btn-outline" id="kupon-btn" type="button" style="white-space:nowrap;">Apply</button>
+        </div>
+        <p id="kupon-msj" style="font-size:.8rem;margin-top:6px;display:none;"></p>
+
+        <div style="margin:22px 0 6px;font-weight:700;font-size:.9rem;">Delivery Details</div>
+        <div class="field" style="margin-bottom:10px;"><input type="text" id="co-ad" placeholder="Full name" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
+        <div class="field" style="margin-bottom:10px;"><input type="email" id="co-eposta" placeholder="Email" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
+        <div class="field" style="margin-bottom:10px;"><input type="tel" id="co-tel" placeholder="Phone" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
+        <div class="field" style="margin-bottom:10px;"><textarea id="co-adres" rows="3" placeholder="Delivery address" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;resize:vertical;"></textarea></div>
+        <div class="field" style="margin-bottom:14px;"><input type="text" id="co-not" placeholder="Order note (optional)" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
+
+        <div style="margin-bottom:6px;font-weight:700;font-size:.9rem;">Payment</div>
+        <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Bank Transfer</b><small>IBAN details arrive by email after ordering; we ship once payment is confirmed.</small></span></label>
+        <label class="pay-opt dis"><input type="radio" name="odeme" disabled><span><b>Credit Card</b><small>Coming very soon.</small></span></label>
+
+        <button class="btn btn-gold" id="co-btn" style="width:100%;margin-top:10px;">Complete Order</button>
+        <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
+        <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">Free shipping over 500 TL. Unconditional 14-day returns on unopened products.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var KARGO = 80, KARGO_ESIK = 500;
+  function fmt(n) { return '₺' + Number(n).toLocaleString('tr-TR'); }
+
+  function render() {
+    var c = window.omCart.get();
+    var host = document.getElementById('cart-items');
+    var bos = document.getElementById('cart-empty');
+    var sum = document.getElementById('cart-sum');
+    host.innerHTML = '';
+    if (!c.length) { bos.style.display = 'block'; sum.style.display = 'none'; return; }
+    bos.style.display = 'none';
+    sum.style.display = 'block';
+    c.forEach(function (k, i) {
+      var d = document.createElement('div');
+      d.className = 'cart-item';
+      d.innerHTML = '<img src="' + (k.img || 'assets/img/ayvalik-500.jpg') + '" alt="">' +
+        '<div class="t"><b>' + k.ad + '</b><span>' + fmt(k.fiyat) + '</span><br>' +
+        '<button class="cart-del" data-i="' + i + '">Remove</button></div>' +
+        '<div class="cart-qty"><button data-i="' + i + '" data-d="-1">−</button><b>' + k.adet + '</b><button data-i="' + i + '" data-d="1">+</button></div>';
+      host.appendChild(d);
+    });
+    var ara = c.reduce(function (t, k) { return t + k.fiyat * k.adet; }, 0);
+    var kp = null;
+    try { kp = JSON.parse(localStorage.getItem('om-kupon') || 'null'); } catch (e) { }
+    var indirim = kp ? Math.min(kp.indirim || 0, ara) : 0;
+    var indAra = Math.max(0, ara - indirim);
+    var kargo = ((kp && kp.ucretsizKargo) || indAra >= KARGO_ESIK) ? 0 : KARGO;
+    var oran = ara > 0 ? indAra / ara : 1;
+    var kdvT = c.reduce(function (t, k) {
+      return t + k.fiyat * k.adet * oran * (typeof k.kdv === 'number' ? k.kdv : 1) / 100;
+    }, 0);
+    kdvT = Math.round(kdvT * 100) / 100;
+    document.getElementById('sum-ara').textContent = fmt(ara);
+    document.getElementById('row-kupon').style.display = indirim > 0 ? 'flex' : 'none';
+    if (indirim > 0) {
+      document.getElementById('kupon-lbl').textContent = kp.kod;
+      document.getElementById('sum-kupon').textContent = '-' + fmt(indirim);
+    }
+    document.getElementById('sum-kargo').textContent = kargo ? fmt(kargo) : 'Free';
+    document.getElementById('sum-kdv').textContent = '₺' + kdvT.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+    document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo + kdvT) * 100) / 100);
+  }
+
+  function kuponDogrula(kod, sessiz) {
+    var msj = document.getElementById('kupon-msj');
+    fetch('/api/kupon', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kod: kod, kalemler: window.omCart.get() })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (s.gecerli) {
+          localStorage.setItem('om-kupon', JSON.stringify({ kod: kod, indirim: s.indirim, ucretsizKargo: s.ucretsizKargo }));
+          document.getElementById('kupon-btn').textContent = 'Remove';
+          if (!sessiz) { msj.textContent = 'Coupon applied.'; msj.style.color = '#2e7d32'; msj.style.display = 'block'; }
+        } else {
+          localStorage.removeItem('om-kupon');
+          document.getElementById('kupon-btn').textContent = 'Apply';
+          if (!sessiz) { msj.textContent = s.mesaj || 'Invalid coupon.'; msj.style.color = '#a33'; msj.style.display = 'block'; }
+        }
+        render();
+      })
+      .catch(function () {
+        if (!sessiz) { msj.textContent = 'Could not verify the coupon right now.'; msj.style.color = '#a33'; msj.style.display = 'block'; }
+      });
+  }
+  document.getElementById('kupon-btn').addEventListener('click', function () {
+    var mevcut = null;
+    try { mevcut = JSON.parse(localStorage.getItem('om-kupon') || 'null'); } catch (e) { }
+    if (mevcut) {
+      localStorage.removeItem('om-kupon');
+      this.textContent = 'Apply';
+      document.getElementById('kupon-kod').value = '';
+      document.getElementById('kupon-msj').style.display = 'none';
+      render();
+      return;
+    }
+    var kod = document.getElementById('kupon-kod').value.trim().toUpperCase();
+    if (kod) kuponDogrula(kod, false);
+  });
+  (function () {
+    var kp = null;
+    try { kp = JSON.parse(localStorage.getItem('om-kupon') || 'null'); } catch (e) { }
+    if (kp && kp.kod) {
+      document.getElementById('kupon-kod').value = kp.kod;
+      document.getElementById('kupon-btn').textContent = 'Remove';
+      kuponDogrula(kp.kod, true);
+    }
+  })();
+
+  document.getElementById('cart-items').addEventListener('click', function (e) {
+    var c = window.omCart.get();
+    var i = e.target.dataset.i;
+    if (i === undefined) return;
+    if (e.target.classList.contains('cart-del')) c.splice(+i, 1);
+    else if (e.target.dataset.d) {
+      c[+i].adet = Math.min(99, Math.max(0, c[+i].adet + parseInt(e.target.dataset.d, 10)));
+      if (c[+i].adet === 0) c.splice(+i, 1);
+    }
+    window.omCart.save(c);
+    render();
+  });
+
+  document.getElementById('co-btn').addEventListener('click', function () {
+    var btn = this, hata = document.getElementById('co-err');
+    hata.style.display = 'none';
+    var c = window.omCart.get();
+    if (!c.length) return;
+    var m = {
+      ad: document.getElementById('co-ad').value.trim(),
+      eposta: document.getElementById('co-eposta').value.trim(),
+      telefon: document.getElementById('co-tel').value.trim(),
+      adres: document.getElementById('co-adres').value.trim(),
+      not: document.getElementById('co-not').value.trim()
+    };
+    if (!m.ad || !m.eposta || !m.telefon || !m.adres) {
+      hata.textContent = 'Please fill in name, email, phone and address.';
+      hata.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    fetch('/api/siparis', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ musteri: m, odeme: 'havale', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (s) {
+        if (!s.ok) throw new Error(s.j.hata || 'Order failed');
+        window.omCart.save([]);
+        localStorage.removeItem('om-kupon');
+        document.getElementById('co-no').textContent = s.j.no;
+        document.getElementById('cart-wrap').style.display = 'none';
+        document.getElementById('co-ok').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .catch(function (e) {
+        hata.textContent = e.message + ' — check your connection and try again.';
+        hata.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Complete Order';
+      });
+  });
+
+  var bekle = setInterval(function () {
+    if (window.omCart) { clearInterval(bekle); render(); }
+  }, 50);
+});
+</script>
+</body>
+</html>

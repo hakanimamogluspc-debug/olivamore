@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Öğren: Zeytinyağı Rehberleri, Sağlıklı Yaşam &amp; Tarifler | Olivamore</title>
+<meta name="description" content="Naturel sızma nedir? Polifenol ne işe yarar? Hasat ne zaman yapılır? Net, soru-cevap yapılı rehberler, sağlıklı yaşam yazıları ve mevsim tarifleri.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body data-page="ogren">
+<div id="om-header"></div>
+
+<!-- VİDEO BANNER (orijinal oran, metinsiz) -->
+<div class="ogren-video">
+  <video id="ov-video" src="assets/img/ogren-banner.mp4" autoplay muted loop playsinline aria-label="Olivamore tanıtım videosu"></video>
+  <div class="ov-text" id="ov-text">
+    <h1>Zeytinyağını tanı</h1>
+  </div>
+</div>
+<script>
+  // Videonun sonunda metin belirir, döngü başında kaybolur
+  document.addEventListener('DOMContentLoaded', function () {
+    var v = document.getElementById('ov-video'), t = document.getElementById('ov-text');
+    v.addEventListener('timeupdate', function () {
+      if (v.currentTime >= 7.5) t.classList.add('show');
+      else if (v.currentTime < 1) t.classList.remove('show');
+    });
+  });
+</script>
+<script>
+  // Mouse hareketiyle kare-kare banner (mobilde kendiliğinden akar)
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!document.getElementById('seq-img')) return; // video banner'a geçildi; eski sekans kodu devre dışı
+    var N = 30, kareler = [], gorsel = document.getElementById('seq-img'), hero = document.getElementById('ogren-hero');
+    for (var i = 0; i < N; i++) {
+      var im = new Image();
+      im.src = 'assets/img/ezgif/kare-' + ('0' + i).slice(-2) + '.jpg';
+      kareler.push(im);
+    }
+    var idx = 0;
+    function git(i) {
+      i = Math.max(0, Math.min(N - 1, i));
+      if (i !== idx) { idx = i; gorsel.src = kareler[i].src; }
+    }
+    // KAYDIRMA SÜRÜŞÜ: banner sabitlenir; mouse tekeri / ok tuşlarıyla
+    // kaydırdıkça kareler ilerler. Animasyon bitmeden sayfa aşağı geçmez.
+    var seq = document.getElementById('ogren-seq');
+    function kaydir() {
+      var r = seq.getBoundingClientRect();
+      var toplam = seq.offsetHeight - window.innerHeight;
+      var p = Math.min(1, Math.max(0, -r.top / toplam));
+      git(Math.round(p * (N - 1)));
+    }
+    window.addEventListener('scroll', kaydir, { passive: true });
+    window.addEventListener('resize', kaydir);
+    kaydir();
+  });
+</script>
+
+<!-- TARİFLER -->
+<section class="block" id="sec-tarifler">
+  <div class="container">
+    <div class="sec-head center"><div class="kicker">Mutfaktan</div><h2>10 tarif, 3 yağ</h2><p class="lead">Her tarifin altında o tabağa yakışan Olivamore yazar. Beğendiğine tıkla, malzemesinden porsiyonuna hepsi hazır.</p></div>
+    <div class="tarif-grid">
+      <a class="blog-card" href="tarif-firin-levrek.html"><div class="blog-thumb"><img src="assets/img/tarif-firin-levrek.jpg" alt="Zeytinyağlı fırın levrek" loading="lazy"></div><div class="card-body"><span class="blog-tag">Ayvalık EH</span><h3>Zeytinyağlı Fırın Levrek</h3></div></a>
+      <a class="blog-card" href="tarif-zeytinyagli-enginar.html"><div class="blog-thumb"><img src="assets/img/tarif-zeytinyagli-enginar.jpg" alt="Zeytinyağlı enginar" loading="lazy"></div><div class="card-body"><span class="blog-tag">Olgun Hasat</span><h3>Zeytinyağlı Enginar</h3></div></a>
+      <a class="blog-card" href="tarif-patlican-ezme.html"><div class="blog-thumb"><img src="assets/img/tarif-patlican-ezme.jpg" alt="Közlenmiş patlıcan ezmesi" loading="lazy"></div><div class="card-body"><span class="blog-tag">Trilye</span><h3>Közlenmiş Patlıcan Ezmesi</h3></div></a>
+      <a class="blog-card" href="tarif-mercimek-corbasi.html"><div class="blog-thumb"><img src="assets/img/tarif-mercimek-corbasi.jpg" alt="Kızgın yağlı mercimek çorbası" loading="lazy"></div><div class="card-body"><span class="blog-tag">Olgun Hasat</span><h3>Mercimek Çorbası, Kızgın Yağlı</h3></div></a>
+      <a class="blog-card" href="tarif-yaprak-sarma.html"><div class="blog-thumb"><img src="assets/img/tarif-yaprak-sarma.jpg" alt="Zeytinyağlı yaprak sarma" loading="lazy"></div><div class="card-body"><span class="blog-tag">Olgun Hasat</span><h3>Zeytinyağlı Yaprak Sarma</h3></div></a>
+      <a class="blog-card" href="tarif-taze-fasulye.html"><div class="blog-thumb"><img src="assets/img/tarif-taze-fasulye.jpg" alt="Zeytinyağlı taze fasulye" loading="lazy"></div><div class="card-body"><span class="blog-tag">Olgun Hasat</span><h3>Zeytinyağlı Taze Fasulye</h3></div></a>
+      <a class="blog-card" href="tarif-visneli-salata.html"><div class="blog-thumb"><img src="assets/img/tarif-visneli-salata.jpg" alt="Vişneli keçi peynirli salata" loading="lazy"></div><div class="card-body"><span class="blog-tag">Ayvalık EH</span><h3>Vişneli, Keçi Peynirli Salata</h3></div></a>
+      <a class="blog-card" href="tarif-humus.html"><div class="blog-thumb"><img src="assets/img/tarif-humus.jpg" alt="Limonlu humus" loading="lazy"></div><div class="card-body"><span class="blog-tag">Trilye</span><h3>Limonlu Humus</h3></div></a>
+      <a class="blog-card" href="tarif-portakalli-kek.html"><div class="blog-thumb"><img src="assets/img/tarif-portakalli-kek.jpg" alt="Zeytinyağlı portakallı kek" loading="lazy"></div><div class="card-body"><span class="blog-tag">Ayvalık EH</span><h3>Zeytinyağlı Portakallı Kek</h3></div></a>
+      <a class="blog-card" href="tarif-ekmek-bandirma.html"><div class="blog-thumb"><img src="assets/img/tarif-ekmek-bandirma.jpg" alt="Ekmek bandırması tadım tabağı" loading="lazy"></div><div class="card-body"><span class="blog-tag">Trilye</span><h3>Ekmek Bandırması</h3></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- TARİF ASİSTANI TANITIMI -->
+<section class="block tight" style="padding-bottom:0;" id="sec-tarif-promo">
+  <div class="container split">
+    <div class="split-art photo-cover" style="min-height:380px;">
+      <img src="assets/img/tarif-promo.jpg" alt="Olivamore ile hazırlanmış sofra">
+    </div>
+    <div>
+      <div class="kicker">Yeni · Yapay Zekâ Destekli</div>
+      <h2>Elindekilerle ne pişirsen?</h2>
+      <p class="lead" style="margin-top:16px;">Malzemelerini yaz, sana özel bir tarif üretelim ve o yemeğe en çok yakışan Olivamore'u önerelim.</p>
+      <p style="margin-top:30px;"><a class="btn btn-gold" href="tarif-asistani.html">Tarif Asistanı'nı Dene</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- REHBERLER -->
+<section class="block tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Rehberler</div><h2>Sık sorulan büyük sorular</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-naturel-nedir.jpg" alt="Naturel sızma zeytinyağı şişesi ve zeytin dalı"></div>
+        <div class="card-body"><span class="blog-tag">Rehber</span><h3>Naturel sızma zeytinyağı nedir? Diğerlerinden farkı ne?</h3><p class="card-note">Sızma, naturel, riviera: market rafındaki terimlerin gerçek karşılıkları.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-polifenol.jpg" alt="Zeytinyağında polifenol"></div>
+        <div class="card-body"><span class="blog-tag">Rehber</span><h3>Zeytinyağında polifenol ne işe yarar?</h3><p class="card-note">Boğazdaki o yakma hissi bir kusur değil. Antioksidan içeriğinin tadım diliyle çevirisi.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-hasat.jpg" alt="Zeytin hasadı"></div>
+        <div class="card-body"><span class="blog-tag">Rehber</span><h3>Zeytin hasadı ne zaman yapılır?</h3><p class="card-note">Erken hasat ve olgun hasat: aynı ağaç, iki farklı yağ. Renk, aroma ve fiyat neden değişiyor?</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-raf-omru.jpg" alt="Zeytinyağı saklama koşulları"></div>
+        <div class="card-body"><span class="blog-tag">Rehber</span><h3>Zeytinyağı bozulur mu? Raf ömrü ve saklama koşulları</h3><p class="card-note">Işık, ısı ve hava: yağın üç düşmanı. Doğru saklamayla tazeliği aylarca koru.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-hatalar.jpg" alt="Zeytinyağı tüketiminde yapılan hatalar"></div>
+        <div class="card-body"><span class="blog-tag">Rehber</span><h3>Zeytinyağı tüketiminde sık yapılan hatalar ve doğruları</h3><p class="card-note">"Zeytinyağıyla pişirilmez" dahil, en yaygın efsaneleri verilerle çözüyoruz.</p></div>
+      </a>
+      <a class="blog-card" href="urun.html">
+        <div class="blog-thumb"><img src="assets/img/ayvalik-500.jpg" alt="Ayvalık Erken Hasat 500ml" style="object-fit:contain;padding:10px;background:#fff;"></div>
+        <div class="card-body"><span class="blog-tag">Uygula</span><h3>Okuduğunu tat: Ayvalık Erken Hasat</h3><p class="card-note">Rehberlerde anlattığımız her değer bu şişenin etiketinde. Kendin karşılaştır.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SAĞLIKLI YAŞAM -->
+<section class="block alt tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Sofra Kültürü</div><h2>İyi yaşam, iyi sofra</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-akdeniz.jpg" alt="Akdeniz diyeti sofrası"></div>
+        <div class="card-body"><span class="blog-tag">Yaşam</span><h3>Akdeniz diyetinde zeytin ve zeytinyağının rolü</h3><p class="card-note">UNESCO listesindeki yaşam biçiminin merkezinde neden hep zeytin var?</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-detoks.jpg" alt="Güne bir kaşık zeytinyağı"></div>
+        <div class="card-body"><span class="blog-tag">Yaşam</span><h3>Güne 1 kaşık zeytinyağı: gelenek ne diyor, araştırma ne diyor?</h3><p class="card-note">Aç karnına zeytinyağı geleneğinin kökeni ve araştırmaların bugüne kadar söyledikleri.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-cilt.jpg" alt="Zeytinyağı ile cilt bakımı"></div>
+        <div class="card-body"><span class="blog-tag">Yaşam</span><h3>Mutfaktan banyoya: zeytinyağının geleneksel kullanımları</h3><p class="card-note">Sabun geleneğinden bakım ritüellerine; E vitamini ve skualen nedir, nerede bulunur?</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SİRKE DÜNYASI -->
+<section class="block tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Sirke Dünyası</div><h2>Doğal fermente sirkeler</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-alic-sirkesi.jpg" alt="Alıç sirkesi"></div>
+        <div class="card-body"><span class="blog-tag">Sirke</span><h3>Alıç sirkesi nedir?</h3><p class="card-note">Anadolu'nun az bilinen meyvesinden, doğal fermantasyonla gelen keskin, canlı bir lezzet.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-fermantasyon.jpg" alt="Doğal fermantasyon sirkeleri"></div>
+        <div class="card-body"><span class="blog-tag">Sirke</span><h3>Doğal fermente sirke: canlı sirke pastörizeden nasıl ayrılır?</h3><p class="card-note">Pastörize sirke ile canlı sirke arasındaki fark, sandığından büyük.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- TARİFLER -->
+<section class="block alt tight">
+  <div class="container">
+    <div class="sec-head"><div class="kicker">Tarifler</div><h2>Yağı sofraya taşı</h2></div>
+    <div class="blog-grid">
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-levrek.jpg" alt="Çıtır levrekli deniz börülcesi"></div>
+        <div class="card-body"><span class="blog-tag">Tarif</span><h3>Çıtır levrekli deniz börülcesi</h3><p class="card-note">Ege'nin ikonik ikilisi. Deniz börülcesini erken hasat sızmayla bitir.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/blog-visneli-salata.jpg" alt="Vişneli lorlu salata"></div>
+        <div class="card-body"><span class="blog-tag">Tarif</span><h3>Vişneli lorlu salata</h3><p class="card-note">Tatlı-ekşi vişne, taze lor ve yoğun meyvemsi Trilye: yaz sofrasının sürprizi.</p></div>
+      </a>
+      <a class="blog-card" href="#">
+        <div class="blog-thumb"><img src="assets/img/story-sofra.jpg" alt="Olivamore ürünleriyle kurulmuş sofra"></div>
+        <div class="card-body"><span class="blog-tag">Sofra</span><h3>Olivamore ile sofra kurmak</h3><p class="card-note">Zeytinyağından nar ekşisine, fermente zeytinden doğal sabuna; ürün ailesiyle tanış.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div id="om-footer"></div>
+</body>
+</html>
