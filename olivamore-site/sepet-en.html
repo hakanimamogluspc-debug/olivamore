@@ -90,6 +90,10 @@
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Bank Transfer</b><small>IBAN details arrive by email after ordering; we ship once payment is confirmed.</small></span></label>
         <label class="pay-opt dis"><input type="radio" name="odeme" disabled><span><b>Credit Card</b><small>Coming very soon.</small></span></label>
 
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin:12px 0 4px;cursor:pointer;">
+          <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
+          <span>I have read and accept the <a href="mesafeli-satis.html" target="_blank" style="text-decoration:underline;">Distance Sales Agreement</a> and the <a href="gizlilik.html" target="_blank" style="text-decoration:underline;">Privacy (KVKK) Notice</a>.</span>
+        </label>
         <button class="btn btn-gold" id="co-btn" style="width:100%;margin-top:10px;">Complete Order</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
         <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">Free shipping over 500 TL. Unconditional 14-day returns on unopened products.</p>
@@ -218,6 +222,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     if (!m.ad || !m.eposta || !m.telefon || !m.adres) {
       hata.textContent = 'Please fill in name, email, phone and address.';
+      hata.style.display = 'block';
+      return;
+    }
+    if (!document.getElementById('co-onay').checked) {
+      hata.textContent = 'Please accept the Distance Sales Agreement and the Privacy Notice to continue.';
       hata.style.display = 'block';
       return;
     }

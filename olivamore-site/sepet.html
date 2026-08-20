@@ -93,6 +93,10 @@
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Havale / EFT</b><small>Sipariş sonrası IBAN bilgisi e-postana gelir; ödeme onayıyla kargolanır.</small></span></label>
         <label class="pay-opt dis"><input type="radio" name="odeme" disabled><span><b>Kredi Kartı</b><small>Çok yakında (iyzico başvurusu tamamlanınca aktifleşecek).</small></span></label>
 
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin:12px 0 4px;cursor:pointer;">
+          <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
+          <span><a href="mesafeli-satis.html" target="_blank" style="text-decoration:underline;">Mesafeli Satış Sözleşmesi</a>'ni ve <a href="gizlilik.html" target="_blank" style="text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum, onaylıyorum.</span>
+        </label>
         <button class="btn btn-gold" id="co-btn" style="width:100%;margin-top:10px;">Siparişi Tamamla</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
         <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">500 TL üzeri kargo bedava. Açılmamış ürünlerde 14 gün koşulsuz iade.</p>
@@ -228,6 +232,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     if (!m.ad || !m.eposta || !m.telefon || !m.adres) {
       hata.textContent = 'Lütfen ad, e-posta, telefon ve adres alanlarını doldur.';
+      hata.style.display = 'block';
+      return;
+    }
+    if (!document.getElementById('co-onay').checked) {
+      hata.textContent = 'Devam etmek için Mesafeli Satış Sözleşmesi ve KVKK Aydınlatma Metni onayı gerekli.';
       hata.style.display = 'block';
       return;
     }
