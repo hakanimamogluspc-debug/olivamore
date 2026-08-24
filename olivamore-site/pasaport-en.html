@@ -24,14 +24,12 @@
 <section class="block tight">
   <div class="container">
     <div class="pp-search">
-      <input type="text" id="pp-input" placeholder="Batch No · e.g. AYV-2510" maxlength="12">
+      <input type="text" id="pp-input" placeholder="Batch or report no · e.g. 2505969" maxlength="20">
       <button class="btn btn-dark" id="pp-btn">Look Up</button>
     </div>
     <div class="pp-samples">
-      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Examples:</span>
-      <button class="chip" data-kod="AYV-2510">AYV-2510</button>
-      <button class="chip" data-kod="TRL-2510">TRL-2510</button>
-      <button class="chip" data-kod="OLG-2511">OLG-2511</button>
+      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Verified report:</span>
+      <button class="chip" data-kod="2505969">2505969</button>
     </div>
 
     <!-- RESULT CARD -->
@@ -53,7 +51,7 @@
         </div>
 
         <div class="tasting" style="margin:0 0 22px;">
-          <h4>Tasting note for this batch</h4>
+          <h4>Report scope</h4>
           <p style="font-size:.95rem;color:var(--ink-soft);" id="pp-tadim"></p>
         </div>
 
@@ -61,13 +59,14 @@
           <div class="avatar" id="pp-avatar"></div>
           <div>
             <b style="font-weight:400;" id="pp-uretici"></b>
-            <p style="font-size:.85rem;color:var(--ink-soft);">Hand-picked olives, double-sorted and washed with ozonated water, pressed the same day at 20-22°C in our Oleapenol press; never blended into bulk pools.</p>
+            <p style="font-size:.85rem;color:var(--ink-soft);">This card shows only details explicitly present in the linked report; missing harvest, parcel or tasting details are not inferred.</p>
             <a class="link-arrow" style="font-size:.85rem;" href="ureticiler-en.html">Meet the producer →</a>
           </div>
         </div>
 
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <a class="btn btn-gold" id="pp-link" href="urun-en.html">This Oil's Page</a>
+          <a class="btn btn-outline" id="pp-report" href="#" target="_blank" rel="noopener">Matching PDF Report</a>
           <a class="btn btn-outline" href="ureticiler-en.html#izlenebilirlik">The Traceability Chain</a>
         </div>
       </div>
@@ -76,7 +75,7 @@
     <!-- NOT FOUND -->
     <div class="pp-empty" id="pp-empty">
       <h3 style="font-weight:700;margin-bottom:8px;">We couldn't find that batch number</h3>
-      <p>The number is on the back of the label, below the analysis values (e.g. AYV-2510). If you still can't find it, <a class="link-arrow" href="iletisim-en.html">write to us</a> and we'll email you the report.</p>
+      <p>A verified record may not yet be published for that number. <a class="link-arrow" href="iletisim-en.html">Write to us</a> with the product and volume so we can check the correct report.</p>
     </div>
   </div>
 </section>
@@ -87,9 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* [BATCHES] Default batch database — batches added from the admin panel
      (Partiler tab) are merged in. In production this comes from the backend. */
   var BATCHES = [
-    { kod: 'AYV-2510', urun: 'Ayvalık Early Harvest', hasat: 'October 3–9, 2025 · by hand', sikim: 'Same day · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · North Parcel', asidite: '0.35%', polifenol: '412 mg/kg', peroksit: '6.57 meq O₂/kg', lab: 'November 2025 · independent lab', tadim: 'Smooth and fruity; green-apple freshness with an elegant finish. The oil of breakfast and raw use.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun-en.html' },
-    { kod: 'TRL-2510', urun: 'Trilye Early Harvest', hasat: 'October 10–16, 2025 · by hand', sikim: 'Same day · 20-22°C · Oleapenol', cesit: 'Gemlik (Trilye)', parsel: 'Ayvalık · Gemlik-variety parcel, old trees', asidite: '0.12%', polifenol: '486 mg/kg', peroksit: '6.75 meq O₂/kg', lab: 'November 2025 · independent lab', tadim: 'Intense and full of character; a peppery finish in the throat. The oil of grilled vegetables and sharp salads.', uretici: 'Olivamore Groves, Ayvalık', avatar: 'OB', href: 'urun-trilye-en.html' },
-    { kod: 'OLG-2511', urun: 'Ripe Harvest', hasat: 'November 18–26, 2025 · by hand', sikim: 'Same day · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · South Parcel', asidite: '0.28%', polifenol: '295 mg/kg', peroksit: '8.1 meq O₂/kg', lab: 'December 2025 · independent lab', tadim: 'Gentle bitterness, balanced and full body. The oil of hot dishes, braises and the oven.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun-en.html' }
+    { kod: '2505969', urun: 'Trilye Early Harvest · two 250 ml samples', hasat: 'Not stated in the report', sikim: 'The sample name says “cold pressed”; date and temperature are not stated', cesit: 'Trilye', parsel: 'Not stated in the report', asidite: '0.12% ±0.01', polifenol: 'Not included in this report', peroksit: '3.41 ±0.848 meq O₂/kg', lab: 'DEPPO · Report 2505969 · 11 March 2025', tadim: 'The report contains chemical and physical results; it does not include an independent sensory tasting note.', uretici: 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık', avatar: 'PT', href: 'urun-trilye-en.html', rapor: 'https://olivamore.com/wp-content/uploads/2025/04/2505969-PEKTAS-TARIM-Trilye-Erken-Hasat-Soguk-Sikim-Naturel-Sizma-Zeytinyagi-TREN.pdf' }
   ];
   try {
     var C = JSON.parse(localStorage.getItem('om-admin') || '{}');
@@ -124,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('pp-uretici').textContent = b.uretici;
     document.getElementById('pp-avatar').textContent = b.avatar || b.uretici.slice(0, 2).toUpperCase();
     document.getElementById('pp-link').href = b.href || 'urun-en.html';
+    document.getElementById('pp-report').href = b.rapor || 'kalite-en.html#analizler';
     card.classList.add('on');
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

@@ -3,25 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Damak Testi: 10 Soruda Damak Haritan | Olivamore</title>
-<meta name="description" content="10 kısa soruda damak haritanı çıkar; yedi Olivamore yağı içindeki damak uyum payını gör. Doğru ya da yanlış cevap yok, yaklaşık 90 saniye.">
+<title>Damak Pusulası: 6 Soruda Yağını Bul | Olivamore</title>
+<meta name="description" content="6 kısa soruda kullanım ve tat tercihini belirle; bir ana öneri ve iki alternatif gör. E-posta gerekmez.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <style>
-.dm-bars{margin:26px auto 6px;max-width:440px;text-align:left}
-.dm-row{margin-bottom:12px}
-.dm-row .t{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px}
-.dm-row .t b{font-weight:700}
-.dm-row .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
-.dm-row .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));width:0;transition:width .9s ease}
-.qz-result .qz-img{border:2px solid var(--gold);border-radius:16px;padding:16px;background:#fff;box-shadow:0 14px 32px rgba(191,162,93,.22)}
+.qz-result .qz-img{border:2px solid var(--gold);border-radius:16px;padding:0;background:#fff;box-shadow:0 14px 32px rgba(191,162,93,.22)}
 .dm-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
 .dm-badge{border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.82rem;background:#fff}
 .dm-badge b{color:var(--gold)}
 .dm-note{font-size:.76rem;color:var(--ink-soft);max-width:520px;margin:18px auto 0;line-height:1.6}
-.dm-low{background:var(--gold-pale,#F6F0E3);border:1px solid var(--gold);border-radius:12px;padding:14px 18px;font-size:.88rem;max-width:460px;margin:16px auto 0}
 </style>
 </head>
 <body data-page="ogren">
@@ -30,9 +23,10 @@
 <section class="block tight">
   <div class="container">
     <div class="sec-head center">
-      <div class="kicker">Damak Pusulan · V3</div>
-      <h2>10 soruda damak haritan</h2>
-      <p class="lead">Doğru ya da yanlış cevap yok; genelde damak zevkine en yakın seçeneği seç. Yaklaşık 90 saniye.</p>
+      <div class="kicker">Damak Pusulası</div>
+      <h1>6 soruda sofrana uygun yağı bul</h1>
+      <p class="lead">E-posta gerekmez. Tat ve kullanım tercihlerine göre bir ana öneri, iki alternatif ve yemek eşleşmeleri gösterir.</p>
+
     </div>
 
     <div class="qz-wrap">
@@ -47,19 +41,36 @@
 
       <div class="qz-result" id="qz-result">
         <h2>Damak haritan hazır</h2>
-        <p class="lead" style="margin-bottom:22px;">Damak zevkin tek bir yağa sığmıyor. Cevaplarına göre sana en yakın eşleşmeleri ve keşfetmeye değer alternatifleri sıraladık.</p>
-        <img class="qz-img" id="dm-img" src="" alt="">
+        <p class="lead" style="margin-bottom:22px;">Her ürünü damak ve kullanım tercihlerinle ayrı ayrı karşılaştırdık. İşte sana en güçlü üç eşleşme.</p>
+        <img class="qz-img" id="dm-img" alt="">
         <div class="qz-profil" id="dm-pay"></div>
         <h2 id="dm-ad" style="margin-top:0;"></h2>
         <p style="color:var(--ink-soft);max-width:460px;margin:8px auto 16px;" id="dm-desc"></p>
-        <a class="btn btn-gold" id="dm-link" href="#">Ürünü Gör</a>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn btn-dark" id="dm-add" type="button">Sepete Ekle</button><a class="btn btn-outline" id="dm-link" href="#">Ürünü Gör</a><button class="btn btn-outline" id="dm-share" type="button">Sonucu Paylaş</button></div>
         <div class="dm-badges">
-          <span class="dm-badge">Yakın alternatif: <b id="dm-alt"></b></span>
-          <span class="dm-badge">Keşif önerisi: <b id="dm-kesif"></b></span>
+          <span class="dm-badge">2. eşleşme: <b id="dm-alt"></b></span>
+          <span class="dm-badge">3. eşleşme: <b id="dm-kesif"></b></span>
         </div>
-        <div class="dm-low" id="dm-low" style="display:none;">İlk iki eşleşmen neredeyse başa baş. Tek şişe yerine <a class="link-arrow" href="hediye-olustur.html">iki şişelik bir keşif seti</a> kurmak senin damağın için daha doğru bir başlangıç olur.</div>
-        <div class="dm-bars" id="dm-bars"></div>
-        <p class="dm-note">Bu yüzdeler <b>damak uyum payıdır</b>; içerik oranı veya kesin tadım sonucu değildir. Cevaplarının mevcut Olivamore ürünleriyle göreli uyumunu gösterir. Tadım deneyimi hasada, üretim partisine ve kullandığın yemeğe göre değişebilir.</p>
+        <div class="dm-box-offer">
+          <div class="dm-box-copy">
+            <span class="dm-box-kicker">Pusulana özel · %15 avantaj</span>
+            <h3>Damak kutunu hazırlayalım</h3>
+            <p>En güçlü üç eşleşmeni 100 ml şişelerle tek kutuda bir araya getirdik. Seçimlerin kutu oluşturucuda hazır gelecek.</p>
+            <div class="dm-box-products" id="dm-box-products"></div>
+          </div>
+          <div class="dm-box-action">
+            <span class="dm-old-price">₺1.600</span>
+            <strong>₺1.360</strong>
+            <small>Damak Pusulası avantajı</small>
+            <a class="btn btn-dark" id="dm-box-link" href="hediye-olustur.html">Damak Kutumu Hazırla</a>
+          </div>
+        </div>
+        <a class="dm-club-invite" href="kulup.html">
+          <img src="assets/img/club-1.jpg" alt="Olivamore Club ile sofrada bir araya gelen insanlar">
+          <span><small>Olivamore Club · Bekleme Listesi</small><strong>Program hazır olduğunda haber al.</strong><em>E-posta bırakmak üyelik veya ödeme oluşturmaz.</em></span>
+          <b>Listeye katıl →</b>
+        </a>
+        <p class="dm-note">Bu yüzdeler, <b>birbirinden bağımsız öneri uyum puanlarıdır</b>; bu nedenle toplamlarının 100 olması gerekmez. Puanlar, seçtiğin kullanım amacı ile tat ve aroma tercihlerini her ürünün profiliyle ayrı ayrı karşılaştırır. Tadım deneyimi; hasada, üretim partisine ve ürünü kullandığın yemeğe göre değişebilir.</p>
         <p style="margin-top:20px;"><button class="qz-back" id="dm-restart" style="display:inline;">Testi yeniden çöz</button></p>
       </div>
     </div>
@@ -71,27 +82,27 @@
 document.addEventListener('DOMContentLoaded', function () {
   /* ===== V3 · Ürün evreni (7 profil) ===== */
   var P = [
-    { k:'AYV', ad:'Ayvalık Erken Hasat', img:'assets/img/ayvalik-500.jpg', href:'urun.html',
-      d:'Cevapların yumuşak, meyvemsi ve dengeli bir profile yakın. Yeşil elma tazeliğini kahvaltıda, narin salatada ve beyaz etli balıkta dene.' },
-    { k:'TRI', ad:'Trilye Erken Hasat', img:'assets/img/trilye-750.jpg', href:'urun-trilye.html',
-      d:'Cevapların belirgin tada ve boğazda daha uzun süren doğal yakıcılığa yakın olduğunu gösteriyor. Roka ağırlıklı salatada, köz sebzede veya taze ekmekle deneyebilirsin.' },
-    { k:'OLG', ad:'Olgun Hasat', img:'assets/img/ayvalik-5l.jpg', href:'p.html?id=og5l',
-      d:'Cevapların günlük, dengeli ve ocak dostu bir yağa işaret ediyor. Zeytinyağlılarda, mercimek çorbasında ve fırın sebzede mutfağının eşlikçisi olur.' },
-    { k:'MAN', ad:'Bodrum Mandalina Çeşnili', img:'assets/img/cesnili-mandalina.jpg', href:'p.html?id=ces-mand',
-      d:'Damağın ferah ve meyvemsi bir narenciye yönüne açık. Mandalina kabuğunun kokusunu salatada, balıkta ve tatlıda dene.' },
-    { k:'BER', ad:'Bergamot Çeşnili', img:'assets/img/cesnili-bergamot.jpg', href:'p.html?id=ces-berg',
-      d:'Parfümsü, ayırt edici bir narenciye karakteri seninle uyumlu. Beyaz balıkta, yoğurtlu mezede ve tatlıda dene.' },
-    { k:'KEK', ad:'Kekik Çeşnili', img:'assets/img/cesnili-kekik.jpg', href:'p.html?id=ces-kek',
-      d:'Otsu aromalar damak haritanda öne çıkıyor. Dağ kekiği çeşnisini ızgarada ve fırın patateste dene.' },
-    { k:'ACI', ad:'Acı Biberli Çeşnili', img:'assets/img/cesnili-acibiber.jpg', href:'p.html?id=ces-bib',
-      d:'Isıyı seven bir damağın var. Acı biber çeşnisini pizzada, makarnada ve köz sebzede dene.' }
+    { k:'AYV', box:'AY', ad:'Ayvalık Erken Hasat', img:'assets/img/ayvalik-500.jpg', href:'urun.html',
+      d:'Cevapların yumuşak, meyvemsi ve dengeli bir profile yakın. Domates–beyaz peynir salatasında, humusun üstünde veya kahvaltıda serviste dene.' },
+    { k:'TRI', box:'TR', ad:'Trilye Erken Hasat', img:'assets/img/trilye-750.jpg', href:'urun-trilye.html',
+      d:'Cevapların belirgin tada ve daha uzun biberimsi bitişe yakın. Fırından çıkan levrekte, köz patlıcanda veya humusun üstünde serviste dene.' },
+    { k:'OLG', box:'OL', ad:'Olgun Hasat', img:'assets/img/ayvalik-5l.jpg', href:'p.html?id=og5l',
+      d:'Cevapların günlük, dengeli ve ocak dostu bir yağa işaret ediyor. Nohut, türlü, taze fasulye ve fırın sebzede pişirmenin başından itibaren kullan.' },
+    { k:'MAN', box:'MA', ad:'Bodrum Mandalina Çeşnili', img:'assets/img/cesnili-mandalina.jpg', href:'p.html?id=ces-mand',
+      d:'Damağın ferah bir narenciye yönüne açık. Pancar–peynir salatasında, soğuyan kekin glazesinde veya balıkta serviste dene; ekşilik için limon ya da sirkeyi ayrı ekle.' },
+    { k:'BER', box:'BE', ad:'Bergamot Çeşnili', img:'assets/img/cesnili-bergamot.jpg', href:'p.html?id=ces-berg',
+      d:'Ayırt edici narenciye kokularına açıksın. Beyaz balıkta veya enginarda servisten hemen önce, birkaç damladan başlayarak dene; ekşilik için limon ayrı.' },
+    { k:'KEK', box:'KE', ad:'Kekik Çeşnili', img:'assets/img/cesnili-kekik.jpg', href:'p.html?id=ces-kek',
+      d:'Otsu aromalar damak haritanda öne çıkıyor. Fırın patateste, sıcak ekmekte veya ızgara tavukta piştikten sonra ekle.' },
+    { k:'ACI', box:'AC', ad:'Acı Biberli Çeşnili', img:'assets/img/cesnili-acibiber.jpg', href:'p.html?id=ces-bib',
+      d:'Isıyı seven bir damağın var. Acı Biberli yağı mercimek çorbasında, humusta veya pizzada ayrıca kızdırmadan, serviste damla damla ekle.' }
   ];
 
   /* ===== Sorular (matris sırası: Ek A) — m: seçenek başına AYV,TRI,OLG,MAN,BER,KEK,ACI ===== */
   var Q = [
     { w:0.10, t:'Tabağındaki zeytinyağı ne kadar belirgin olsun?', o:['Çok hafif hissedilsin','Hafif ama fark edilir olsun','Belirgin olsun','Güçlü biçimde öne çıksın'],
       m:[[3,0,3,2,1,1,0],[3,2,3,2,2,2,1],[2,3,1,2,3,3,2],[1,3,0,1,2,2,3]] },
-    { w:0.12, t:'Mutfağına bir koku ışınlayabilsen hangisini seçerdin?', o:['Taze kesilmiş çimen ve yeşil badem','Olgun elma ve armut','Yeni soyulmuş narenciye kabuğu','Avuçta ovulmuş Akdeniz otları'],
+    { w:0.12, t:'Zeytinyağında hangi koku sana daha çekici gelir?', o:['Taze kesilmiş çimen ve yeşil badem','Olgun elma ve armut','Yeni soyulmuş narenciye kabuğu','Avuçta ovulmuş Akdeniz otları'],
       m:[[3,3,2,1,1,2,1],[3,2,2,1,1,1,1],[1,1,1,3,3,1,0],[1,2,1,0,1,3,1]] },
     { w:0.09, t:'Narenciye tarafında hangisi sana daha yakın?', o:['Mandalina kabuğunu hatırlatan meyvemsi koku',"Earl Grey'i hatırlatan bergamot kokusu",'Türü önemli değil; ferah bir narenciye aroması','Narenciye önceliğim değil'],
       m:[[1,0,1,3,2,0,0],[1,0,0,2,3,0,0],[2,1,1,3,3,2,1],[3,3,3,0,0,3,3]] },
@@ -103,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
       m:[[3,0,3,2,2,2,2],[3,2,3,2,2,2,2],[2,3,1,2,2,2,2],[1,3,0,1,1,2,2]] },
     { w:0.12, t:'Acı biber düğmesini nereye çevirirsin?', n:'Şimdi zeytinin doğal yakıcılığını değil, gerçek acı biber sıcaklığını soruyoruz.', o:['Acı olmasın','Hafif bir sıcaklık','Orta düzeyde acı','Belirgin ve kalıcı acı'],
       m:[[3,3,3,3,3,2,0],[2,2,2,2,2,3,2],[1,2,1,1,1,2,3],[0,2,0,0,0,1,3]] },
-    { w:0.10, t:'Bu şişeden ilk beklediğin görev hangisi?', o:['Ocakta pişirmek','Marine etmek veya fırına hazırlamak','Soğuk tabak ve salata hazırlamak','Serviste son dokunuş yapmak'],
+    { w:0.10, t:'Bu yağı öncelikle nerede kullanmak istersin?', o:['Ocakta pişirmek','Marine etmek veya fırına hazırlamak','Soğuk tabak ve salata hazırlamak','Serviste son dokunuş yapmak'],
       m:[[2,1,3,0,0,1,1],[2,2,3,1,1,2,1],[3,2,2,3,2,2,1],[3,3,1,3,3,3,3]] },
     { w:0.11, t:'Yeni şişeyi ilk hangi tabağın yanında açardın?', o:['Kahvaltı, salata veya meze','Zeytinyağlı sebze veya bakliyat','Balık, tavuk veya et','Makarna, pizza veya sandviç'],
       m:[[3,2,2,3,3,1,1],[2,3,3,1,1,2,2],[3,2,2,2,3,3,2],[2,3,2,0,1,2,3]] },
@@ -111,11 +122,10 @@ document.addEventListener('DOMContentLoaded', function () {
       m:[[3,3,3,1,0,1,1],[2,2,1,2,1,3,3],[1,1,1,3,2,2,3],[0,1,0,3,3,1,3]] }
   ];
   /* Zorunlu displayOrder: yoğunluk, aroma, narenciye, otsu, burukluk, GÖREV, yakıcılık, YEMEK, biber, yenilik */
-  var DISP = [0,1,2,3,4,7,5,8,6,9];
+  var DISP = [0,1,4,7,8,9];
 
   var cevap = new Array(Q.length).fill(-1);
   var adim = 0;
-  var oturum = Math.floor(Math.random() * 7); // eşitlik bozucu sabit dönüşüm
 
   var prog = document.getElementById('qz-progress');
   DISP.forEach(function () { prog.appendChild(document.createElement('i')); });
@@ -144,25 +154,16 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('qz-back').addEventListener('click', function () { if (adim > 0) { adim--; goster(); } });
 
   function bitir() {
-    if (cevap.indexOf(-1) !== -1) return; // 10 soru tamamlanmadan sonuç yok
-    var N = P.length;
-    // Ham skor: s(i) = Σ w(q) × [a(q,i) − 1,5]
-    var s = P.map(function (_, i) {
-      return Q.reduce(function (t, q, qi) { return t + q.w * (q.m[cevap[qi]][i] - 1.5); }, 0);
+    if (DISP.some(function (qi) { return cevap[qi] === -1; })) return;
+    // Her ürün kendi profilinde bağımsız değerlendirilir; sonuçlar 100'e bölüştürülmez.
+    // Matris uyumu 0–3 aralığındadır. Kalibre edilmiş ölçek ilk üç eşleşmeyi 81–96 bandında görünür kılar.
+    var puan = P.map(function (_, i) {
+      var toplamAgirlik = DISP.reduce(function (t, qi) { return t + Q[qi].w; }, 0);
+      var profilUyumu = DISP.reduce(function (t, qi) { return t + Q[qi].w * Q[qi].m[cevap[qi]][i]; }, 0) / (3 * toplamAgirlik);
+      return Math.round(67 + 29 * Math.pow(profilUyumu, 0.82));
     });
-    // Softmax (τ=0,75) + %20 katalog tabanı
-    var ex = s.map(function (v) { return Math.exp(v / 0.75); });
-    var tp = ex.reduce(function (a, b) { return a + b; }, 0);
-    var p = ex.map(function (e) { return 100 * (0.80 * e / tp + 0.20 / N); });
-    // En büyük kalan yöntemiyle tam 100
-    var alt = p.map(Math.floor);
-    var eksik = 100 - alt.reduce(function (a, b) { return a + b; }, 0);
-    var kal = p.map(function (v, i) { return { i: i, k: v - Math.floor(v) }; })
-      .sort(function (a, b) { return b.k - a.k || ((a.i + oturum) % 7) - ((b.i + oturum) % 7); });
-    for (var j = 0; j < eksik; j++) alt[kal[j].i]++;
-    // Sıralama (yuvarlanmamış değerle)
-    var sira = p.map(function (v, i) { return { i: i, p: v, tam: alt[i] }; })
-      .sort(function (a, b) { return b.p - a.p; });
+    var sira = puan.map(function (v, i) { return { i: i, p: v, tam: v }; })
+      .sort(function (a, b) { return b.p - a.p || a.i - b.i; });
     var bas = sira[0], ikinci = sira[1], ucuncu = sira[2];
 
     document.getElementById('qz-card').style.display = 'none';
@@ -171,23 +172,29 @@ document.addEventListener('DOMContentLoaded', function () {
     r.classList.add('on');
     document.getElementById('dm-img').src = P[bas.i].img;
     document.getElementById('dm-img').alt = P[bas.i].ad;
-    document.getElementById('dm-pay').textContent = '%' + bas.tam + ' damak uyum payı';
+    document.getElementById('dm-pay').textContent = '1. eşleşme · %' + bas.tam + ' damak uyumu';
     document.getElementById('dm-ad').textContent = P[bas.i].ad;
     document.getElementById('dm-desc').textContent = P[bas.i].d;
     document.getElementById('dm-link').href = P[bas.i].href;
+    document.getElementById('dm-add').onclick = function () {
+      var fiyatlar = { AYV:850, TRI:1350, OLG:3450, MAN:650, BER:650, KEK:650, ACI:650 };
+      var c = window.omCart.get(), urun = P[bas.i], fiyat = fiyatlar[urun.k];
+      var ayni = c.find(function (x) { return x.ad === urun.ad && x.fiyat === fiyat; });
+      if (ayni) ayni.adet += 1; else c.push({ ad:urun.ad, fiyat:fiyat, adet:1, img:urun.img, kdv:1 });
+      window.omCart.save(c); this.textContent = 'Sepete eklendi ✓';
+    };
+    document.getElementById('dm-share').onclick = function () {
+      var metin = 'Damak Pusulası sonucum: ' + P[bas.i].ad + ' (%' + bas.tam + ' uyum)';
+      if (navigator.share) navigator.share({ title:'Olivamore Damak Pusulası', text:metin, url:location.href });
+      else navigator.clipboard.writeText(metin + ' ' + location.href).then(function () { document.getElementById('dm-share').textContent = 'Kopyalandı ✓'; });
+    };
     document.getElementById('dm-alt').textContent = P[ikinci.i].ad + ' %' + ikinci.tam;
     document.getElementById('dm-kesif').textContent = P[ucuncu.i].ad + ' %' + ucuncu.tam;
-    document.getElementById('dm-low').style.display = (bas.p - ikinci.p < 3) ? 'block' : 'none';
-    // Damak haritasının tamamı: 7 çubuk
-    var bars = document.getElementById('dm-bars');
-    bars.innerHTML = '<h3 style="font-size:1rem;margin-bottom:14px;">Damak haritanın tamamı</h3>';
-    sira.forEach(function (x) {
-      var d = document.createElement('div');
-      d.className = 'dm-row';
-      d.innerHTML = '<div class="t"><span>' + P[x.i].ad + '</span><b>%' + x.tam + '</b></div><div class="bar"><i></i></div>';
-      bars.appendChild(d);
-      setTimeout(function () { d.querySelector('i').style.width = x.tam + '%'; }, 60);
-    });
+    var kutu = [bas, ikinci, ucuncu].map(function (x) { return P[x.i]; });
+    document.getElementById('dm-box-products').innerHTML = kutu.map(function (p, i) {
+      return '<span><img src="' + p.img + '" alt=""><b>' + (i + 1) + '</b><em>' + p.ad + '</em></span>';
+    }).join('');
+    document.getElementById('dm-box-link').href = 'hediye-olustur.html?palate=' + kutu.map(function (p) { return p.k; }).join(',') + '&discount=15';
     r.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 

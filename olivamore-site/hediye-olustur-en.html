@@ -32,12 +32,16 @@
 
     <!-- RIGHT: BUILDER -->
     <div>
+      <div class="gb-palate-banner" id="gb-palate-banner" hidden>
+        <b>Your Palate Compass prepared this box</b>
+        <span id="gb-palate-copy"></span> <strong>Your 15% Palate Compass advantage is applied.</strong>
+      </div>
       <div class="gb-step">
         <h3>1. Choose your box</h3>
         <div class="hint">How many bottles should we prepare?</div>
         <div class="gb-box sizes">
-          <button class="size" data-cap="3" data-price="690" data-img="assets/img/hediye-seti-3lu.jpg">Box of 3<small>3 × 100 ml · ₺690</small></button>
-          <button class="size on" data-cap="5" data-price="1.050" data-img="assets/img/hediye-seti-5li.jpg">Box of 5<small>5 × 100 ml · ₺1.050</small></button>
+          <button class="size" data-cap="3" data-price="1.600" data-img="assets/img/hediye-seti-3lu.jpg">Box of 3<small>3 × 100 ml · ₺1.600</small></button>
+          <button class="size on" data-cap="5" data-price="1.500" data-img="assets/img/hediye-seti-5li.jpg">Box of 5<small>5 × 100 ml · ₺1.500</small></button>
         </div>
       </div>
 
@@ -45,8 +49,13 @@
         <h3>2. Pick your bottles</h3>
         <div class="hint">You can add more than one of the same flavor.</div>
         <div class="gb-flavors">
-          <div class="gb-flavor" data-code="AY"><span><b>Ayvalık Early Harvest</b><small>Smooth, fruity extra virgin</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
-          <div class="gb-flavor" data-code="TR"><span><b>Trilye Early Harvest</b><small>Intense extra virgin with character</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="AY" data-quiz="AYV"><span><b>Ayvalık Early Harvest</b><small>Smooth, fruity extra virgin</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="TR" data-quiz="TRI"><span><b>Trilye Early Harvest</b><small>Intense extra virgin with character</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="OL" data-quiz="OLG"><span><b>Ripe Harvest</b><small>Balanced and stove-friendly</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="MA" data-quiz="MAN"><span><b>Bodrum Mandarin Infused</b><small>Fresh, fruity citrus</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="BE" data-quiz="BER"><span><b>Bergamot Infused</b><small>Perfumed, distinctive citrus</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="KE" data-quiz="KEK"><span><b>Thyme Infused</b><small>Pronounced Mediterranean herbs</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="AC" data-quiz="ACI"><span><b>Hot Pepper Infused</b><small>Lively, lasting heat</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
           <div class="gb-flavor" data-code="BD"><span><b>Bodrum</b><small>Balanced, sunny profile</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
           <div class="gb-flavor" data-code="BL"><span><b>Balsamic Vinegar</b><small>Naturally fermented, intense</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
           <div class="gb-flavor" data-code="NR"><span><b>Pomegranate Molasses</b><small>Additive-free, sweet-tart</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
@@ -67,7 +76,7 @@
 
       <div class="gb-summary">
         <div>
-          <div class="gb-price" id="gb-price">₺1.050</div>
+          <div class="gb-price" id="gb-price">₺1.500</div>
           <div class="gb-state" id="gb-state">Fill the box to add it to your bag</div>
         </div>
         <button class="btn btn-dark" id="gb-add" data-add disabled>Add to Bag</button>
@@ -83,15 +92,15 @@
     <div class="prod-grid three">
       <a class="card" href="koleksiyon-en.html#hediyelik">
         <div class="prod-img photo"><span class="badge">Gift</span><img src="assets/img/hediye-seti-5li.jpg" alt="Gift set of 5"><button class="add-bag" data-add>Add to Bag <span>→</span></button></div>
-        <div class="card-body"><div class="card-row"><h3>Tasting Set of 5</h3><span class="price">₺1.050 <small>/ 100ml×5</small></span></div><p class="card-note">Ayvalık, Bodrum, Balsamic, Pomegranate, Trilye. The best-loved five.</p></div>
+        <div class="card-body"><div class="card-row"><h3>Tasting Set of 5</h3><span class="price">₺1.500 <small>/ 100ml×5</small></span></div><p class="card-note">Ayvalık, Bodrum, Balsamic, Pomegranate, Trilye. The best-loved five.</p></div>
       </a>
       <a class="card" href="koleksiyon-en.html#hediyelik">
         <div class="prod-img photo"><img src="assets/img/hediye-seti-3lu.jpg" alt="Gift set of 3"><button class="add-bag" data-add>Add to Bag <span>→</span></button></div>
-        <div class="card-body"><div class="card-row"><h3>Set of 3 with Bag</h3><span class="price">₺690 <small>/ 100ml×3</small></span></div><p class="card-note">A classic trio in an elegant box with a carry bag.</p></div>
+        <div class="card-body"><div class="card-row"><h3>Set of 3 with Bag</h3><span class="price">₺1.600 <small>/ 100ml×3</small></span></div><p class="card-note">A classic trio in an elegant box with a carry bag.</p></div>
       </a>
       <a class="card" href="koleksiyon-en.html#hediyelik">
         <div class="prod-img photo"><img src="assets/img/kutulu-750.jpg" alt="Gift-boxed 750ml"><button class="add-bag" data-add>Add to Bag <span>→</span></button></div>
-        <div class="card-body"><div class="card-row"><h3>Gift Box 750 ml</h3><span class="price">₺1.190 <small>/ 750ml</small></span></div><p class="card-note">One bottle, big impression. In its cylinder box.</p></div>
+        <div class="card-body"><div class="card-row"><h3>Gift Box 750 ml</h3><span class="price">₺1.250 <small>/ 750ml</small></span></div><p class="card-note">One bottle, big impression. In its cylinder box.</p></div>
       </a>
     </div>
   </div>
@@ -100,16 +109,38 @@
 <div id="om-footer"></div>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    var params = new URLSearchParams(location.search);
+    var palateKeys = (params.get('palate') || '').split(',').filter(function (key) { return /^[A-Z]{3}$/.test(key); }).slice(0, 3);
+    var palateOffer = params.get('discount') === '15' && palateKeys.length === 3;
+    if (palateOffer) {
+      document.querySelectorAll('.gb-box .size').forEach(function (b) { b.classList.toggle('on', b.dataset.cap === '3'); });
+    }
     // read initial values from the selected box (includes admin panel overrides)
     var selBox = document.querySelector('.gb-box .size.on');
     var cap = selBox ? parseInt(selBox.dataset.cap, 10) : 5;
-    var price = selBox ? selBox.dataset.price : '1.050';
+    var price = selBox ? selBox.dataset.price : '1.500';
     var counts = {};
     var slots = document.getElementById('gb-slots');
     var hint = document.getElementById('gb-hint');
     var priceEl = document.getElementById('gb-price');
     var stateEl = document.getElementById('gb-state');
     var addBtn = document.getElementById('gb-add');
+    var palateBanner = document.getElementById('gb-palate-banner');
+
+    if (palateOffer) {
+      var chosenNames = [];
+      palateKeys.forEach(function (key) {
+        var flavor = document.querySelector('.gb-flavor[data-quiz="' + key + '"]');
+        if (!flavor) return;
+        counts[flavor.dataset.code] = (counts[flavor.dataset.code] || 0) + 1;
+        chosenNames.push(flavor.querySelector('b').textContent);
+      });
+      document.getElementById('gb-palate-copy').textContent = chosenNames.join(', ') + ' came preselected.';
+      document.getElementById('gb-img').src = selBox.dataset.img;
+    }
+
+    function priceNumber(value) { return parseInt(String(value).replace(/\./g, ''), 10) || 0; }
+    function priceText(value) { return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
     function total() {
       var t = 0;
@@ -131,10 +162,19 @@
         slots.appendChild(d);
       }
       hint.textContent = t + ' / ' + cap + ' bottles selected';
-      priceEl.textContent = '₺' + price;
+      var discounted = palateOffer && cap === 3;
+      if (discounted) {
+        var regular = priceNumber(price);
+        var offerPrice = Math.round(regular * 0.85);
+        priceEl.innerHTML = '₺' + priceText(offerPrice) + ' <del>₺' + priceText(regular) + '</del><span class="gb-saving">15% Palate Compass advantage</span>';
+      } else {
+        priceEl.textContent = '₺' + price;
+      }
+      palateBanner.hidden = !discounted;
       addBtn.disabled = (t !== cap);
+      addBtn.textContent = discounted ? 'Add Palate Box to Bag' : 'Add to Bag';
       stateEl.textContent = t === cap
-        ? 'Your box is ready ✓'
+        ? (discounted ? 'Your Palate Box is ready · 15% advantage applied ✓' : 'Your box is ready ✓')
         : 'Fill the box to add it to your bag';
       document.querySelectorAll('.gb-flavor .plus').forEach(function (b) { b.disabled = (t >= cap); });
       document.querySelectorAll('.gb-flavor').forEach(function (f) {
@@ -145,6 +185,8 @@
 
     document.querySelectorAll('.gb-box .size').forEach(function (b) {
       b.addEventListener('click', function () {
+        document.querySelectorAll('.gb-box .size').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
         cap = parseInt(b.dataset.cap, 10);
         price = b.dataset.price;
         document.getElementById('gb-img').src = b.dataset.img;

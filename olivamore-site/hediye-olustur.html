@@ -27,17 +27,21 @@
     <!-- SOL: GÖRSEL -->
     <div class="gb-visual">
       <div class="photo-frame"><img id="gb-img" src="assets/img/hediye-seti-5li.jpg" alt="Olivamore hediye seti kutusu, 100 ml şişelerle"></div>
-      <p style="font-size:.85rem;color:var(--ink-soft);margin-top:12px;">Tüm setler şık silindir şişeler ve çantalı hediye kutusuyla gönderilir. Karta yazılmış notun kutunun içinde yerini alır.</p>
+      <p style="font-size:.85rem;color:var(--ink-soft);margin-top:12px;">Tüm setler, şık silindir şişelerle çantalı hediye kutusunda gönderilir. Kişisel notunu da kutunun içine ekleriz.</p>
     </div>
 
     <!-- SAĞ: OLUŞTURUCU -->
     <div>
+      <div class="gb-palate-banner" id="gb-palate-banner" hidden>
+        <b>Damak Pusulası kutunu hazırladı</b>
+        <span id="gb-palate-copy"></span> <strong>%15 Damak Pusulası avantajın uygulandı.</strong>
+      </div>
       <div class="gb-step">
         <h3>1. Kutunu seç</h3>
         <div class="hint">Kaç şişelik bir set hazırlayalım?</div>
         <div class="gb-box sizes">
-          <button class="size" data-cap="3" data-price="690" data-img="assets/img/hediye-seti-3lu.jpg">3'lü Kutu<small>3 × 100 ml · ₺690</small></button>
-          <button class="size on" data-cap="5" data-price="1.050" data-img="assets/img/hediye-seti-5li.jpg">5'li Kutu<small>5 × 100 ml · ₺1.050</small></button>
+          <button class="size" data-cap="3" data-price="1.600" data-img="assets/img/hediye-seti-3lu.jpg">3'lü Kutu<small>3 × 100 ml · ₺1.600</small></button>
+          <button class="size on" data-cap="5" data-price="1.500" data-img="assets/img/hediye-seti-5li.jpg">5'li Kutu<small>5 × 100 ml · ₺1.500</small></button>
         </div>
       </div>
 
@@ -45,8 +49,13 @@
         <h3>2. Şişelerini seç</h3>
         <div class="hint">Aynı lezzetten birden fazla ekleyebilirsin.</div>
         <div class="gb-flavors">
-          <div class="gb-flavor" data-code="AY"><span><b>Ayvalık Erken Hasat</b><small>Yumuşak, meyvemsi sızma</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
-          <div class="gb-flavor" data-code="TR"><span><b>Trilye Erken Hasat</b><small>Yoğun, karakterli sızma</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="AY" data-quiz="AYV"><span><b>Ayvalık Erken Hasat</b><small>Yumuşak, meyvemsi sızma</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="TR" data-quiz="TRI"><span><b>Trilye Erken Hasat</b><small>Yoğun, karakterli sızma</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="OL" data-quiz="OLG"><span><b>Olgun Hasat</b><small>Günlük, dengeli ve ocak dostu</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="MA" data-quiz="MAN"><span><b>Bodrum Mandalina Çeşnili</b><small>Ferah ve meyvemsi narenciye</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="BE" data-quiz="BER"><span><b>Bergamot Çeşnili</b><small>Çiçeksi, ayırt edici narenciye</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="KE" data-quiz="KEK"><span><b>Kekik Çeşnili</b><small>Belirgin Akdeniz otları</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
+          <div class="gb-flavor" data-code="AC" data-quiz="ACI"><span><b>Acı Biberli Çeşnili</b><small>Canlı ve kalıcı sıcaklık</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
           <div class="gb-flavor" data-code="BD"><span><b>Bodrum</b><small>Dengeli, güneşli profil</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
           <div class="gb-flavor" data-code="BL"><span><b>Balsamik Sirke</b><small>Doğal fermente, yoğun</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
           <div class="gb-flavor" data-code="NR"><span><b>Nar Ekşisi</b><small>Katkısız, tatlı-ekşi</small></span><span class="gb-qty"><button type="button" class="minus">−</button><span class="n">0</span><button type="button" class="plus">+</button></span></div>
@@ -67,7 +76,7 @@
 
       <div class="gb-summary">
         <div>
-          <div class="gb-price" id="gb-price">₺1.050</div>
+          <div class="gb-price" id="gb-price">₺1.500</div>
           <div class="gb-state" id="gb-state">Kutuyu doldurunca sepete ekleyebilirsin</div>
         </div>
         <button class="btn btn-dark" id="gb-add" data-add disabled>Sepete Ekle</button>
@@ -83,15 +92,15 @@
     <div class="prod-grid three">
       <a class="card" href="koleksiyon.html#hediyelik">
         <div class="prod-img photo"><span class="badge">Hediyelik</span><img src="assets/img/hediye-seti-5li.jpg" alt="5'li hediye seti"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><div class="card-row"><h3>5'li Tadım Seti</h3><span class="price">₺1.050 <small>/ 100ml×5</small></span></div><p class="card-note">Ayvalık, Bodrum, Balsamik, Nar, Trilye. En sevilen beşli.</p></div>
+        <div class="card-body"><div class="card-row"><h3>5'li Tadım Seti</h3><span class="price">₺1.500 <small>/ 100 ml × 5</small></span></div><p class="card-note">Ayvalık, Bodrum, Balsamik, Nar, Trilye. En sevilen beşli.</p></div>
       </a>
       <a class="card" href="koleksiyon.html#hediyelik">
         <div class="prod-img photo"><img src="assets/img/hediye-seti-3lu.jpg" alt="3'lü hediye seti"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><div class="card-row"><h3>3'lü Çantalı Set</h3><span class="price">₺690 <small>/ 100ml×3</small></span></div><p class="card-note">Şık çantalı kutuda üçlü klasik seçki.</p></div>
+        <div class="card-body"><div class="card-row"><h3>3'lü Çantalı Set</h3><span class="price">₺1.600 <small>/ 100 ml × 3</small></span></div><p class="card-note">Şık çantalı kutuda üçlü klasik seçki.</p></div>
       </a>
       <a class="card" href="koleksiyon.html#hediyelik">
-        <div class="prod-img photo"><img src="assets/img/kutulu-750.jpg" alt="Hediye kutulu 750ml"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><div class="card-row"><h3>Hediye Kutulu 750 ml</h3><span class="price">₺1.190 <small>/ 750ml</small></span></div><p class="card-note">Tek şişe, büyük etki. Silindir kutusunda.</p></div>
+        <div class="prod-img photo"><img src="assets/img/kutulu-750.jpg" alt="Hediye kutulu 750 ml"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
+        <div class="card-body"><div class="card-row"><h3>Hediye Kutulu 750 ml</h3><span class="price">₺1.250 <small>/ 750 ml</small></span></div><p class="card-note">Tek şişe, büyük etki. Silindir kutusunda.</p></div>
       </a>
     </div>
   </div>
@@ -100,16 +109,38 @@
 <div id="om-footer"></div>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    var params = new URLSearchParams(location.search);
+    var palateKeys = (params.get('palate') || '').split(',').filter(function (key) { return /^[A-Z]{3}$/.test(key); }).slice(0, 3);
+    var palateOffer = params.get('discount') === '15' && palateKeys.length === 3;
+    if (palateOffer) {
+      document.querySelectorAll('.gb-box .size').forEach(function (b) { b.classList.toggle('on', b.dataset.cap === '3'); });
+    }
     // başlangıç değerlerini seçili kutudan oku (panel override'ları dahil)
     var selBox = document.querySelector('.gb-box .size.on');
     var cap = selBox ? parseInt(selBox.dataset.cap, 10) : 5;
-    var price = selBox ? selBox.dataset.price : '1.050';
+    var price = selBox ? selBox.dataset.price : '1.500';
     var counts = {};
     var slots = document.getElementById('gb-slots');
     var hint = document.getElementById('gb-hint');
     var priceEl = document.getElementById('gb-price');
     var stateEl = document.getElementById('gb-state');
     var addBtn = document.getElementById('gb-add');
+    var palateBanner = document.getElementById('gb-palate-banner');
+
+    if (palateOffer) {
+      var chosenNames = [];
+      palateKeys.forEach(function (key) {
+        var flavor = document.querySelector('.gb-flavor[data-quiz="' + key + '"]');
+        if (!flavor) return;
+        counts[flavor.dataset.code] = (counts[flavor.dataset.code] || 0) + 1;
+        chosenNames.push(flavor.querySelector('b').textContent);
+      });
+      document.getElementById('gb-palate-copy').textContent = chosenNames.join(', ') + ' seçili geldi.';
+      document.getElementById('gb-img').src = selBox.dataset.img;
+    }
+
+    function priceNumber(value) { return parseInt(String(value).replace(/\./g, ''), 10) || 0; }
+    function priceText(value) { return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
     function total() {
       var t = 0;
@@ -132,10 +163,19 @@
         slots.appendChild(d);
       }
       hint.textContent = t + ' / ' + cap + ' şişe seçildi';
-      priceEl.textContent = '₺' + price;
+      var discounted = palateOffer && cap === 3;
+      if (discounted) {
+        var regular = priceNumber(price);
+        var offerPrice = Math.round(regular * 0.85);
+        priceEl.innerHTML = '₺' + priceText(offerPrice) + ' <del>₺' + priceText(regular) + '</del><span class="gb-saving">%15 Damak Pusulası avantajı</span>';
+      } else {
+        priceEl.textContent = '₺' + price;
+      }
+      palateBanner.hidden = !discounted;
       addBtn.disabled = (t !== cap);
+      addBtn.textContent = discounted ? 'Damak Kutusunu Sepete Ekle' : 'Sepete Ekle';
       stateEl.textContent = t === cap
-        ? 'Kutun hazır ✓'
+        ? (discounted ? 'Damak Kutun hazır · %15 avantaj uygulandı ✓' : 'Kutun hazır ✓')
         : 'Kutuyu doldurunca sepete ekleyebilirsin';
       // + butonlarını kapasiteye göre kilitle
       document.querySelectorAll('.gb-flavor .plus').forEach(function (b) { b.disabled = (t >= cap); });
@@ -148,6 +188,8 @@
     // kutu boyu seçimi
     document.querySelectorAll('.gb-box .size').forEach(function (b) {
       b.addEventListener('click', function () {
+        document.querySelectorAll('.gb-box .size').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
         cap = parseInt(b.dataset.cap, 10);
         price = b.dataset.price;
         document.getElementById('gb-img').src = b.dataset.img;

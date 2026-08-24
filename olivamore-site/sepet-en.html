@@ -17,6 +17,7 @@
 .cart-item .t{flex:1;min-width:0}
 .cart-item .t b{font-weight:700;font-size:.95rem;display:block}
 .cart-item .t span{font-size:.85rem;color:var(--ink-soft)}
+.cart-item .cart-meta{display:block;margin:3px 0;color:var(--ink-soft);font-size:.76rem;letter-spacing:.02em}
 .cart-qty{display:flex;align-items:center;gap:8px}
 .cart-qty button{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:#fff;cursor:pointer;font-size:1rem}
 .cart-qty button:hover{border-color:var(--gold);color:var(--gold)}
@@ -32,6 +33,11 @@
 .pay-opt.dis{opacity:.5;cursor:default}
 #co-ok{display:none;text-align:center;padding:60px 20px}
 #co-ok h2{margin:14px 0 10px}
+.checkout-field{display:block;margin-bottom:12px;font-size:.8rem;font-weight:500;color:var(--ink)}
+.checkout-field input,.checkout-field textarea{display:block;width:100%;margin-top:5px;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;background:#fff}
+.checkout-field input:focus,.checkout-field textarea:focus{outline:2px solid rgba(128,106,54,.22);border-color:#806A36}
+.checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media(max-width:520px){.checkout-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body data-page="shop" data-lang="en">
@@ -70,7 +76,7 @@
         <div class="sum-row"><span>Subtotal</span><span id="sum-ara">₺0</span></div>
         <div class="sum-row" id="row-kupon" style="display:none;color:#2e7d32;"><span>Coupon (<span id="kupon-lbl"></span>)</span><span id="sum-kupon">-₺0</span></div>
         <div class="sum-row"><span>Shipping</span><span id="sum-kargo">₺0</span></div>
-        <div class="sum-row"><span>VAT</span><span id="sum-kdv">₺0</span></div>
+        <div class="sum-row"><span>VAT</span><span>Included in prices</span></div>
         <div class="sum-row total"><span>Total</span><span id="sum-toplam">₺0</span></div>
 
         <div style="display:flex;gap:8px;margin-top:16px;">
@@ -79,22 +85,26 @@
         </div>
         <p id="kupon-msj" style="font-size:.8rem;margin-top:6px;display:none;"></p>
 
-        <div style="margin:22px 0 6px;font-weight:700;font-size:.9rem;">Delivery Details</div>
-        <div class="field" style="margin-bottom:10px;"><input type="text" id="co-ad" placeholder="Full name" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
-        <div class="field" style="margin-bottom:10px;"><input type="email" id="co-eposta" placeholder="Email" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
-        <div class="field" style="margin-bottom:10px;"><input type="tel" id="co-tel" placeholder="Phone" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
-        <div class="field" style="margin-bottom:10px;"><textarea id="co-adres" rows="3" placeholder="Delivery address" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;resize:vertical;"></textarea></div>
-        <div class="field" style="margin-bottom:14px;"><input type="text" id="co-not" placeholder="Order note (optional)" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;"></div>
+        <div style="margin:22px 0 10px;font-weight:700;font-size:.9rem;">Delivery Details</div>
+        <label class="checkout-field" for="co-ad">Full name<input type="text" id="co-ad" name="name" autocomplete="name" required></label>
+        <label class="checkout-field" for="co-eposta">Email<input type="email" id="co-eposta" name="email" autocomplete="email" inputmode="email" required></label>
+        <label class="checkout-field" for="co-tel">Phone<input type="tel" id="co-tel" name="tel" autocomplete="tel" inputmode="tel" required minlength="10"></label>
+        <label class="checkout-field" for="co-adres">Street address<textarea id="co-adres" name="street-address" rows="3" autocomplete="street-address" required></textarea></label>
+        <div class="checkout-grid">
+          <label class="checkout-field" for="co-il">Province<input type="text" id="co-il" name="address-level1" autocomplete="address-level1" required></label>
+          <label class="checkout-field" for="co-ilce">District<input type="text" id="co-ilce" name="address-level2" autocomplete="address-level2" required></label>
+        </div>
+        <label class="checkout-field" for="co-posta">Postal code<input type="text" id="co-posta" name="postal-code" autocomplete="postal-code" inputmode="numeric" required pattern="[0-9]{5}" maxlength="5"></label>
+        <label class="checkout-field" for="co-not">Order note <span style="font-weight:300;">(optional)</span><input type="text" id="co-not" name="order-note"></label>
 
         <div style="margin-bottom:6px;font-weight:700;font-size:.9rem;">Payment</div>
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Bank Transfer</b><small>IBAN details arrive by email after ordering; we ship once payment is confirmed.</small></span></label>
-        <label class="pay-opt dis"><input type="radio" name="odeme" disabled><span><b>Credit Card</b><small>Coming very soon.</small></span></label>
 
         <label style="display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin:12px 0 4px;cursor:pointer;">
           <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
           <span>I have read and accept the <a href="mesafeli-satis.html" target="_blank" style="text-decoration:underline;">Distance Sales Agreement</a> and the <a href="gizlilik.html" target="_blank" style="text-decoration:underline;">Privacy (KVKK) Notice</a>.</span>
         </label>
-        <button class="btn btn-gold" id="co-btn" style="width:100%;margin-top:10px;">Complete Order</button>
+        <button class="btn btn-gold" id="co-btn" type="button" disabled style="width:100%;margin-top:10px;">Complete Order</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
         <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">Free shipping over 500 TL. Unconditional 14-day returns on unopened products.</p>
       </div>
@@ -120,8 +130,9 @@ document.addEventListener('DOMContentLoaded', function () {
     c.forEach(function (k, i) {
       var d = document.createElement('div');
       d.className = 'cart-item';
+      var meta = [k.hacim || '', k.kod ? ('Product code: ' + k.kod) : ''].filter(Boolean).join(' · ');
       d.innerHTML = '<img src="' + (k.img || 'assets/img/ayvalik-500.jpg') + '" alt="">' +
-        '<div class="t"><b>' + k.ad + '</b><span>' + fmt(k.fiyat) + '</span><br>' +
+        '<div class="t"><b>' + k.ad + '</b>' + (meta ? '<small class="cart-meta">' + meta + '</small>' : '') + '<span>' + fmt(k.fiyat) + '</span><br>' +
         '<button class="cart-del" data-i="' + i + '">Remove</button></div>' +
         '<div class="cart-qty"><button data-i="' + i + '" data-d="-1">−</button><b>' + k.adet + '</b><button data-i="' + i + '" data-d="1">+</button></div>';
       host.appendChild(d);
@@ -132,11 +143,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var indirim = kp ? Math.min(kp.indirim || 0, ara) : 0;
     var indAra = Math.max(0, ara - indirim);
     var kargo = ((kp && kp.ucretsizKargo) || indAra >= KARGO_ESIK) ? 0 : KARGO;
-    var oran = ara > 0 ? indAra / ara : 1;
-    var kdvT = c.reduce(function (t, k) {
-      return t + k.fiyat * k.adet * oran * (typeof k.kdv === 'number' ? k.kdv : 1) / 100;
-    }, 0);
-    kdvT = Math.round(kdvT * 100) / 100;
     document.getElementById('sum-ara').textContent = fmt(ara);
     document.getElementById('row-kupon').style.display = indirim > 0 ? 'flex' : 'none';
     if (indirim > 0) {
@@ -144,8 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('sum-kupon').textContent = '-' + fmt(indirim);
     }
     document.getElementById('sum-kargo').textContent = kargo ? fmt(kargo) : 'Free';
-    document.getElementById('sum-kdv').textContent = '₺' + kdvT.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
-    document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo + kdvT) * 100) / 100);
+    document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo) * 100) / 100);
   }
 
   function kuponDogrula(kod, sessiz) {
@@ -218,10 +223,16 @@ document.addEventListener('DOMContentLoaded', function () {
       eposta: document.getElementById('co-eposta').value.trim(),
       telefon: document.getElementById('co-tel').value.trim(),
       adres: document.getElementById('co-adres').value.trim(),
+      il: document.getElementById('co-il').value.trim(),
+      ilce: document.getElementById('co-ilce').value.trim(),
+      postaKodu: document.getElementById('co-posta').value.trim(),
       not: document.getElementById('co-not').value.trim()
     };
-    if (!m.ad || !m.eposta || !m.telefon || !m.adres) {
-      hata.textContent = 'Please fill in name, email, phone and address.';
+    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
+    if (required.some(function (el) { return !el.checkValidity(); })) {
+      var firstInvalid = required.find(function (el) { return !el.checkValidity(); });
+      if (firstInvalid) firstInvalid.reportValidity();
+      hata.textContent = 'Please complete all delivery fields with valid information.';
       hata.style.display = 'block';
       return;
     }
@@ -253,6 +264,17 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.textContent = 'Complete Order';
       });
   });
+
+  function checkoutState() {
+    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
+    var valid = required.every(function (el) { return el.checkValidity(); }) && document.getElementById('co-onay').checked;
+    document.getElementById('co-btn').disabled = !valid;
+  }
+  document.querySelectorAll('.checkout-field input,.checkout-field textarea,#co-onay').forEach(function (el) {
+    el.addEventListener('input', checkoutState);
+    el.addEventListener('change', checkoutState);
+  });
+  checkoutState();
 
   var bekle = setInterval(function () {
     if (window.omCart) { clearInterval(bekle); render(); }
