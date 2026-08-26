@@ -17,7 +17,9 @@
     return base.replace(/\.html$/, '-en.html') + hash;
   }
   // Karşı dilin sayfası (dil anahtarı için)
-  const current = (location.pathname.split('/').pop() || 'index.html');
+  let current = (location.pathname.split('/').pop() || 'index.html');
+  if (current === 'en') current = 'index-en.html';                 // temiz EN ana sayfa
+  else if (!/\.html$/.test(current)) current += '.html';           // temiz URL -> dosya adı
   const other = EN
     ? current.replace(/-en\.html$/, '.html')
     : current.replace(/\.html$/, '-en.html');
@@ -109,7 +111,7 @@
         <div><a class="top" data-nav="kulup" href="${P('kulup.html')}">${T.club}</a></div>
         <div><a class="top" data-nav="ureticiler" href="${P('ureticiler.html')}">${T.producers}</a></div>
       </nav>
-      <a class="logo-link" href="${P('index.html')}" aria-label="Olivamore">
+      <a class="logo-link" href="${EN ? '/en' : '/'}" aria-label="Olivamore">
         <img src="assets/logo-word.svg" style="height:17px;width:auto;" alt="OLIVAMORE">
       </a>
       <div class="nav-right">
