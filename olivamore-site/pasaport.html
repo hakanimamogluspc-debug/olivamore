@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hasat Pasaportu: Şişendeki Yağın Hikâyesi | Olivamore</title>
-<meta name="description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe, çeşit ve lab-test değerleriyle şişendeki yağın tüm hikâyesini gör.">
+<meta name="description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe, çeşit ve laboratuvar sonuçlarıyla şişendeki yağın tüm hikâyesini gör.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
@@ -17,21 +17,19 @@
   <div class="container">
     <div class="kicker">İzlenebilirlik</div>
     <h1>Hasat Pasaportu</h1>
-    <p class="lead">Etiketin arkasındaki parti numarasını gir; şişendeki yağın hangi bahçeden, hangi hasattan geldiğini, lab değerleriyle birlikte gör.</p>
+    <p class="lead">Etiketin arkasındaki parti numarasını gir; şişendeki yağın hangi bahçeden ve hangi hasattan geldiğini laboratuvar sonuçlarıyla birlikte gör.</p>
   </div>
 </div>
 
 <section class="block tight">
   <div class="container">
     <div class="pp-search">
-      <input type="text" id="pp-input" placeholder="Parti No · örn. AYV-2510" maxlength="12">
+      <input type="text" id="pp-input" placeholder="Parti veya rapor no · örn. 2505969" maxlength="20">
       <button class="btn btn-dark" id="pp-btn">Sorgula</button>
     </div>
     <div class="pp-samples">
-      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Örnekler:</span>
-      <button class="chip" data-kod="AYV-2510">AYV-2510</button>
-      <button class="chip" data-kod="TRL-2510">TRL-2510</button>
-      <button class="chip" data-kod="OLG-2511">OLG-2511</button>
+      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Doğrulanmış rapor:</span>
+      <button class="chip" data-kod="2505969">2505969</button>
     </div>
 
     <!-- SONUÇ KARTI -->
@@ -49,11 +47,11 @@
           <div class="pp-row"><b>Asidite (FFA)</b><span id="pp-asidite"></span></div>
           <div class="pp-row"><b>Polifenol</b><span id="pp-polifenol"></span></div>
           <div class="pp-row"><b>Peroksit</b><span id="pp-peroksit"></span></div>
-          <div class="pp-row"><b>Lab-test</b><span id="pp-lab"></span></div>
+          <div class="pp-row"><b>Laboratuvar analizi</b><span id="pp-lab"></span></div>
         </div>
 
         <div class="tasting" style="margin:0 0 22px;">
-          <h4>Bu partinin tadım notu</h4>
+          <h4>Rapor kapsamı</h4>
           <p style="font-size:.95rem;color:var(--ink-soft);" id="pp-tadim"></p>
         </div>
 
@@ -61,13 +59,15 @@
           <div class="avatar" id="pp-avatar"></div>
           <div>
             <b style="font-weight:400;" id="pp-uretici"></b>
-            <p style="font-size:.85rem;color:var(--ink-soft);">Zeytinler elle toplandı, iki elemeden geçip ozonlu suyla yıkandı, aynı gün 20-22°C'de Oleapenol'de sıkıldı; havuz yağıyla karışmadı.</p>
+            <p style="font-size:.85rem;color:var(--ink-soft);">Bu kart yalnızca bağlantılı raporda açıkça yer alan bilgileri gösterir; raporda bulunmayan hasat, parsel veya tadım ayrıntıları tahmin edilmez.</p>
+
             <a class="link-arrow" style="font-size:.85rem;" href="ureticiler.html">Üreticiyi tanı →</a>
           </div>
         </div>
 
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <a class="btn btn-gold" id="pp-link" href="urun.html">Bu Yağın Sayfası</a>
+          <a class="btn btn-outline" id="pp-report" href="#" target="_blank" rel="noopener">Eşleşen PDF Raporu</a>
           <a class="btn btn-outline" href="ureticiler.html#izlenebilirlik">İzlenebilirlik Zinciri</a>
         </div>
       </div>
@@ -76,7 +76,7 @@
     <!-- BULUNAMADI -->
     <div class="pp-empty" id="pp-empty">
       <h3 style="font-weight:700;margin-bottom:8px;">Bu parti numarasını bulamadık</h3>
-      <p>Numara etiketin arka yüzünde, analiz değerlerinin altındadır (örn. AYV-2510). Yine de bulamazsan <a class="link-arrow" href="iletisim.html">bize yaz</a>, raporu e-postana gönderelim.</p>
+      <p>Bu numarayla eşleşen doğrulanmış kayıt henüz yayınlanmamış olabilir. <a class="link-arrow" href="iletisim.html">Bize yaz</a>; ürün ve hacim bilgisiyle doğru raporu kontrol edelim.</p>
     </div>
   </div>
 </section>
@@ -87,9 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* [PARTİLER] Varsayılan parti veritabanı — panelden (Partiler sekmesi)
      eklenen partiler bununla birleştirilir. Canlıda backend'den gelir. */
   var BATCHES = [
-    { kod: 'AYV-2510', urun: 'Ayvalık Erken Hasat', hasat: '3–9 Ekim 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · Kuzey Parsel', asidite: '%0,35', polifenol: '412 mg/kg', peroksit: '6,57 meq O₂/kg', lab: 'Kasım 2025 · bağımsız lab', tadim: 'Yumuşak ve meyvemsi; yeşil elma tazeliği, zarif bir bitiş. Kahvaltının ve çiğ kullanımın yağı.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun.html' },
-    { kod: 'TRL-2510', urun: 'Trilye Erken Hasat', hasat: '10–16 Ekim 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Gemlik (Trilye)', parsel: 'Ayvalık · Gemlik cinsi parsel, eski ağaçlar', asidite: '%0,12', polifenol: '486 mg/kg', peroksit: '6,75 meq O₂/kg', lab: 'Kasım 2025 · bağımsız lab', tadim: 'Yoğun ve karakterli; boğazda biberimsi bir final. Izgara sebzenin ve keskin salataların yağı.', uretici: 'Olivamore Bahçeleri, Ayvalık', avatar: 'OB', href: 'urun-trilye.html' },
-    { kod: 'OLG-2511', urun: 'Olgun Hasat', hasat: '18–26 Kasım 2025 · elle', sikim: 'Aynı gün · 20-22°C · Oleapenol', cesit: 'Ayvalık (Edremit)', parsel: 'Ayvalık · Güney Parsel', asidite: '%0,28', polifenol: '295 mg/kg', peroksit: '8,1 meq O₂/kg', lab: 'Aralık 2025 · bağımsız lab', tadim: 'Yumuşak acılık, dengeli ve dolgun gövde. Sıcak yemeklerin, zeytinyağlıların ve fırının yağı.', uretici: 'Pektaş Tarım, Ayvalık', avatar: 'PT', href: 'urun.html' }
+    { kod: '2505969', urun: 'Trilye Erken Hasat · 250 ml × 2 numune', hasat: 'Raporda belirtilmiyor', sikim: 'Ürün adında “soğuk sıkım” olarak geçiyor; tarih ve sıcaklık belirtilmiyor', cesit: 'Trilye', parsel: 'Raporda belirtilmiyor', asidite: '%0,12 ±0,01', polifenol: 'Bu raporda yer almıyor', peroksit: '3,41 ±0,848 meq O₂/kg', lab: 'DEPPO · Rapor 2505969 · 11.03.2025', tadim: 'Rapor kimyasal ve fiziksel analiz sonuçlarını içerir; bağımsız duyusal tadım notu içermez.', uretici: 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık', avatar: 'PT', href: 'urun-trilye.html', rapor: 'https://olivamore.com/wp-content/uploads/2025/04/2505969-PEKTAS-TARIM-Trilye-Erken-Hasat-Soguk-Sikim-Naturel-Sizma-Zeytinyagi-TREN.pdf' }
   ];
   // Panelden eklenen partileri birleştir (aynı kod panelinkiyle değişir)
   try {
@@ -125,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('pp-uretici').textContent = b.uretici;
     document.getElementById('pp-avatar').textContent = b.avatar || b.uretici.slice(0, 2).toUpperCase();
     document.getElementById('pp-link').href = b.href || 'urun.html';
+    document.getElementById('pp-report').href = b.rapor || 'kalite.html#analizler';
     card.classList.add('on');
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -142,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // QR hedefi: ?parti=AYV-2510 ile gelindiyse doğrudan göster
+  // QR hedefi: ?parti=2505969 ile gelindiyse doğrudan göster
   var q = new URLSearchParams(location.search).get('parti');
   if (q) { document.getElementById('pp-input').value = q.toUpperCase(); show(q); }
 });

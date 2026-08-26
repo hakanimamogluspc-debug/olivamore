@@ -16,24 +16,52 @@
     const hash = i === -1 ? '' : f.slice(i);
     return base.replace(/\.html$/, '-en.html') + hash;
   }
-  // Karşı dilin sayfası (dil anahtarı için)
+  // Karşı dilin sayfası (uzantılı ve uzantısız URL'lerde aynı çalışır).
   let current = (location.pathname.split('/').pop() || 'index.html');
-  if (current === 'en') current = 'index-en.html';                 // temiz EN ana sayfa
-  else if (!/\.html$/.test(current)) current += '.html';           // temiz URL -> dosya adı
-  const other = EN
-    ? current.replace(/-en\.html$/, '.html')
-    : current.replace(/\.html$/, '-en.html');
+  if (current === 'en') current = 'index-en.html'; // temiz EN ana sayfa: /en
+  const currentStem = current.replace(/\.html$/, '') || 'index';
+  const pairedPages = new Set([
+    'index','damak-testi','hediye-olustur','hikayemiz','iletisim','kalite','koleksiyon',
+    'kulup','ogren','p','pasaport','sepet','sss','tarif-asistani','ureticiler','urun','urun-trilye',
+    'naturel-sizma-zeytinyagi-nedir','zeytinyagi-polifenol-acilik-yakicilik','erken-hasat-olgun-hasat',
+    'zeytinyagi-saklama-raf-omru','zeytinyagi-efsaneleri','akdeniz-diyeti-zeytinyagi',
+    'sabah-bir-kasik-zeytinyagi','zeytinyagi-geleneksel-kullanimlari','alic-sirkesi-nedir','dogal-fermente-sirke'
+  ]);
+  const baseStem = currentStem.replace(/-en$/, '');
+  // Temiz (uzantısız) kanonik adresler
+  const cleanTR = baseStem === 'index' ? '/' : '/' + baseStem;
+  const cleanEN = baseStem === 'index' ? '/en' : '/' + baseStem + '-en';
+  const other = pairedPages.has(baseStem) ? (EN ? cleanTR : cleanEN) : '';
+
+  // Arama motorlarına dil eşlerini ve tercih edilen URL'yi açıkça bildir.
+  if (pairedPages.has(baseStem)) {
+    const origin = location.origin;
+    if (!document.querySelector('link[rel="canonical"]')) {
+      const canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      canonical.href = origin + (EN ? cleanEN : cleanTR) + location.search;
+      document.head.appendChild(canonical);
+    }
+    [['tr', cleanTR], ['en', cleanEN]].forEach(function (pair) {
+      if (document.querySelector('link[rel="alternate"][hreflang="' + pair[0] + '"]')) return;
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = pair[0];
+      link.href = origin + pair[1];
+      document.head.appendChild(link);
+    });
+  }
 
   /* ---------- Metinler ---------- */
   const T = EN ? {
-    announce: 'The new harvest is here: <b>free shipping over 500 TL</b> · Club members always ship free',
-    shop: 'Shop', club: 'Club', producers: 'Producers', learn: 'Learn', story: 'Our Story',
+    announce: '2025 harvest · Ayvalık and Trilye · Trace every bottle through its harvest passport',
+    shop: 'Shop', club: 'Club', producers: 'Producers', learn: 'Learn', quality: 'Quality', story: 'Our Story',
     megaCat: 'Category', megaAll: 'All Products', megaBest: 'Bestsellers', megaEvoo: 'Finishing Oils', megaEarly: 'Cooking Oils',
     megaPurpose: 'Purpose', megaGift: 'Gift Sets', megaBuild: 'Build Your Own Set', megaJoin: 'Join the Club', megaAcc: 'Accessories',
     megaNew: 'The new harvest is here', megaCta: 'Discover', megaRecipe: 'Recipe Assistant', megaQuiz: 'Palate Quiz',
     search: 'Search', cart: 'Bag', menu: 'Menu',
     faq: 'FAQ', contact: 'Contact',
-    tagline: 'Traceable, award-winning extra virgin olive oil from our own groves in Ayvalık and Trilye.',
+    tagline: 'Traceable extra virgin olive oil shaped by Olivamore’s Ayvalık grove and carefully selected harvests.',
     fShop: 'Shop', fBrand: 'Brand', fHelp: 'Help',
     fAll: 'All Products', fEvoo: 'Finishing Oils', fGift: 'Gift Sets',
     fStory: 'Our Story', fProducers: 'Producers', fTrace: 'Traceability', fPassport: 'Harvest Passport', fQuality: 'Quality & Lab Reports', fAwards: 'Awards',
@@ -44,14 +72,15 @@
     cookieText: 'We use only the cookies necessary for this site to work. When analytics cookies are added later, we will ask for your consent first.',
     cookieOk: 'OK', cookieMore: 'Privacy'
   } : {
-    announce: 'Yeni hasat geldi: <b>500 TL üzeri kargo bedava</b> · Club üyelerine her zaman ücretsiz kargo',
-    shop: 'Shop', club: 'Club', producers: 'Üreticiler', learn: 'Öğren', story: 'Hikâyemiz',
-    megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Serin Sofra', megaEarly: 'Ocak Başı',
+    announce: '2025 hasadı · Ayvalık ve Trilye · Her şişenin izini Hasat Pasaportu ile sür',
+    shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
+    megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Bitirme Zeytinyağları', megaEarly: 'Pişirme Zeytinyağları',
     megaPurpose: 'Amaç', megaGift: 'Hediyelik Setler', megaBuild: 'Kendi Setini Oluştur', megaJoin: "Club'a Katıl", megaAcc: 'Aksesuarlar',
     megaNew: 'Yeni hasat geldi', megaCta: 'Keşfet', megaRecipe: 'Tarif Asistanı', megaQuiz: 'Damak Testi',
     search: 'Ara', cart: 'Sepet', menu: 'Menü',
     faq: 'SSS', contact: 'İletişim',
-    tagline: "Ayvalık ve Trilye'nin kendi topraklarından, izlenebilir, ödüllü sızma zeytinyağı.",
+    tagline: "Ayvalık'taki bahçemizden ve özenle seçilen hasatlardan, izlenebilir naturel sızma zeytinyağı.",
+
     fShop: 'Alışveriş', fBrand: 'Marka', fHelp: 'Yardım',
     fAll: 'Tüm Ürünler', fEvoo: 'Serin Sofra', fGift: 'Hediyelik Setler',
     fStory: 'Hikâyemiz', fProducers: 'Üreticiler', fTrace: 'İzlenebilirlik', fPassport: 'Hasat Pasaportu', fQuality: 'Kalite ve Analizler', fAwards: 'Ödüller',
@@ -59,7 +88,7 @@
     rights: '© 2026 Olivamore. Tüm hakları saklıdır.',
     privacy: 'Gizlilik', terms: 'Kullanım Şartları', kvkk: 'KVKK',
     toast: 'Sepete eklendi ✓',
-    cookieText: 'Bu sitede yalnızca çalışması için gerekli çerezler kullanılır. İleride analitik çerezler eklendiğinde önce onayınızı isteyeceğiz.',
+    cookieText: 'Bu sitede yalnızca sitenin çalışması için gerekli çerezler kullanılır. İleride analitik çerezler kullanmaya başlarsak önce onayını isteyeceğiz.',
     cookieOk: 'Tamam', cookieMore: 'Gizlilik'
   };
 
@@ -87,8 +116,8 @@
             <div class="cat-grid mega-grid">
               <a class="cat-card" href="${P('koleksiyon.html#serin')}"><span class="thumb"><img src="assets/img/kat-bitirme.png" alt=""></span>${EN ? 'Finishing Olive Oil' : 'Bitirme Zeytinyağı'}</a>
               <a class="cat-card" href="${P('koleksiyon.html#ocak')}"><span class="thumb"><img src="assets/img/kat-pisirme.png" alt=""></span>${EN ? 'Cooking Olive Oil' : 'Pişirme Zeytinyağı'}</a>
-              <a class="cat-card" href="${P('koleksiyon.html#zeytin')}"><span class="thumb"><img src="assets/img/kat-zeytin.png" alt=""></span>${EN ? 'Natural Olives' : 'Doğal Zeytinler'}</a>
-              <a class="cat-card" href="${P('koleksiyon.html#eksi')}"><span class="thumb"><img src="assets/img/kat-sirke.png" alt=""></span>${EN ? 'Vinegars' : 'Sirkeler'}</a>
+              <a class="cat-card" href="${P('koleksiyon.html#zeytin')}"><span class="thumb"><img src="assets/img/kat-zeytin.png" alt=""></span>${EN ? 'Natural Olives · Soon' : 'Doğal Zeytinler · Yakında'}</a>
+              <a class="cat-card" href="${P('koleksiyon.html#eksi')}"><span class="thumb"><img src="assets/img/kat-sirke.png" alt=""></span>${EN ? 'Vinegars & Pomegranate · Soon' : 'Ekşiler · Yakında'}</a>
               <a class="cat-card" href="${P('koleksiyon.html#hediyelik')}"><span class="thumb"><img src="assets/img/kat-set.png" alt=""></span>${EN ? 'Sets' : 'Setler'}</a>
               <a class="cat-card" href="${P('koleksiyon.html')}"><span class="thumb"><img src="assets/img/kat-tum.png" alt=""></span>${EN ? 'All Products' : 'Tüm Ürünler'}</a>
             </div>
@@ -96,19 +125,18 @@
               <a href="${P('damak-testi.html')}">${T.megaQuiz}</a>
               <a href="${P('tarif-asistani.html')}">${T.megaRecipe}</a>
               <a href="${P('hediye-olustur.html')}">${T.megaBuild}</a>
-              <a href="${P('kulup.html')}">${T.megaJoin}</a>
             </div>
             </div>
             <a class="mega-promo" href="${P('koleksiyon.html#hediyelik')}">
               <img src="assets/img/foto-hediye-setleri.jpg" alt="">
               <div class="mp-body">
-                <p>${EN ? 'A box worth opening, an oil worth the table' : 'Açmaya değer bir kutu, sofraya değer bir yağ'}</p>
+                <p>${EN ? 'A box worth opening, an oil worth the table' : 'Açmaya değer bir kutu, sofrana yakışan bir yağ'}</p>
                 <span class="btn btn-gold btn-sm">${EN ? 'Shop Now' : 'Alışverişe Başla'}</span>
               </div>
             </a>
           </div>
         </div>
-        <div><a class="top" data-nav="kulup" href="${P('kulup.html')}">${T.club}</a></div>
+        <div><a class="top" href="${P('damak-testi.html')}">${EN ? 'Find Your Oil' : 'Yağını Bul'}</a></div>
         <div><a class="top" data-nav="ureticiler" href="${P('ureticiler.html')}">${T.producers}</a></div>
       </nav>
       <a class="logo-link" href="${EN ? '/en' : '/'}" aria-label="Olivamore">
@@ -116,11 +144,9 @@
       </a>
       <div class="nav-right">
         <a class="top" data-nav="ogren" href="${P('ogren.html')}">${T.learn}</a>
+        <a class="top" data-nav="kalite" href="${P('kalite.html')}">${T.quality}</a>
         <a class="top" data-nav="hikayemiz" href="${P('hikayemiz.html')}">${T.story}</a>
-        <a class="top lang-switch" href="${other}" aria-label="${EN ? 'Türkçe' : 'English'}">${EN ? 'TR' : 'EN'}</a>
-        <button class="icon-btn" aria-label="${T.search}">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        </button>
+        ${other ? `<a class="top lang-switch" href="${other}" aria-label="${EN ? 'Türkçe' : 'English'}">${EN ? 'TR' : 'EN'}</a>` : ''}
         <a class="icon-btn" aria-label="${T.cart}" id="cart-btn" href="${P('sepet.html')}">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l-1.5 12h-9L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
           <span class="cart-count" id="cart-count">0</span>
@@ -132,13 +158,14 @@
     </div>
     <div class="mobile-nav" id="mobile-nav">
       <a href="${P('koleksiyon.html')}">${T.shop}</a>
-      <a href="${P('kulup.html')}">Olivamore Club</a>
+      <a href="${P('damak-testi.html')}">${EN ? 'Find Your Oil' : 'Yağını Bul'}</a>
       <a href="${P('ureticiler.html')}">${T.producers}</a>
       <a href="${P('hikayemiz.html')}">${T.story}</a>
       <a href="${P('ogren.html')}">${T.learn}</a>
+      <a href="${P('kalite.html')}">${T.quality}</a>
       <a href="${P('sss.html')}">${T.faq}</a>
       <a href="${P('iletisim.html')}">${T.contact}</a>
-      <a href="${other}">${EN ? 'Türkçe' : 'English'}</a>
+      ${other ? `<a href="${other}">${EN ? 'Türkçe' : 'English'}</a>` : ''}
     </div>
   </header>`;
 
@@ -157,7 +184,7 @@
             <li><a href="${P('koleksiyon.html')}">${T.fAll}</a></li>
             <li><a href="${P('koleksiyon.html#serin')}">${T.fEvoo}</a></li>
             <li><a href="${P('koleksiyon.html#hediyelik')}">${T.fGift}</a></li>
-            <li><a href="${P('kulup.html')}">Club</a></li>
+            <li><a href="${P('damak-testi.html')}">${EN ? 'Palate Quiz' : 'Damak Pusulası'}</a></li>
           </ul>
         </div>
         <div>
@@ -183,7 +210,7 @@
       </div>
       <div class="foot-bottom">
         <span>${T.rights}</span>
-        <span><a href="gizlilik.html">${T.kvkk}</a> · <a href="kullanim-sartlari.html">${T.terms}</a> · <a href="mesafeli-satis.html">${EN ? 'Distance Sales Agreement' : 'Mesafeli Satış Sözleşmesi'}</a> · <a href="cerez-politikasi.html">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a> · <a href="panel.html" style="opacity:.55;">${EN ? 'Admin' : 'Yönetim'}</a></span>
+        <span><a href="gizlilik.html">${T.kvkk}</a> · <a href="kullanim-sartlari.html">${T.terms}</a> · <a href="mesafeli-satis.html">${EN ? 'Distance Sales Agreement' : 'Mesafeli Satış Sözleşmesi'}</a> · <a href="cerez-politikasi.html">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a></span>
       </div>
     </div>
   </footer>
@@ -199,13 +226,227 @@
     catch (e) { return {}; }
   }
   function fmtTL(n) { return Number(n).toLocaleString('tr-TR'); }
-  let AC = adminConfig(); // yerel yedek; sunucu config'i gelirse üzerine yazılır
+  // olivamore.com canlı mağaza fiyatları, 21 Ağustos 2026.
+  const LIVE_PRICE_REV = 'olivamore.com@2026-08-21';
+  const LIVE_PRICES = {
+    ay250: 425, ay500: 850, ay750: 1250, ay2l: 2500, ay5l: 5250,
+    tr250: 450, tr500: 880, tr750: 1350, tr2l: 2900, tr5l: 5750,
+    og5l: 3450, kutu750: 1250, kutu500: 850, 'custom-set': 1600,
+    'ces-mand': 650, 'ces-bib': 650, 'ces-berg': 650, 'ces-kek': 650,
+    'zey-siyah': 360, 'zey-yesil': 325
+  };
+  function syncLivePrices(config) {
+    const C = config || {};
+    if (C.priceSource === LIVE_PRICE_REV) return C;
+    if (Array.isArray(C.products)) {
+      C.products.forEach(p => {
+        if (LIVE_PRICES[p.id] !== undefined) p.price = LIVE_PRICES[p.id];
+      });
+    }
+    C.gift3 = 1600;
+    C.gift5 = 1500;
+    C.pdp = Object.assign({}, C.pdp, { ay750: 1250 });
+    C.priceSource = LIVE_PRICE_REV;
+    return C;
+  }
+  const BRAND_COPY_REV = 'nature-balance@2026-08-21';
+  function syncBrandCopy(config) {
+    const C = config || {};
+    if (C.brandCopySource === BRAND_COPY_REV) return C;
+    C.heroTitleTR = 'Doğanın Dengesi';
+    C.heroTitleEN = "Nature's Balance";
+    C.pages = C.pages || {};
+    C.pages.hikayemiz = Object.assign({}, C.pages.hikayemiz, {
+      tTR: 'Doğanın Dengesi',
+      tEN: "Nature's Balance",
+      lTR: 'Aynı bahçede yetişen farklı zeytin çeşitlerinin birbirini tamamlayan karakterinden doğan bir yaklaşım.',
+      lEN: 'An approach born from the complementary characters of different olive varieties growing in the same grove.'
+    });
+    C.brandCopySource = BRAND_COPY_REV;
+    return C;
+  }
+  const TRUST_BASELINE_REV = 'prelaunch-truth@2026-08-22';
+  function syncTrustBaseline(config) {
+    const C = config || {};
+    C.announceTR = '2025 hasadı · Ayvalık ve Trilye · Her şişeyi Hasat Pasaportu ile izle';
+    C.announceEN = '2025 harvest · Ayvalık and Trilye · Trace every bottle through its Harvest Passport';
+    C.heroLeadTR = "Ayvalık bahçemizden; tadı, hasadı ve hangi yemeğe yakıştığı belli zeytinyağları.";
+    C.heroLeadEN = 'From our Ayvalık grove: olive oils with a clear taste, harvest and place at the table.';
+    C.modules = Object.assign({}, C.modules, { club:false, reviews:false });
+    C.pages = C.pages || {};
+    C.pages.ureticiler = {
+      tTR:'Şişenin arkasındaki üretim yaklaşımı', tEN:'The production approach behind the bottle',
+      lTR:"Olivamore'un üretim yaklaşımı Ayvalık'ta 2017'de edinilen bahçeyle başladı. Yalnızca doğrulayabildiğimiz köken, üretim ve analiz bilgisini yayınlıyoruz.",
+      lEN:"Olivamore's production journey began with a grove acquired in Ayvalık in 2017. We publish only origin, production and analysis details we can verify."
+    };
+    C.pages.kulup = {
+      tTR:'Olivamore Club hazırlanıyor', tEN:'Olivamore Club is being prepared',
+      lTR:'Club şu anda aktif bir abonelik ürünü değil. Koşullar kesinleştiğinde bekleme listesindekilere haber vereceğiz.',
+      lEN:'Club is not an active subscription product. We will notify the waitlist when the terms are final.'
+    };
+    if (Array.isArray(C.products)) C.products.forEach(p => { if (p.type === 'club' || p.id === 'club') p.visible = false; });
+    C.trustBaselineSource = TRUST_BASELINE_REV;
+    return C;
+  }
+  const PAIRING_COPY_REV = 'role-timing-articles@2026-08-24';
+  const PAIRING_NOTES = {
+    og5l: {
+      tr: 'Nohut, türlü, taze fasulye ve fırın sebzede baştan eklenen günlük pişirme yağı.',
+      en: 'An everyday cooking oil added from the start for chickpea stew, braised vegetables and the oven.'
+    },
+    'ces-mand': {
+      tr: 'Pancar–peynir salatası, narenciyeli kek ve deniz ürününde serviste. Aroma verir; asitlik için limon veya sirke ayrıca.',
+      en: 'Finish beet-and-cheese salad, citrus cake or seafood. It adds aroma, not acidity; add lemon or vinegar separately.'
+    },
+    'ces-bib': {
+      tr: 'Mercimek çorbası, humus ve pizzada serviste; ayrıca kızdırmadan, birkaç damladan başlayarak.',
+      en: 'Finish lentil soup, hummus or pizza. Do not heat separately; begin with a few drops.'
+    },
+    'ces-berg': {
+      tr: 'Beyaz balık ve enginarda çok düşük dozlu bitirme yağı; servisten hemen önce, damla damla.',
+      en: 'A very-low-dose finishing oil for white fish and artichokes; add drop by drop just before serving.'
+    },
+    'ces-kek': {
+      tr: 'Fırın patates, sıcak ekmek ve ızgara tavukta piştikten sonra eklenen otsu bitirme yağı.',
+      en: 'A herbal finishing oil for roast potatoes, warm bread and grilled chicken, added after cooking.'
+    },
+    'sir-bal': {
+      tr: 'Domates–mozzarella, pancar–peynir ve ızgara ette düşük dozlu tatlı-ekşi bitiriş.',
+      en: 'A low-dose sweet-sour finish for tomato and mozzarella, beet and cheese, or grilled beef.'
+    },
+    'sir-alic': {
+      tr: 'Mercimek ve patates salatasında sos asidi; doğal asitlik değişebileceği için düşük dozdan başla.',
+      en: 'A dressing acid for lentil or potato salad; begin low because natural acidity can vary by batch.'
+    },
+    'sir-elma': {
+      tr: 'Ispanak–elma salatasında, lahana salatasında ve hızlı turşuda günlük meyvemsi ekşilik.',
+      en: 'Everyday fruity acidity for spinach and apple salad, slaw and quick pickles.'
+    },
+    'sir-uzum': {
+      tr: 'Antalya piyazı, çoban salata ve köz patlıcan salatasında geleneksel sos asidi.',
+      en: 'Traditional dressing acidity for Antalya-style bean salad, shepherd salad and charred eggplant.'
+    },
+    'sir-nar': {
+      tr: 'Gavurdağı salatası, kısır ve muhammarada yoğun meyve ekşiliği. Sirke değildir.',
+      en: 'Dense fruit tartness for Gavurdağı salad, kısır and muhammara. It is not vinegar.'
+    }
+  };
+  const ARTICLE_BLOGS = {
+    b1: {
+      titleTR: 'Natürel sızma zeytinyağı nedir? Diğerlerinden farkı ne?', titleEN: 'What is extra virgin olive oil? How is it different?',
+      noteTR: 'Natürel sızma, natürel birinci, rafine ve Riviera kategorilerini üretim ve duyusal ölçütlerle ayır.',
+      noteEN: 'Separate extra virgin, virgin, refined and blended olive oil by production and sensory criteria.',
+      img: 'assets/img/blog-naturel-nedir.jpg', href: 'naturel-sizma-zeytinyagi-nedir.html'
+    },
+    b2: {
+      titleTR: 'Zeytinyağında polifenol, acılık ve yakıcılık', titleEN: 'Polyphenols, bitterness and pungency in olive oil',
+      noteTR: 'Acılık ve yakıcılık olumlu özellikler olabilir; kesin polifenol miktarı aynı parti analiziyle belirlenir.',
+      noteEN: 'Bitterness and pungency can be positive; exact phenolic content requires analysis of the same batch.',
+      img: 'assets/img/blog-polifenol.jpg', href: 'zeytinyagi-polifenol-acilik-yakicilik.html'
+    },
+    b3: {
+      titleTR: 'Erken hasat ve olgun hasat arasındaki fark', titleEN: 'Early-harvest and ripe-harvest olive oil',
+      noteTR: 'Hasat zamanı verim ve duyusal profili etkiler; tek başına kalite garantisi değildir.',
+      noteEN: 'Harvest timing affects yield and sensory profile; it is not a quality guarantee by itself.',
+      img: 'assets/img/blog-hasat.jpg', href: 'erken-hasat-olgun-hasat.html'
+    },
+    b4: {
+      titleTR: 'Zeytinyağı bozulur mu? Raf ömrü ve saklama', titleEN: 'Does olive oil go bad? Shelf life and storage',
+      noteTR: 'Işık, ısı ve oksijeni sınırla; hacmi kullanım hızına göre seç ve kapağı hemen kapat.',
+      noteEN: 'Limit light, heat and oxygen; choose a size you can use and close it promptly.',
+      img: 'assets/img/blog-raf-omru.jpg', href: 'zeytinyagi-saklama-raf-omru.html'
+    },
+    b5: {
+      titleTR: 'Zeytinyağı tüketiminde sık yapılan hatalar ve doğruları', titleEN: 'Common olive-oil mistakes and the facts',
+      noteTR: 'Pişirme, renk, asitlik, yakıcılık ve buzdolabı testi hakkındaki yedi efsaneyi ayır.',
+      noteEN: 'Separate fact from seven myths about cooking, colour, acidity, pungency and the fridge test.',
+      img: 'assets/img/blog-hatalar.jpg', href: 'zeytinyagi-efsaneleri.html'
+    },
+    b7: {
+      titleTR: 'Akdeniz beslenmesinde zeytin ve zeytinyağının rolü', titleEN: 'The role of olives and olive oil in the Mediterranean diet',
+      noteTR: 'Tek bir mucize gıda değil; sebze, bakliyat, tahıl, ölçü, mevsim ve paylaşım kültürü.',
+      noteEN: 'Not one miracle food, but vegetables, pulses, grains, measured use, seasonality and sharing.',
+      img: 'assets/img/blog-akdeniz.jpg', href: 'akdeniz-diyeti-zeytinyagi.html'
+    },
+    b8: {
+      titleTR: 'Sabah bir kaşık zeytinyağı: Gelenek, kanıt ve ölçü', titleEN: 'A morning spoonful of olive oil: tradition, evidence and measure',
+      noteTR: 'Araştırmalar özel bir aç-karnına zamanlamadan çok toplam beslenme düzenini inceler.',
+      noteEN: 'Research focuses on the overall dietary pattern rather than a special empty-stomach timing.',
+      img: 'assets/img/blog-detoks.jpg', href: 'sabah-bir-kasik-zeytinyagi.html'
+    },
+    b9: {
+      titleTR: 'Mutfaktan sabuna: Zeytinyağının yaşayan kültürü', titleEN: 'From kitchen to soap: Olive oil as living culture',
+      noteTR: 'Hasat ve sabun mirasını anlatırken mutfak yağı, kozmetik ve güvenlik sınırlarını ayır.',
+      noteEN: 'Explore harvest and soap heritage while keeping culinary oil, cosmetics and safety separate.',
+      img: 'assets/img/blog-cilt.jpg', href: 'zeytinyagi-geleneksel-kullanimlari.html'
+    },
+    b10: {
+      titleTR: 'Alıç sirkesi nedir?', titleEN: 'What is hawthorn vinegar?',
+      noteTR: 'Türü ve parti profili değişebilir; tadını, fermantasyonunu ve kontrollü mutfak dozlarını öğren.',
+      noteEN: 'Species and batch profile can vary; learn its flavour, fermentation and controlled kitchen doses.',
+      img: 'assets/img/blog-alic-sirkesi.jpg', href: 'alic-sirkesi-nedir.html'
+    },
+    b11: {
+      titleTR: 'Doğal fermente, filtrelenmiş ve pastörize sirke: Fark nedir?', titleEN: 'Naturally fermented, filtered and pasteurised vinegar: What is the difference?',
+      noteTR: 'Fermantasyon, filtrasyon, pastörizasyon, sirke anası ve tortu aynı şeyi anlatmaz.',
+      noteEN: 'Fermentation, filtration, pasteurisation, vinegar mother and sediment describe different things.',
+      img: 'assets/img/blog-fermantasyon.jpg', href: 'dogal-fermente-sirke.html'
+    }
+  };
+  const RECIPE_BLOGS = {
+    b12: {
+      tagTR: 'Tarif · Pişir + Bitir', tagEN: 'Recipe · Cook + finish',
+      titleTR: 'Fırında Sebzeli Levrek', titleEN: 'Oven-baked Sea Bass',
+      noteTR: 'Olgun Hasat ile pişir; Trilye\'yi biberimsi aroması için fırından sonra ekle.',
+      noteEN: 'Cook with Ripe Harvest; add Trilye after the oven for a peppery finish.',
+      img: 'assets/img/tarif-firin-levrek.jpg', href: 'tarif-firin-levrek.html'
+    },
+    b13: {
+      tagTR: 'Tarif · Bitir', tagEN: 'Recipe · Finish',
+      titleTR: 'Vişneli Lorlu Salata', titleEN: 'Sour Cherry Salad with Fresh Curd',
+      noteTR: 'Tatlı-ekşi vişne ve lorun üzerine Ayvalık\'ı yalnızca serviste ekle.',
+      noteEN: 'Add Ayvalık only at the table over sweet-tart cherries and fresh curd.',
+      img: 'assets/img/tarif-visneli-salata.jpg', href: 'tarif-visneli-salata.html'
+    },
+    b14: {
+      section: 'tarif', tagTR: 'Tarif · Pişir', tagEN: 'Recipe · Cook',
+      titleTR: 'Zeytinyağlı Nohut Yemeği', titleEN: 'Olive-oil Chickpea Stew',
+      noteTR: 'Olgun Hasat\'ı tencerenin başından itibaren kullanan pratik günlük yemek.',
+      noteEN: 'A practical everyday pot that uses Ripe Harvest from the beginning.',
+      img: 'assets/img/tarif-nohut-yemegi.jpg', href: 'tarif-nohut-yemegi.html'
+    }
+  };
+  function syncPairingCopy(config) {
+    const C = config || {};
+    if (C.pairingCopySource === PAIRING_COPY_REV) return C;
+    if (Array.isArray(C.products)) {
+      C.products.forEach(p => {
+        const copy = PAIRING_NOTES[p.id];
+        if (!copy) return;
+        p.noteTR = copy.tr;
+        p.noteEN = copy.en;
+      });
+    }
+    if (Array.isArray(C.blogs)) {
+      C.blogs.forEach(b => {
+        if (ARTICLE_BLOGS[b.id]) Object.assign(b, ARTICLE_BLOGS[b.id]);
+        if (RECIPE_BLOGS[b.id]) Object.assign(b, RECIPE_BLOGS[b.id]);
+      });
+    }
+    C.pairingCopySource = PAIRING_COPY_REV;
+    return C;
+  }
+  let AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(adminConfig())))); // yerel yedek; sunucu config'i gelirse üzerine yazılır
+  window.omLivePrices = LIVE_PRICES;
   let MODS = mkMods();
   function mkMods() {
-    return Object.assign(
-      { announce: true, trust: true, club: true, reviews: true, newsletter: true, hediyelik: true, blogPreview: true, hediye: true, tarif: true },
+    const mods = Object.assign(
+      { announce: true, trust: true, club: false, reviews: false, newsletter: true, hediyelik: true, blogPreview: true, hediye: true, tarif: true },
       AC.modules || {}
     );
+    mods.club = false;
+    mods.reviews = false;
+    return mods;
   }
 
   function applyAdminOverrides() {
@@ -260,12 +501,11 @@
     };
     const pdp750 = (C.pdp && C.pdp.ay750) || (C.prices || {}).ay750;
     let sizeMap = null;
-    if (current.indexOf('urun-trilye') === 0) sizeMap = { '750ml': priceOf('tr750'), '2lt': priceOf('tr2l') };
-    else if (current.indexOf('urun') === 0) sizeMap = { '250ml': priceOf('ay250'), '500ml': priceOf('ay500'), '750ml': pdp750 };
+    if (current.indexOf('urun-trilye') === 0) sizeMap = { tr250: priceOf('tr250'), tr500: priceOf('tr500'), tr750: priceOf('tr750'), tr2l: priceOf('tr2l'), tr5l: priceOf('tr5l') };
+    else if (current.indexOf('urun') === 0) sizeMap = { ay250: priceOf('ay250'), ay500: priceOf('ay500'), ay750: pdp750, ay2l: priceOf('ay2l'), ay5l: priceOf('ay5l') };
     if (sizeMap && document.getElementById('fiyat-tek')) {
       document.querySelectorAll('.sizes .size[data-price]').forEach(b => {
-        const label = b.textContent.trim().replace(/\s.*$/, '');
-        const val = sizeMap[label];
+        const val = sizeMap[b.dataset.pid];
         if (val) {
           b.dataset.price = fmtTL(val);
           b.dataset.sub = fmtTL(Math.floor(val * 0.85));
@@ -302,7 +542,7 @@
     serin: { tr: 'Bitirme Zeytinyağı', en: 'Finishing' },
     ocak: { tr: 'Pişirme Zeytinyağı', en: 'Cooking' },
     zeytin: { tr: 'Doğal Zeytinler', en: 'Natural Olives' },
-    eksi: { tr: 'Sirkeler', en: 'Vinegars' },
+    eksi: { tr: 'Ekşiler', en: 'Vinegars & Pomegranate' },
     hediye: { tr: 'Setler', en: 'Sets' }
   };
   // Zengin (elle yazılmış) sayfası olan ürünler; kalan her ürün dinamik p.html'e gider
@@ -312,13 +552,77 @@
   };
   function urunHref(p) {
     if (p.type === 'builder' || p.type === 'club') return P(p.href || 'koleksiyon.html');
-    if (OZEL_SAYFA[p.id]) return P(OZEL_SAYFA[p.id]);
+    if (OZEL_SAYFA[p.id]) return P(OZEL_SAYFA[p.id]) + '?variant=' + encodeURIComponent(p.id || '');
     return (EN ? 'p-en.html' : 'p.html') + '?id=' + encodeURIComponent(p.id || '');
+  }
+  const STATIC_PRODUCT_META = {
+    ay250: { volume: '250 ml', price: 425, img: 'assets/img/ayvalik-250.jpg' },
+    ay500: { volume: '500 ml', price: 850, img: 'assets/img/ayvalik-500.jpg' },
+    ay750: { volume: '750 ml', price: 1250, img: 'assets/img/ayvalik-750.jpg' },
+    ay2l: { volume: '2 L Teneke', price: 2500, img: 'assets/img/ayvalik-2l.jpg' },
+    ay5l: { volume: '5 L Teneke', price: 5250, img: 'assets/img/ayvalik-5l.jpg' },
+    tr250: { volume: '250 ml', price: 450, img: 'assets/img/trilye-250.jpg' },
+    tr500: { volume: '500 ml', price: 880, img: 'assets/img/trilye-500.jpg' },
+    tr750: { volume: '750 ml', price: 1350, img: 'assets/img/trilye-750.jpg' },
+    tr2l: { volume: '2 L Teneke', price: 2900, img: 'assets/img/trilye-2l.jpg' },
+    tr5l: { volume: '5 L Teneke', price: 5750, img: 'assets/img/trilye-5l.jpg' },
+    og5l: { volume: '5 L Teneke', price: 3450, img: 'assets/img/ayvalik-5l.jpg' },
+    kutu750: { volume: '750 ml', price: 1250, img: 'assets/img/kutulu-750.jpg' },
+    kutu500: { volume: '500 ml', price: 850, img: 'assets/img/kutulu-500.jpg' }
+  };
+  function normalizeVariantText(value) {
+    return String(value || '').toLocaleLowerCase('tr-TR')
+      .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function detectVariantId(value) {
+    const text = normalizeVariantText(value);
+    if (/hediye kutulu.*750|gift box.*750/.test(text)) return 'kutu750';
+    if (/hediye kutulu.*500|gift box.*500/.test(text)) return 'kutu500';
+    if (/olgun hasat|ripe harvest/.test(text)) return 'og5l';
+    if (/trilye/.test(text)) {
+      if (/\b2\s*(?:l|lt|litre)/.test(text)) return 'tr2l';
+      if (/\b5\s*(?:l|lt|litre)/.test(text)) return 'tr5l';
+      if (/250\s*ml/.test(text)) return 'tr250';
+      if (/500\s*ml/.test(text)) return 'tr500';
+      return 'tr750';
+    }
+    if (/ayvalik/.test(text)) {
+      if (/\b2\s*(?:l|lt|litre)/.test(text)) return 'ay2l';
+      if (/\b5\s*(?:l|lt|litre)/.test(text)) return 'ay5l';
+      if (/250\s*ml/.test(text)) return 'ay250';
+      if (/750\s*ml/.test(text)) return 'ay750';
+      return 'ay500';
+    }
+    return '';
+  }
+  function cleanProductUnit(value) {
+    return displayUnit(value).replace(/^\s*\/\s*/, '').trim();
+  }
+  function hydrateProductCards(root) {
+    (root || document).querySelectorAll('.card').forEach(card => {
+      const visibleText = [card.querySelector('h3') && card.querySelector('h3').textContent, card.querySelector('.price') && card.querySelector('.price').textContent].filter(Boolean).join(' ');
+      const id = card.dataset.pid || detectVariantId(visibleText);
+      const meta = STATIC_PRODUCT_META[id];
+      if (!id || !meta) return;
+      card.dataset.pid = id;
+      card.dataset.code = id;
+      card.dataset.volume = card.dataset.volume || meta.volume;
+      card.dataset.price = card.dataset.price || String(meta.price);
+      card.dataset.img = card.dataset.img || ((card.querySelector('.prod-img > img:not(.alt-img)') || {}).getAttribute && card.querySelector('.prod-img > img:not(.alt-img)').getAttribute('src')) || meta.img;
+      card.setAttribute('href', urunHref({ id: id, type: 'product' }));
+    });
+  }
+  function displayUnit(value) {
+    return String(value || '')
+      .replace(/(\d)\s*ml\b/gi, '$1 ml')
+      .replace(/(\d)\s*(?:lt|l)\b/gi, '$1 L')
+      .replace(/100 ml\s*[x×]\s*(\d)/gi, '100 ml × $1');
   }
   function productCard(p, C) {
     const name = EN ? p.nameEN : p.nameTR;
     const note = EN ? p.noteEN : p.noteTR;
-    const unit = EN ? p.unitEN : p.unitTR;
+    const unit = displayUnit(EN ? p.unitEN : p.unitTR);
     const badge = EN ? p.badgeEN : p.badgeTR;
     const href = urunHref(p);
     const badgeHtml = badge ? `<span class="badge">${badge}</span>` : '';
@@ -336,9 +640,13 @@
       const altImg = (p.galeri && p.galeri[0]) ? `<img class="alt-img" src="${p.galeri[0]}" alt="">` : '';
       const addBtn = p.price ? `<button class="add-bag" data-add>${EN ? 'Add to Bag' : 'Sepete Ekle'} <span>→</span></button>` : '';
       media = `<div class="prod-img photo">${badgeHtml}<img src="${p.img}" alt="${name}">${altImg}${addBtn}</div>`;
-      priceHtml = p.price ? `₺${fmtTL(p.price)} <small>${unit || ''}</small>` : `<span style="color:var(--gold);font-size:.85rem;font-weight:600;">${EN ? 'Coming soon' : 'Fiyat yakında'}</span>`;
+      let unitProof = EN ? 'VAT included' : 'KDV dahil';
+      const volume = String(unit || '').toLowerCase();
+      const amount = volume.includes('ml') ? Number(volume.replace(/[^0-9]/g, '')) / 1000 : (/\b(?:l|lt|litre)\b/.test(volume) ? Number(volume.replace(/[^0-9]/g, '')) : 0);
+      if (p.price && amount) unitProof = `₺${fmtTL(Math.round(p.price / amount))} / ${EN ? 'litre' : 'litre'} · ${unitProof}`;
+      priceHtml = p.price ? `₺${fmtTL(p.price)} <small>${unit || ''}</small><em class="portion">${unitProof}</em>` : `<span style="color:var(--gold-text);font-size:.85rem;font-weight:600;">${EN ? 'Coming soon' : 'Fiyat yakında'}</span>`;
     }
-    return `<a class="card" href="${href}" data-role="${p.role || 'all'}" data-pid="${p.id || ''}">${media}<div class="card-body">${roleHtml}<div class="card-row"><h3>${name}</h3><span class="price">${priceHtml}</span></div>${note ? `<p class="card-note">${note}</p>` : ''}</div></a>`;
+    return `<a class="card" href="${href}" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">${media}<div class="card-body">${roleHtml}<div class="card-row"><h3>${name}</h3><span class="price">${priceHtml}</span></div>${note ? `<p class="card-note">${note}</p>` : ''}</div></a>`;
   }
 
   function renderProductGrids(C) {
@@ -405,13 +713,15 @@
     const f = document.getElementById('om-footer');
     if (h) h.innerHTML = header;
     if (f) f.innerHTML = footer;
+    // Statik yedek kartlar da CMS kartlarıyla aynı varyant kimliğini taşır.
+    hydrateProductCards(document);
 
     // Sunucu CMS config'i (panel kayıtları tüm ziyaretçilere buradan ulaşır);
     // API yoksa (yerel önizleme) localStorage yedeğiyle devam edilir.
     fetch('/api/config', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(cfg => {
-        if (cfg && Object.keys(cfg).length) { AC = cfg; MODS = mkMods(); }
+        if (cfg && Object.keys(cfg).length) { AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(cfg)))); MODS = mkMods(); }
         applyAdminOverrides();
         markSweep();
         if (window.omBoySenkron) window.omBoySenkron();
@@ -458,7 +768,20 @@
       toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
     }
     function cartGet() {
-      try { return JSON.parse(localStorage.getItem('om-cart') || '[]'); } catch (e) { return []; }
+      try {
+        const parsed = JSON.parse(localStorage.getItem('om-cart') || '[]');
+        return Array.isArray(parsed) ? parsed.map(k => {
+          const id = k.id || detectVariantId([k.ad, k.hacim].filter(Boolean).join(' '));
+          const meta = STATIC_PRODUCT_META[id] || {};
+          return Object.assign({}, k, {
+            id: id || k.id || '',
+            kod: k.kod || id || '',
+            hacim: k.hacim || meta.volume || '',
+            img: k.img || meta.img || '',
+            fiyat: Number(k.fiyat) || meta.price || 0
+          });
+        }) : [];
+      } catch (e) { return []; }
     }
     function cartSave(c) {
       localStorage.setItem('om-cart', JSON.stringify(c));
@@ -477,23 +800,42 @@
       var m = String(metin || '').match(/\d{1,3}(?:\.\d{3})+|\d+/);
       return m ? parseInt(m[0].replace(/\./g, ''), 10) : 0;
     }
+    function birimTemizle(birim) {
+      return String(birim || '').replace(/^\s*\/\s*/, '').trim();
+    }
+    function urunKaydi(id) {
+      return ((AC && AC.products) || []).find(p => p.id === id) || null;
+    }
     function urunTopla(addEl) {
       // Tıklanan butonun bağlamından ürün bilgisi çıkar
       // 1) PDP "Sepete Ekle · ₺X" butonu
       if (addEl.id === 'sepet-btn') {
         const h1 = document.querySelector('.buy h1');
         const boyut = document.querySelector('.sizes .size.on');
+        const id = (boyut && boyut.dataset.pid) || addEl.dataset.pid || '';
+        const kayit = urunKaydi(id);
+        const hacim = (boyut && boyut.dataset.l) || addEl.dataset.volume || birimTemizle(kayit && (EN ? kayit.unitEN : kayit.unitTR));
         return {
-          ad: (h1 ? h1.textContent.trim() : 'Ürün') + (boyut ? ' · ' + boyut.textContent.trim() : ''),
-          fiyat: fiyatCoz(addEl.textContent),
-          img: (document.getElementById('gallery-img') || {}).src || ''
+          id: id,
+          kod: id,
+          ad: h1 ? h1.textContent.trim() : 'Ürün',
+          hacim: hacim,
+          fiyat: fiyatCoz((boyut && boyut.dataset.price) || addEl.textContent),
+          img: (boyut && boyut.dataset.img) || addEl.dataset.img || (document.getElementById('gallery-img') || {}).src || ''
         };
       }
       // 2) Hediye kutusu oluşturucu
       if (addEl.id === 'gb-add') {
         const sec = document.querySelector('.gb-box .size.on');
+        const params = new URLSearchParams(location.search);
+        const isPalateBox = params.get('discount') === '15' && (params.get('palate') || '').split(',').filter(Boolean).length === 3;
         return {
-          ad: EN ? ('Custom Gift Set (' + (sec ? sec.dataset.cap : '?') + ' bottles)') : ('Kendi Hediye Setin (' + (sec ? sec.dataset.cap : '?') + "'li)"),
+          id: isPalateBox ? 'palate-box' : 'custom-gift-set',
+          kod: isPalateBox ? 'palate-box' : 'custom-gift-set',
+          ad: isPalateBox
+            ? (EN ? 'My Palate Box (3 bottles · 15% advantage)' : 'Damak Kutum (3’lü · %15 avantajlı)')
+            : (EN ? ('Custom Gift Set (' + (sec ? sec.dataset.cap : '?') + ' bottles)') : ('Kendi Hediye Setin (' + (sec ? sec.dataset.cap : '?') + "'li)")),
+          hacim: sec ? ((sec.dataset.cap || '?') + (EN ? ' bottles' : "'li")) : '',
           fiyat: fiyatCoz((document.getElementById('gb-price') || {}).textContent),
           img: (document.getElementById('gb-img') || {}).src || 'assets/img/hediye-seti-5li.jpg'
         };
@@ -504,10 +846,16 @@
         const h3 = kart.querySelector('h3');
         const fiyat = kart.querySelector('.price');
         const img = kart.querySelector('img');
+        const id = kart.dataset.pid || kart.dataset.code || detectVariantId([h3 && h3.textContent, fiyat && fiyat.textContent].filter(Boolean).join(' '));
+        const kayit = urunKaydi(id);
+        const meta = STATIC_PRODUCT_META[id] || {};
         return {
+          id: id,
+          kod: kart.dataset.code || id,
           ad: h3 ? h3.textContent.trim() : 'Ürün',
-          fiyat: fiyatCoz(fiyat ? fiyat.textContent : ''),
-          img: img ? img.getAttribute('src') : ''
+          hacim: kart.dataset.volume || birimTemizle(kayit && (EN ? kayit.unitEN : kayit.unitTR)) || meta.volume || '',
+          fiyat: Number(kart.dataset.price) || fiyatCoz(fiyat ? fiyat.textContent : '') || meta.price || 0,
+          img: kart.dataset.img || (img ? img.getAttribute('src') : '') || meta.img || ''
         };
       }
       return null;
@@ -530,9 +878,9 @@
         const u = urunTopla(add);
         if (u && u.fiyat > 0) {
           const c = cartGet();
-          const ayni = c.find(k => k.ad === u.ad && k.fiyat === u.fiyat);
+          const ayni = c.find(k => u.id ? k.id === u.id : (k.ad === u.ad && k.hacim === u.hacim && k.fiyat === u.fiyat));
           if (ayni) ayni.adet = Math.min(99, ayni.adet + 1);
-          else c.push({ ad: u.ad, fiyat: u.fiyat, adet: 1, img: u.img, kdv: kdvBul(u.ad) });
+          else c.push({ id: u.id || '', kod: u.kod || u.id || '', ad: u.ad, hacim: u.hacim || '', fiyat: u.fiyat, adet: 1, img: u.img, kdv: kdvBul(u.ad) });
           cartSave(c);
           showToast(T.toast);
         } else {
@@ -547,6 +895,9 @@
       if (pick) {
         pick.parentElement.querySelectorAll('.on').forEach(x => x.classList.remove('on'));
         pick.classList.add('on');
+        if (pick.matches('.size')) {
+          pick.parentElement.querySelectorAll('.size').forEach(x => x.setAttribute('aria-pressed', x === pick ? 'true' : 'false'));
+        }
       }
     });
 
@@ -590,7 +941,16 @@
       const io = new IntersectionObserver((ents) => {
         ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
       }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
-      revs.forEach(el => { el.classList.add('rv'); io.observe(el); });
+      revs.forEach(el => {
+        // İlk ekrandaki içerik animasyon beklemeden görünür olmalı; özellikle mobil koleksiyonda
+        // filtrelerin ve ilk ürünün boş sayfa izlenimi vermesini önler.
+        if (el.getBoundingClientRect().top < window.innerHeight * 1.15) {
+          el.classList.add('in');
+          return;
+        }
+        el.classList.add('rv');
+        io.observe(el);
+      });
     }
 
     // PDP boy butonlarını CMS fiyatlarıyla eşitle (panelde fiyat girilince otomatik aktifleşir)
@@ -609,8 +969,66 @@
           b.disabled = true;
         }
       });
+      if (window.omVariantSync) window.omVariantSync();
     };
     window.omBoySenkron = boySenkron;
+
+    // PDP'de seçili hacmin litre fiyatını ve KDV bilgisini eşzamanlı güncelle.
+    const priceNote = document.getElementById('price-note');
+    function updateUnitPrice(button) {
+      if (!priceNote || !button) return;
+      const rawPrice = Number(String(button.dataset.price || '').replace(/\./g, '').replace(',', '.'));
+      const label = String(button.dataset.l || '').toLowerCase();
+      const amount = label.includes('ml') ? Number(label.replace(/[^0-9]/g, '')) / 1000 : Number(label.replace(/[^0-9]/g, ''));
+      if (!rawPrice || !amount) return;
+      const perLitre = Math.round(rawPrice / amount).toLocaleString(EN ? 'en-US' : 'tr-TR');
+      priceNote.textContent = EN
+        ? `VAT included · ₺${perLitre} / litre · Delivery within Turkey only`
+        : `KDV dahil · ₺${perLitre} / litre · Türkiye içi teslimat`;
+    }
+    const sizeButtons = Array.from(document.querySelectorAll('.sizes .size[data-pid]'));
+    function syncPdpVariant(button, updateUrl) {
+      if (!button) return;
+      sizeButtons.forEach(b => {
+        const active = b === button;
+        b.classList.toggle('on', active);
+        b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      const price = document.getElementById('fiyat-tek');
+      const addButton = document.getElementById('sepet-btn');
+      const gallery = document.getElementById('gallery-img');
+      if (price && button.dataset.price) price.textContent = '₺' + button.dataset.price;
+      if (addButton) {
+        addButton.dataset.pid = button.dataset.pid || '';
+        addButton.dataset.volume = button.dataset.l || '';
+        addButton.dataset.img = button.dataset.img || '';
+        if (button.dataset.price) addButton.textContent = (EN ? 'Add to Bag · ₺' : 'Sepete Ekle · ₺') + button.dataset.price;
+      }
+      if (gallery && button.dataset.img) {
+        gallery.src = button.dataset.img;
+        const heading = document.querySelector('.buy h1');
+        gallery.alt = ((heading && heading.textContent.trim()) || 'Ürün') + (button.dataset.l ? ' ' + button.dataset.l : '');
+      }
+      document.querySelectorAll('.thumb[data-img]').forEach(t => t.classList.toggle('on', t.dataset.img === button.dataset.img));
+      updateUnitPrice(button);
+      if (updateUrl && button.dataset.pid) {
+        const url = new URL(location.href);
+        url.searchParams.set('variant', button.dataset.pid);
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+      }
+      if (window.omStickyVariantSync) window.omStickyVariantSync();
+    }
+    window.omVariantSync = function () {
+      if (!sizeButtons.length) {
+        if (window.omStickyVariantSync) window.omStickyVariantSync();
+        return;
+      }
+      const requested = new URLSearchParams(location.search).get('variant');
+      const chosen = (requested && sizeButtons.find(b => b.dataset.pid === requested && !b.disabled)) || sizeButtons.find(b => b.classList.contains('on') && !b.disabled) || sizeButtons.find(b => !b.disabled);
+      syncPdpVariant(chosen, false);
+    };
+    sizeButtons.forEach(b => b.addEventListener('click', () => syncPdpVariant(b, true)));
+    window.omVariantSync();
 
     // PDP mobil sabit CTA çubuğu (strateji: ad + fiyat + Sepete Ekle hep görünür)
     const pdpBtn = document.getElementById('sepet-btn');
@@ -623,10 +1041,19 @@
       document.body.appendChild(bar);
       document.body.classList.add('has-pdp-sticky');
       const fiyatKopya = bar.querySelector('span');
-      const esitle = () => { fiyatKopya.textContent = pdpFiyat.textContent; };
+      const baslikKopya = bar.querySelector('b');
+      const stickyButton = bar.querySelector('button');
+      const esitle = () => {
+        const selected = document.querySelector('.sizes .size.on');
+        const hacim = (selected && selected.dataset.l) || pdpBtn.dataset.volume || '';
+        baslikKopya.textContent = pdpAd.textContent.trim() + (hacim ? ' · ' + hacim : '');
+        fiyatKopya.textContent = pdpFiyat.textContent;
+        stickyButton.textContent = (EN ? 'Add to Bag' : 'Sepete Ekle') + (hacim ? ' · ' + hacim : '');
+      };
+      window.omStickyVariantSync = esitle;
       esitle();
       new MutationObserver(esitle).observe(pdpFiyat, { childList: true, characterData: true, subtree: true });
-      bar.querySelector('button').addEventListener('click', () => pdpBtn.click());
+      stickyButton.addEventListener('click', () => pdpBtn.click());
     }
 
     // çerez bandı (KVKK) — bir kez gösterilir
@@ -641,32 +1068,70 @@
       });
     }
 
-    // formlar: bülten/iletişim artık API'ye gider (API yoksa yine de nazik davranır)
+    // Formlar: başarı yalnızca sunucu isteği gerçekten kabul ederse gösterilir.
     document.querySelectorAll('form[data-demo]').forEach(form => {
-      form.addEventListener('submit', e => {
+      let status = form.querySelector('.form-status');
+      if (!status) {
+        status = document.createElement('p');
+        status.className = 'form-status';
+        status.setAttribute('aria-live', 'polite');
+        form.appendChild(status);
+      }
+      form.addEventListener('submit', async e => {
         e.preventDefault();
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
         const eposta = (form.querySelector('input[type=email]') || {}).value || '';
         const mesajAlani = form.querySelector('textarea');
-        if (mesajAlani) {
-          // iletişim formu
-          fetch('/api/iletisim', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        const submit = form.querySelector('[type=submit]');
+        const originalText = submit ? submit.textContent : '';
+        if (submit) {
+          submit.disabled = true;
+          submit.textContent = EN ? 'Sending…' : 'Gönderiliyor…';
+        }
+        status.className = 'form-status is-pending';
+        status.textContent = EN ? 'Your request is being sent…' : 'İsteğiniz gönderiliyor…';
+        try {
+          let endpoint;
+          let payload;
+          if (mesajAlani) {
+            endpoint = '/api/iletisim';
+            payload = {
               ad: (form.querySelector('#name') || {}).value || '',
               eposta: eposta,
               konu: (form.querySelector('#topic') || {}).value || '',
               mesaj: mesajAlani.value
-            })
-          }).catch(() => {});
-        } else if (eposta) {
-          // bülten / e-posta yakalama formları
-          fetch('/api/bulten', {
+            };
+          } else {
+            endpoint = '/api/bulten';
+            payload = { eposta: eposta, kaynak: document.body.dataset.page || '' };
+          }
+          const response = await fetch(endpoint, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eposta: eposta, kaynak: document.body.dataset.page || '' })
-          }).catch(() => {});
+            body: JSON.stringify(payload)
+          });
+          let result = {};
+          try { result = await response.json(); } catch (jsonError) { result = {}; }
+          if (!response.ok || result.tamam !== true) {
+            throw new Error(result.hata || (EN ? 'The request could not be completed. Please try again.' : 'İşlem tamamlanamadı. Lütfen yeniden deneyin.'));
+          }
+          status.className = 'form-status is-success';
+          status.textContent = form.dataset.demo;
+          showToast(form.dataset.demo);
+          form.reset();
+        } catch (error) {
+          status.className = 'form-status is-error';
+          status.textContent = error && error.message
+            ? error.message
+            : (EN ? 'Connection failed. Your entries were kept; please try again.' : 'Bağlantı kurulamadı. Bilgileriniz korundu; lütfen yeniden deneyin.');
+        } finally {
+          if (submit) {
+            submit.disabled = false;
+            submit.textContent = originalText;
+          }
         }
-        showToast(form.dataset.demo);
-        form.reset();
       });
     });
   });

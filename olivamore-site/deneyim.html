@@ -148,11 +148,7 @@ button{font:inherit;cursor:pointer}
   <div class="kicker" data-t="endKicker"></div>
   <h1 data-t="endTitle"></h1>
   <p class="lead" data-t="endLead"></p>
-  <div class="story-medals">
-    <img src="assets/img/medal-london.png" alt="London IOOC Gold">
-    <img src="assets/img/medal-istanbul.png" alt="Istanbul IOOC Gold">
-    <img src="assets/img/medal-japan.png" alt="Olive Japan Gold">
-  </div>
+  <p><a class="btn btn-ghost" href="kalite.html#oduller">Doğrulanmış belgeleri gör</a></p>
   <div class="cta-row">
     <a class="btn btn-dark" href="koleksiyon.html" data-t="endShop"></a>
     <button class="btn btn-gold" id="btn-share" data-t="endShare"></button>
@@ -189,7 +185,7 @@ var I18N = {
     arFound: 'Etiket bulundu, hikâye başlıyor',
     endKicker: 'Sağlıkla Dolu',
     endTitle: 'Hikâyenin tadına bak',
-    endLead: 'Etikette gördüğün her şey şişenin içinde: Ekim hasadı, soğuk sıkım, tek bahçe.',
+    endLead: 'Etikette gördüğün hasat ve parti bilgisini Hasat Pasaportu ile kontrol et.',
     endShop: 'Ürünleri Keşfet',
     endShare: 'Paylaş',
     endReplay: 'Deneyimi tekrar başlat',
@@ -199,11 +195,12 @@ var I18N = {
     scenes: [
       { bg: 'assets/img/webslider.jpg', kicker: 'Ayvalık', title: 'Bu etiketin ardında gerçek bir bahçe var', text: 'Etiketteki yel değirmeni süs değil; Ayvalık\'taki bahçemizin tepesinden esen rüzgârın hatırası. Her şişe o tepenin zeytinlerinden dolar.' },
       { bg: 'assets/img/story-hasat.jpg', kicker: 'Erken Hasat', title: 'Ekim\'in ilk haftası, elle', text: 'Zeytinler daha yeşilken, tane tane elle toplanır. Yere değmez, kasada bekletilmez. Erken hasat az yağ verir ama karakter dolu.' },
-      { bg: 'assets/img/hakkimizda-banner.jpg', kicker: 'Soğuk Sıkım', title: 'Aynı gün, 20-22°C\'de', text: 'Hasadın sabahı toplanan zeytin, akşam şişededir. Lab-test sonucu etiketin arkasında: %0,35 asidite, 412 mg/kg polifenol.' },
-      { bg: 'assets/img/story-sofra.jpg', kicker: 'Sofrana', title: 'Yumuşak, meyvemsi. Tıpkı etikette yazdığı gibi', text: 'Üç uluslararası jüriden üç altın madalya. Ama asıl jüri senin sofran. Şişeyi çevir, hasat tarihini kendin oku.' }
+      { bg: 'assets/img/hakkimizda-banner.jpg', kicker: 'Üretim', title: 'Belgesiyle birlikte', text: 'Üretim ve analiz bilgilerini genellemeden, yalnızca ilgili numuneye ait raporla birlikte paylaşıyoruz.' },
+      { bg: 'assets/img/story-sofra.jpg', kicker: 'Sofrana', title: 'Yumuşak, meyvemsi. Tıpkı etikette yazdığı gibi', text: 'Şişeyi çevir; hasat ve parti bilgisini oku, mevcut analiz belgesiyle eşleştir.' }
+
     ],
     /* [AR METNİ] — etiket üzerinde beliren yazı */
-    arOverlayText: 'Ekim 2025 Hasadı\nTek Bahçe · Soğuk Sıkım\n%0,35 asidite · 412 mg/kg polifenol'
+    arOverlayText: 'Parti kodunu okut\nHasat Pasaportunu aç\nMevcut belgeyi kontrol et'
   },
   en: {
     welKicker: 'The Olivamore Experience',
@@ -222,7 +219,7 @@ var I18N = {
     arFound: 'Label found, the story begins',
     endKicker: 'Full of Health',
     endTitle: 'Taste the story',
-    endLead: 'Everything you saw on the label is inside the bottle: October harvest, cold pressed, single grove.',
+    endLead: 'Check the harvest and batch details on the label through the Harvest Passport.',
     endShop: 'Discover the Products',
     endShare: 'Share',
     endReplay: 'Restart the experience',
@@ -231,10 +228,10 @@ var I18N = {
     scenes: [
       { bg: 'assets/img/webslider.jpg', kicker: 'Ayvalık', title: 'There is a real grove behind this label', text: 'The windmill on the label is not decoration; it is the memory of the wind over our grove in Ayvalık. Every bottle is filled from that hill\'s olives.' },
       { bg: 'assets/img/story-hasat.jpg', kicker: 'Early Harvest', title: 'The first week of October, by hand', text: 'The olives are picked one by one while still green. They never touch the ground, never wait in crates. Early harvest yields less oil, but full character.' },
-      { bg: 'assets/img/hakkimizda-banner.jpg', kicker: 'Cold Pressed', title: 'Same day, at 20-22°C', text: 'Olives picked in the morning are in the bottle by evening. The lab results are on the back label: 0.35% acidity, 412 mg/kg polyphenols.' },
-      { bg: 'assets/img/story-sofra.jpg', kicker: 'To Your Table', title: 'Smooth, fruity. Just as the label says', text: 'Three golds from three international juries. But the real jury is your table. Turn the bottle and read the harvest date yourself.' }
+      { bg: 'assets/img/hakkimizda-banner.jpg', kicker: 'Production', title: 'Published with its document', text: 'We do not generalise production or analysis data; we publish it only with the report that applies to the relevant sample.' },
+      { bg: 'assets/img/story-sofra.jpg', kicker: 'To Your Table', title: 'Smooth, fruity. Just as the label says', text: 'Turn the bottle; read the harvest and batch details and match them with the available analysis document.' }
     ],
-    arOverlayText: 'October 2025 Harvest\nSingle Grove · Cold Pressed\n0.35% acidity · 412 mg/kg polyphenols'
+    arOverlayText: 'Scan the batch code\nOpen the Harvest Passport\nCheck the available document'
   }
 };
 

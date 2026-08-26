@@ -93,40 +93,43 @@
 document.addEventListener('DOMContentLoaded', function () {
   var OILS = {
     ayvalik: { name: 'Ayvalık Early Harvest', img: 'assets/img/ayvalik-500.jpg', href: 'urun-en.html' },
-    trilye:  { name: 'Trilye Early Harvest',  img: 'assets/img/trilye-750.jpg',  href: 'urun-trilye-en.html' }
+    trilye:  { name: 'Trilye Early Harvest',  img: 'assets/img/trilye-750.jpg',  href: 'urun-trilye-en.html' },
+    ripe: { name: 'Ripe Harvest', img: 'assets/img/ayvalik-5l.jpg', href: 'p-en.html?id=og5l' },
+    thyme: { name: 'Thyme Infused', img: 'assets/img/cesnili-kekik.jpg', href: 'p-en.html?id=ces-kek' },
+    chilli: { name: 'Hot Pepper Infused', img: 'assets/img/cesnili-acibiber.jpg', href: 'p-en.html?id=ces-bib' }
   };
 
   var DB = [
     { name: 'Garden-Style Menemen', tags: ['tomato', 'egg', 'pepper', 'onion'], min: 2,
       time: '20 min', serves: 'Serves 2', level: 'Easy',
-      pantry: ['3 tbsp Olivamore Ayvalık', 'salt, chili flakes'],
-      steps: ['Finely chop the onion and pepper; soften in olive oil over medium heat for 4-5 minutes.', 'Add grated tomato and cook 8-10 minutes until the juices reduce.', 'Crack in the eggs one by one; stir them in, or leave them sunny.', 'Cook 3 minutes on low heat; finish with a swirl of raw olive oil off the heat.'],
-      oil: 'ayvalik', why: 'A light, eggy breakfast classic. Ayvalık\'s smooth, fruity profile carries the tomato\'s sweetness without overpowering it.' },
+      pantry: ['2 tbsp Olivamore Ripe Harvest', 'Ayvalık Early Harvest to finish', 'salt, chili flakes'],
+      steps: ['Finely chop the onion and pepper; soften in Ripe Harvest over medium heat for 4-5 minutes.', 'Add grated tomato and cook 8-10 minutes until the juices reduce.', 'Crack in the eggs one by one; stir them in, or leave them sunny.', 'Cook 3 minutes on low heat; finish with Ayvalık Early Harvest off the heat.'],
+      oil: 'ripe', why: 'Ripe Harvest handles everyday cooking. If using Ayvalık Early Harvest, add it after turning off the heat to keep its fresh aroma.' },
     { name: 'Charred Eggplant Şakşuka', tags: ['eggplant', 'tomato', 'pepper', 'garlic'], min: 2,
       time: '35 min', serves: 'Serves 4', level: 'Medium',
-      pantry: ['4 tbsp Olivamore Trilye', 'salt, vinegar'],
-      steps: ['Cube the eggplant, soak in salted water for 15 minutes, pat dry.', 'Fry in generous olive oil until golden; drain.', 'In the same pan, cook garlic and grated tomato into a sauce.', 'Fold the eggplant into the sauce; serve warm or cold with raw Trilye drizzled on top.'],
-      oil: 'trilye', why: 'A smoky meze with character. Trilye\'s intense, peppery profile stands shoulder to shoulder with the eggplant\'s charred notes.' },
+      pantry: ['4 tbsp Olivamore Ripe Harvest', 'Trilye Early Harvest to finish', 'salt, vinegar'],
+      steps: ['Cube the eggplant, soak in salted water for 15 minutes, pat dry.', 'Fry in Ripe Harvest until golden; drain.', 'In the same pan, cook garlic and grated tomato into a sauce.', 'Fold the eggplant into the sauce; serve warm or cold with Trilye drizzled on top.'],
+      oil: 'trilye', why: 'Ripe Harvest does the cooking; Trilye adds its intense peppery character over the smoky eggplant at the table.' },
     { name: 'Baked Sea Bass with Lemon-Olive Oil Sauce', tags: ['sea bass', 'fish', 'lemon', 'garlic'], min: 1,
       time: '30 min', serves: 'Serves 2', level: 'Easy',
-      pantry: ['4 tbsp Olivamore Ayvalık', 'salt, black pepper, thyme'],
-      steps: ['Heat the oven to 200°C. Salt the sea bass and tuck lemon slices inside.', 'Place on parchment, drizzle with olive oil, bake 20 minutes.', 'For the sauce: whisk 3 tbsp olive oil with lemon juice and crushed garlic.', 'Pour the sauce over the baked fish; finish with thyme.'],
-      oil: 'ayvalik', why: 'With delicate white fish the goal is to brighten, not to mask. Ayvalık\'s elegant fruitiness is made for the job.' },
+      pantry: ['1 tbsp Olivamore Ripe Harvest', '2 tsp Trilye Early Harvest to finish', 'salt, black pepper, thyme'],
+      steps: ['Heat the oven to 200°C. Salt the sea bass and tuck lemon slices inside.', 'Place on parchment, drizzle with Ripe Harvest, bake 20 minutes.', 'Mix lemon juice and crushed garlic separately.', 'Pour the lemon mixture over the fish and finish with Trilye after baking.'],
+      oil: 'trilye', why: 'Ripe Harvest goes into the oven; Trilye is added over the hot fish just before serving so its aroma stays clear.' },
     { name: 'Green Beans Braised in Olive Oil', tags: ['green beans', 'beans', 'tomato', 'onion'], min: 1,
       time: '45 min', serves: 'Serves 4', level: 'Easy',
-      pantry: ['5 tbsp Olivamore Ayvalık', 'salt, 1 tsp sugar'],
+      pantry: ['5 tbsp Olivamore Ripe Harvest', 'salt, 1 tsp sugar'],
       steps: ['Slice the onion into half-moons; sauté in olive oil until translucent.', 'Add the trimmed beans and stir for 5 minutes.', 'Add grated tomato, salt, sugar and half a cup of hot water.', 'Cover and simmer 30-35 minutes. Serve cold, always, with a swirl of raw oil before serving.'],
-      oil: 'ayvalik', why: 'The golden rule of Turkish olive oil dishes: an oil as good as the dish itself. Ayvalık\'s aroma opens up as it cools — the natural partner of the classics.' },
+      oil: 'ripe', why: 'Ripe Harvest is the everyday cooking oil for slow-braised vegetables. Add it from the start; reserve a small amount for after the heat if desired.' },
     { name: 'Chickpea &amp; Spinach Sauté', tags: ['chickpeas', 'spinach', 'onion', 'garlic'], min: 1,
       time: '25 min', serves: 'Serves 2-3', level: 'Easy',
-      pantry: ['3 tbsp Olivamore Trilye', 'salt, cumin, chili flakes'],
-      steps: ['Sauté the onion and garlic in olive oil.', 'Add cooked chickpeas and toss with cumin for 5 minutes.', 'Add the spinach (or whatever greens you have) and cook until wilted.', 'Serve with yogurt and a swirl of raw Trilye.'],
-      oil: 'trilye', why: 'Legumes\' earthy tones ask for a robust oil. Trilye\'s intensity matches the chickpea\'s fullness.' },
+      pantry: ['3 tbsp Olivamore Ripe Harvest', 'optional Trilye to finish', 'salt, cumin, chili flakes'],
+      steps: ['Sauté the onion and garlic in Ripe Harvest.', 'Add cooked chickpeas and toss with cumin for 5 minutes.', 'Add the spinach (or whatever greens you have) and cook until wilted.', 'Serve with yogurt and, if desired, a small swirl of Trilye off the heat.'],
+      oil: 'ripe', why: 'Ripe Harvest handles the sauté. Use Trilye only after cooking if you want a more peppery finish.' },
     { name: 'Red Lentil Soup with Sizzling Oil', tags: ['lentils', 'onion', 'carrot', 'potato'], min: 1,
       time: '30 min', serves: 'Serves 4', level: 'Easy',
-      pantry: ['4 tbsp Olivamore Ayvalık', 'salt, chili flakes, dried mint'],
-      steps: ['Sauté the onion in olive oil; add carrot and potato if you have them.', 'Add rinsed lentils and 5 cups of hot water.', 'When the vegetables soften, blend until silky; season.', 'At the table: sizzle a spoonful of olive oil with chili flakes and mint, and pour it over each bowl.'],
-      oil: 'ayvalik', why: 'A silky soup wants a smooth companion. Sizzling Ayvalık with chili flakes is the oldest trick of the Turkish table.' },
+      pantry: ['3 tbsp Olivamore Ripe Harvest', 'Hot Pepper Infused to finish', 'salt, dried mint'],
+      steps: ['Sauté the onion in Ripe Harvest; add carrot and potato if you have them.', 'Add rinsed lentils and 5 cups of hot water.', 'When the vegetables soften, blend until silky; season with salt and mint.', 'At the table add Hot Pepper Infused oil a few drops at a time. Do not heat it separately.'],
+      oil: 'chilli', why: 'Ripe Harvest cooks the soup; Hot Pepper Infused lets each person control the heat at the table while its aroma remains intact.' },
     { name: 'Arugula, Parmesan &amp; Early Harvest Salad', tags: ['arugula', 'parmesan', 'lemon', 'walnut'], min: 1,
       time: '10 min', serves: 'Serves 2', level: 'Very easy',
       pantry: ['3 tbsp Olivamore Trilye', 'salt, lemon juice'],
@@ -134,9 +137,9 @@ document.addEventListener('DOMContentLoaded', function () {
       oil: 'trilye', why: 'In a three-ingredient salad there is nowhere to hide: the oil is the lead. Trilye\'s peppery finish rhymes with arugula\'s bite.' },
     { name: 'Artichokes Braised in Olive Oil', tags: ['artichoke', 'carrot', 'potato', 'peas', 'lemon'], min: 1,
       time: '40 min', serves: 'Serves 4', level: 'Medium',
-      pantry: ['5 tbsp Olivamore Ayvalık', 'salt, sugar, dill'],
+      pantry: ['5 tbsp Olivamore Ripe Harvest', 'salt, sugar, dill'],
       steps: ['Keep the artichokes in lemon water to prevent browning.', 'Sauté diced carrot and potato in olive oil for 5 minutes.', 'Arrange the artichoke bottoms in the pot and fill them with the vegetables.', 'Add lightly sweetened lemon water; simmer 25 minutes. Serve cold with plenty of dill; finish with raw oil.'],
-      oil: 'ayvalik', why: 'The finesse of classic olive oil dishes calls for a gentle oil; adding it raw at the end, off the heat, preserves the aroma.' },
+      oil: 'ripe', why: 'Ripe Harvest cooks the artichokes gently. A separate finishing oil may be added only after the dish has cooled.' },
     { name: 'Garlic &amp; Olive Oil Pasta (Aegean Style)', tags: ['pasta', 'garlic', 'lemon', 'cheese'], min: 1,
       time: '15 min', serves: 'Serves 2', level: 'Very easy',
       pantry: ['4 tbsp Olivamore Trilye', 'salt, chili flakes, parsley'],
@@ -144,14 +147,14 @@ document.addEventListener('DOMContentLoaded', function () {
       oil: 'trilye', why: 'Here the oil IS the sauce. Trilye\'s full body carries the garlic\'s sweetness and leaves a peppery finish.' },
     { name: 'Çılbır: Poached Eggs on Yogurt', tags: ['egg', 'yogurt', 'garlic'], min: 2,
       time: '15 min', serves: 'Serves 2', level: 'Easy',
-      pantry: ['3 tbsp Olivamore Ayvalık', 'salt, chili flakes, vinegar'],
-      steps: ['Prepare garlicky yogurt at room temperature; spread onto plates.', 'Poach the eggs in barely simmering water with vinegar (3-4 minutes).', 'Lift the eggs onto the yogurt.', 'Sizzle the olive oil with chili flakes and pour it over. Serve immediately.'],
-      oil: 'ayvalik', why: 'A gentle oil balances the yogurt\'s tang and the poached egg\'s cream; sizzling Ayvalık ties the two together.' },
+      pantry: ['3 tbsp Olivamore Ripe Harvest', 'salt, chili flakes, vinegar'],
+      steps: ['Prepare garlicky yogurt at room temperature; spread onto plates.', 'Poach the eggs in barely simmering water with vinegar (3-4 minutes).', 'Lift the eggs onto the yogurt.', 'Warm the Ripe Harvest gently with chili flakes without smoking, spoon over and serve immediately.'],
+      oil: 'olgun', why: 'Ripe Harvest is the balanced cooking oil here; gentle warming carries the chili without scorching it.' },
     { name: 'Zucchini Fritters with Herbed Yogurt', tags: ['zucchini', 'egg', 'flour', 'dill', 'cheese'], min: 1,
       time: '25 min', serves: 'Serves 3-4', level: 'Easy',
-      pantry: ['4 tbsp Olivamore Ayvalık', 'salt, black pepper'],
-      steps: ['Grate the zucchini, salt it, rest 10 minutes and squeeze out the water thoroughly.', 'Mix with egg, flour, white cheese and dill.', 'Heat the olive oil in a pan; drop spoonfuls of batter and fry both sides.', 'Rest on paper towels; serve with garlicky yogurt.'],
-      oil: 'ayvalik', why: 'Don\'t fear frying with extra virgin: a ~207°C smoke point is more than enough. Ayvalık keeps the light batter light.' }
+      pantry: ['4 tbsp Olivamore Ripe Harvest', 'salt, black pepper'],
+      steps: ['Grate the zucchini, salt it, rest 10 minutes and squeeze out the water thoroughly.', 'Mix with egg, flour, white cheese and dill.', 'Warm Ripe Harvest over medium heat; drop spoonfuls of batter and fry both sides.', 'Rest on paper towels; serve with garlicky yogurt.'],
+      oil: 'ripe', why: 'The oil has a cooking role here. Use Ripe Harvest over medium heat without letting the pan smoke heavily.' }
   ];
 
   function fallback(ings) {
@@ -159,14 +162,14 @@ document.addEventListener('DOMContentLoaded', function () {
     return {
       name: 'Oven-Roasted ' + list[0].charAt(0).toUpperCase() + list[0].slice(1) + ' in Olive Oil',
       tags: list, min: 0, time: '35 min', serves: 'Serves 2-4', level: 'Easy',
-      pantry: ['4 tbsp Olivamore Trilye', 'salt, black pepper, thyme'],
+      pantry: ['4 tbsp Olivamore Ripe Harvest', 'Thyme Infused to finish', 'salt, black pepper'],
       steps: [
         'Heat the oven to 200°C. Cut your ' + list.join(', ') + ' into evenly sized large pieces.',
-        'Spread in a single layer on a wide tray; add olive oil, salt, pepper and thyme, and toss by hand.',
+        'Spread in a single layer on a wide tray; add Ripe Harvest, salt and pepper, and toss by hand.',
         'Roast 25-30 minutes until the edges caramelize, turning once halfway.',
-        'Out of the oven, add one more swirl of raw olive oil; serve warm.'
+        'Out of the oven, add a small amount of Thyme Infused oil, taste, and adjust; serve warm.'
       ],
-      oil: 'trilye', why: 'The oven\'s caramel notes want a robust oil. Trilye\'s character adds depth to roasted vegetables.'
+      oil: 'ripe', why: 'Ripe Harvest is the everyday oven oil. Add Thyme Infused only after roasting if you want a herbal finish.'
     };
   }
 
