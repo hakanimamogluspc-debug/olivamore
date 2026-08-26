@@ -1,0 +1,2 @@
+# Betikler her zaman LF ile kalsin (Windows'ta CRLF'e cevrilirse sunucuda bozulur)
+*.sh text eol=lf
