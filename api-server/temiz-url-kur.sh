@@ -1,9 +1,11 @@
 #!/bin/bash
 # Olivamore temiz URL kurulumu — yedek alir, conf'u gunceller, test eder, uygular
 set -e
-CONF=$(grep -l "server_name olivamore.de" /etc/nginx/sites-enabled/*)
+CONF=$(grep -l "server_name olivamore.de" /etc/nginx/sites-enabled/* | grep -v yedek | head -n1)
 echo "Conf dosyasi: $CONF"
-cp "$CONF" "$CONF.yedek"
+# Yedek nginx'in okumadigi bir yere alinir; eski hatali yedek varsa temizlenir
+cp "$CONF" "/root/nginx-olivamore.yedek"
+rm -f /etc/nginx/sites-enabled/*.yedek
 python3 - "$CONF" <<'PY'
 import sys
 p = sys.argv[1]
