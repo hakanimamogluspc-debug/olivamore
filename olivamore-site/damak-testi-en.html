@@ -3,19 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Palate Compass: Find Your Oil in 6 Questions | Olivamore</title>
-<meta name="description" content="Choose your taste and cooking preferences in 6 short questions; see one primary match and two alternatives. No email required.">
+<title>Palate Compass: Find Your Oil in 10 Questions | Olivamore</title>
+<meta name="description" content="Choose your table, taste and cooking preferences in 10 short questions, then see three olive oil recommendations and food pairings. No email required.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <style>
 .qz-result .qz-img{border:2px solid var(--gold);border-radius:16px;padding:16px;background:#fff;box-shadow:0 14px 32px rgba(191,162,93,.22)}
 .dm-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
-.dm-badge{border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.82rem;background:#fff}
+.dm-badge{border:1px solid var(--line);border-radius:16px;padding:10px 16px;font-size:.82rem;background:#fff;display:grid;gap:3px;text-align:left}
+.dm-badge small{color:var(--ink-soft);font-size:.72rem}
 .dm-badge b{color:var(--gold)}
 .dm-note{font-size:.76rem;color:var(--ink-soft);max-width:520px;margin:18px auto 0;line-height:1.6}
 </style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Palate Compass: Find Your Oil in 10 Questions | Olivamore">
+<meta property="og:description" content="Choose your table, taste and cooking preferences in 10 short questions, then see three olive oil recommendations and food pairings. No email required.">
+<meta property="og:image" content="https://olivamore.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Palate Compass: Find Your Oil in 10 Questions | Olivamore">
+<meta name="twitter:description" content="Choose your table, taste and cooking preferences in 10 short questions, then see three olive oil recommendations and food pairings. No email required.">
+<meta name="twitter:image" content="https://olivamore.com/og.png">
+
+<link rel="canonical" href="https://olivamore.com/damak-testi-en.html">
+<link rel="alternate" hreflang="tr" href="https://olivamore.com/damak-testi.html">
+<link rel="alternate" hreflang="en" href="https://olivamore.com/damak-testi-en.html">
+<link rel="alternate" hreflang="x-default" href="https://olivamore.com/damak-testi.html">
+<meta property="og:url" content="https://olivamore.com/damak-testi-en.html">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="tr_TR">
+
+<meta property="og:site_name" content="Olivamore">
 </head>
 <body data-page="ogren" data-lang="en">
 <div id="om-header"></div>
@@ -24,8 +44,8 @@
   <div class="container">
     <div class="sec-head center">
       <div class="kicker">Palate Compass</div>
-      <h1>Find the right oil for your table in 6 questions</h1>
-      <p class="lead">No email required. Your taste and use preferences produce one primary match, two alternatives and food pairings.</p>
+      <h1>Find the right oil for your table in 10 questions</h1>
+      <p class="lead">No email required. Choose your table, favourite aromas and kitchen habits to see three recommendations and their food pairings.</p>
     </div>
 
     <div class="qz-wrap">
@@ -39,16 +59,16 @@
       </div>
 
       <div class="qz-result" id="qz-result">
-        <h2>Your palate map is ready</h2>
-        <p class="lead" style="margin-bottom:22px;">We compared every product independently with your palate and cooking preferences. Here are your three strongest matches.</p>
+        <h2>Our recommendations for you</h2>
+        <p class="lead" style="margin-bottom:22px;">We compared your answers with each product's taste and use character. Here is our first pick and two other routes for your table.</p>
         <img class="qz-img" id="dm-img" alt="">
         <div class="qz-profil" id="dm-pay"></div>
         <h2 id="dm-ad" style="margin-top:0;"></h2>
         <p style="color:var(--ink-soft);max-width:460px;margin:8px auto 16px;" id="dm-desc"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn btn-dark" id="dm-add" type="button">Add to Bag</button><a class="btn btn-outline" id="dm-link" href="#">View Product</a><button class="btn btn-outline" id="dm-share" type="button">Share Result</button></div>
         <div class="dm-badges">
-          <span class="dm-badge">2nd match: <b id="dm-alt"></b></span>
-          <span class="dm-badge">3rd match: <b id="dm-kesif"></b></span>
+          <span class="dm-badge"><small>You may also enjoy</small><b id="dm-alt"></b></span>
+          <span class="dm-badge"><small>A new flavour to explore</small><b id="dm-kesif"></b></span>
         </div>
         <div class="dm-box-offer">
           <div class="dm-box-copy">
@@ -65,11 +85,11 @@
           </div>
         </div>
         <a class="dm-club-invite" href="kulup-en.html">
-          <img src="assets/img/club-1.jpg" alt="People gathering at the table with Olivamore Club">
+          <img src="assets/img/club-1.jpg" alt="People gathering at the table with Olivamore Club" width="1120" height="1400">
           <span><small>Olivamore Club · Waitlist</small><strong>Hear when the programme is ready.</strong><em>Leaving an email does not create a membership or payment.</em></span>
           <b>Join the waitlist →</b>
         </a>
-        <p class="dm-note">These percentages are <b>independent recommendation-match scores</b>; they do not need to add up to 100. Each score compares your intended use, preferred intensity and aroma choices with that product's profile. The tasting experience can vary by harvest, batch and the dish you use.</p>
+        <p class="dm-note">Recommendations compare your intended use, preferred intensity and aroma choices with the product profiles. They are not a tasting guarantee; the experience can vary by harvest, batch and the dish you use.</p>
         <p style="margin-top:20px;"><button class="qz-back" id="dm-restart" style="display:inline;">Retake the quiz</button></p>
       </div>
     </div>
@@ -99,26 +119,27 @@ document.addEventListener('DOMContentLoaded', function () {
   var Q = [
     { w:0.10, t:'How present should the olive oil be on your plate?', o:['Barely there','Light but noticeable','Pronounced','Strongly up front'],
       m:[[3,0,3,2,1,1,0],[3,2,3,2,2,2,1],[2,3,1,2,3,3,2],[1,3,0,1,2,2,3]] },
-    { w:0.12, t:'If you could beam one scent into your kitchen, which would it be?', o:['Fresh-cut grass and green almond','Ripe apple and pear','Freshly peeled citrus zest','Mediterranean herbs rubbed in the palm'],
+    { w:0.12, t:'Which aroma appeals to you most in an olive oil?', o:['Fresh-cut grass and green almond','Ripe apple and pear','Freshly peeled citrus zest','Mediterranean herbs rubbed in the palm'],
       m:[[3,3,2,1,1,2,1],[3,2,2,1,1,1,1],[1,1,1,3,3,1,0],[1,2,1,0,1,3,1]] },
     { w:0.09, t:'On the citrus side, which is closer to you?', o:['A fruity scent recalling mandarin zest','A bergamot scent recalling Earl Grey',"The type doesn't matter; a fresh citrus aroma",'Citrus is not my priority'],
       m:[[1,0,1,3,2,0,0],[1,0,0,2,3,0,0],[2,1,1,3,3,2,1],[3,3,3,0,0,3,3]] },
     { w:0.08, t:'How much room should Mediterranean herbs take on your plate?', o:['No noticeable herb aroma','Faintly in the background','Herbs like thyme clearly present','Herbal aroma in the lead role'],
       m:[[3,2,3,3,3,0,2],[2,2,2,2,2,2,2],[1,2,1,0,1,3,1],[0,2,0,0,0,3,1]] },
-    { w:0.11, t:'How pronounced should the bitterness the oil leaves on your palate be?', n:"We mean the olive's natural bitterness here, not chili heat.", o:['Not at all','Faintly felt','Pronounced','Strong and lasting'],
+    { w:0.11, t:'How pronounced should the bitterness the oil leaves on your palate be?', n:"We mean the olive's natural bitterness here, not chilli heat.", o:['Not at all','Faintly felt','Pronounced','Strong and lasting'],
       m:[[3,0,3,2,2,2,2],[3,2,3,2,2,2,2],[2,3,1,2,2,2,2],[1,3,0,1,1,2,2]] },
-    { w:0.10, t:'How pronounced should the natural pepperiness in the throat be?', n:"This isn't chili; it's the oil's natural throat sensation.", o:['Not at all','Light and short','Pronounced but short','Strong and lasting'],
+    { w:0.10, t:'How pronounced should the natural pepperiness in the throat be?', n:"This isn't chilli; it is the oil's natural throat sensation.", o:['Not at all','Light and short','Pronounced but short','Strong and lasting'],
       m:[[3,0,3,2,2,2,2],[3,2,3,2,2,2,2],[2,3,1,2,2,2,2],[1,3,0,1,1,2,2]] },
-    { w:0.12, t:'Where do you turn the chili dial?', n:"Now we're asking about real chili heat, not the oil's natural pepperiness.", o:['No heat','A gentle warmth','Medium heat','Distinct, lasting heat'],
+    { w:0.12, t:'Where do you turn the chilli dial?', n:"Now we're asking about real chilli heat, not the oil's natural pepperiness.", o:['No heat','A gentle warmth','Medium heat','Distinct, lasting heat'],
       m:[[3,3,3,3,3,2,0],[2,2,2,2,2,3,2],[1,2,1,1,1,2,3],[0,2,0,0,0,1,3]] },
-    { w:0.10, t:'What is the first job you expect from this bottle?', o:['Cooking on the stove','Marinating or prepping for the oven','Preparing cold plates and salads','A finishing touch at serving'],
+    { w:0.10, t:'What is the first job you expect from this bottle?', o:['Cooking on the hob','Marinating or preparing for the oven','Preparing cold plates and salads','A finishing touch at serving'],
       m:[[2,1,3,0,0,1,1],[2,2,3,1,1,2,1],[3,2,2,3,2,2,1],[3,3,1,3,3,3,3]] },
     { w:0.11, t:'Next to which plate would you first open the new bottle?', o:['Breakfast, salad or meze','Braised vegetables or legumes','Fish, chicken or meat','Pasta, pizza or sandwich'],
       m:[[3,2,2,3,3,1,1],[2,3,3,1,1,2,2],[3,2,2,2,3,3,2],[2,3,2,0,1,2,3]] },
     { w:0.07, t:'How much novelty do you look for in a new bottle?', o:['Classic tastes I know','A small twist on the classic','A clearly new taste','An unusual, experimental taste'],
       m:[[3,3,3,1,0,1,1],[2,2,1,2,1,3,3],[1,1,1,3,2,2,3],[0,1,0,3,3,1,3]] }
   ];
-  var DISP = [0,1,4,7,8,9];
+  /* Flow: task, dish, intensity, aroma, citrus, herbs, bitterness, pepperiness, chilli, novelty. */
+  var DISP = [7,8,0,1,2,3,4,5,6,9];
 
   var cevap = new Array(Q.length).fill(-1);
   var adim = 0;
@@ -151,13 +172,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function bitir() {
     if (DISP.some(function (qi) { return cevap[qi] === -1; })) return;
-    // Score every product independently instead of dividing one 100-point pool across the range.
+    // Scores only determine recommendation order; no artificial percentage is shown to the customer.
     var puan = P.map(function (_, i) {
       var totalWeight = DISP.reduce(function (t, qi) { return t + Q[qi].w; }, 0);
-      var profileFit = DISP.reduce(function (t, qi) { return t + Q[qi].w * Q[qi].m[cevap[qi]][i]; }, 0) / (3 * totalWeight);
-      return Math.round(67 + 29 * Math.pow(profileFit, 0.82));
+      return DISP.reduce(function (t, qi) { return t + Q[qi].w * Q[qi].m[cevap[qi]][i]; }, 0) / (3 * totalWeight);
     });
-    var sira = puan.map(function (v, i) { return { i: i, p: v, tam: v }; })
+    var sira = puan.map(function (v, i) { return { i: i, p: v }; })
       .sort(function (a, b) { return b.p - a.p || a.i - b.i; });
     var bas = sira[0], ikinci = sira[1], ucuncu = sira[2];
 
@@ -167,24 +187,25 @@ document.addEventListener('DOMContentLoaded', function () {
     r.classList.add('on');
     document.getElementById('dm-img').src = P[bas.i].img;
     document.getElementById('dm-img').alt = P[bas.i].ad;
-    document.getElementById('dm-pay').textContent = '1st match · ' + bas.tam + '% palate fit';
+    document.getElementById('dm-pay').textContent = 'Our pick for you';
     document.getElementById('dm-ad').textContent = P[bas.i].ad;
     document.getElementById('dm-desc').textContent = P[bas.i].d;
     document.getElementById('dm-link').href = P[bas.i].href;
     document.getElementById('dm-add').onclick = function () {
       var prices = { AYV:850, TRI:1350, OLG:3450, MAN:650, BER:650, KEK:650, ACI:650 };
+      var productIds = { AYV:'ay500', TRI:'tr750', OLG:'og5l', MAN:'ces-mand', BER:'ces-berg', KEK:'ces-kek', ACI:'ces-bib' };
       var c = window.omCart.get(), product = P[bas.i], price = prices[product.k];
-      var same = c.find(function (x) { return x.ad === product.ad && x.fiyat === price; });
-      if (same) same.adet += 1; else c.push({ ad:product.ad, fiyat:price, adet:1, img:product.img, kdv:1 });
+      var same = c.find(function (x) { return x.id === productIds[product.k]; });
+      if (same) same.adet += 1; else c.push({ id:productIds[product.k], ad:product.ad, fiyat:price, adet:1, img:product.img, kdv:1 });
       window.omCart.save(c); this.textContent = 'Added ✓';
     };
     document.getElementById('dm-share').onclick = function () {
-      var copy = 'My Palate Compass result: ' + P[bas.i].ad + ' (' + bas.tam + '% match)';
+      var copy = 'The Palate Compass first pick for me: ' + P[bas.i].ad;
       if (navigator.share) navigator.share({ title:'Olivamore Palate Compass', text:copy, url:location.href });
       else navigator.clipboard.writeText(copy + ' ' + location.href).then(function () { document.getElementById('dm-share').textContent = 'Copied ✓'; });
     };
-    document.getElementById('dm-alt').textContent = P[ikinci.i].ad + ' ' + ikinci.tam + '%';
-    document.getElementById('dm-kesif').textContent = P[ucuncu.i].ad + ' ' + ucuncu.tam + '%';
+    document.getElementById('dm-alt').textContent = P[ikinci.i].ad;
+    document.getElementById('dm-kesif').textContent = P[ucuncu.i].ad;
     var box = [bas, ikinci, ucuncu].map(function (x) { return P[x.i]; });
     document.getElementById('dm-box-products').innerHTML = box.map(function (p, i) {
       return '<span><img src="' + p.img + '" alt=""><b>' + (i + 1) + '</b><em>' + p.ad + '</em></span>';

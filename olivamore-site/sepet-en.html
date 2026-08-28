@@ -6,6 +6,7 @@
 <title>My Bag | Olivamore</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
@@ -39,6 +40,24 @@
 .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 @media(max-width:520px){.checkout-grid{grid-template-columns:1fr}}
 </style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="My Bag | Olivamore">
+<meta property="og:description" content="Ayvalık'tan sofraya Olivamore.">
+<meta property="og:image" content="https://olivamore.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="My Bag | Olivamore">
+<meta name="twitter:description" content="Ayvalık'tan sofraya Olivamore.">
+<meta name="twitter:image" content="https://olivamore.com/og.png">
+
+<link rel="canonical" href="https://olivamore.com/sepet-en.html">
+<link rel="alternate" hreflang="tr" href="https://olivamore.com/sepet.html">
+<link rel="alternate" hreflang="en" href="https://olivamore.com/sepet-en.html">
+<link rel="alternate" hreflang="x-default" href="https://olivamore.com/sepet.html">
+<meta property="og:url" content="https://olivamore.com/sepet-en.html">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="tr_TR">
+
+<meta property="og:site_name" content="Olivamore">
 </head>
 <body data-page="shop" data-lang="en">
 <div id="om-header"></div>
@@ -104,7 +123,7 @@
           <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
           <span>I have read and accept the <a href="mesafeli-satis.html" target="_blank" style="text-decoration:underline;">Distance Sales Agreement</a> and the <a href="gizlilik.html" target="_blank" style="text-decoration:underline;">Privacy (KVKK) Notice</a>.</span>
         </label>
-        <button class="btn btn-gold" id="co-btn" type="button" disabled style="width:100%;margin-top:10px;">Complete Order</button>
+        <button class="btn btn-gold" id="co-btn" type="button" style="width:100%;margin-top:10px;">Complete Order</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
         <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">Free shipping over 500 TL. Unconditional 14-day returns on unopened products.</p>
       </div>
@@ -213,6 +232,32 @@ document.addEventListener('DOMContentLoaded', function () {
     render();
   });
 
+  function fieldMessage(el) {
+    if (el.validity.valueMissing) return 'This field is required.';
+    if (el.validity.typeMismatch) return 'Enter a valid email address.';
+    if (el.validity.tooShort) return 'The phone number must be at least 10 characters.';
+    if (el.validity.patternMismatch) return 'The postcode must contain 5 digits.';
+    return 'Check this field.';
+  }
+  function clearFieldError(el) {
+    el.removeAttribute('aria-invalid');
+    var old = el.parentElement.querySelector('.field-error');
+    if (old) old.remove();
+  }
+  function showFieldError(el) {
+    clearFieldError(el);
+    el.setAttribute('aria-invalid', 'true');
+    var message = document.createElement('small');
+    message.className = 'field-error';
+    message.textContent = fieldMessage(el);
+    el.insertAdjacentElement('afterend', message);
+  }
+  function validateFields() {
+    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
+    required.forEach(function (el) { if (el.checkValidity()) clearFieldError(el); else showFieldError(el); });
+    return required.find(function (el) { return !el.checkValidity(); });
+  }
+
   document.getElementById('co-btn').addEventListener('click', function () {
     var btn = this, hata = document.getElementById('co-err');
     hata.style.display = 'none';
@@ -228,12 +273,11 @@ document.addEventListener('DOMContentLoaded', function () {
       postaKodu: document.getElementById('co-posta').value.trim(),
       not: document.getElementById('co-not').value.trim()
     };
-    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
-    if (required.some(function (el) { return !el.checkValidity(); })) {
-      var firstInvalid = required.find(function (el) { return !el.checkValidity(); });
-      if (firstInvalid) firstInvalid.reportValidity();
+    var firstInvalid = validateFields();
+    if (firstInvalid) {
       hata.textContent = 'Please complete all delivery fields with valid information.';
       hata.style.display = 'block';
+      firstInvalid.focus();
       return;
     }
     if (!document.getElementById('co-onay').checked) {
@@ -265,16 +309,10 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 
-  function checkoutState() {
-    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
-    var valid = required.every(function (el) { return el.checkValidity(); }) && document.getElementById('co-onay').checked;
-    document.getElementById('co-btn').disabled = !valid;
-  }
   document.querySelectorAll('.checkout-field input,.checkout-field textarea,#co-onay').forEach(function (el) {
-    el.addEventListener('input', checkoutState);
-    el.addEventListener('change', checkoutState);
+    el.addEventListener('input', function () { if (el.matches('.checkout-field *') && el.checkValidity()) clearFieldError(el); });
+    el.addEventListener('change', function () { if (el.matches('.checkout-field *') && el.checkValidity()) clearFieldError(el); });
   });
-  checkoutState();
 
   var bekle = setInterval(function () {
     if (window.omCart) { clearInterval(bekle); render(); }

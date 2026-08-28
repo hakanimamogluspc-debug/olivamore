@@ -28,7 +28,7 @@
     'sabah-bir-kasik-zeytinyagi','zeytinyagi-geleneksel-kullanimlari','alic-sirkesi-nedir','dogal-fermente-sirke'
   ]);
   const baseStem = currentStem.replace(/-en$/, '');
-  // Temiz (uzantısız) kanonik adresler
+  // GitHub sunucusundaki uzantısız kanonik adresler.
   const cleanTR = baseStem === 'index' ? '/' : '/' + baseStem;
   const cleanEN = baseStem === 'index' ? '/en' : '/' + baseStem + '-en';
   const other = pairedPages.has(baseStem) ? (EN ? cleanTR : cleanEN) : '';
@@ -54,7 +54,7 @@
 
   /* ---------- Metinler ---------- */
   const T = EN ? {
-    announce: '2025 harvest · Ayvalık and Trilye · Trace every bottle through its harvest passport',
+    announce: '2025 harvest · Ayvalık and Trilye · Check published batch records in the Harvest Passport',
     shop: 'Shop', club: 'Club', producers: 'Producers', learn: 'Learn', quality: 'Quality', story: 'Our Story',
     megaCat: 'Category', megaAll: 'All Products', megaBest: 'Bestsellers', megaEvoo: 'Finishing Oils', megaEarly: 'Cooking Oils',
     megaPurpose: 'Purpose', megaGift: 'Gift Sets', megaBuild: 'Build Your Own Set', megaJoin: 'Join the Club', megaAcc: 'Accessories',
@@ -72,7 +72,7 @@
     cookieText: 'We use only the cookies necessary for this site to work. When analytics cookies are added later, we will ask for your consent first.',
     cookieOk: 'OK', cookieMore: 'Privacy'
   } : {
-    announce: '2025 hasadı · Ayvalık ve Trilye · Her şişenin izini Hasat Pasaportu ile sür',
+    announce: '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et',
     shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
     megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Bitirme Zeytinyağları', megaEarly: 'Pişirme Zeytinyağları',
     megaPurpose: 'Amaç', megaGift: 'Hediyelik Setler', megaBuild: 'Kendi Setini Oluştur', megaJoin: "Club'a Katıl", megaAcc: 'Aksesuarlar',
@@ -268,8 +268,8 @@
   const TRUST_BASELINE_REV = 'prelaunch-truth@2026-08-22';
   function syncTrustBaseline(config) {
     const C = config || {};
-    C.announceTR = '2025 hasadı · Ayvalık ve Trilye · Her şişeyi Hasat Pasaportu ile izle';
-    C.announceEN = '2025 harvest · Ayvalık and Trilye · Trace every bottle through its Harvest Passport';
+    C.announceTR = '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et';
+    C.announceEN = '2025 harvest · Ayvalık and Trilye · Check published batch records in the Harvest Passport';
     C.heroLeadTR = "Ayvalık bahçemizden; tadı, hasadı ve hangi yemeğe yakıştığı belli zeytinyağları.";
     C.heroLeadEN = 'From our Ayvalık grove: olive oils with a clear taste, harvest and place at the table.';
     C.modules = Object.assign({}, C.modules, { club:false, reviews:false });
@@ -628,7 +628,7 @@
     const badgeHtml = badge ? `<span class="badge">${badge}</span>` : '';
     const roleDef = ROLE_LABELS[p.role];
     const roleHtml = roleDef ? `<span class="role-tag">${EN ? roleDef.en : roleDef.tr}</span>` : '';
-    let media, priceHtml, cta;
+    let media, priceHtml;
     if (p.type === 'club') {
       media = `<div class="prod-img art-olive">${badgeHtml}<div style="height:100%;display:flex;align-items:center;justify-content:center;padding-bottom:60px;" data-mark="110"></div><span class="add-bag">${EN ? 'Join the Club' : "Club'a Katıl"} <span>→</span></span></div>`;
       priceHtml = `₺${fmtTL(p.price)} <small>${unit || ''}</small>`;
@@ -646,7 +646,7 @@
       if (p.price && amount) unitProof = `₺${fmtTL(Math.round(p.price / amount))} / ${EN ? 'litre' : 'litre'} · ${unitProof}`;
       priceHtml = p.price ? `₺${fmtTL(p.price)} <small>${unit || ''}</small><em class="portion">${unitProof}</em>` : `<span style="color:var(--gold-text);font-size:.85rem;font-weight:600;">${EN ? 'Coming soon' : 'Fiyat yakında'}</span>`;
     }
-    return `<a class="card" href="${href}" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">${media}<div class="card-body">${roleHtml}<div class="card-row"><h3>${name}</h3><span class="price">${priceHtml}</span></div>${note ? `<p class="card-note">${note}</p>` : ''}</div></a>`;
+    return `<article class="card" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}"><a class="card-hit" href="${href}" aria-label="${name}" data-pid="${p.id || ''}"></a>${media}<div class="card-body">${roleHtml}<div class="card-row"><h3>${name}</h3><span class="price">${priceHtml}</span></div>${note ? `<p class="card-note">${note}</p>` : ''}</div></article>`;
   }
 
   function renderProductGrids(C) {
@@ -761,8 +761,9 @@
 
     // ---- GERÇEK SEPET (localStorage 'om-cart') ----
     const toast = document.getElementById('toast');
-    function showToast(msg) {
+    function showToast(msg, type) {
       toast.textContent = msg;
+      toast.classList.toggle('is-error', type === 'error');
       toast.classList.add('show');
       clearTimeout(toast._t);
       toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
@@ -830,8 +831,8 @@
         const params = new URLSearchParams(location.search);
         const isPalateBox = params.get('discount') === '15' && (params.get('palate') || '').split(',').filter(Boolean).length === 3;
         return {
-          id: isPalateBox ? 'palate-box' : 'custom-gift-set',
-          kod: isPalateBox ? 'palate-box' : 'custom-gift-set',
+          id: isPalateBox ? 'palate-box-3' : ('custom-set-' + (sec ? sec.dataset.cap : '')),
+          kod: isPalateBox ? 'palate-box-3' : ('custom-set-' + (sec ? sec.dataset.cap : '')),
           ad: isPalateBox
             ? (EN ? 'My Palate Box (3 bottles · 15% advantage)' : 'Damak Kutum (3’lü · %15 avantajlı)')
             : (EN ? ('Custom Gift Set (' + (sec ? sec.dataset.cap : '?') + ' bottles)') : ('Kendi Hediye Setin (' + (sec ? sec.dataset.cap : '?') + "'li)")),
@@ -884,7 +885,7 @@
           cartSave(c);
           showToast(T.toast);
         } else {
-          showToast(T.toast);
+          showToast(EN ? 'This product is not available yet.' : 'Bu ürün henüz satışta değil.', 'error');
         }
       }
       // akordeon
@@ -1039,7 +1040,10 @@
       bar.className = 'pdp-sticky';
       bar.innerHTML = `<div class="t"><b>${pdpAd.textContent.trim()}</b><span></span></div><button class="btn btn-gold" type="button">${EN ? 'Add to Bag' : 'Sepete Ekle'}</button>`;
       document.body.appendChild(bar);
-      document.body.classList.add('has-pdp-sticky');
+      const setSticky = (visible) => {
+        bar.classList.toggle('show', visible);
+        document.body.classList.toggle('has-pdp-sticky', visible);
+      };
       const fiyatKopya = bar.querySelector('span');
       const baslikKopya = bar.querySelector('b');
       const stickyButton = bar.querySelector('button');
@@ -1054,6 +1058,11 @@
       esitle();
       new MutationObserver(esitle).observe(pdpFiyat, { childList: true, characterData: true, subtree: true });
       stickyButton.addEventListener('click', () => pdpBtn.click());
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => setSticky(!entry.isIntersecting), { threshold: 0.15 }).observe(pdpBtn);
+      } else {
+        setSticky(true);
+      }
     }
 
     // çerez bandı (KVKK) — bir kez gösterilir

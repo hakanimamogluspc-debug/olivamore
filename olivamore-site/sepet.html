@@ -6,6 +6,7 @@
 <title>Sepetim | Olivamore</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
@@ -39,6 +40,24 @@
 .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 @media(max-width:520px){.checkout-grid{grid-template-columns:1fr}}
 </style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sepetim | Olivamore">
+<meta property="og:description" content="Ayvalık'tan sofraya Olivamore.">
+<meta property="og:image" content="https://olivamore.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sepetim | Olivamore">
+<meta name="twitter:description" content="Ayvalık'tan sofraya Olivamore.">
+<meta name="twitter:image" content="https://olivamore.com/og.png">
+
+<link rel="canonical" href="https://olivamore.com/sepet.html">
+<link rel="alternate" hreflang="tr" href="https://olivamore.com/sepet.html">
+<link rel="alternate" hreflang="en" href="https://olivamore.com/sepet-en.html">
+<link rel="alternate" hreflang="x-default" href="https://olivamore.com/sepet.html">
+<meta property="og:url" content="https://olivamore.com/sepet.html">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:locale:alternate" content="en_GB">
+
+<meta property="og:site_name" content="Olivamore">
 </head>
 <body data-page="shop">
 <div id="om-header"></div>
@@ -107,7 +126,7 @@
           <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
           <span><a href="mesafeli-satis.html" target="_blank" style="text-decoration:underline;">Mesafeli Satış Sözleşmesi</a>'ni ve <a href="gizlilik.html" target="_blank" style="text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum, onaylıyorum.</span>
         </label>
-        <button class="btn btn-gold" id="co-btn" type="button" disabled style="width:100%;margin-top:10px;">Siparişi Tamamla</button>
+        <button class="btn btn-gold" id="co-btn" type="button" style="width:100%;margin-top:10px;">Siparişi Tamamla</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
         <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">500 TL üzerindeki siparişlerde kargo ücretsizdir. Açılmamış ürünleri 14 gün içinde koşulsuz olarak iade edebilirsin.</p>
       </div>
@@ -222,6 +241,32 @@ document.addEventListener('DOMContentLoaded', function () {
     render();
   });
 
+  function alanHatasi(el) {
+    if (el.validity.valueMissing) return 'Bu alan zorunlu.';
+    if (el.validity.typeMismatch) return 'Geçerli bir e-posta adresi yaz.';
+    if (el.validity.tooShort) return 'Telefon numarası en az 10 karakter olmalı.';
+    if (el.validity.patternMismatch) return 'Posta kodu 5 rakam olmalı.';
+    return 'Bu alanı kontrol et.';
+  }
+  function hataTemizle(el) {
+    el.removeAttribute('aria-invalid');
+    var eski = el.parentElement.querySelector('.field-error');
+    if (eski) eski.remove();
+  }
+  function hataGoster(el) {
+    hataTemizle(el);
+    el.setAttribute('aria-invalid', 'true');
+    var msj = document.createElement('small');
+    msj.className = 'field-error';
+    msj.textContent = alanHatasi(el);
+    el.insertAdjacentElement('afterend', msj);
+  }
+  function alanlariDogrula() {
+    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
+    required.forEach(function (el) { if (el.checkValidity()) hataTemizle(el); else hataGoster(el); });
+    return required.find(function (el) { return !el.checkValidity(); });
+  }
+
   document.getElementById('co-btn').addEventListener('click', function () {
     var btn = this, hata = document.getElementById('co-err');
     hata.style.display = 'none';
@@ -237,12 +282,11 @@ document.addEventListener('DOMContentLoaded', function () {
       postaKodu: document.getElementById('co-posta').value.trim(),
       not: document.getElementById('co-not').value.trim()
     };
-    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
-    if (required.some(function (el) { return !el.checkValidity(); })) {
-      var firstInvalid = required.find(function (el) { return !el.checkValidity(); });
-      if (firstInvalid) firstInvalid.reportValidity();
+    var firstInvalid = alanlariDogrula();
+    if (firstInvalid) {
       hata.textContent = 'Lütfen teslimat alanlarını geçerli ve eksiksiz doldur.';
       hata.style.display = 'block';
+      firstInvalid.focus();
       return;
     }
     if (!document.getElementById('co-onay').checked) {
@@ -274,16 +318,10 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 
-  function checkoutState() {
-    var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
-    var valid = required.every(function (el) { return el.checkValidity(); }) && document.getElementById('co-onay').checked;
-    document.getElementById('co-btn').disabled = !valid;
-  }
   document.querySelectorAll('.checkout-field input,.checkout-field textarea,#co-onay').forEach(function (el) {
-    el.addEventListener('input', checkoutState);
-    el.addEventListener('change', checkoutState);
+    el.addEventListener('input', function () { if (el.matches('.checkout-field *') && el.checkValidity()) hataTemizle(el); });
+    el.addEventListener('change', function () { if (el.matches('.checkout-field *') && el.checkValidity()) hataTemizle(el); });
   });
-  checkoutState();
 
   // site.js sepeti kurana kadar bekle
   var bekle = setInterval(function () {

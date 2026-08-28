@@ -3,19 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Damak Pusulası: 6 Soruda Yağını Bul | Olivamore</title>
-<meta name="description" content="6 kısa soruda kullanım ve tat tercihini belirle; bir ana öneri ve iki alternatif gör. E-posta gerekmez.">
+<title>Damak Pusulası: 10 Soruda Yağını Bul | Olivamore</title>
+<meta name="description" content="10 kısa soruda kullanım ve tat tercihlerini seç; senin için hazırlanan üç zeytinyağı önerisini ve yemek eşleşmelerini gör. E-posta gerekmez.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <style>
 .qz-result .qz-img{border:2px solid var(--gold);border-radius:16px;padding:0;background:#fff;box-shadow:0 14px 32px rgba(191,162,93,.22)}
 .dm-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
-.dm-badge{border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.82rem;background:#fff}
+.dm-badge{border:1px solid var(--line);border-radius:16px;padding:10px 16px;font-size:.82rem;background:#fff;display:grid;gap:3px;text-align:left}
+.dm-badge small{color:var(--ink-soft);font-size:.72rem}
 .dm-badge b{color:var(--gold)}
 .dm-note{font-size:.76rem;color:var(--ink-soft);max-width:520px;margin:18px auto 0;line-height:1.6}
 </style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Damak Pusulası: 10 Soruda Yağını Bul | Olivamore">
+<meta property="og:description" content="10 kısa soruda kullanım ve tat tercihlerini seç; senin için hazırlanan üç zeytinyağı önerisini ve yemek eşleşmelerini gör. E-posta gerekmez.">
+<meta property="og:image" content="https://olivamore.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Damak Pusulası: 10 Soruda Yağını Bul | Olivamore">
+<meta name="twitter:description" content="10 kısa soruda kullanım ve tat tercihlerini seç; senin için hazırlanan üç zeytinyağı önerisini ve yemek eşleşmelerini gör. E-posta gerekmez.">
+<meta name="twitter:image" content="https://olivamore.com/og.png">
+
+<link rel="canonical" href="https://olivamore.com/damak-testi.html">
+<link rel="alternate" hreflang="tr" href="https://olivamore.com/damak-testi.html">
+<link rel="alternate" hreflang="en" href="https://olivamore.com/damak-testi-en.html">
+<link rel="alternate" hreflang="x-default" href="https://olivamore.com/damak-testi.html">
+<meta property="og:url" content="https://olivamore.com/damak-testi.html">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:locale:alternate" content="en_GB">
+
+<meta property="og:site_name" content="Olivamore">
 </head>
 <body data-page="ogren">
 <div id="om-header"></div>
@@ -24,8 +44,8 @@
   <div class="container">
     <div class="sec-head center">
       <div class="kicker">Damak Pusulası</div>
-      <h1>6 soruda sofrana uygun yağı bul</h1>
-      <p class="lead">E-posta gerekmez. Tat ve kullanım tercihlerine göre bir ana öneri, iki alternatif ve yemek eşleşmeleri gösterir.</p>
+      <h1>10 soruda sofrana uygun yağı bul</h1>
+      <p class="lead">E-posta gerekmez. Sofranı, sevdiğin aromaları ve mutfaktaki alışkanlıklarını seç; sana özel üç öneri ve yemek eşleşmelerini gör.</p>
 
     </div>
 
@@ -40,16 +60,16 @@
       </div>
 
       <div class="qz-result" id="qz-result">
-        <h2>Damak haritan hazır</h2>
-        <p class="lead" style="margin-bottom:22px;">Her ürünü damak ve kullanım tercihlerinle ayrı ayrı karşılaştırdık. İşte sana en güçlü üç eşleşme.</p>
+        <h2>Senin için önerilerimiz</h2>
+        <p class="lead" style="margin-bottom:22px;">Cevaplarını ürünlerin tat ve kullanım karakterleriyle karşılaştırdık. İlk önerin ve sofrana açılan iki farklı yol burada.</p>
         <img class="qz-img" id="dm-img" alt="">
         <div class="qz-profil" id="dm-pay"></div>
         <h2 id="dm-ad" style="margin-top:0;"></h2>
         <p style="color:var(--ink-soft);max-width:460px;margin:8px auto 16px;" id="dm-desc"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn btn-dark" id="dm-add" type="button">Sepete Ekle</button><a class="btn btn-outline" id="dm-link" href="#">Ürünü Gör</a><button class="btn btn-outline" id="dm-share" type="button">Sonucu Paylaş</button></div>
         <div class="dm-badges">
-          <span class="dm-badge">2. eşleşme: <b id="dm-alt"></b></span>
-          <span class="dm-badge">3. eşleşme: <b id="dm-kesif"></b></span>
+          <span class="dm-badge"><small>Bunu da sevebilirsin</small><b id="dm-alt"></b></span>
+          <span class="dm-badge"><small>Yeni bir tat keşfi</small><b id="dm-kesif"></b></span>
         </div>
         <div class="dm-box-offer">
           <div class="dm-box-copy">
@@ -66,11 +86,11 @@
           </div>
         </div>
         <a class="dm-club-invite" href="kulup.html">
-          <img src="assets/img/club-1.jpg" alt="Olivamore Club ile sofrada bir araya gelen insanlar">
+          <img src="assets/img/club-1.jpg" alt="Olivamore Club ile sofrada bir araya gelen insanlar" width="1120" height="1400">
           <span><small>Olivamore Club · Bekleme Listesi</small><strong>Program hazır olduğunda haber al.</strong><em>E-posta bırakmak üyelik veya ödeme oluşturmaz.</em></span>
           <b>Listeye katıl →</b>
         </a>
-        <p class="dm-note">Bu yüzdeler, <b>birbirinden bağımsız öneri uyum puanlarıdır</b>; bu nedenle toplamlarının 100 olması gerekmez. Puanlar, seçtiğin kullanım amacı ile tat ve aroma tercihlerini her ürünün profiliyle ayrı ayrı karşılaştırır. Tadım deneyimi; hasada, üretim partisine ve ürünü kullandığın yemeğe göre değişebilir.</p>
+        <p class="dm-note">Öneriler; seçtiğin kullanım amacı, yoğunluk ve aroma tercihleri ile ürün profillerinin karşılaştırılmasına dayanır. Bir tadım garantisi değildir; deneyim hasada, üretim partisine ve ürünü kullandığın yemeğe göre değişebilir.</p>
         <p style="margin-top:20px;"><button class="qz-back" id="dm-restart" style="display:inline;">Testi yeniden çöz</button></p>
       </div>
     </div>
@@ -121,8 +141,8 @@ document.addEventListener('DOMContentLoaded', function () {
     { w:0.07, t:'Yeni bir şişede ne kadar yenilik ararsın?', o:['Tanıdığım klasik tatlar','Klasik tada küçük bir yenilik','Belirgin biçimde yeni bir tat','Alışılmadık ve deneysel bir tat'],
       m:[[3,3,3,1,0,1,1],[2,2,1,2,1,3,3],[1,1,1,3,2,2,3],[0,1,0,3,3,1,3]] }
   ];
-  /* Zorunlu displayOrder: yoğunluk, aroma, narenciye, otsu, burukluk, GÖREV, yakıcılık, YEMEK, biber, yenilik */
-  var DISP = [0,1,4,7,8,9];
+  /* Akış: görev, yemek, yoğunluk, aroma, narenciye, otsu, burukluk, yakıcılık, biber, yenilik. */
+  var DISP = [7,8,0,1,2,3,4,5,6,9];
 
   var cevap = new Array(Q.length).fill(-1);
   var adim = 0;
@@ -155,14 +175,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function bitir() {
     if (DISP.some(function (qi) { return cevap[qi] === -1; })) return;
-    // Her ürün kendi profilinde bağımsız değerlendirilir; sonuçlar 100'e bölüştürülmez.
-    // Matris uyumu 0–3 aralığındadır. Kalibre edilmiş ölçek ilk üç eşleşmeyi 81–96 bandında görünür kılar.
+    // Puanlar yalnız öneri sırasını belirler; kullanıcıya yapay bir yüzde gösterilmez.
     var puan = P.map(function (_, i) {
       var toplamAgirlik = DISP.reduce(function (t, qi) { return t + Q[qi].w; }, 0);
-      var profilUyumu = DISP.reduce(function (t, qi) { return t + Q[qi].w * Q[qi].m[cevap[qi]][i]; }, 0) / (3 * toplamAgirlik);
-      return Math.round(67 + 29 * Math.pow(profilUyumu, 0.82));
+      return DISP.reduce(function (t, qi) { return t + Q[qi].w * Q[qi].m[cevap[qi]][i]; }, 0) / (3 * toplamAgirlik);
     });
-    var sira = puan.map(function (v, i) { return { i: i, p: v, tam: v }; })
+    var sira = puan.map(function (v, i) { return { i: i, p: v }; })
       .sort(function (a, b) { return b.p - a.p || a.i - b.i; });
     var bas = sira[0], ikinci = sira[1], ucuncu = sira[2];
 
@@ -172,24 +190,25 @@ document.addEventListener('DOMContentLoaded', function () {
     r.classList.add('on');
     document.getElementById('dm-img').src = P[bas.i].img;
     document.getElementById('dm-img').alt = P[bas.i].ad;
-    document.getElementById('dm-pay').textContent = '1. eşleşme · %' + bas.tam + ' damak uyumu';
+    document.getElementById('dm-pay').textContent = 'Senin için seçtik';
     document.getElementById('dm-ad').textContent = P[bas.i].ad;
     document.getElementById('dm-desc').textContent = P[bas.i].d;
     document.getElementById('dm-link').href = P[bas.i].href;
     document.getElementById('dm-add').onclick = function () {
       var fiyatlar = { AYV:850, TRI:1350, OLG:3450, MAN:650, BER:650, KEK:650, ACI:650 };
+      var urunIdleri = { AYV:'ay500', TRI:'tr750', OLG:'og5l', MAN:'ces-mand', BER:'ces-berg', KEK:'ces-kek', ACI:'ces-bib' };
       var c = window.omCart.get(), urun = P[bas.i], fiyat = fiyatlar[urun.k];
-      var ayni = c.find(function (x) { return x.ad === urun.ad && x.fiyat === fiyat; });
-      if (ayni) ayni.adet += 1; else c.push({ ad:urun.ad, fiyat:fiyat, adet:1, img:urun.img, kdv:1 });
+      var ayni = c.find(function (x) { return x.id === urunIdleri[urun.k]; });
+      if (ayni) ayni.adet += 1; else c.push({ id:urunIdleri[urun.k], ad:urun.ad, fiyat:fiyat, adet:1, img:urun.img, kdv:1 });
       window.omCart.save(c); this.textContent = 'Sepete eklendi ✓';
     };
     document.getElementById('dm-share').onclick = function () {
-      var metin = 'Damak Pusulası sonucum: ' + P[bas.i].ad + ' (%' + bas.tam + ' uyum)';
+      var metin = 'Damak Pusulası’nın benim için ilk önerisi: ' + P[bas.i].ad;
       if (navigator.share) navigator.share({ title:'Olivamore Damak Pusulası', text:metin, url:location.href });
       else navigator.clipboard.writeText(metin + ' ' + location.href).then(function () { document.getElementById('dm-share').textContent = 'Kopyalandı ✓'; });
     };
-    document.getElementById('dm-alt').textContent = P[ikinci.i].ad + ' %' + ikinci.tam;
-    document.getElementById('dm-kesif').textContent = P[ucuncu.i].ad + ' %' + ucuncu.tam;
+    document.getElementById('dm-alt').textContent = P[ikinci.i].ad;
+    document.getElementById('dm-kesif').textContent = P[ucuncu.i].ad;
     var kutu = [bas, ikinci, ucuncu].map(function (x) { return P[x.i]; });
     document.getElementById('dm-box-products').innerHTML = kutu.map(function (p, i) {
       return '<span><img src="' + p.img + '" alt=""><b>' + (i + 1) + '</b><em>' + p.ad + '</em></span>';
