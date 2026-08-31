@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hesabım | Olivamore</title>
+<meta name="description" content="Olivamore hesabın: siparişlerin, kargo takibi ve puanların tek ekranda.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<style>
+.hs-kart{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;max-width:440px;margin:0 auto;box-shadow:0 14px 32px rgba(30,28,25,.07)}
+.hs-sekme{display:flex;gap:0;border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:22px}
+.hs-sekme button{flex:1;border:none;background:none;font:inherit;font-size:.88rem;padding:9px;border-radius:999px;cursor:pointer;color:var(--ink-soft)}
+.hs-sekme button.on{background:var(--ink);color:#fff}
+.hs-alan{margin-bottom:13px}
+.hs-alan label{display:block;font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+.hs-alan input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit;font-size:.92rem;box-sizing:border-box}
+.hs-alan input:focus{outline:2px solid rgba(128,106,54,.22);border-color:#806A36}
+.hs-hata{color:#a33;font-size:.82rem;margin-top:10px;display:none}
+.hs-ust{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.hs-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
+@media(max-width:640px){.hs-stats{grid-template-columns:1fr}}
+.hs-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;text-align:center}
+.hs-stat .n{font-family:Fraunces,serif;font-size:1.7rem;color:var(--gold)}
+.hs-stat .l{font-size:.76rem;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.hs-sip{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.hs-sip summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;cursor:pointer;list-style:none;flex-wrap:wrap}
+.hs-sip summary::-webkit-details-marker{display:none}
+.hs-sip .b{font-size:.9rem}
+.hs-sip .t{font-size:.76rem;color:var(--ink-soft)}
+.hs-pill{font-size:.72rem;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.hs-govde{border-top:1px dashed var(--line);padding:16px 18px;font-size:.86rem}
+.hs-kargo{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:.84rem;color:var(--gold);font-weight:600}
+.hs-puan-not{font-size:.78rem;color:var(--ink-soft);max-width:560px;margin:0 auto 26px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body data-page="hesap">
+<div id="om-header"></div>
+
+<section class="block tight">
+  <div class="container">
+
+    <!-- GİRİŞ / KAYIT -->
+    <div id="hs-giris" style="display:none;">
+      <div class="sec-head center">
+        <div class="kicker">Olivamore Hesabın</div>
+        <h2>Siparişlerin, kargon ve puanların</h2>
+        <p class="lead">Kayıt olurken kullandığın e-posta, sipariş verirken yazdığın e-postaysa geçmiş siparişlerin de hesabında görünür.</p>
+      </div>
+      <div class="hs-kart">
+        <div class="hs-sekme">
+          <button type="button" id="hs-t-giris" class="on">Giriş Yap</button>
+          <button type="button" id="hs-t-kayit">Kayıt Ol</button>
+        </div>
+        <form id="hs-form">
+          <div class="hs-alan" id="hs-ad-alan" style="display:none;"><label for="hs-ad">Ad soyad</label><input type="text" id="hs-ad" autocomplete="name"></div>
+          <div class="hs-alan"><label for="hs-eposta">E-posta</label><input type="email" id="hs-eposta" autocomplete="email" required></div>
+          <div class="hs-alan"><label for="hs-sifre">Şifre</label><input type="password" id="hs-sifre" autocomplete="current-password" required minlength="6"></div>
+          <button class="btn btn-gold" type="submit" id="hs-btn" style="width:100%;margin-top:6px;">Giriş Yap</button>
+          <p class="hs-hata" id="hs-hataMsj"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- HESAP EKRANI -->
+    <div id="hs-panel" style="display:none;">
+      <div class="hs-ust">
+        <div>
+          <div class="kicker">Hesabım</div>
+          <h2 style="margin:0;">Hoş geldin, <span id="hs-isim"></span></h2>
+        </div>
+        <button class="btn btn-ghost" type="button" id="hs-cikis">Çıkış Yap</button>
+      </div>
+      <div class="hs-stats">
+        <div class="hs-stat"><div class="n" id="hs-puan">0</div><div class="l">Puanın (1 puan = ₺1)</div></div>
+        <div class="hs-stat"><div class="n" id="hs-sipsay">0</div><div class="l">Toplam sipariş</div></div>
+        <div class="hs-stat"><div class="n" id="hs-uyelik">—</div><div class="l">Üyelik tarihi</div></div>
+      </div>
+      <p class="hs-puan-not">Her ₺100 harcamada 2 puan kazanırsın. Puanlarını yakında siparişlerinde indirim olarak kullanabileceksin; şimdilik birikiyor.</p>
+      <h3 style="font-family:Fraunces,serif;font-weight:400;margin-bottom:14px;">Siparişlerim</h3>
+      <div id="hs-siparisler"></div>
+    </div>
+
+  </div>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var KEY = 'om-uye-token';
+  var mod = 'giris';
+  var RENK = { 'yeni': '#2563eb', 'hazırlanıyor': '#d97706', 'kargolandı': '#7c3aed', 'tamamlandı': '#16a34a', 'iptal': '#6b7280', 'iade': '#dc2626', 'odeme-bekliyor': '#0891b2', 'odeme-basarisiz': '#9f1239' };
+  var ETIKET = { 'yeni': 'Alındı', 'hazırlanıyor': 'Hazırlanıyor', 'kargolandı': 'Kargoda', 'tamamlandı': 'Teslim edildi', 'iptal': 'İptal edildi', 'iade': 'İade edildi', 'odeme-bekliyor': 'Ödeme bekleniyor', 'odeme-basarisiz': 'Ödeme başarısız' };
+  var KARGO_URL = {
+    'Yurtiçi': 'https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=',
+    'Aras': 'https://kargotakip.araskargo.com.tr/mainpage.aspx?code=',
+    'MNG': 'https://kargotakip.mngkargo.com.tr/?takipNo=',
+    'PTT': 'https://gonderitakip.ptt.gov.tr/Track/Verify?q=',
+    'Sürat': 'https://www.suratkargo.com.tr/KargoTakip/?kargotakipno=',
+    'UPS': 'https://www.ups.com/track?tracknum='
+  };
+  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function tl(n) { return '₺' + Number(n || 0).toLocaleString('tr-TR'); }
+  function fmtTarih(t) { try { return new Date(t).toLocaleDateString('tr-TR'); } catch (e) { return ''; } }
+  function goster(id) {
+    document.getElementById('hs-giris').style.display = id === 'giris' ? '' : 'none';
+    document.getElementById('hs-panel').style.display = id === 'panel' ? '' : 'none';
+  }
+  function sekme(m) {
+    mod = m;
+    document.getElementById('hs-t-giris').classList.toggle('on', m === 'giris');
+    document.getElementById('hs-t-kayit').classList.toggle('on', m === 'kayit');
+    document.getElementById('hs-ad-alan').style.display = m === 'kayit' ? '' : 'none';
+    document.getElementById('hs-btn').textContent = m === 'kayit' ? 'Kayıt Ol' : 'Giriş Yap';
+    document.getElementById('hs-sifre').autocomplete = m === 'kayit' ? 'new-password' : 'current-password';
+  }
+  document.getElementById('hs-t-giris').addEventListener('click', function () { sekme('giris'); });
+  document.getElementById('hs-t-kayit').addEventListener('click', function () { sekme('kayit'); });
+
+  function kargoLink(s) {
+    if (!s.kargoNo) return '';
+    var url = (KARGO_URL[s.kargoFirma] || 'https://www.google.com/search?q=') + encodeURIComponent(s.kargoNo);
+    return '<a class="hs-kargo" href="' + url + '" target="_blank" rel="noopener">📦 Kargoyu takip et: ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) + ' →</a>';
+  }
+  function panelDoldur(v) {
+    document.getElementById('hs-isim').textContent = v.ad;
+    document.getElementById('hs-puan').textContent = v.puan;
+    document.getElementById('hs-sipsay').textContent = v.siparisler.length;
+    document.getElementById('hs-uyelik').textContent = fmtTarih(v.uyelik);
+    var host = document.getElementById('hs-siparisler');
+    if (!v.siparisler.length) {
+      host.innerHTML = '<p style="color:var(--ink-soft);">Henüz siparişin yok. <a class="link-arrow" href="koleksiyon.html">Koleksiyona göz at →</a><br><small>Not: siparişlerin, hesabındaki e-posta ile verilmiş olanlardır.</small></p>';
+      return;
+    }
+    host.innerHTML = v.siparisler.map(function (s) {
+      var r = RENK[s.durum] || '#6b7280';
+      return '<details class="hs-sip"><summary>' +
+        '<span><span class="b"><b>' + s.no + '</b> · ' + tl(s.toplam) + '</span><br><span class="t">' + fmtTarih(s.tarih) + ' · ' + (s.odeme === 'kart' ? 'Kart' : 'Havale/EFT') + '</span></span>' +
+        '<span class="hs-pill" style="background:' + r + '1a;color:' + r + ';border:1px solid ' + r + '55;">' + (ETIKET[s.durum] || s.durum) + (s.iadeDurum === 'talep' ? ' · iade talebi' : '') + '</span></summary>' +
+        '<div class="hs-govde">' +
+        s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad); }).join('<br>') +
+        kargoLink(s) + '</div></details>';
+    }).join('');
+  }
+  function beniGetir() {
+    var t = localStorage.getItem(KEY);
+    if (!t) { goster('giris'); return; }
+    fetch('/api/uye/ben', { headers: { 'Authorization': 'Bearer ' + t } })
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (v) { panelDoldur(v); goster('panel'); })
+      .catch(function () { localStorage.removeItem(KEY); goster('giris'); });
+  }
+  document.getElementById('hs-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var hata = document.getElementById('hs-hataMsj');
+    hata.style.display = 'none';
+    var btn = document.getElementById('hs-btn');
+    btn.disabled = true;
+    fetch(mod === 'kayit' ? '/api/uye/kayit' : '/api/uye/giris', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ad: document.getElementById('hs-ad').value.trim(),
+        eposta: document.getElementById('hs-eposta').value.trim(),
+        sifre: document.getElementById('hs-sifre').value
+      })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (s) {
+        btn.disabled = false;
+        if (!s.ok) { hata.textContent = s.j.hata || 'İşlem başarısız.'; hata.style.display = 'block'; return; }
+        localStorage.setItem(KEY, s.j.token);
+        beniGetir();
+      })
+      .catch(function () { btn.disabled = false; hata.textContent = 'Bağlantı hatası; tekrar dene.'; hata.style.display = 'block'; });
+  });
+  document.getElementById('hs-cikis').addEventListener('click', function () {
+    var t = localStorage.getItem(KEY);
+    if (t) fetch('/api/uye/cikis', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } });
+    localStorage.removeItem(KEY);
+    sekme('giris');
+    goster('giris');
+  });
+  beniGetir();
+});
+</script>
+</body>
+</html>

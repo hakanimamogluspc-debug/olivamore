@@ -21,7 +21,7 @@
   if (current === 'en') current = 'index-en.html'; // temiz EN ana sayfa: /en
   const currentStem = current.replace(/\.html$/, '') || 'index';
   const pairedPages = new Set([
-    'index','damak-testi','hediye-olustur','hikayemiz','iletisim','kalite','koleksiyon',
+    'index','damak-testi','hediye-olustur','hesap','hikayemiz','iletisim','kalite','koleksiyon',
     'kulup','ogren','p','pasaport','sepet','sss','tarif-asistani','ureticiler','urun','urun-trilye',
     'naturel-sizma-zeytinyagi-nedir','zeytinyagi-polifenol-acilik-yakicilik','erken-hasat-olgun-hasat',
     'zeytinyagi-saklama-raf-omru','zeytinyagi-efsaneleri','akdeniz-diyeti-zeytinyagi',
@@ -147,6 +147,9 @@
         <a class="top" data-nav="kalite" href="${P('kalite.html')}">${T.quality}</a>
         <a class="top" data-nav="hikayemiz" href="${P('hikayemiz.html')}">${T.story}</a>
         ${other ? `<a class="top lang-switch" href="${other}" aria-label="${EN ? 'Türkçe' : 'English'}">${EN ? 'TR' : 'EN'}</a>` : ''}
+        <a class="icon-btn" aria-label="${EN ? 'My Account' : 'Hesabım'}" href="${P('hesap.html')}">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg>
+        </a>
         <a class="icon-btn" aria-label="${T.cart}" id="cart-btn" href="${P('sepet.html')}">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l-1.5 12h-9L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
           <span class="cart-count" id="cart-count">0</span>

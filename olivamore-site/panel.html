@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#BFA25D;--ink:#1E1C19;--soft:#4A463F;--line:#ECEAE6;--bg:#F7F6F3;--ok:#3d7a3d}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -22,8 +22,11 @@ a{color:inherit;text-decoration:none}
 .side .brand{color:#fff;font-weight:700;letter-spacing:.22em;font-size:.92rem}
 .side .brand-sub{font-size:.7rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:30px}
 @media(max-width:860px){.side .brand-sub{display:none}.side .brand{flex-shrink:0;margin-right:8px}}
-.side nav{display:flex;flex-direction:column;gap:2px}
-@media(max-width:860px){.side nav{flex-direction:row}}
+.side nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:0;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(191,162,93,.45) transparent}
+.side nav::-webkit-scrollbar{width:5px}
+.side nav::-webkit-scrollbar-thumb{background:rgba(191,162,93,.45);border-radius:99px}
+.side nav::-webkit-scrollbar-track{background:transparent}
+@media(max-width:860px){.side nav{flex-direction:row;overflow-y:visible;flex:initial}}
 .side nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;font-size:.9rem;cursor:pointer;white-space:nowrap;transition:all .2s}
 .side nav a:hover,.side nav a.on{background:rgba(191,162,93,.16);color:#fff}
 .side .foot{margin-top:auto;font-size:.7rem;color:#7d776b;padding-top:20px}
@@ -33,7 +36,7 @@ a{color:inherit;text-decoration:none}
 .main{padding:30px 36px 110px;max-width:1060px}
 @media(max-width:860px){.main{padding:20px 16px 110px}}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
-.topbar h1{font-size:1.45rem;font-weight:700}
+.topbar h1{font-family:'Fraunces',Georgia,serif;font-size:1.7rem;font-weight:400}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;font:inherit;font-size:.86rem;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .2s}
 .btn-dark{background:var(--ink);color:#fff}.btn-dark:hover{background:#000}
@@ -45,7 +48,7 @@ a{color:inherit;text-decoration:none}
 .view{display:none}
 .view.on{display:block}
 .panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(30,28,25,.06);padding:24px;margin-bottom:22px}
-.panel h2{font-size:1.02rem;font-weight:700;margin-bottom:4px}
+.panel h2{font-family:'Fraunces',Georgia,serif;font-size:1.15rem;font-weight:600;margin-bottom:4px}
 .panel .desc{font-size:.8rem;color:var(--soft);margin-bottom:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}

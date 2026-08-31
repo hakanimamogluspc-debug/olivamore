@@ -113,6 +113,35 @@ function kampanyaArkaplan(aboneler, konu, metin) {
   })();
 }
 
+/* ---------- üye sistemi (uyeler.json) ---------- */
+function sifreHashle(sifre, tuz) { return crypto.scryptSync(String(sifre), tuz, 64).toString('hex'); }
+function uyeBul(req) {
+  const h = String(req.headers['authorization'] || '');
+  const t = h.indexOf('Bearer ') === 0 ? h.slice(7) : '';
+  if (!t || t.length < 20) return null;
+  const liste = oku('uyeler.json', []);
+  const simdi = Date.now();
+  for (const u of liste) {
+    if ((u.oturumlar || []).some(o => o.token === t && o.son > simdi)) return { u: u, liste: liste, token: t };
+  }
+  return null;
+}
+function oturumAc(u) {
+  const token = crypto.randomBytes(24).toString('hex');
+  u.oturumlar = (u.oturumlar || []).filter(o => o.son > Date.now()).slice(-4);
+  u.oturumlar.push({ token: token, son: Date.now() + 30 * 86400000 });
+  return token;
+}
+function puanHesapla(eposta) {
+  const e = String(eposta).toLowerCase();
+  let harcama = 0;
+  oku('siparisler.json', []).forEach(s => {
+    if ((s.musteri && (s.musteri.eposta || '').toLowerCase()) === e &&
+      ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1) harcama += s.toplam;
+  });
+  return Math.floor(harcama * 0.02); // her ₺100 harcama = 2 puan (1 puan = ₺1)
+}
+
 /* ---------- iyzico Checkout Form (anahtar girilince aktifleşir) ----------
    env.json → iyzicoApiKey, iyzicoSecret, iyzicoCanli (true = api.iyzipay.com)
    Akış: sepette "kart" seçilir → sipariş 'odeme-bekliyor' kaydedilir →
@@ -312,6 +341,56 @@ const sunucu = http.createServer(async (req, res) => {
         (kuponBilgi ? '\n\nKupon: ' + kuponBilgi.kod + ' (-₺' + indirim + ')' : '') +
         '\n\nMüşteri: ' + m.ad + ' / ' + m.telefon + ' / ' + m.eposta + '\nAdres: ' + m.adres + '\nÖdeme: ' + odemeYolu);
       return json(res, 200, { tamam: true, no: no, toplam: toplam });
+    }
+
+    /* ---- üye uçları ---- */
+    if (req.method === 'POST' && yol === '/api/uye/kayit') {
+      const g = await govde(req, 1);
+      const ad = temiz(g.ad, 120), eposta = temiz(g.eposta, 200).toLowerCase(), sifre = String(g.sifre || '');
+      if (!ad || !epostaMi(eposta)) return json(res, 400, { hata: 'Ad ve geçerli e-posta zorunlu.' });
+      if (sifre.length < 6) return json(res, 400, { hata: 'Şifre en az 6 karakter olmalı.' });
+      const liste = oku('uyeler.json', []);
+      if (liste.find(u => u.eposta === eposta)) return json(res, 400, { hata: 'Bu e-posta zaten kayıtlı; giriş yapmayı dene.' });
+      const tuz = crypto.randomBytes(16).toString('hex');
+      const u = { id: 'U-' + Date.now(), ad: ad, eposta: eposta, tuz: tuz, hash: sifreHashle(sifre, tuz), tarih: new Date().toISOString(), oturumlar: [] };
+      const token = oturumAc(u);
+      liste.push(u);
+      yaz('uyeler.json', liste.slice(-50000));
+      return json(res, 200, { tamam: true, token: token, ad: ad });
+    }
+    if (req.method === 'POST' && yol === '/api/uye/giris') {
+      const g = await govde(req, 1);
+      const eposta = temiz(g.eposta, 200).toLowerCase();
+      const liste = oku('uyeler.json', []);
+      const u = liste.find(x => x.eposta === eposta);
+      const hatali = () => json(res, 401, { hata: 'E-posta veya şifre hatalı.' });
+      if (!u) return hatali();
+      const deneme = Buffer.from(sifreHashle(String(g.sifre || ''), u.tuz), 'hex');
+      const dogru = Buffer.from(u.hash, 'hex');
+      if (deneme.length !== dogru.length || !crypto.timingSafeEqual(deneme, dogru)) return hatali();
+      const token = oturumAc(u);
+      yaz('uyeler.json', liste);
+      return json(res, 200, { tamam: true, token: token, ad: u.ad });
+    }
+    if (req.method === 'POST' && yol === '/api/uye/cikis') {
+      const b = uyeBul(req);
+      if (b) { b.u.oturumlar = b.u.oturumlar.filter(o => o.token !== b.token); yaz('uyeler.json', b.liste); }
+      return json(res, 200, { tamam: true });
+    }
+    if (req.method === 'GET' && yol === '/api/uye/ben') {
+      const b = uyeBul(req);
+      if (!b) return json(res, 401, { hata: 'Oturum geçersiz; yeniden giriş yap.' });
+      const e = b.u.eposta;
+      const siparisler = oku('siparisler.json', [])
+        .filter(s => (s.musteri && (s.musteri.eposta || '').toLowerCase()) === e)
+        .slice(0, 100)
+        .map(s => ({
+          no: s.no, tarih: s.tarih, durum: s.durum, odeme: s.odeme, toplam: s.toplam,
+          kargoFirma: s.kargoFirma || '', kargoNo: s.kargoNo || '',
+          iadeDurum: s.iade ? s.iade.durum : '',
+          kalemler: (s.kalemler || []).map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat }))
+        }));
+      return json(res, 200, { ad: b.u.ad, eposta: e, uyelik: b.u.tarih, puan: puanHesapla(e), siparisler: siparisler });
     }
 
     if (req.method === 'GET' && yol === '/api/odeme-durum') {
