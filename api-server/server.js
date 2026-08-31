@@ -23,6 +23,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const PORT = 3001;
 const DATA = process.env.OM_DATA || '/var/www/olivamore-data';
@@ -92,6 +93,26 @@ function kuponUygula(kupon, kalemler, cfg) {
 }
 function epostaMi(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s || ''); }
 
+/* Bülten çıkış linki imzası (KVKK: her e-postada listeden çıkma linki) */
+function bultenImza(eposta) {
+  const env = oku('env.json', {});
+  if (!env.gizli) { env.gizli = crypto.randomBytes(16).toString('hex'); yaz('env.json', env); }
+  return crypto.createHmac('sha256', env.gizli).update(String(eposta).toLowerCase()).digest('hex').slice(0, 20);
+}
+
+/* Kampanyayı arka planda sırayla gönderir (Brevo'yu boğmamak için 150 ms arayla) */
+function kampanyaArkaplan(aboneler, konu, metin) {
+  let i = 0;
+  (function adim() {
+    if (i >= aboneler.length) return;
+    const e = aboneler[i++].eposta;
+    const link = 'https://olivamore.de/api/bulten-cik?e=' + encodeURIComponent(e) + '&t=' + bultenImza(e);
+    epostaGonder(e, konu, metin +
+      '\n\n—\nBu e-postayı Olivamore bültenine kayıtlı olduğunuz için aldınız.\nListeden çıkmak için: ' + link);
+    setTimeout(adim, 150);
+  })();
+}
+
 /* ---------- basit hız sınırı (IP başına dakikada 30 POST) ---------- */
 const sayac = new Map();
 setInterval(() => sayac.clear(), 60000);
@@ -140,6 +161,22 @@ const sunucu = http.createServer(async (req, res) => {
         yaz('bulten.json', liste.slice(0, 20000));
       }
       return json(res, 200, { tamam: true });
+    }
+
+    if (req.method === 'GET' && yol === '/api/bulten-cik') {
+      const u = new URL(req.url, 'http://x');
+      const e = String(u.searchParams.get('e') || '').slice(0, 200);
+      const t = String(u.searchParams.get('t') || '');
+      const govdeHtml = (mesaj) =>
+        '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Olivamore Bülten</title></head>' +
+        '<body style="font-family:sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1E1C19;">' +
+        '<h2 style="letter-spacing:.2em;">OLIVAMORE</h2><p>' + mesaj + '</p>' +
+        '<p><a href="https://olivamore.de/" style="color:#BFA25D;">olivamore.de</a></p></body></html>';
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      if (!epostaMi(e) || t !== bultenImza(e)) return res.end(govdeHtml('Bağlantı geçersiz veya süresi dolmuş.'));
+      const liste = oku('bulten.json', []);
+      yaz('bulten.json', liste.filter(x => (x.eposta || '').toLowerCase() !== e.toLowerCase()));
+      return res.end(govdeHtml('E-posta listemizden çıkarıldınız. Sizi yeniden aramızda görmek dileğiyle.'));
     }
 
     if (req.method === 'POST' && yol === '/api/kupon') {
@@ -306,6 +343,51 @@ const sunucu = http.createServer(async (req, res) => {
       }
       return json(res, 200, { tamam: true, siparis: s });
     }
+    /* ---- pazarlama ---- */
+    if (req.method === 'GET' && yol === '/api/admin/pazarlama') {
+      const env = oku('env.json', {});
+      return json(res, 200, {
+        aboneler: oku('bulten.json', []),
+        kampanyalar: oku('kampanyalar.json', []),
+        brevo: !!env.brevoKey
+      });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/kampanya') {
+      const g = await govde(req, 1);
+      const konu = temiz(g.konu, 200), metin = temiz(g.metin, 20000);
+      if (!konu || !metin) return json(res, 400, { hata: 'Konu ve metin zorunlu.' });
+      const env = oku('env.json', {});
+      if (!env.brevoKey) return json(res, 400, { hata: 'Brevo API anahtarı girilmemiş (sunucuda env.json → brevoKey). Anahtar olmadan e-posta gönderilemez.' });
+      if (g.test) {
+        if (!env.bildirimEposta) return json(res, 400, { hata: 'Test için env.json → bildirimEposta gerekli.' });
+        epostaGonder(env.bildirimEposta, '[TEST] ' + konu, metin + '\n\n—\n(Bu bir test gönderimidir; listeden çıkma linki gerçek gönderimde eklenir.)');
+        return json(res, 200, { tamam: true, test: true, alici: env.bildirimEposta });
+      }
+      const aboneler = oku('bulten.json', []).filter(a => epostaMi(a.eposta));
+      if (!aboneler.length) return json(res, 400, { hata: 'Hiç abone yok.' });
+      const kampanyalar = oku('kampanyalar.json', []);
+      kampanyalar.unshift({ tarih: new Date().toISOString(), konu: konu, alici: aboneler.length });
+      yaz('kampanyalar.json', kampanyalar.slice(0, 500));
+      kampanyaArkaplan(aboneler, konu, metin);
+      return json(res, 200, { tamam: true, alici: aboneler.length });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/abone-ekle') {
+      const g = await govde(req, 1);
+      if (!epostaMi(g.eposta)) return json(res, 400, { hata: 'Geçerli bir e-posta gir.' });
+      const liste = oku('bulten.json', []);
+      if (!liste.find(x => (x.eposta || '').toLowerCase() === g.eposta.toLowerCase())) {
+        liste.unshift({ tarih: new Date().toISOString(), eposta: temiz(g.eposta, 200), kaynak: 'panel' });
+        yaz('bulten.json', liste.slice(0, 20000));
+      }
+      return json(res, 200, { tamam: true });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/abone-sil') {
+      const g = await govde(req, 1);
+      const liste = oku('bulten.json', []);
+      yaz('bulten.json', liste.filter(x => (x.eposta || '').toLowerCase() !== String(g.eposta || '').toLowerCase()));
+      return json(res, 200, { tamam: true });
+    }
+
     if (req.method === 'GET' && yol === '/api/admin/mesajlar') {
       return json(res, 200, oku('mesajlar.json', []));
     }

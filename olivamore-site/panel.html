@@ -133,6 +133,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <a data-view="batches">◉ Partiler</a>
       <a data-view="orders">▦ Siparişler</a>
       <a data-view="analytics">◔ Analiz</a>
+      <a data-view="marketing">➤ Pazarlama</a>
       <a data-view="coupons">⛁ Kuponlar</a>
       <a data-view="library">🖼 Görseller</a>
       <a data-view="msgs">✉ Mesajlar</a>
@@ -256,6 +257,41 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         <div class="panel"><h2>Sipariş durumları</h2><div id="an-durum" style="margin-top:10px;"></div></div>
         <div class="panel"><h2>Kupon performansı</h2><div id="an-kupon" style="margin-top:10px;"></div></div>
         <div class="panel"><h2>Ödeme yöntemleri</h2><div id="an-odeme" style="margin-top:10px;"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ PAZARLAMA ============ -->
+    <section class="view" id="view-marketing">
+      <div class="note"><b>Pazarlama:</b> Aboneler sitedeki bülten formundan gelir. Her kampanya e-postasının altına otomatik "listeden çık" linki eklenir (KVKK). Önce kendine test göndermen tavsiye edilir.</div>
+      <div id="mk-brevo-uyari"></div>
+      <div class="stats" id="mk-stats"></div>
+
+      <div class="panel">
+        <h2>Kampanya oluştur</h2>
+        <div class="field"><label>Konu</label><input type="text" id="mk-konu" placeholder="Örn: Yeni hasat geldi — Club üyelerine %10"></div>
+        <div class="field"><label>Metin</label><textarea id="mk-metin" rows="8" placeholder="Merhaba,&#10;&#10;Yeni hasat zeytinyağlarımız..."></textarea></div>
+        <div class="row-actions">
+          <button class="btn btn-ghost btn-sm" id="mk-test" type="button">Önce Bana Test Gönder</button>
+          <button class="btn btn-dark btn-sm" id="mk-gonder" type="button">Tüm Abonelere Gönder</button>
+          <span id="mk-durum" style="font-size:.85rem;color:var(--soft);"></span>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px;">
+        <div class="panel">
+          <h2>Aboneler</h2>
+          <div class="row-actions" style="margin-bottom:10px;flex-wrap:wrap;">
+            <input type="text" id="mk-ara" placeholder="E-posta ara..." style="max-width:200px;">
+            <input type="email" id="mk-yeni" placeholder="Elle abone ekle" style="max-width:200px;">
+            <button class="btn btn-ghost btn-sm" id="mk-ekle" type="button">+ Ekle</button>
+            <button class="btn btn-outline btn-sm" id="mk-csv" type="button">⬇ CSV</button>
+          </div>
+          <div id="mk-aboneler" style="max-height:420px;overflow:auto;font-size:.85rem;"></div>
+        </div>
+        <div class="panel">
+          <h2>Gönderim geçmişi</h2>
+          <div id="mk-gecmis" style="font-size:.85rem;"></div>
+        </div>
       </div>
     </section>
 
@@ -484,7 +520,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', marketing: 'Pazarlama', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -983,7 +1019,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   /* ================== DEĞİŞİKLİK TAKİBİ ================== */
   document.querySelector('.main').addEventListener('input', function (e) {
     // Sipariş/Analiz ekranlarındaki alanlar CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
-    if (e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics'))) return;
+    if (e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing'))) return;
     dirty();
   });
 
@@ -1230,6 +1266,84 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   document.querySelector('[data-view="analytics"]').addEventListener('click', renderAnalytics);
   document.getElementById('an-donem').addEventListener('change', renderAnalytics);
   document.getElementById('an-yenile').addEventListener('click', renderAnalytics);
+
+  /* ================== PAZARLAMA ================== */
+  var MK_ABONELER = [], MK_KAMPANYALAR = [], MK_BREVO = false;
+  function mkListe() {
+    var q = (document.getElementById('mk-ara').value || '').toLowerCase().trim();
+    var liste = MK_ABONELER.filter(function (a) { return !q || (a.eposta || '').toLowerCase().indexOf(q) !== -1; });
+    document.getElementById('mk-aboneler').innerHTML = liste.length ? liste.map(function (a) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);">' +
+        '<span style="overflow:hidden;text-overflow:ellipsis;">' + esc(a.eposta) + '</span>' +
+        '<span style="white-space:nowrap;color:var(--soft);font-size:.75rem;">' + (a.kaynak ? esc(a.kaynak) + ' · ' : '') + fmtTarih(a.tarih).split(' ')[0] +
+        ' <button class="btn btn-ghost btn-sm mk-sil" data-eposta="' + esc(a.eposta) + '" type="button" style="padding:2px 8px;">✕</button></span></div>';
+    }).join('') : '<p style="color:var(--soft);">Abone bulunamadı.</p>';
+  }
+  function renderMarketing() {
+    fetch('/api/admin/pazarlama')
+      .then(function (r) { return r.json(); })
+      .then(function (v) {
+        MK_ABONELER = v.aboneler || []; MK_KAMPANYALAR = v.kampanyalar || []; MK_BREVO = !!v.brevo;
+        var ay = Date.now() - 30 * 86400000;
+        var yeni30 = MK_ABONELER.filter(function (a) { return Date.parse(a.tarih) >= ay; }).length;
+        document.getElementById('mk-stats').innerHTML =
+          '<div class="stat"><div class="num">' + MK_ABONELER.length + '</div><div class="lbl">Toplam abone</div></div>' +
+          '<div class="stat"><div class="num">+' + yeni30 + '</div><div class="lbl">Son 30 günde yeni</div></div>' +
+          '<div class="stat"><div class="num">' + MK_KAMPANYALAR.length + '</div><div class="lbl">Gönderilen kampanya</div></div>' +
+          '<div class="stat"><div class="num">' + (MK_BREVO ? '✓' : '—') + '</div><div class="lbl">E-posta servisi (Brevo)</div></div>';
+        document.getElementById('mk-brevo-uyari').innerHTML = MK_BREVO ? '' :
+          '<div class="note" style="border-color:#d97706;"><b>Brevo anahtarı yok:</b> Abone toplayabilirsin ama e-posta gönderilemez. Sunucuda <code>env.json → brevoKey</code> alanına Brevo API anahtarını gir (brevo.com ücretsiz planla günde 300 e-posta).</div>';
+        mkListe();
+        document.getElementById('mk-gecmis').innerHTML = MK_KAMPANYALAR.length ? MK_KAMPANYALAR.map(function (k) {
+          return '<div style="padding:8px 0;border-bottom:1px solid var(--line);"><b>' + esc(k.konu) + '</b><br><span style="color:var(--soft);font-size:.78rem;">' + fmtTarih(k.tarih) + ' · ' + k.alici + ' alıcı</span></div>';
+        }).join('') : '<p style="color:var(--soft);">Henüz kampanya gönderilmedi.</p>';
+      })
+      .catch(function () { document.getElementById('mk-stats').innerHTML = ''; document.getElementById('mk-aboneler').innerHTML = '<p style="color:var(--soft);">Pazarlama verileri yalnız canlı sunucuda görünür.</p>'; });
+  }
+  function mkKampanya(test) {
+    var konu = document.getElementById('mk-konu').value.trim();
+    var metin = document.getElementById('mk-metin').value.trim();
+    var durum = document.getElementById('mk-durum');
+    if (!konu || !metin) { durum.textContent = 'Konu ve metin zorunlu.'; return; }
+    if (!test && !confirm(MK_ABONELER.length + ' aboneye "' + konu + '" gönderilsin mi? Bu işlem geri alınamaz.')) return;
+    durum.textContent = 'Gönderiliyor...';
+    fetch('/api/admin/kampanya', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ konu: konu, metin: metin, test: !!test }) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (c.hata) { durum.textContent = c.hata; return; }
+        durum.textContent = c.test ? 'Test gönderildi → ' + c.alici : c.alici + ' aboneye gönderim başladı (arka planda sürer).';
+        if (!c.test) { document.getElementById('mk-konu').value = ''; document.getElementById('mk-metin').value = ''; renderMarketing(); }
+      })
+      .catch(function () { durum.textContent = 'Sunucuya ulaşılamadı.'; });
+  }
+  document.getElementById('mk-test').addEventListener('click', function () { mkKampanya(true); });
+  document.getElementById('mk-gonder').addEventListener('click', function () { mkKampanya(false); });
+  document.getElementById('mk-ara').addEventListener('input', mkListe);
+  document.getElementById('mk-ekle').addEventListener('click', function () {
+    var e = document.getElementById('mk-yeni').value.trim();
+    if (!e) return;
+    fetch('/api/admin/abone-ekle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: e }) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) { if (c.hata) alert(c.hata); document.getElementById('mk-yeni').value = ''; renderMarketing(); });
+  });
+  document.getElementById('mk-aboneler').addEventListener('click', function (e) {
+    if (!e.target.classList.contains('mk-sil')) return;
+    var ep = e.target.dataset.eposta;
+    if (!confirm(ep + ' listeden silinsin mi?')) return;
+    fetch('/api/admin/abone-sil', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: ep }) })
+      .then(function () { renderMarketing(); });
+  });
+  document.getElementById('mk-csv').addEventListener('click', function () {
+    function h(s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; }
+    var satirlar = [['E-posta', 'Kayıt Tarihi', 'Kaynak'].map(h).join(';')];
+    MK_ABONELER.forEach(function (a) { satirlar.push([a.eposta, fmtTarih(a.tarih), a.kaynak || ''].map(h).join(';')); });
+    var blob = new Blob(['﻿' + satirlar.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'olivamore-aboneler-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+  });
+  document.querySelector('[data-view="marketing"]').addEventListener('click', renderMarketing);
   document.querySelector('[data-view="msgs"]').addEventListener('click', renderMsgs);
 
   /* ================== KUPONLAR ================== */
