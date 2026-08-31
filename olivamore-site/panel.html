@@ -200,7 +200,25 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 
     <!-- ============ SİPARİŞLER ============ -->
     <section class="view" id="view-orders">
-      <div class="note"><b>Siparişler:</b> Sepetten gelen gerçek siparişler. Durumu güncelle: yeni → hazırlanıyor → kargolandı → tamamlandı. Kargo takip numarasını girip "kargolandı" yap.</div>
+      <div class="note"><b>Siparişler:</b> Akış: yeni → hazırlanıyor → kargolandı → tamamlandı. "Kargolandı" yapınca müşteriye takip numaralı e-posta gider (Brevo anahtarı girilince). İade ve iptal bu ekrandan yönetilir.</div>
+      <div class="stats" id="ord-stats"></div>
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="row-actions" style="flex-wrap:wrap;align-items:center;">
+          <select id="ord-filtre" style="max-width:180px;">
+            <option value="hepsi">Tüm durumlar</option>
+            <option value="yeni">Yeni</option>
+            <option value="hazırlanıyor">Hazırlanıyor</option>
+            <option value="kargolandı">Kargolandı</option>
+            <option value="tamamlandı">Tamamlandı</option>
+            <option value="iade-talep">İade talebi bekleyen</option>
+            <option value="iade">İade edilen</option>
+            <option value="iptal">İptal</option>
+          </select>
+          <input type="text" id="ord-ara" placeholder="Sipariş no, ad, e-posta ara..." style="max-width:260px;">
+          <button class="btn btn-ghost btn-sm" id="ord-yenile" type="button">↻ Yenile</button>
+          <button class="btn btn-outline btn-sm" id="ord-csv" type="button">⬇ Excel'e Aktar (CSV)</button>
+        </div>
+      </div>
       <div id="orders-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
     </section>
 
@@ -926,40 +944,136 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   });
 
   /* ================== DEĞİŞİKLİK TAKİBİ ================== */
-  document.querySelector('.main').addEventListener('input', dirty);
+  document.querySelector('.main').addEventListener('input', function (e) {
+    // Sipariş ekranındaki arama/durum alanları CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
+    if (e.target.closest && e.target.closest('#view-orders')) return;
+    dirty();
+  });
 
   /* ================== SİPARİŞLER & MESAJLAR ================== */
-  var DURUMLAR = ['yeni', 'hazırlanıyor', 'kargolandı', 'tamamlandı', 'iptal'];
+  var DURUMLAR = ['yeni', 'hazırlanıyor', 'kargolandı', 'tamamlandı', 'iptal', 'iade'];
+  var DURUM_RENK = { 'yeni': '#2563eb', 'hazırlanıyor': '#d97706', 'kargolandı': '#7c3aed', 'tamamlandı': '#16a34a', 'iptal': '#6b7280', 'iade': '#dc2626' };
+  var KARGOLAR = ['', 'Yurtiçi', 'Aras', 'MNG', 'PTT', 'Sürat', 'UPS', 'Diğer'];
+  var ORD_LISTE = [];
   function fmtTarih(t) { try { return new Date(t).toLocaleString('tr-TR'); } catch (e) { return t; } }
+  function tl(n) { return '₺' + Number(n || 0).toLocaleString('tr-TR'); }
+  function ordPill(s) {
+    var r = DURUM_RENK[s.durum] || '#6b7280';
+    var iadeTalep = s.iade && s.iade.durum === 'talep';
+    return '<span class="pill" style="background:' + r + '1a;color:' + r + ';border:1px solid ' + r + '55;">' + esc(s.durum) + '</span>' +
+      (iadeTalep ? ' <span class="pill" style="background:#dc26261a;color:#dc2626;border:1px solid #dc262655;">iade talebi</span>' : '');
+  }
+  function ordStats() {
+    var simdi = Date.now(), gun = 86400000;
+    var bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+    var aktif = ORD_LISTE.filter(function (s) { return s.durum !== 'iptal' && s.durum !== 'iade'; });
+    var cBugun = 0, nBugun = 0, c7 = 0, n7 = 0;
+    aktif.forEach(function (s) {
+      var t = Date.parse(s.tarih);
+      if (t >= bugun.getTime()) { cBugun += s.toplam; nBugun++; }
+      if (t >= simdi - 7 * gun) { c7 += s.toplam; n7++; }
+    });
+    var bekleyen = ORD_LISTE.filter(function (s) { return s.durum === 'yeni' || s.durum === 'hazırlanıyor'; }).length;
+    var iadeTalep = ORD_LISTE.filter(function (s) { return s.iade && s.iade.durum === 'talep'; }).length;
+    document.getElementById('ord-stats').innerHTML =
+      '<div class="stat"><div class="num">' + tl(cBugun) + '</div><div class="lbl">Bugün · ' + nBugun + ' sipariş</div></div>' +
+      '<div class="stat"><div class="num">' + tl(c7) + '</div><div class="lbl">Son 7 gün · ' + n7 + ' sipariş</div></div>' +
+      '<div class="stat"><div class="num">' + bekleyen + '</div><div class="lbl">İşlem bekleyen</div></div>' +
+      '<div class="stat"><div class="num"' + (iadeTalep ? ' style="color:#dc2626;"' : '') + '>' + iadeTalep + '</div><div class="lbl">İade talebi</div></div>';
+  }
+  function ordIadeBlok(s) {
+    var i = s.iade;
+    if (!i || !i.durum) {
+      return '<div style="border-top:1px dashed var(--line);margin-top:12px;padding-top:12px;">' +
+        '<div class="row-actions" style="flex-wrap:wrap;"><b style="font-size:.82rem;">İade / İptal:</b>' +
+        '<input type="number" class="ord-iade-tutar" data-no="' + s.no + '" value="' + s.toplam + '" step="0.01" style="max-width:110px;" title="İade tutarı">' +
+        '<input type="text" class="ord-iade-neden" data-no="' + s.no + '" placeholder="Neden (müşteri görmez)" style="max-width:220px;">' +
+        '<button class="btn btn-ghost btn-sm ord-iade-talep" data-no="' + s.no + '" type="button">İade Talebi Aç</button></div></div>';
+    }
+    var bilgi = 'İade: <b>' + esc(i.durum) + '</b> · ' + tl(i.tutar) + (i.neden ? ' · ' + esc(i.neden) : '') + ' · ' + fmtTarih(i.tarih);
+    if (i.durum === 'talep') {
+      return '<div style="border-top:1px dashed #dc2626;margin-top:12px;padding-top:12px;font-size:.85rem;">' + bilgi +
+        '<div class="row-actions" style="margin-top:8px;">' +
+        '<button class="btn btn-dark btn-sm ord-iade-onay" data-no="' + s.no + '" type="button">İadeyi Onayla (müşteriye e-posta gider)</button>' +
+        '<button class="btn btn-ghost btn-sm ord-iade-red" data-no="' + s.no + '" type="button">Reddet</button></div></div>';
+    }
+    return '<div style="border-top:1px dashed var(--line);margin-top:12px;padding-top:12px;font-size:.85rem;">' + bilgi + '</div>';
+  }
+  function ordListe() {
+    var host = document.getElementById('orders-list');
+    var f = document.getElementById('ord-filtre').value;
+    var q = (document.getElementById('ord-ara').value || '').toLowerCase().trim();
+    var liste = ORD_LISTE.filter(function (s) {
+      if (f === 'iade-talep') { if (!(s.iade && s.iade.durum === 'talep')) return false; }
+      else if (f !== 'hepsi' && s.durum !== f) return false;
+      if (q && (s.no + ' ' + s.musteri.ad + ' ' + s.musteri.eposta).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+    if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Bu filtreye uyan sipariş yok.</p>'; return; }
+    host.innerHTML = liste.map(function (s) {
+      return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
+        '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + (s.kargoNo ? ' · ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) : '') + '</span></div>' + ordPill(s) + '</summary>' +
+        '<div class="body"><p style="font-size:.85rem;margin-bottom:8px;">' +
+        s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad) + ' (₺' + k.fiyat + (typeof k.kdv === 'number' ? (k.kdv ? ' +KDV %' + k.kdv : ' · KDV dahil') : '') + ')'; }).join('<br>') +
+        (s.kdvToplam !== undefined ? '<br><b>Ara: ' + tl(s.araToplam) + (s.indirim ? ' · Kupon ' + esc(s.kupon && s.kupon.kod || '') + ': -' + tl(s.indirim) : '') + ' · KDV: ' + tl(s.kdvToplam) + ' · Kargo: ' + (s.kargo ? tl(s.kargo) : 'Ücretsiz') + ' · Toplam: ' + tl(s.toplam) + '</b>' : '') + '</p>' +
+        '<p style="font-size:.82rem;color:var(--soft);margin-bottom:12px;">' + esc(s.musteri.telefon) + ' · ' + esc(s.musteri.eposta) + '<br>' + esc(s.musteri.adres) +
+        (s.musteri.not ? '<br>Müşteri notu: ' + esc(s.musteri.not) : '') + '</p>' +
+        '<div class="row-actions" style="flex-wrap:wrap;"><select class="ord-durum" data-no="' + s.no + '">' +
+        DURUMLAR.map(function (d) { return '<option' + (d === s.durum ? ' selected' : '') + '>' + d + '</option>'; }).join('') +
+        '</select><select class="ord-firma" data-no="' + s.no + '" style="max-width:120px;">' +
+        KARGOLAR.map(function (k) { return '<option value="' + k + '"' + (k === (s.kargoFirma || '') ? ' selected' : '') + '>' + (k || 'Kargo firması') + '</option>'; }).join('') +
+        '</select><input type="text" class="ord-kargo" data-no="' + s.no + '" placeholder="Kargo takip no" value="' + esc(s.kargoNo || '') + '" style="max-width:180px;">' +
+        '<button class="btn btn-dark btn-sm ord-kaydet" data-no="' + s.no + '" type="button">Güncelle</button></div>' +
+        '<div class="field" style="margin-top:10px;"><label>Yönetici notu (müşteri görmez)</label><input type="text" class="ord-not" data-no="' + s.no + '" value="' + esc(s.adminNot || '') + '"></div>' +
+        ordIadeBlok(s) +
+        (s.gecmis && s.gecmis.length ? '<div style="margin-top:12px;font-size:.75rem;color:var(--soft);">' +
+          s.gecmis.slice(0, 8).map(function (g) { return fmtTarih(g.tarih) + ' — ' + esc(g.islem); }).join('<br>') + '</div>' : '') +
+        '</div></details>';
+    }).join('');
+  }
   function renderOrders() {
     fetch('/api/admin/siparisler')
       .then(function (r) { return r.json(); })
-      .then(function (liste) {
-        var host = document.getElementById('orders-list');
-        if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Henüz sipariş yok.</p>'; return; }
-        host.innerHTML = liste.map(function (s) {
-          return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ₺' + Number(s.toplam).toLocaleString('tr-TR') + ' · ' + esc(s.musteri.ad) + '</b>' +
-            '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + '</span></div><span class="pill">' + esc(s.durum) + '</span></summary>' +
-            '<div class="body"><p style="font-size:.85rem;margin-bottom:8px;">' +
-            s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad) + ' (₺' + k.fiyat + (typeof k.kdv === 'number' ? (k.kdv ? ' +KDV %' + k.kdv : ' · KDV dahil') : '') + ')'; }).join('<br>') +
-            (s.kdvToplam !== undefined ? '<br><b>Ara: ₺' + Number(s.araToplam || 0).toLocaleString('tr-TR') + ' · KDV: ₺' + Number(s.kdvToplam).toLocaleString('tr-TR') + ' · Kargo: ' + (s.kargo ? '₺' + s.kargo : 'Ücretsiz') + ' · Toplam: ₺' + Number(s.toplam).toLocaleString('tr-TR') + '</b>' : '') + '</p>' +
-            '<p style="font-size:.82rem;color:var(--soft);margin-bottom:12px;">' + esc(s.musteri.telefon) + ' · ' + esc(s.musteri.eposta) + '<br>' + esc(s.musteri.adres) +
-            (s.musteri.not ? '<br>Not: ' + esc(s.musteri.not) : '') + '</p>' +
-            '<div class="row-actions"><select class="ord-durum" data-no="' + s.no + '">' +
-            DURUMLAR.map(function (d) { return '<option' + (d === s.durum ? ' selected' : '') + '>' + d + '</option>'; }).join('') +
-            '</select><input type="text" class="ord-kargo" data-no="' + s.no + '" placeholder="Kargo takip no" value="' + esc(s.kargoNo || '') + '" style="max-width:200px;">' +
-            '<button class="btn btn-ghost btn-sm ord-kaydet" data-no="' + s.no + '" type="button">Güncelle</button></div></div></details>';
-        }).join('');
-      })
-      .catch(function () { document.getElementById('orders-list').innerHTML = '<p style="color:var(--soft);">Sipariş listesi yalnız canlı sunucuda (olivamore.de/panel.html) görünür.</p>'; });
+      .then(function (liste) { ORD_LISTE = liste; ordStats(); ordListe(); })
+      .catch(function () { document.getElementById('orders-list').innerHTML = '<p style="color:var(--soft);">Sipariş listesi yalnız canlı sunucuda (olivamore.de/panel) görünür.</p>'; });
+  }
+  function ordGonder(veri) {
+    fetch('/api/admin/siparis-durum', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(veri) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) { if (c.hata) alert(c.hata); renderOrders(); })
+      .catch(function () { alert('Sunucuya ulaşılamadı.'); });
   }
   document.getElementById('orders-list').addEventListener('click', function (e) {
-    if (!e.target.classList.contains('ord-kaydet')) return;
     var no = e.target.dataset.no;
-    var durum = document.querySelector('.ord-durum[data-no="' + no + '"]').value;
-    var kargo = document.querySelector('.ord-kargo[data-no="' + no + '"]').value;
-    fetch('/api/admin/siparis-durum', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, durum: durum, kargoNo: kargo }) })
-      .then(function () { renderOrders(); });
+    if (!no) return;
+    function v(cls) { var el = document.querySelector('.' + cls + '[data-no="' + no + '"]'); return el ? el.value : undefined; }
+    if (e.target.classList.contains('ord-kaydet')) {
+      ordGonder({ no: no, durum: v('ord-durum'), kargoNo: v('ord-kargo'), kargoFirma: v('ord-firma'), adminNot: v('ord-not') });
+    } else if (e.target.classList.contains('ord-iade-talep')) {
+      ordGonder({ no: no, iade: { islem: 'talep', tutar: v('ord-iade-tutar'), neden: v('ord-iade-neden') } });
+    } else if (e.target.classList.contains('ord-iade-onay')) {
+      if (confirm('İade onaylansın mı? Müşteriye bilgilendirme e-postası gönderilir.')) ordGonder({ no: no, iade: { islem: 'onay' } });
+    } else if (e.target.classList.contains('ord-iade-red')) {
+      ordGonder({ no: no, iade: { islem: 'red' } });
+    }
+  });
+  document.getElementById('ord-filtre').addEventListener('change', ordListe);
+  document.getElementById('ord-ara').addEventListener('input', ordListe);
+  document.getElementById('ord-yenile').addEventListener('click', renderOrders);
+  document.getElementById('ord-csv').addEventListener('click', function () {
+    function h(s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; }
+    var satirlar = [['Sipariş No', 'Tarih', 'Durum', 'Müşteri', 'E-posta', 'Telefon', 'Ödeme', 'Kalemler', 'Ara Toplam', 'İndirim', 'KDV', 'Kargo Ücreti', 'Toplam', 'Kargo Firması', 'Takip No', 'İade'].map(h).join(';')];
+    ORD_LISTE.forEach(function (s) {
+      satirlar.push([s.no, fmtTarih(s.tarih), s.durum, s.musteri.ad, s.musteri.eposta, s.musteri.telefon, s.odeme,
+        s.kalemler.map(function (k) { return k.adet + 'x ' + k.ad; }).join(' | '),
+        s.araToplam, s.indirim || 0, s.kdvToplam, s.kargo, s.toplam, s.kargoFirma || '', s.kargoNo || '',
+        s.iade ? s.iade.durum + ' ' + s.iade.tutar : ''].map(h).join(';'));
+    });
+    var blob = new Blob(['﻿' + satirlar.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'olivamore-siparisler-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
   });
   function renderMsgs() {
     fetch('/api/admin/mesajlar')

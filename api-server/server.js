@@ -256,10 +256,55 @@ const sunucu = http.createServer(async (req, res) => {
       const liste = oku('siparisler.json', []);
       const s = liste.find(x => x.no === g.no);
       if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
-      s.durum = temiz(g.durum, 30) || s.durum;
+      const eskiDurum = s.durum;
+      const yeniDurum = temiz(g.durum, 30) || s.durum;
+      s.durum = yeniDurum;
       if (g.kargoNo !== undefined) s.kargoNo = temiz(g.kargoNo, 60);
+      if (g.kargoFirma !== undefined) s.kargoFirma = temiz(g.kargoFirma, 40);
+      if (g.adminNot !== undefined) s.adminNot = temiz(g.adminNot, 1000);
+      // İade yönetimi: {iade:{islem:'talep'|'onay'|'red', tutar, neden}}
+      if (g.iade && g.iade.islem) {
+        const islem = temiz(g.iade.islem, 20);
+        s.iade = s.iade || {};
+        if (islem === 'talep') {
+          s.iade.durum = 'talep';
+          s.iade.neden = temiz(g.iade.neden, 500);
+          s.iade.tutar = Math.min(s.toplam, Math.max(0, parseFloat(g.iade.tutar) || s.toplam));
+          s.iade.tarih = new Date().toISOString();
+        } else if (islem === 'onay') {
+          s.iade.durum = 'onaylandı';
+          s.iade.onayTarih = new Date().toISOString();
+          s.durum = 'iade';
+        } else if (islem === 'red') {
+          s.iade.durum = 'reddedildi';
+        }
+      }
+      // İşlem geçmişi
+      s.gecmis = s.gecmis || [];
+      const kayit = [];
+      if (s.durum !== eskiDurum) kayit.push('durum: ' + eskiDurum + ' → ' + s.durum);
+      if (g.kargoNo) kayit.push('kargo: ' + (s.kargoFirma ? s.kargoFirma + ' ' : '') + s.kargoNo);
+      if (g.iade && g.iade.islem) kayit.push('iade ' + g.iade.islem + (g.iade.neden ? ' (' + temiz(g.iade.neden, 200) + ')' : ''));
+      if (g.adminNot !== undefined) kayit.push('not güncellendi');
+      if (kayit.length) s.gecmis.unshift({ tarih: new Date().toISOString(), islem: kayit.join(' · ') });
       yaz('siparisler.json', liste);
-      return json(res, 200, { tamam: true });
+      // Müşteriye bilgilendirme e-postası (Brevo anahtarı varsa)
+      if (s.durum !== eskiDurum && s.musteri && s.musteri.eposta) {
+        if (s.durum === 'kargolandı') {
+          epostaGonder(s.musteri.eposta, 'Siparişiniz kargoya verildi · ' + s.no,
+            'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişiniz kargoya verildi.' +
+            (s.kargoNo ? '\nKargo: ' + (s.kargoFirma || '') + ' · Takip No: ' + s.kargoNo : '') +
+            '\n\nAfiyet olsun,\nOlivamore');
+        } else if (s.durum === 'iptal') {
+          epostaGonder(s.musteri.eposta, 'Siparişiniz iptal edildi · ' + s.no,
+            'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişiniz iptal edildi. Sorularınız için bu e-postayı yanıtlayabilirsiniz.\n\nOlivamore');
+        } else if (s.durum === 'iade') {
+          epostaGonder(s.musteri.eposta, 'İade talebiniz onaylandı · ' + s.no,
+            'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişiniz için ₺' + (s.iade && s.iade.tutar || s.toplam) +
+            ' tutarında iade onaylandı. Ödeme yönteminize göre 3-10 iş günü içinde hesabınıza yansır.\n\nOlivamore');
+        }
+      }
+      return json(res, 200, { tamam: true, siparis: s });
     }
     if (req.method === 'GET' && yol === '/api/admin/mesajlar') {
       return json(res, 200, oku('mesajlar.json', []));
@@ -277,10 +322,16 @@ const sunucu = http.createServer(async (req, res) => {
 /* ---------- e-posta bildirimi (Brevo anahtarı girilince aktifleşir) ---------- */
 function epostaBildir(konu, metin) {
   const env = oku('env.json', {});
-  if (!env.brevoKey || !env.bildirimEposta) return; // anahtar yoksa sessizce geç
+  if (!env.bildirimEposta) return;
+  epostaGonder(env.bildirimEposta, konu, metin);
+}
+// Herhangi bir alıcıya e-posta (müşteri bildirimleri için)
+function epostaGonder(kime, konu, metin) {
+  const env = oku('env.json', {});
+  if (!env.brevoKey || !epostaMi(kime)) return; // anahtar yoksa sessizce geç
   const veri = JSON.stringify({
-    sender: { name: 'Olivamore Site', email: env.gonderen || 'site@olivamore.de' },
-    to: [{ email: env.bildirimEposta }],
+    sender: { name: 'Olivamore', email: env.gonderen || 'site@olivamore.de' },
+    to: [{ email: kime }],
     subject: konu, textContent: metin
   });
   const istek = require('https').request({
