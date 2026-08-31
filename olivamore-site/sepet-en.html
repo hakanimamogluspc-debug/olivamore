@@ -118,6 +118,7 @@
 
         <div style="margin-bottom:6px;font-weight:700;font-size:.9rem;">Payment</div>
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Bank Transfer</b><small>IBAN details arrive by email after ordering; we ship once payment is confirmed.</small></span></label>
+        <label class="pay-opt" id="pay-kart" style="display:none;"><input type="radio" name="odeme" value="kart"><span><b>Credit / Debit Card</b><small>3D Secure payment via iyzico. Your card details are never stored by us.</small></span></label>
 
         <label style="display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin:12px 0 4px;cursor:pointer;">
           <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
@@ -287,13 +288,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     btn.disabled = true;
     btn.textContent = 'Sending...';
+    var odemeYolu = (document.querySelector('input[name="odeme"]:checked') || {}).value || 'havale';
     fetch('/api/siparis', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ musteri: m, odeme: 'havale', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
+      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
         if (!s.ok) throw new Error(s.j.hata || 'Order failed');
+        if (s.j.odemeUrl) {
+          btn.textContent = 'Redirecting to secure payment...';
+          window.location.href = s.j.odemeUrl;
+          return;
+        }
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = s.j.no;
@@ -308,6 +315,31 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.textContent = 'Complete Order';
       });
   });
+
+  // Show card option when payments are enabled
+  fetch('/api/odeme-durum').then(function (r) { return r.json(); })
+    .then(function (j) { if (j && j.kart) document.getElementById('pay-kart').style.display = ''; })
+    .catch(function () {});
+
+  // iyzico return: #odeme-ok-NO → thank you; #odeme-hata → warning
+  (function () {
+    var mOk = location.hash.match(/^#odeme-ok-(OM-\d+)$/);
+    if (mOk) {
+      var goster = function () {
+        window.omCart.save([]);
+        localStorage.removeItem('om-kupon');
+        document.getElementById('co-no').textContent = mOk[1];
+        document.getElementById('cart-wrap').style.display = 'none';
+        document.getElementById('co-ok').style.display = 'block';
+      };
+      var b1 = setInterval(function () { if (window.omCart) { clearInterval(b1); goster(); } }, 50);
+      history.replaceState(null, '', location.pathname);
+    } else if (location.hash === '#odeme-hata') {
+      var h = document.getElementById('co-err');
+      if (h) { h.textContent = 'Payment could not be completed; your card was not charged. Try again or choose Bank Transfer.'; h.style.display = 'block'; }
+      history.replaceState(null, '', location.pathname);
+    }
+  })();
 
   document.querySelectorAll('.checkout-field input,.checkout-field textarea,#co-onay').forEach(function (el) {
     el.addEventListener('input', function () { if (el.matches('.checkout-field *') && el.checkValidity()) clearFieldError(el); });

@@ -113,6 +113,35 @@ function kampanyaArkaplan(aboneler, konu, metin) {
   })();
 }
 
+/* ---------- iyzico Checkout Form (anahtar girilince aktifleşir) ----------
+   env.json → iyzicoApiKey, iyzicoSecret, iyzicoCanli (true = api.iyzipay.com)
+   Akış: sepette "kart" seçilir → sipariş 'odeme-bekliyor' kaydedilir →
+   iyzico ödeme sayfasına yönlendirilir → callback /api/odeme-sonuc doğrular. */
+function iyzicoAktif() {
+  const env = oku('env.json', {});
+  return !!(env.iyzicoApiKey && env.iyzicoSecret);
+}
+function iyziIstek(uri, veriObj) {
+  return new Promise((cozul, hataVer) => {
+    const env = oku('env.json', {});
+    const g = JSON.stringify(veriObj);
+    const rnd = String(Date.now());
+    const imza = crypto.createHmac('sha256', env.iyzicoSecret).update(rnd + uri + g).digest('hex');
+    const auth = 'IYZWSv2 ' + Buffer.from('apiKey:' + env.iyzicoApiKey + '&randomKey:' + rnd + '&signature:' + imza).toString('base64');
+    const istek = require('https').request({
+      hostname: env.iyzicoCanli ? 'api.iyzipay.com' : 'sandbox-api.iyzipay.com',
+      path: uri, method: 'POST',
+      headers: { 'Authorization': auth, 'x-iyzi-rnd': rnd, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(g) }
+    }, r => {
+      let p = '';
+      r.on('data', d => p += d);
+      r.on('end', () => { try { cozul(JSON.parse(p)); } catch (e) { hataVer(new Error('iyzico yanıtı okunamadı')); } });
+    });
+    istek.on('error', hataVer);
+    istek.end(g);
+  });
+}
+
 /* ---------- basit hız sınırı (IP başına dakikada 30 POST) ---------- */
 const sayac = new Map();
 setInterval(() => sayac.clear(), 60000);
@@ -232,19 +261,94 @@ const sunucu = http.createServer(async (req, res) => {
       durum.son++;
       yaz('sayac.json', durum);
       const no = 'OM-' + durum.son;
+      const odemeYolu = temiz(g.odeme, 40) || 'havale';
+      if (odemeYolu === 'kart' && !iyzicoAktif()) {
+        return json(res, 400, { hata: 'Kartla ödeme şu anda aktif değil; lütfen Havale/EFT seç.' });
+      }
       const siparisler = oku('siparisler.json', []);
       siparisler.unshift({
-        no: no, tarih: new Date().toISOString(), durum: 'yeni',
-        odeme: temiz(g.odeme, 40) || 'havale',
-        musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40), adres: temiz(m.adres, 1000), not: temiz(m.not, 500) },
+        no: no, tarih: new Date().toISOString(),
+        durum: odemeYolu === 'kart' ? 'odeme-bekliyor' : 'yeni',
+        odeme: odemeYolu, dil: g.dil === 'en' ? 'en' : 'tr',
+        musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40), adres: temiz(m.adres, 1000), il: temiz(m.il, 60), ilce: temiz(m.ilce, 60), postaKodu: temiz(m.postaKodu, 10), not: temiz(m.not, 500) },
         kalemler: kalemler, araToplam: araToplam, kupon: kuponBilgi, indirim: indirim, kdvToplam: kdvToplam, kargo: kargo, toplam: toplam
       });
       yaz('siparisler.json', siparisler.slice(0, 5000));
+      if (odemeYolu === 'kart') {
+        // iyzico Checkout Form başlat; müşteri ödeme sayfasına yönlendirilir
+        const parcalar = temiz(m.ad, 120).split(/\s+/);
+        const soyad = parcalar.length > 1 ? parcalar.pop() : '-';
+        const adK = parcalar.join(' ') || soyad;
+        try {
+          const y = await iyziIstek('/payment/iyzipos/checkoutform/initialize/auth/ecom', {
+            locale: g.dil === 'en' ? 'en' : 'tr',
+            conversationId: no, basketId: no,
+            price: String(toplam), paidPrice: String(toplam), currency: 'TRY',
+            paymentGroup: 'PRODUCT',
+            callbackUrl: 'https://olivamore.de/api/odeme-sonuc',
+            buyer: {
+              id: no, name: adK, surname: soyad,
+              gsmNumber: temiz(m.telefon, 40), email: temiz(m.eposta, 200),
+              identityNumber: '11111111111', // TCKN toplamıyoruz; iyzico zorunlu alan
+              registrationAddress: temiz(m.adres, 1000),
+              ip: req.headers['x-real-ip'] || '0.0.0.0',
+              city: temiz(m.il, 60) || 'Istanbul', country: 'Turkey'
+            },
+            shippingAddress: { contactName: temiz(m.ad, 120), city: temiz(m.il, 60) || 'Istanbul', country: 'Turkey', address: temiz(m.adres, 1000) },
+            billingAddress: { contactName: temiz(m.ad, 120), city: temiz(m.il, 60) || 'Istanbul', country: 'Turkey', address: temiz(m.adres, 1000) },
+            basketItems: [{ id: no, name: 'Olivamore Siparişi ' + no, category1: 'Gıda', itemType: 'PHYSICAL', price: String(toplam) }]
+          });
+          if (y && y.status === 'success' && y.paymentPageUrl) {
+            return json(res, 200, { tamam: true, no: no, toplam: toplam, odemeUrl: y.paymentPageUrl });
+          }
+          console.error('[iyzico]', y && y.errorMessage);
+        } catch (e) { console.error('[iyzico]', e.message); }
+        const s = siparisler.find(x => x.no === no);
+        if (s) { s.durum = 'odeme-basarisiz'; yaz('siparisler.json', siparisler); }
+        return json(res, 502, { hata: 'Ödeme sayfası açılamadı; lütfen tekrar dene veya Havale/EFT seç.' });
+      }
       epostaBildir('Yeni sipariş ' + no + ' · ₺' + toplam.toLocaleString('tr-TR'),
         kalemler.map(k => k.adet + ' × ' + k.ad + ' (₺' + k.fiyat + ')').join('\n') +
         (kuponBilgi ? '\n\nKupon: ' + kuponBilgi.kod + ' (-₺' + indirim + ')' : '') +
-        '\n\nMüşteri: ' + m.ad + ' / ' + m.telefon + ' / ' + m.eposta + '\nAdres: ' + m.adres + '\nÖdeme: ' + (g.odeme || 'havale'));
+        '\n\nMüşteri: ' + m.ad + ' / ' + m.telefon + ' / ' + m.eposta + '\nAdres: ' + m.adres + '\nÖdeme: ' + odemeYolu);
       return json(res, 200, { tamam: true, no: no, toplam: toplam });
+    }
+
+    if (req.method === 'GET' && yol === '/api/odeme-durum') {
+      return json(res, 200, { kart: iyzicoAktif() });
+    }
+
+    /* iyzico ödeme sonucu (callback) — token doğrulanır, sipariş güncellenir */
+    if (yol === '/api/odeme-sonuc') {
+      const yonlendir = hedef => { res.writeHead(302, { Location: hedef }); res.end(); };
+      if (req.method !== 'POST') return yonlendir('/sepet');
+      const ham = await new Promise((cozul, hataVer) => {
+        let p = ''; req.on('data', d => { p += d; if (p.length > 100000) req.destroy(); });
+        req.on('end', () => cozul(p)); req.on('error', hataVer);
+      });
+      const token = new URLSearchParams(ham).get('token');
+      if (!token || !iyzicoAktif()) return yonlendir('/sepet#odeme-hata');
+      let d = {};
+      try { d = await iyziIstek('/payment/iyzipos/checkoutform/auth/ecom/detail', { token: token }); } catch (e) {}
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === d.conversationId || x.no === d.basketId);
+      const sepetYolu = s && s.dil === 'en' ? '/sepet-en' : '/sepet';
+      if (d.status === 'success' && d.paymentStatus === 'SUCCESS' && s) {
+        if (s.durum === 'odeme-bekliyor') {
+          s.durum = 'yeni'; s.odendi = true; s.odemeId = d.paymentId || '';
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'kart ödemesi alındı' + (d.paymentId ? ' (' + d.paymentId + ')' : '') });
+          yaz('siparisler.json', liste);
+          epostaBildir('Yeni sipariş ' + s.no + ' · ₺' + s.toplam.toLocaleString('tr-TR') + ' (KART İLE ÖDENDİ)',
+            s.kalemler.map(k => k.adet + ' × ' + k.ad).join('\n') +
+            '\n\nMüşteri: ' + s.musteri.ad + ' / ' + s.musteri.telefon + ' / ' + s.musteri.eposta + '\nAdres: ' + s.musteri.adres);
+          epostaGonder(s.musteri.eposta, 'Siparişin alındı · ' + s.no,
+            'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişin ödemesi alındı (₺' + s.toplam.toLocaleString('tr-TR') + '). Hazırlanıp kargoya verildiğinde tekrar haber vereceğiz.\n\nAfiyet olsun,\nOlivamore');
+        }
+        return yonlendir(sepetYolu + '#odeme-ok-' + s.no);
+      }
+      if (s && s.durum === 'odeme-bekliyor') { s.durum = 'odeme-basarisiz'; yaz('siparisler.json', liste); }
+      return yonlendir(sepetYolu + '#odeme-hata');
     }
 
     /* ---- yönetici (nginx basic auth arkasında) ---- */

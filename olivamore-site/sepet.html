@@ -121,6 +121,7 @@
 
         <div style="margin-bottom:6px;font-weight:700;font-size:.9rem;">Ödeme</div>
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Havale / EFT</b><small>Sipariş sonrası IBAN bilgisi e-postana gelir; ödeme onayıyla kargolanır.</small></span></label>
+        <label class="pay-opt" id="pay-kart" style="display:none;"><input type="radio" name="odeme" value="kart"><span><b>Kredi / Banka Kartı</b><small>iyzico güvencesiyle 3D Secure ödeme. Kart bilgilerin bizde tutulmaz.</small></span></label>
 
         <label style="display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin:12px 0 4px;cursor:pointer;">
           <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
@@ -296,13 +297,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     btn.disabled = true;
     btn.textContent = 'Gönderiliyor...';
+    var odemeYolu = (document.querySelector('input[name="odeme"]:checked') || {}).value || 'havale';
     fetch('/api/siparis', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ musteri: m, odeme: 'havale', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
+      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'tr', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
         if (!s.ok) throw new Error(s.j.hata || 'Sipariş alınamadı');
+        if (s.j.odemeUrl) {
+          // Kart: iyzico ödeme sayfasına git; sepet, ödeme onaylanana dek korunur
+          btn.textContent = 'Ödeme sayfasına yönlendiriliyorsun...';
+          window.location.href = s.j.odemeUrl;
+          return;
+        }
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = s.j.no;
@@ -317,6 +325,31 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.textContent = 'Siparişi Tamamla';
       });
   });
+
+  // Kartla ödeme aktifse seçeneği göster
+  fetch('/api/odeme-durum').then(function (r) { return r.json(); })
+    .then(function (j) { if (j && j.kart) document.getElementById('pay-kart').style.display = ''; })
+    .catch(function () {});
+
+  // iyzico dönüşü: #odeme-ok-NO → teşekkür; #odeme-hata → uyarı
+  (function () {
+    var mOk = location.hash.match(/^#odeme-ok-(OM-\d+)$/);
+    if (mOk) {
+      var goster = function () {
+        window.omCart.save([]);
+        localStorage.removeItem('om-kupon');
+        document.getElementById('co-no').textContent = mOk[1];
+        document.getElementById('cart-wrap').style.display = 'none';
+        document.getElementById('co-ok').style.display = 'block';
+      };
+      var b1 = setInterval(function () { if (window.omCart) { clearInterval(b1); goster(); } }, 50);
+      history.replaceState(null, '', location.pathname);
+    } else if (location.hash === '#odeme-hata') {
+      var h = document.getElementById('co-err');
+      if (h) { h.textContent = 'Ödeme tamamlanamadı; kartından ücret çekilmedi. Tekrar deneyebilir veya Havale/EFT seçebilirsin.'; h.style.display = 'block'; }
+      history.replaceState(null, '', location.pathname);
+    }
+  })();
 
   document.querySelectorAll('.checkout-field input,.checkout-field textarea,#co-onay').forEach(function (el) {
     el.addEventListener('input', function () { if (el.matches('.checkout-field *') && el.checkValidity()) hataTemizle(el); });

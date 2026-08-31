@@ -229,6 +229,8 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
             <option value="iade-talep">İade talebi bekleyen</option>
             <option value="iade">İade edilen</option>
             <option value="iptal">İptal</option>
+            <option value="odeme-bekliyor">Ödeme bekleyen (kart)</option>
+            <option value="odeme-basarisiz">Ödemesi başarısız</option>
           </select>
           <input type="text" id="ord-ara" placeholder="Sipariş no, ad, e-posta ara..." style="max-width:260px;">
           <button class="btn btn-ghost btn-sm" id="ord-yenile" type="button">↻ Yenile</button>
@@ -1066,8 +1068,8 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   });
 
   /* ================== SİPARİŞLER & MESAJLAR ================== */
-  var DURUMLAR = ['yeni', 'hazırlanıyor', 'kargolandı', 'tamamlandı', 'iptal', 'iade'];
-  var DURUM_RENK = { 'yeni': '#2563eb', 'hazırlanıyor': '#d97706', 'kargolandı': '#7c3aed', 'tamamlandı': '#16a34a', 'iptal': '#6b7280', 'iade': '#dc2626' };
+  var DURUMLAR = ['yeni', 'hazırlanıyor', 'kargolandı', 'tamamlandı', 'iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'];
+  var DURUM_RENK = { 'yeni': '#2563eb', 'hazırlanıyor': '#d97706', 'kargolandı': '#7c3aed', 'tamamlandı': '#16a34a', 'iptal': '#6b7280', 'iade': '#dc2626', 'odeme-bekliyor': '#0891b2', 'odeme-basarisiz': '#9f1239' };
   var KARGOLAR = ['', 'Yurtiçi', 'Aras', 'MNG', 'PTT', 'Sürat', 'UPS', 'Diğer'];
   var ORD_LISTE = [];
   function fmtTarih(t) { try { return new Date(t).toLocaleString('tr-TR'); } catch (e) { return t; } }
@@ -1081,7 +1083,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function ordStats() {
     var simdi = Date.now(), gun = 86400000;
     var bugun = new Date(); bugun.setHours(0, 0, 0, 0);
-    var aktif = ORD_LISTE.filter(function (s) { return s.durum !== 'iptal' && s.durum !== 'iade'; });
+    var aktif = ORD_LISTE.filter(function (s) { return ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1; });
     var cBugun = 0, nBugun = 0, c7 = 0, n7 = 0;
     aktif.forEach(function (s) {
       var t = Date.parse(s.tarih);
@@ -1256,7 +1258,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         var gunSay = parseInt(document.getElementById('an-donem').value, 10);
         var esik = gunSay ? Date.now() - gunSay * 86400000 : 0;
         var donem = liste.filter(function (s) { return Date.parse(s.tarih) >= esik; });
-        var aktif = donem.filter(function (s) { return s.durum !== 'iptal' && s.durum !== 'iade'; });
+        var aktif = donem.filter(function (s) { return ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1; });
         var ciro = aktif.reduce(function (t, s) { return t + s.toplam; }, 0);
         var iptalIade = donem.length - aktif.length;
         document.getElementById('an-stats').innerHTML =
