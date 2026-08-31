@@ -1157,6 +1157,9 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   });
 
   /* ================== SİPARİŞLER & MESAJLAR ================== */
+  var KARGO_API = { yurtici: false, dhl: false };
+  fetch('/api/admin/kargo-durum').then(function (r) { return r.json(); })
+    .then(function (v) { KARGO_API = v || KARGO_API; }).catch(function () {});
   var DURUMLAR = ['yeni', 'hazırlanıyor', 'kargolandı', 'tamamlandı', 'iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'];
   var DURUM_RENK = { 'yeni': '#2563eb', 'hazırlanıyor': '#d97706', 'kargolandı': '#7c3aed', 'tamamlandı': '#16a34a', 'iptal': '#6b7280', 'iade': '#dc2626', 'odeme-bekliyor': '#0891b2', 'odeme-basarisiz': '#9f1239' };
   var KARGOLAR = ['', 'Yurtiçi', 'Aras', 'MNG', 'PTT', 'Sürat', 'UPS', 'Diğer'];
@@ -1230,7 +1233,10 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         KARGOLAR.map(function (k) { return '<option value="' + k + '"' + (k === (s.kargoFirma || '') ? ' selected' : '') + '>' + (k || 'Kargo firması') + '</option>'; }).join('') +
         '</select><input type="text" class="ord-kargo" data-no="' + s.no + '" placeholder="Kargo takip no" value="' + esc(s.kargoNo || '') + '" style="max-width:180px;">' +
         '<button class="btn btn-dark btn-sm ord-kaydet" data-no="' + s.no + '" type="button">Güncelle</button>' +
-        '<button class="btn btn-ghost btn-sm ord-fis" data-no="' + s.no + '" type="button">🖨 Fiş</button></div>' +
+        '<button class="btn btn-ghost btn-sm ord-fis" data-no="' + s.no + '" type="button">🖨 Fiş</button>' +
+        (KARGO_API.yurtici && !s.kargoNo ? '<button class="btn btn-outline btn-sm ord-kargo-gonder" data-no="' + s.no + '" data-firma="Yurtiçi" type="button">📦 Yurtiçi\'ye Bildir</button>' : '') +
+        (KARGO_API.dhl && !s.kargoNo ? '<button class="btn btn-outline btn-sm ord-kargo-gonder" data-no="' + s.no + '" data-firma="DHL" type="button">📦 DHL\'e Bildir</button>' : '') +
+        '</div>' +
         '<div class="grid2" style="margin-top:10px;">' +
         '<div class="field"><label>Yönetici notu (müşteri görmez)</label><input type="text" class="ord-not" data-no="' + s.no + '" value="' + esc(s.adminNot || '') + '"></div>' +
         '<div class="field"><label>Hasat parti kodu (müşteri hesabında pasaport linki olur)</label><input type="text" class="ord-parti" data-no="' + s.no + '" list="parti-listesi" placeholder="Örn: AYV-2510" value="' + esc(s.partiKod || '') + '"></div>' +
@@ -1269,6 +1275,19 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     } else if (e.target.classList.contains('ord-fis')) {
       var sip = ORD_LISTE.find(function (x) { return x.no === no; });
       if (sip) fisYazdir(sip);
+    } else if (e.target.classList.contains('ord-kargo-gonder')) {
+      var firma = e.target.dataset.firma;
+      if (!confirm(no + ' siparişi ' + firma + ' sistemine bildirilsin mi? Gönderi oluşturulur, sipariş "kargolandı" olur ve müşteriye takip maili gider.')) return;
+      e.target.disabled = true;
+      e.target.textContent = 'Bildiriliyor...';
+      fetch('/api/admin/kargo-gonder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, firma: firma }) })
+        .then(function (r) { return r.json(); })
+        .then(function (c) {
+          if (c.hata) { alert(c.hata); renderOrders(); return; }
+          if (c.etiket) window.open('/api/admin/etiket?no=' + encodeURIComponent(no), '_blank');
+          renderOrders();
+        })
+        .catch(function () { alert('Sunucuya ulaşılamadı.'); renderOrders(); });
     }
   });
   // Markalı sipariş fişi (pakete konur) — yazdırma penceresi açar

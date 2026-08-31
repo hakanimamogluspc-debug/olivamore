@@ -113,6 +113,158 @@ function kampanyaArkaplan(aboneler, konu, metin) {
   })();
 }
 
+/* ---------- kargo entegrasyonu (Yurtiçi SOAP + DHL MyDHL) ----------
+   env.json alanları girilince aktifleşir:
+   - yurticiWsUser, yurticiWsSifre  (Yurtiçi müşteri temsilcisinden "WS entegrasyon" bilgileri)
+   - dhlApiKey, dhlApiSecret, dhlHesapNo, dhlTest:true|false  (MyDHL API)
+   - kargoGonderen: { ad, adres, il, ilce, postaKodu, telefon, eposta }  (DHL gönderici bilgisi) */
+function kargoAktif() {
+  const env = oku('env.json', {});
+  return {
+    yurtici: !!(env.yurticiWsUser && env.yurticiWsSifre),
+    dhl: !!(env.dhlApiKey && env.dhlApiSecret && env.dhlHesapNo)
+  };
+}
+function xmlKacir(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function httpsIstek(secenek, govdeStr) {
+  return new Promise((cozul, hataVer) => {
+    const istek = require('https').request(secenek, r => {
+      let p = '';
+      r.on('data', d => p += d);
+      r.on('end', () => cozul({ kod: r.statusCode, govde: p }));
+    });
+    istek.on('error', hataVer);
+    istek.setTimeout(20000, () => { istek.destroy(new Error('kargo servisi zaman aşımı')); });
+    if (govdeStr) istek.end(govdeStr); else istek.end();
+  });
+}
+/* Yurtiçi SOAP zarfı */
+function yurticiSoap(metod, icerik) {
+  const env = oku('env.json', {});
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ship="http://yurticikargo.com.tr/ShippingOrderDispatcherServices">' +
+    '<soapenv:Header/><soapenv:Body><ship:' + metod + '>' +
+    '<wsUserName>' + xmlKacir(env.yurticiWsUser) + '</wsUserName>' +
+    '<wsPassword>' + xmlKacir(env.yurticiWsSifre) + '</wsPassword>' +
+    '<userLanguage>TR</userLanguage>' + icerik +
+    '</ship:' + metod + '></soapenv:Body></soapenv:Envelope>';
+  return httpsIstek({
+    hostname: 'webservices.yurticikargo.com', path: '/KOPSWebServices/ShippingOrderDispatcherServices',
+    method: 'POST',
+    headers: { 'Content-Type': 'text/xml; charset=utf-8', 'SOAPAction': '', 'Content-Length': Buffer.byteLength(xml) }
+  }, xml);
+}
+async function yurticiGonderiOlustur(s) {
+  const m = s.musteri;
+  const icerik = '<ShippingOrderVO>' +
+    '<cargoKey>' + xmlKacir(s.no) + '</cargoKey>' +
+    '<invoiceKey>' + xmlKacir(s.no) + '</invoiceKey>' +
+    '<receiverCustName>' + xmlKacir(m.ad) + '</receiverCustName>' +
+    '<receiverAddress>' + xmlKacir(m.adres + (m.ilce ? ' ' + m.ilce : '') + (m.il ? ' / ' + m.il : '')) + '</receiverAddress>' +
+    '<receiverPhone1>' + xmlKacir(m.telefon) + '</receiverPhone1>' +
+    (m.il ? '<cityName>' + xmlKacir(m.il) + '</cityName>' : '') +
+    (m.ilce ? '<townName>' + xmlKacir(m.ilce) + '</townName>' : '') +
+    '<emailAddress>' + xmlKacir(m.eposta) + '</emailAddress>' +
+    '</ShippingOrderVO>';
+  const y = await yurticiSoap('createShipment', icerik);
+  const hataVar = /<outFlag>\s*[^0]/.test(y.govde) || y.kod >= 400;
+  if (hataVar) {
+    const msj = (y.govde.match(/<outResult>([^<]*)<\/outResult>/) || [])[1] || 'Yurtiçi servisi hata döndü.';
+    return { hata: msj };
+  }
+  // Yurtiçi'nde takip, gönderi anahtarı (sipariş no) ile yapılır
+  return { kargoNo: s.no };
+}
+async function yurticiDurumSorgula(s) {
+  // queryShipment: keyType 0 = cargoKey
+  const icerik = '<keys>' + xmlKacir(s.kargoNo || s.no) + '</keys><keyType>0</keyType><addHistoricalData>false</addHistoricalData><onlyTracking>false</onlyTracking>';
+  const y = await yurticiSoap('queryShipment', icerik);
+  if (/TESLIM|DELIVERED|<operationCode>\s*5\s*</i.test(y.govde)) return 'teslim';
+  return '';
+}
+/* DHL MyDHL API */
+function dhlSecenek(pathUri, metod, govdeStr) {
+  const env = oku('env.json', {});
+  return {
+    hostname: 'express.api.dhl.com',
+    path: (env.dhlTest ? '/mydhlapi/test' : '/mydhlapi') + pathUri,
+    method: metod,
+    headers: Object.assign({
+      'Authorization': 'Basic ' + Buffer.from(env.dhlApiKey + ':' + env.dhlApiSecret).toString('base64'),
+      'Content-Type': 'application/json'
+    }, govdeStr ? { 'Content-Length': Buffer.byteLength(govdeStr) } : {})
+  };
+}
+async function dhlGonderiOlustur(s) {
+  const env = oku('env.json', {});
+  const g = env.kargoGonderen || {};
+  const m = s.musteri;
+  const yarin = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const veri = JSON.stringify({
+    plannedShippingDateAndTime: yarin + 'T10:00:00 GMT+03:00',
+    pickup: { isRequested: false },
+    productCode: 'N', // yurtiçi; uluslararası gönderide 'P' kullanılır
+    accounts: [{ typeCode: 'shipper', number: env.dhlHesapNo }],
+    customerDetails: {
+      shipperDetails: {
+        postalAddress: { postalCode: g.postaKodu || '10400', cityName: g.il || 'Balıkesir', countryCode: 'TR', addressLine1: (g.adres || 'Olivamore').slice(0, 45) },
+        contactInformation: { phone: g.telefon || '', companyName: 'Olivamore', fullName: g.ad || 'Olivamore', email: g.eposta || 'site@olivamore.de' }
+      },
+      receiverDetails: {
+        postalAddress: { postalCode: m.postaKodu || '34000', cityName: m.il || 'Istanbul', countryCode: 'TR', addressLine1: String(m.adres).slice(0, 45) },
+        contactInformation: { phone: m.telefon, fullName: m.ad, email: m.eposta }
+      }
+    },
+    content: {
+      packages: [{ weight: Math.max(1, (s.kalemler || []).reduce((t, k) => t + k.adet, 0)), dimensions: { length: 20, width: 20, height: 30 } }],
+      isCustomsDeclarable: false,
+      description: 'Olivamore siparişi ' + s.no,
+      unitOfMeasurement: 'metric'
+    }
+  });
+  const y = await httpsIstek(dhlSecenek('/shipments', 'POST', veri), veri);
+  let c = {};
+  try { c = JSON.parse(y.govde); } catch (e) {}
+  if (y.kod >= 400 || !c.shipmentTrackingNumber) {
+    const msj = (c.detail || c.message || 'DHL servisi hata döndü (' + y.kod + ').');
+    return { hata: String(msj).slice(0, 300) };
+  }
+  // Etiket PDF'i veri klasörüne kaydet (panelden yazdırılır)
+  try {
+    const doc = (c.documents || []).find(d => d.typeCode === 'label');
+    if (doc && doc.content) fs.writeFileSync(dosya('etiket-' + s.no + '.pdf'), Buffer.from(doc.content, 'base64'));
+  } catch (e) {}
+  return { kargoNo: c.shipmentTrackingNumber };
+}
+async function dhlDurumSorgula(s) {
+  const y = await httpsIstek(dhlSecenek('/shipments/' + encodeURIComponent(s.kargoNo) + '/tracking', 'GET'));
+  if (/"Delivered"|"delivered"|\bOK\b.*Delivered/i.test(y.govde) || /"typeCode"\s*:\s*"OK"/.test(y.govde)) return 'teslim';
+  return '';
+}
+/* Kargolanan siparişlerin teslim durumunu kontrol eder (otomasyon döngüsünden çağrılır) */
+async function kargoTakipTur() {
+  const aktif = kargoAktif();
+  if (!aktif.yurtici && !aktif.dhl) return;
+  const siparisler = oku('siparisler.json', []);
+  let degisti = false;
+  for (const s of siparisler) {
+    if (s.durum !== 'kargolandı' || !s.kargoNo) continue;
+    if (Date.now() - Date.parse(s.tarih) > 60 * 86400000) continue; // eski siparişleri sorgulamayı bırak
+    try {
+      let sonuc = '';
+      if (s.kargoFirma === 'Yurtiçi' && aktif.yurtici) sonuc = await yurticiDurumSorgula(s);
+      else if (s.kargoFirma === 'DHL' && aktif.dhl) sonuc = await dhlDurumSorgula(s);
+      if (sonuc === 'teslim') {
+        s.durum = 'tamamlandı';
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'kargo teslim edildi (otomatik)' });
+        degisti = true;
+      }
+    } catch (e) { console.error('[kargo-takip]', s.no, e.message); }
+  }
+  if (degisti) yaz('siparisler.json', siparisler);
+}
+
 /* ---------- e-posta otomasyonları ---------- */
 function otomasyonAyar() {
   return oku('otomasyon.json', {
@@ -169,6 +321,8 @@ function otomasyonCalistir() {
 }
 setInterval(otomasyonCalistir, 30 * 60000);
 setTimeout(otomasyonCalistir, 20000);
+setInterval(() => { kargoTakipTur().catch(e => console.error('[kargo]', e.message)); }, 60 * 60000);
+setTimeout(() => { kargoTakipTur().catch(e => console.error('[kargo]', e.message)); }, 40000);
 
 /* ---------- stok takibi (cms.json içindeki ürünlerde "stok" alanı) ---------- */
 function urunKaydi(cfg, ad) {
@@ -913,6 +1067,49 @@ const sunucu = http.createServer(async (req, res) => {
       const liste = oku('bulten.json', []);
       yaz('bulten.json', liste.filter(x => (x.eposta || '').toLowerCase() !== String(g.eposta || '').toLowerCase()));
       return json(res, 200, { tamam: true });
+    }
+
+    /* ---- kargo (admin) ---- */
+    if (req.method === 'GET' && yol === '/api/admin/kargo-durum') {
+      return json(res, 200, kargoAktif());
+    }
+    if (req.method === 'POST' && yol === '/api/admin/kargo-gonder') {
+      const g = await govde(req, 1);
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === temiz(g.no, 20));
+      if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+      const firma = temiz(g.firma, 20);
+      const aktif = kargoAktif();
+      if (firma === 'Yurtiçi' && !aktif.yurtici) return json(res, 400, { hata: 'Yurtiçi WS bilgileri girilmemiş (env.json → yurticiWsUser / yurticiWsSifre).' });
+      if (firma === 'DHL' && !aktif.dhl) return json(res, 400, { hata: 'DHL API bilgileri girilmemiş (env.json → dhlApiKey / dhlApiSecret / dhlHesapNo).' });
+      if (['Yurtiçi', 'DHL'].indexOf(firma) === -1) return json(res, 400, { hata: 'Geçersiz taşıyıcı.' });
+      try {
+        const sonuc = firma === 'Yurtiçi' ? await yurticiGonderiOlustur(s) : await dhlGonderiOlustur(s);
+        if (sonuc.hata) return json(res, 502, { hata: firma + ': ' + sonuc.hata });
+        const eskiDurum = s.durum;
+        s.kargoFirma = firma;
+        s.kargoNo = sonuc.kargoNo;
+        s.durum = 'kargolandı';
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: firma + ' gönderisi oluşturuldu (' + sonuc.kargoNo + ')' });
+        yaz('siparisler.json', liste);
+        if (eskiDurum !== 'kargolandı' && s.musteri && s.musteri.eposta) {
+          epostaGonder(s.musteri.eposta, 'Siparişiniz kargoya verildi · ' + s.no,
+            'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişiniz kargoya verildi.\nKargo: ' + firma + ' · Takip No: ' + sonuc.kargoNo + '\n\nAfiyet olsun,\nOlivamore');
+        }
+        const etiketVar = fs.existsSync(dosya('etiket-' + s.no + '.pdf'));
+        return json(res, 200, { tamam: true, kargoNo: sonuc.kargoNo, etiket: etiketVar });
+      } catch (e) {
+        return json(res, 502, { hata: firma + ' servisine ulaşılamadı: ' + e.message });
+      }
+    }
+    if (req.method === 'GET' && yol === '/api/admin/etiket') {
+      const u = new URL(req.url, 'http://x');
+      const no = String(u.searchParams.get('no') || '').replace(/[^A-Za-z0-9-]/g, '');
+      const yolPdf = dosya('etiket-' + no + '.pdf');
+      if (!no || !fs.existsSync(yolPdf)) { return json(res, 404, { hata: 'Etiket bulunamadı.' }); }
+      res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="etiket-' + no + '.pdf"' });
+      return fs.createReadStream(yolPdf).pipe(res);
     }
 
     if (req.method === 'GET' && yol === '/api/admin/ozet') {
