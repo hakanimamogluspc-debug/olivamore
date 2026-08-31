@@ -110,6 +110,17 @@ details[open] .sp-ok{transform:rotate(180deg)}
 .sv.aktif .oran{color:#806A36}
 .sv .rozet{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:999px;white-space:nowrap}
 .sv-ozel{margin-top:14px;background:linear-gradient(120deg,#F6F0E3,#FAF7EF);border:1px solid rgba(191,162,93,.4);border-radius:12px;padding:12px 16px;font-size:.85rem}
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.ad-kart{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;font-size:.86rem;line-height:1.55;position:relative}
+.ad-kart .b{font-family:Fraunces,serif;font-size:1rem;margin-bottom:6px;color:#806A36}
+.ad-kart .islem{margin-top:12px;display:flex;gap:8px}
+.ad-kart .islem button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:.76rem;cursor:pointer;transition:all .2s}
+.ad-kart .islem button:hover{border-color:var(--gold);color:#806A36}
+.ad-yeni{border:1px dashed var(--line);border-radius:15px;display:flex;align-items:center;justify-content:center;min-height:130px;cursor:pointer;color:var(--ink-soft);font-size:.88rem;transition:all .25s;background:none;font-family:inherit}
+.ad-yeni:hover{border-color:var(--gold);color:#806A36}
+.ad-form{background:#fff;border:1px solid var(--gold);border-radius:15px;padding:22px;margin-top:14px;display:none}
+.ad-form .satir{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:560px){.ad-form .satir{grid-template-columns:1fr}}
 </style>
 </head>
 <body data-page="hesap" data-lang="en">
@@ -173,6 +184,31 @@ details[open] .sp-ok{transform:rotate(180deg)}
         <p class="sv-aciklama">You earn <b>1 point</b> for every <b>₺50</b> you spend. Once your points pass a tier's threshold, that tier's discount is applied <b>automatically on every order</b> — no coupon code needed.</p>
         <div class="sv-grid" id="hs-seviyeler"></div>
         <div class="sv-ozel" id="hs-ozel" style="display:none;"></div>
+      </div>
+
+      <div class="sv-wrap">
+        <div class="sv-baslik"><h2>My Address Book</h2></div>
+        <p class="sv-aciklama">Saved addresses can be selected with one tap at checkout; you can still enter a new address for any order.</p>
+        <div class="ad-grid" id="hs-adresler"></div>
+        <div class="ad-form" id="ad-form">
+          <div class="hs-alan"><label for="af-baslik">Address label (Home, Work...)</label><input type="text" id="af-baslik" maxlength="40"></div>
+          <div class="hs-alan"><label for="af-ad">Full name</label><input type="text" id="af-ad" autocomplete="name"></div>
+          <div class="satir">
+            <div class="hs-alan"><label for="af-tel">Phone</label><input type="tel" id="af-tel" autocomplete="tel"></div>
+            <div class="hs-alan"><label for="af-posta">Postal code</label><input type="text" id="af-posta" maxlength="5"></div>
+          </div>
+          <div class="hs-alan"><label for="af-adres">Address</label><input type="text" id="af-adres"></div>
+          <div class="satir">
+            <div class="hs-alan"><label for="af-il">City</label><input type="text" id="af-il"></div>
+            <div class="hs-alan"><label for="af-ilce">District</label><input type="text" id="af-ilce"></div>
+          </div>
+          <input type="hidden" id="af-id">
+          <div style="display:flex;gap:10px;margin-top:6px;">
+            <button class="btn btn-gold btn-sm" type="button" id="af-kaydet">Save Address</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="af-vazgec">Cancel</button>
+            <span id="af-msj" style="font-size:.8rem;color:#a33;align-self:center;"></span>
+          </div>
+        </div>
       </div>
 
       <div class="sp-baslik">
@@ -288,6 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ozel.innerHTML = '✨ You have a personal <b>' + v.ozelIndirim + '%</b> discount' +
         (v.ozelIndirim >= (v.indirimOran || 0) ? ' — applied on every order.' : '.');
     } else ozel.style.display = 'none';
+    adresCiz(v.adresler || []);
     var host = document.getElementById('hs-siparisler');
     if (!v.siparisler.length) {
       host.innerHTML = '<div class="sp-bos"><div class="i">🫒</div><p>No orders yet. Start your table — and your points — with your first bottle.<br><small>Note: orders placed with your account email appear here.</small></p><a class="btn btn-gold" href="koleksiyon-en.html">Explore the Collection</a></div>';
@@ -312,6 +349,70 @@ document.addEventListener('DOMContentLoaded', function () {
         '</div>' + dokum(s) + kargoBlok(s) + '</div></details>';
     }).join('');
   }
+  /* ---- address book ---- */
+  var ADRESLER = [];
+  function adresCiz(liste) {
+    ADRESLER = liste;
+    var host = document.getElementById('hs-adresler');
+    host.innerHTML = liste.map(function (a) {
+      return '<div class="ad-kart"><div class="b">' + esc(a.baslik) + '</div>' +
+        esc(a.ad) + '<br>' + esc(a.adres) + '<br>' +
+        [esc(a.ilce), esc(a.il), esc(a.postaKodu)].filter(Boolean).join(' / ') + '<br>' + esc(a.telefon) +
+        '<div class="islem"><button type="button" class="ad-duzenle" data-id="' + esc(a.id) + '">Edit</button>' +
+        '<button type="button" class="ad-sil" data-id="' + esc(a.id) + '">Delete</button></div></div>';
+    }).join('') + '<button class="ad-yeni" type="button" id="ad-yeni-btn">+ Add New Address</button>';
+  }
+  function adresFormAc(a) {
+    document.getElementById('af-id').value = a ? a.id : '';
+    document.getElementById('af-baslik').value = a ? a.baslik : '';
+    document.getElementById('af-ad').value = a ? a.ad : (document.getElementById('hs-isim').textContent || '');
+    document.getElementById('af-tel').value = a ? a.telefon : '';
+    document.getElementById('af-adres').value = a ? a.adres : '';
+    document.getElementById('af-il').value = a ? a.il : '';
+    document.getElementById('af-ilce').value = a ? a.ilce : '';
+    document.getElementById('af-posta').value = a ? a.postaKodu : '';
+    document.getElementById('af-msj').textContent = '';
+    document.getElementById('ad-form').style.display = 'block';
+    document.getElementById('af-baslik').focus();
+  }
+  document.getElementById('hs-adresler').addEventListener('click', function (e) {
+    if (e.target.id === 'ad-yeni-btn') { adresFormAc(null); return; }
+    var id = e.target.dataset.id;
+    if (!id) return;
+    if (e.target.classList.contains('ad-duzenle')) {
+      adresFormAc(ADRESLER.find(function (a) { return a.id === id; }));
+    } else if (e.target.classList.contains('ad-sil')) {
+      if (!confirm('Delete this address?')) return;
+      fetch('/api/uye/adres-sil', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(KEY) }, body: JSON.stringify({ id: id }) })
+        .then(function (r) { return r.json(); })
+        .then(function (c) { if (c.adresler) adresCiz(c.adresler); });
+    }
+  });
+  document.getElementById('af-vazgec').addEventListener('click', function () { document.getElementById('ad-form').style.display = 'none'; });
+  document.getElementById('af-kaydet').addEventListener('click', function () {
+    var msj = document.getElementById('af-msj');
+    fetch('/api/uye/adres-kaydet', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(KEY) },
+      body: JSON.stringify({
+        id: document.getElementById('af-id').value,
+        baslik: document.getElementById('af-baslik').value.trim(),
+        ad: document.getElementById('af-ad').value.trim(),
+        telefon: document.getElementById('af-tel').value.trim(),
+        adres: document.getElementById('af-adres').value.trim(),
+        il: document.getElementById('af-il').value.trim(),
+        ilce: document.getElementById('af-ilce').value.trim(),
+        postaKodu: document.getElementById('af-posta').value.trim()
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (c.hata) { msj.textContent = c.hata; return; }
+        document.getElementById('ad-form').style.display = 'none';
+        adresCiz(c.adresler);
+      })
+      .catch(function () { msj.textContent = 'Connection error.'; });
+  });
+
   function beniGetir() {
     var t = localStorage.getItem(KEY);
     if (!t) { goster('giris'); return; }

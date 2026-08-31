@@ -106,6 +106,7 @@
         <p id="kupon-msj" style="font-size:.8rem;margin-top:6px;display:none;"></p>
 
         <div style="margin:22px 0 10px;font-weight:700;font-size:.9rem;">Delivery Details</div>
+        <div id="adres-secim" style="display:none;margin-bottom:14px;"></div>
         <label class="checkout-field" for="co-ad">Full name<input type="text" id="co-ad" name="name" autocomplete="name" required></label>
         <label class="checkout-field" for="co-eposta">Email<input type="email" id="co-eposta" name="email" autocomplete="email" inputmode="email" required></label>
         <label class="checkout-field" for="co-tel">Phone<input type="tel" id="co-tel" name="tel" autocomplete="tel" inputmode="tel" required minlength="10"></label>
@@ -305,6 +306,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
         if (!s.ok) throw new Error(s.j.hata || 'Order failed');
+        adresiDefteriKaydet();
         if (s.j.odemeUrl) {
           btn.textContent = 'Redirecting to secure payment...';
           window.location.href = s.j.odemeUrl;
@@ -325,16 +327,75 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 
-  // Member discount rate (if signed in)
+  // Member info (if signed in): discount rate + saved address picker
   window.OM_UYE_ORAN = 0;
+  var OM_UYE = null;
+  function adresDoldur(a) {
+    document.getElementById('co-ad').value = a.ad || '';
+    document.getElementById('co-tel').value = a.telefon || '';
+    document.getElementById('co-adres').value = a.adres || '';
+    document.getElementById('co-il').value = a.il || '';
+    document.getElementById('co-ilce').value = a.ilce || '';
+    document.getElementById('co-posta').value = a.postaKodu || '';
+    if (OM_UYE && !document.getElementById('co-eposta').value) document.getElementById('co-eposta').value = OM_UYE.eposta || '';
+  }
+  function adresSecimKur(v) {
+    if (!v.adresler || !v.adresler.length) return;
+    var host = document.getElementById('adres-secim');
+    host.style.display = '';
+    host.innerHTML = '<label style="display:block;font-size:.8rem;font-weight:500;margin-bottom:8px;">Delivery address</label>' +
+      v.adresler.map(function (a, i) {
+        return '<label class="pay-opt" style="margin-bottom:8px;"><input type="radio" name="kayitli-adres" value="' + i + '"' + (i === 0 ? ' checked' : '') + '>' +
+          '<span><b>' + a.baslik.replace(/</g, '&lt;') + '</b><small>' + (a.ad + ' · ' + a.adres + ' ' + [a.ilce, a.il].filter(Boolean).join('/')).replace(/</g, '&lt;') + '</small></span></label>';
+      }).join('') +
+      '<label class="pay-opt" style="margin-bottom:8px;"><input type="radio" name="kayitli-adres" value="yeni"><span><b>Enter a new address</b><small>Fill in the fields below manually.</small></span></label>' +
+      '<label id="adres-kaydet-satir" style="display:none;font-size:.8rem;align-items:center;gap:8px;margin:4px 0 6px;cursor:pointer;"><input type="checkbox" id="co-adres-kaydet" style="margin-right:6px;">Save this address to my address book</label>';
+    adresDoldur(v.adresler[0]);
+    host.addEventListener('change', function (e) {
+      if (e.target.name !== 'kayitli-adres') return;
+      var kaydetSatir = document.getElementById('adres-kaydet-satir');
+      if (e.target.value === 'yeni') {
+        ['co-adres', 'co-il', 'co-ilce', 'co-posta'].forEach(function (id) { document.getElementById(id).value = ''; });
+        kaydetSatir.style.display = 'flex';
+        document.getElementById('co-adres').focus();
+      } else {
+        adresDoldur(v.adresler[parseInt(e.target.value, 10)]);
+        kaydetSatir.style.display = 'none';
+      }
+    });
+  }
   (function () {
     var t = localStorage.getItem('om-uye-token');
     if (!t) return;
     fetch('/api/uye/ben', { headers: { 'Authorization': 'Bearer ' + t } })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (v) { if (v && v.indirimOran > 0) { window.OM_UYE_ORAN = v.indirimOran; if (window.omCart) render(); } })
+      .then(function (v) {
+        if (!v) return;
+        OM_UYE = v;
+        if (v.indirimOran > 0) { window.OM_UYE_ORAN = v.indirimOran; if (window.omCart) render(); }
+        if (!document.getElementById('co-eposta').value) document.getElementById('co-eposta').value = v.eposta || '';
+        adresSecimKur(v);
+      })
       .catch(function () {});
   })();
+  function adresiDefteriKaydet() {
+    var kutu = document.getElementById('co-adres-kaydet');
+    var t = localStorage.getItem('om-uye-token');
+    if (!t || !kutu || !kutu.checked) return;
+    var ilce = document.getElementById('co-ilce').value.trim();
+    fetch('/api/uye/adres-kaydet', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+      body: JSON.stringify({
+        baslik: ilce || 'My Address',
+        ad: document.getElementById('co-ad').value.trim(),
+        telefon: document.getElementById('co-tel').value.trim(),
+        adres: document.getElementById('co-adres').value.trim(),
+        il: document.getElementById('co-il').value.trim(),
+        ilce: ilce,
+        postaKodu: document.getElementById('co-posta').value.trim()
+      })
+    }).catch(function () {});
+  }
 
   // Show card option when payments are enabled
   fetch('/api/odeme-durum').then(function (r) { return r.json(); })

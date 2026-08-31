@@ -428,8 +428,41 @@ const sunucu = http.createServer(async (req, res) => {
         ad: b.u.ad, eposta: e, uyelik: b.u.tarih, puan: puanHesapla(e),
         indirimOran: uyeOran(b.u), seviyeler: uyeAyar().seviyeler,
         ozelIndirim: b.u.ozelIndirim ? parseFloat(b.u.ozelIndirim.oran) || 0 : 0,
+        adresler: b.u.adresler || [],
         siparisler: siparisler
       });
+    }
+
+    if (req.method === 'POST' && yol === '/api/uye/adres-kaydet') {
+      const b = uyeBul(req);
+      if (!b) return json(res, 401, { hata: 'Oturum geçersiz; yeniden giriş yap.' });
+      const g = await govde(req, 1);
+      if (!temiz(g.ad, 120) || !temiz(g.telefon, 40) || !temiz(g.adres, 1000)) {
+        return json(res, 400, { hata: 'Ad, telefon ve adres zorunlu.' });
+      }
+      b.u.adresler = b.u.adresler || [];
+      const yeni = {
+        id: temiz(g.id, 30) || 'A-' + Date.now(),
+        baslik: temiz(g.baslik, 40) || 'Adresim',
+        ad: temiz(g.ad, 120), telefon: temiz(g.telefon, 40),
+        adres: temiz(g.adres, 1000), il: temiz(g.il, 60), ilce: temiz(g.ilce, 60), postaKodu: temiz(g.postaKodu, 10)
+      };
+      const i = b.u.adresler.findIndex(a => a.id === yeni.id);
+      if (i !== -1) b.u.adresler[i] = yeni;
+      else {
+        if (b.u.adresler.length >= 8) return json(res, 400, { hata: 'En fazla 8 adres kaydedebilirsin.' });
+        b.u.adresler.push(yeni);
+      }
+      yaz('uyeler.json', b.liste);
+      return json(res, 200, { tamam: true, adresler: b.u.adresler });
+    }
+    if (req.method === 'POST' && yol === '/api/uye/adres-sil') {
+      const b = uyeBul(req);
+      if (!b) return json(res, 401, { hata: 'Oturum geçersiz.' });
+      const g = await govde(req, 1);
+      b.u.adresler = (b.u.adresler || []).filter(a => a.id !== temiz(g.id, 30));
+      yaz('uyeler.json', b.liste);
+      return json(res, 200, { tamam: true, adresler: b.u.adresler });
     }
 
     if (req.method === 'GET' && yol === '/api/odeme-durum') {

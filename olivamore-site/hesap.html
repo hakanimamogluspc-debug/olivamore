@@ -118,6 +118,18 @@ details[open] .sp-ok{transform:rotate(180deg)}
 .sv.aktif .oran{color:#806A36}
 .sv .rozet{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:999px;white-space:nowrap}
 .sv-ozel{margin-top:14px;background:linear-gradient(120deg,#F6F0E3,#FAF7EF);border:1px solid rgba(191,162,93,.4);border-radius:12px;padding:12px 16px;font-size:.85rem}
+/* adres defteri */
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.ad-kart{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;font-size:.86rem;line-height:1.55;position:relative}
+.ad-kart .b{font-family:Fraunces,serif;font-size:1rem;margin-bottom:6px;color:#806A36}
+.ad-kart .islem{margin-top:12px;display:flex;gap:8px}
+.ad-kart .islem button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:.76rem;cursor:pointer;transition:all .2s}
+.ad-kart .islem button:hover{border-color:var(--gold);color:#806A36}
+.ad-yeni{border:1px dashed var(--line);border-radius:15px;display:flex;align-items:center;justify-content:center;min-height:130px;cursor:pointer;color:var(--ink-soft);font-size:.88rem;transition:all .25s;background:none;font-family:inherit}
+.ad-yeni:hover{border-color:var(--gold);color:#806A36}
+.ad-form{background:#fff;border:1px solid var(--gold);border-radius:15px;padding:22px;margin-top:14px;display:none}
+.ad-form .satir{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:560px){.ad-form .satir{grid-template-columns:1fr}}
 </style>
 </head>
 <body data-page="hesap">
@@ -183,6 +195,31 @@ details[open] .sp-ok{transform:rotate(180deg)}
         <p class="sv-aciklama">Her <b>₺50</b> harcamanda <b>1 puan</b> kazanırsın. Puanın bir seviyenin eşiğini geçtiğinde o seviyenin indirimi, sepetinde <b>her siparişte otomatik</b> uygulanır — kupon kodu gerekmez.</p>
         <div class="sv-grid" id="hs-seviyeler"></div>
         <div class="sv-ozel" id="hs-ozel" style="display:none;"></div>
+      </div>
+
+      <div class="sv-wrap">
+        <div class="sv-baslik"><h2>Adres Defterim</h2></div>
+        <p class="sv-aciklama">Kaydettiğin adresler sipariş verirken tek dokunuşla seçilir; istersen her siparişte yeni adres de girebilirsin.</p>
+        <div class="ad-grid" id="hs-adresler"></div>
+        <div class="ad-form" id="ad-form">
+          <div class="hs-alan"><label for="af-baslik">Adres başlığı (Ev, İş...)</label><input type="text" id="af-baslik" maxlength="40"></div>
+          <div class="hs-alan"><label for="af-ad">Ad soyad</label><input type="text" id="af-ad" autocomplete="name"></div>
+          <div class="satir">
+            <div class="hs-alan"><label for="af-tel">Telefon</label><input type="tel" id="af-tel" autocomplete="tel"></div>
+            <div class="hs-alan"><label for="af-posta">Posta kodu</label><input type="text" id="af-posta" maxlength="5"></div>
+          </div>
+          <div class="hs-alan"><label for="af-adres">Açık adres</label><input type="text" id="af-adres"></div>
+          <div class="satir">
+            <div class="hs-alan"><label for="af-il">İl</label><input type="text" id="af-il"></div>
+            <div class="hs-alan"><label for="af-ilce">İlçe</label><input type="text" id="af-ilce"></div>
+          </div>
+          <input type="hidden" id="af-id">
+          <div style="display:flex;gap:10px;margin-top:6px;">
+            <button class="btn btn-gold btn-sm" type="button" id="af-kaydet">Adresi Kaydet</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="af-vazgec">Vazgeç</button>
+            <span id="af-msj" style="font-size:.8rem;color:#a33;align-self:center;"></span>
+          </div>
+        </div>
       </div>
 
       <div class="sp-baslik">
@@ -299,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ozel.innerHTML = '✨ Sana özel tanımlı <b>%' + v.ozelIndirim + '</b> indirim var' +
         (v.ozelIndirim >= (v.indirimOran || 0) ? ' — her siparişinde bu oran uygulanıyor.' : '.');
     } else ozel.style.display = 'none';
+    adresCiz(v.adresler || []);
     var host = document.getElementById('hs-siparisler');
     if (!v.siparisler.length) {
       host.innerHTML = '<div class="sp-bos"><div class="i">🫒</div><p>Henüz siparişin yok. İlk şişenle hem sofranı hem puan birikimini başlat.<br><small>Not: hesabındaki e-posta ile verilen siparişler burada görünür.</small></p><a class="btn btn-gold" href="koleksiyon.html">Koleksiyonu Keşfet</a></div>';
@@ -323,6 +361,70 @@ document.addEventListener('DOMContentLoaded', function () {
         '</div>' + dokum(s) + kargoBlok(s) + '</div></details>';
     }).join('');
   }
+  /* ---- adres defteri ---- */
+  var ADRESLER = [];
+  function adresCiz(liste) {
+    ADRESLER = liste;
+    var host = document.getElementById('hs-adresler');
+    host.innerHTML = liste.map(function (a) {
+      return '<div class="ad-kart"><div class="b">' + esc(a.baslik) + '</div>' +
+        esc(a.ad) + '<br>' + esc(a.adres) + '<br>' +
+        [esc(a.ilce), esc(a.il), esc(a.postaKodu)].filter(Boolean).join(' / ') + '<br>' + esc(a.telefon) +
+        '<div class="islem"><button type="button" class="ad-duzenle" data-id="' + esc(a.id) + '">Düzenle</button>' +
+        '<button type="button" class="ad-sil" data-id="' + esc(a.id) + '">Sil</button></div></div>';
+    }).join('') + '<button class="ad-yeni" type="button" id="ad-yeni-btn">+ Yeni Adres Ekle</button>';
+  }
+  function adresFormAc(a) {
+    document.getElementById('af-id').value = a ? a.id : '';
+    document.getElementById('af-baslik').value = a ? a.baslik : '';
+    document.getElementById('af-ad').value = a ? a.ad : (document.getElementById('hs-isim').textContent || '');
+    document.getElementById('af-tel').value = a ? a.telefon : '';
+    document.getElementById('af-adres').value = a ? a.adres : '';
+    document.getElementById('af-il').value = a ? a.il : '';
+    document.getElementById('af-ilce').value = a ? a.ilce : '';
+    document.getElementById('af-posta').value = a ? a.postaKodu : '';
+    document.getElementById('af-msj').textContent = '';
+    document.getElementById('ad-form').style.display = 'block';
+    document.getElementById('af-baslik').focus();
+  }
+  document.getElementById('hs-adresler').addEventListener('click', function (e) {
+    if (e.target.id === 'ad-yeni-btn') { adresFormAc(null); return; }
+    var id = e.target.dataset.id;
+    if (!id) return;
+    if (e.target.classList.contains('ad-duzenle')) {
+      adresFormAc(ADRESLER.find(function (a) { return a.id === id; }));
+    } else if (e.target.classList.contains('ad-sil')) {
+      if (!confirm('Bu adres silinsin mi?')) return;
+      fetch('/api/uye/adres-sil', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(KEY) }, body: JSON.stringify({ id: id }) })
+        .then(function (r) { return r.json(); })
+        .then(function (c) { if (c.adresler) adresCiz(c.adresler); });
+    }
+  });
+  document.getElementById('af-vazgec').addEventListener('click', function () { document.getElementById('ad-form').style.display = 'none'; });
+  document.getElementById('af-kaydet').addEventListener('click', function () {
+    var msj = document.getElementById('af-msj');
+    fetch('/api/uye/adres-kaydet', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(KEY) },
+      body: JSON.stringify({
+        id: document.getElementById('af-id').value,
+        baslik: document.getElementById('af-baslik').value.trim(),
+        ad: document.getElementById('af-ad').value.trim(),
+        telefon: document.getElementById('af-tel').value.trim(),
+        adres: document.getElementById('af-adres').value.trim(),
+        il: document.getElementById('af-il').value.trim(),
+        ilce: document.getElementById('af-ilce').value.trim(),
+        postaKodu: document.getElementById('af-posta').value.trim()
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (c.hata) { msj.textContent = c.hata; return; }
+        document.getElementById('ad-form').style.display = 'none';
+        adresCiz(c.adresler);
+      })
+      .catch(function () { msj.textContent = 'Bağlantı hatası.'; });
+  });
+
   function beniGetir() {
     var t = localStorage.getItem(KEY);
     if (!t) { goster('giris'); return; }
