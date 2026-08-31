@@ -1283,16 +1283,17 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     fetch('/api/admin/pazarlama')
       .then(function (r) { return r.json(); })
       .then(function (v) {
-        MK_ABONELER = v.aboneler || []; MK_KAMPANYALAR = v.kampanyalar || []; MK_BREVO = !!v.brevo;
+        MK_ABONELER = v.aboneler || []; MK_KAMPANYALAR = v.kampanyalar || []; MK_BREVO = !!(v.eposta || v.brevo);
+        var MK_SERVIS = v.servis || 'Resend';
         var ay = Date.now() - 30 * 86400000;
         var yeni30 = MK_ABONELER.filter(function (a) { return Date.parse(a.tarih) >= ay; }).length;
         document.getElementById('mk-stats').innerHTML =
           '<div class="stat"><div class="num">' + MK_ABONELER.length + '</div><div class="lbl">Toplam abone</div></div>' +
           '<div class="stat"><div class="num">+' + yeni30 + '</div><div class="lbl">Son 30 günde yeni</div></div>' +
           '<div class="stat"><div class="num">' + MK_KAMPANYALAR.length + '</div><div class="lbl">Gönderilen kampanya</div></div>' +
-          '<div class="stat"><div class="num">' + (MK_BREVO ? '✓' : '—') + '</div><div class="lbl">E-posta servisi (Brevo)</div></div>';
+          '<div class="stat"><div class="num">' + (MK_BREVO ? '✓' : '—') + '</div><div class="lbl">E-posta servisi' + (MK_BREVO ? ' (' + MK_SERVIS + ')' : '') + '</div></div>';
         document.getElementById('mk-brevo-uyari').innerHTML = MK_BREVO ? '' :
-          '<div class="note" style="border-color:#d97706;"><b>Brevo anahtarı yok:</b> Abone toplayabilirsin ama e-posta gönderilemez. Sunucuda <code>env.json → brevoKey</code> alanına Brevo API anahtarını gir (brevo.com ücretsiz planla günde 300 e-posta).</div>';
+          '<div class="note" style="border-color:#d97706;"><b>E-posta anahtarı yok:</b> Abone toplayabilirsin ama e-posta gönderilemez. Resend hesabı açıp (resend.com) olivamore.de alan adını doğrula, sonra API anahtarını sunucuda <code>env.json → resendKey</code> alanına gir.</div>';
         mkListe();
         document.getElementById('mk-gecmis').innerHTML = MK_KAMPANYALAR.length ? MK_KAMPANYALAR.map(function (k) {
           return '<div style="padding:8px 0;border-bottom:1px solid var(--line);"><b>' + esc(k.konu) + '</b><br><span style="color:var(--soft);font-size:.78rem;">' + fmtTarih(k.tarih) + ' · ' + k.alici + ' alıcı</span></div>';

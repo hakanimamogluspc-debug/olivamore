@@ -349,7 +349,8 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, {
         aboneler: oku('bulten.json', []),
         kampanyalar: oku('kampanyalar.json', []),
-        brevo: !!env.brevoKey
+        eposta: epostaServisiVar(),
+        servis: env.resendKey ? 'Resend' : (env.brevoKey ? 'Brevo' : '')
       });
     }
     if (req.method === 'POST' && yol === '/api/admin/kampanya') {
@@ -357,7 +358,7 @@ const sunucu = http.createServer(async (req, res) => {
       const konu = temiz(g.konu, 200), metin = temiz(g.metin, 20000);
       if (!konu || !metin) return json(res, 400, { hata: 'Konu ve metin zorunlu.' });
       const env = oku('env.json', {});
-      if (!env.brevoKey) return json(res, 400, { hata: 'Brevo API anahtarı girilmemiş (sunucuda env.json → brevoKey). Anahtar olmadan e-posta gönderilemez.' });
+      if (!epostaServisiVar()) return json(res, 400, { hata: 'E-posta API anahtarı girilmemiş (sunucuda env.json → resendKey). Anahtar olmadan e-posta gönderilemez.' });
       if (g.test) {
         if (!env.bildirimEposta) return json(res, 400, { hata: 'Test için env.json → bildirimEposta gerekli.' });
         epostaGonder(env.bildirimEposta, '[TEST] ' + konu, metin + '\n\n—\n(Bu bir test gönderimidir; listeden çıkma linki gerçek gönderimde eklenir.)');
@@ -407,21 +408,42 @@ function epostaBildir(konu, metin) {
   if (!env.bildirimEposta) return;
   epostaGonder(env.bildirimEposta, konu, metin);
 }
-// Herhangi bir alıcıya e-posta (müşteri bildirimleri için)
+// Herhangi bir alıcıya e-posta — Resend (öncelikli) veya Brevo (yedek)
 function epostaGonder(kime, konu, metin) {
   const env = oku('env.json', {});
-  if (!env.brevoKey || !epostaMi(kime)) return; // anahtar yoksa sessizce geç
-  const veri = JSON.stringify({
-    sender: { name: 'Olivamore', email: env.gonderen || 'site@olivamore.de' },
-    to: [{ email: kime }],
-    subject: konu, textContent: metin
+  if (!epostaMi(kime)) return;
+  let secenek, veri;
+  if (env.resendKey) {
+    veri = JSON.stringify({
+      from: 'Olivamore <' + (env.gonderen || 'site@olivamore.de') + '>',
+      to: [kime], subject: konu, text: metin
+    });
+    secenek = {
+      hostname: 'api.resend.com', path: '/emails', method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.resendKey, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(veri) }
+    };
+  } else if (env.brevoKey) {
+    veri = JSON.stringify({
+      sender: { name: 'Olivamore', email: env.gonderen || 'site@olivamore.de' },
+      to: [{ email: kime }],
+      subject: konu, textContent: metin
+    });
+    secenek = {
+      hostname: 'api.brevo.com', path: '/v3/smtp/email', method: 'POST',
+      headers: { 'api-key': env.brevoKey, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(veri) }
+    };
+  } else return; // anahtar yoksa sessizce geç
+  const istek = require('https').request(secenek, r => {
+    if (r.statusCode >= 400) {
+      let p = ''; r.on('data', d => p += d); r.on('end', () => console.error('[posta]', r.statusCode, p.slice(0, 300)));
+    } else r.resume();
   });
-  const istek = require('https').request({
-    hostname: 'api.brevo.com', path: '/v3/smtp/email', method: 'POST',
-    headers: { 'api-key': env.brevoKey, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(veri) }
-  }, r => { r.resume(); });
   istek.on('error', e => console.error('[posta]', e.message));
   istek.end(veri);
+}
+function epostaServisiVar() {
+  const env = oku('env.json', {});
+  return !!(env.resendKey || env.brevoKey);
 }
 
 if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
