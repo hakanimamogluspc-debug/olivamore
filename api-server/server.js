@@ -961,21 +961,22 @@ function epostaHtmlYap(konu, metin) {
   const parcalar = String(metin).split(/\n—\n/);
   const govdeHtml = linkle(kacir(parcalar[0])).replace(/\n/g, '<br>');
   const dipnotHtml = parcalar[1] ? linkle(kacir(parcalar.slice(1).join('\n'))).replace(/\n/g, '<br>') : '';
+  // Tek parça kart: tüm içerik tek çerçeveli tabloda, satırlar arası boşluk/kenarlık yok
   return '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
     '<body style="margin:0;padding:0;background-color:#F7F6F3;">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F3;padding:28px 12px;"><tr><td align="center">' +
-    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F6F3;"><tr><td align="center" style="padding:28px 12px;">' +
+    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#ffffff;border:1px solid #ECEAE6;border-radius:14px;overflow:hidden;border-collapse:separate;">' +
     // Başlık bandı
-    '<tr><td style="background-color:#000000;border-radius:14px 14px 0 0;padding:28px 20px;text-align:center;">' +
+    '<tr><td style="background-color:#000000;padding:28px 20px;text-align:center;border-radius:13px 13px 0 0;">' +
     '<img src="https://olivamore.de/assets/img/logo-eposta.png" alt="OLIVAMORE" width="180" style="width:180px;height:auto;border:0;display:inline-block;">' +
     '</td></tr>' +
     // Gövde
-    '<tr><td style="background-color:#ffffff;padding:32px 34px;border-left:1px solid #ECEAE6;border-right:1px solid #ECEAE6;">' +
+    '<tr><td style="padding:32px 34px 24px 34px;">' +
     '<div style="font-family:Georgia,serif;font-size:20px;color:#1E1C19;margin-bottom:16px;">' + kacir(konu) + '</div>' +
     '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4A463F;">' + govdeHtml + '</div>' +
     '</td></tr>' +
-    // Alt bant
-    '<tr><td style="background-color:#ffffff;border-radius:0 0 14px 14px;border:1px solid #ECEAE6;border-top:1px dashed #ECEAE6;padding:18px 34px;text-align:center;">' +
+    // Alt bölüm (aynı kartın içinde, ince ayraçla)
+    '<tr><td style="padding:18px 34px 22px 34px;text-align:center;border-top:1px dashed #ECEAE6;">' +
     '<div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:#806A36;margin-bottom:8px;">&ldquo;Her şişe, tek bir hasadın izini taşır.&rdquo;</div>' +
     '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8377;"><a href="https://olivamore.de" style="color:#8a8377;">olivamore.de</a></div>' +
     (dipnotHtml ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0aa9e;margin-top:10px;line-height:1.6;">' + dipnotHtml + '</div>' : '') +
