@@ -101,6 +101,23 @@ details[open] .sp-ok{transform:rotate(180deg)}
 .sp-bos{text-align:center;padding:60px 20px;background:#fff;border:1px dashed var(--line);border-radius:18px}
 .sp-bos .i{font-size:2rem;margin-bottom:10px}
 .sp-bos p{color:var(--ink-soft);font-size:.9rem;max-width:400px;margin:0 auto 18px;line-height:1.6}
+/* sadakat merdiveni */
+.sv-wrap{margin:0 0 36px}
+.sv-baslik{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:6px}
+.sv-baslik h2{font-family:Fraunces,serif;font-weight:400;font-size:1.5rem;margin:0}
+.sv-aciklama{font-size:.82rem;color:var(--ink-soft);margin:0 0 18px;line-height:1.6;max-width:640px}
+.sv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.sv{position:relative;border:1px solid var(--line);background:#fff;border-radius:15px;padding:20px 16px;text-align:center;transition:all .3s}
+.sv .ad{font-family:Fraunces,serif;font-size:1.02rem;margin-bottom:4px}
+.sv .oran{font-family:Fraunces,serif;font-size:1.6rem;color:#b6b0a5;line-height:1.1}
+.sv .esik{font-size:.72rem;color:var(--ink-soft);letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+.sv.gecti{border-color:rgba(191,162,93,.45)}
+.sv.gecti .oran{color:var(--gold)}
+.sv.gecti::after{content:'✓';position:absolute;top:10px;right:12px;color:var(--gold);font-size:.85rem}
+.sv.aktif{border-color:var(--gold);background:linear-gradient(180deg,#FBF7EE,#fff);box-shadow:0 12px 30px rgba(191,162,93,.2);transform:translateY(-3px)}
+.sv.aktif .oran{color:#806A36}
+.sv .rozet{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:999px;white-space:nowrap}
+.sv-ozel{margin-top:14px;background:linear-gradient(120deg,#F6F0E3,#FAF7EF);border:1px solid rgba(191,162,93,.4);border-radius:12px;padding:12px 16px;font-size:.85rem}
 </style>
 </head>
 <body data-page="hesap">
@@ -159,6 +176,13 @@ details[open] .sp-ok{transform:rotate(180deg)}
           <div class="uk-v"><div class="n" id="hs-sipsay">0</div><div class="l">Sipariş</div></div>
           <div class="uk-v"><div class="n" id="hs-harcama">₺0</div><div class="l">Toplam alışveriş</div></div>
         </div>
+      </div>
+
+      <div class="sv-wrap">
+        <div class="sv-baslik"><h2>Sadakat Programı</h2></div>
+        <p class="sv-aciklama">Her <b>₺50</b> harcamanda <b>1 puan</b> kazanırsın. Puanın bir seviyenin eşiğini geçtiğinde o seviyenin indirimi, sepetinde <b>her siparişte otomatik</b> uygulanır — kupon kodu gerekmez.</p>
+        <div class="sv-grid" id="hs-seviyeler"></div>
+        <div class="sv-ozel" id="hs-ozel" style="display:none;"></div>
       </div>
 
       <div class="sp-baslik">
@@ -257,6 +281,24 @@ document.addEventListener('DOMContentLoaded', function () {
         ? 'En üst seviyedesin: her siparişte %' + v.indirimOran + ' üye indirimi 🎉'
         : 'Her ₺50 harcama = 1 puan';
     }
+    // Sadakat merdiveni (seviyeler sunucudan gelir; panelde değişince burada da güncellenir)
+    var sevler = (v.seviyeler || []).slice().sort(function (a, b) { return a.puan - b.puan; });
+    var aktifIdx = -1;
+    sevler.forEach(function (s, i) { if (v.puan >= s.puan) aktifIdx = i; });
+    document.getElementById('hs-seviyeler').innerHTML = sevler.map(function (s, i) {
+      var cls = i < aktifIdx ? ' gecti' : (i === aktifIdx ? ' gecti aktif' : '');
+      return '<div class="sv' + cls + '">' +
+        (i === aktifIdx ? '<span class="rozet">Şu andasın</span>' : '') +
+        '<div class="ad">' + esc(s.ad || 'Seviye ' + (i + 1)) + '</div>' +
+        '<div class="oran">%' + s.oran + '</div>' +
+        '<div class="esik">' + (s.puan > 0 ? s.puan + ' puan' : 'Başlangıç') + '</div></div>';
+    }).join('');
+    var ozel = document.getElementById('hs-ozel');
+    if (v.ozelIndirim > 0) {
+      ozel.style.display = '';
+      ozel.innerHTML = '✨ Sana özel tanımlı <b>%' + v.ozelIndirim + '</b> indirim var' +
+        (v.ozelIndirim >= (v.indirimOran || 0) ? ' — her siparişinde bu oran uygulanıyor.' : '.');
+    } else ozel.style.display = 'none';
     var host = document.getElementById('hs-siparisler');
     if (!v.siparisler.length) {
       host.innerHTML = '<div class="sp-bos"><div class="i">🫒</div><p>Henüz siparişin yok. İlk şişenle hem sofranı hem puan birikimini başlat.<br><small>Not: hesabındaki e-posta ile verilen siparişler burada görünür.</small></p><a class="btn btn-gold" href="koleksiyon.html">Koleksiyonu Keşfet</a></div>';
