@@ -1578,7 +1578,12 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       document.querySelector('.side .foot').innerHTML = 'Sunucu CMS aktif ✓<br>Kayıtlar tüm ziyaretçilere yansır.';
       libYenile(renderAll); // kütüphaneyi sunucudan çek, sonra her şeyi çiz
     })
-    .catch(function () { renderAll(); });
+    .catch(function () {
+      renderAll();
+      if (location.hostname && location.protocol.indexOf('http') === 0 && location.hostname !== 'localhost') {
+        document.querySelector('.side .foot').innerHTML = '<span style="color:#e8896b;">⚠ Sunucuya bağlanılamadı!<br>Kayıtlar siteye GİTMEZ.<br>Ctrl+F5 yap, şifreyi tekrar gir.</span>';
+      }
+    });
 })();
 </script>
 </body>

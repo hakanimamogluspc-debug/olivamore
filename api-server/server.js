@@ -280,6 +280,9 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, { tamam: true });
     }
 
+    if (req.method === 'GET' && yol === '/api/admin/config') {
+      return json(res, 200, oku('cms.json', {}));
+    }
     if (req.method === 'POST' && yol === '/api/admin/config') {
       const g = await govde(req, 8); // panel görsel yüklemeleri için geniş limit
       yaz('cms.json', g);
