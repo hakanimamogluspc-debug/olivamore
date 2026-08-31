@@ -141,6 +141,26 @@ function puanHesapla(eposta) {
   });
   return Math.floor(harcama * 0.02); // her ₺100 harcama = 2 puan (1 puan = ₺1)
 }
+/* Sadakat seviyeleri (panelden düzenlenir): puan eşiği → üye indirim oranı (%) */
+function uyeAyar() {
+  return oku('uye-ayar.json', {
+    seviyeler: [
+      { puan: 0, oran: 0, ad: 'Fidan' },
+      { puan: 100, oran: 3, ad: 'Dal' },
+      { puan: 250, oran: 5, ad: 'Ağaç' },
+      { puan: 500, oran: 8, ad: 'Bahçe' }
+    ]
+  });
+}
+function uyeOran(u) {
+  const puan = puanHesapla(u.eposta);
+  let oran = 0;
+  (uyeAyar().seviyeler || []).forEach(s => {
+    if (puan >= (parseFloat(s.puan) || 0)) oran = Math.max(oran, parseFloat(s.oran) || 0);
+  });
+  if (u.ozelIndirim && parseFloat(u.ozelIndirim.oran) > oran) oran = parseFloat(u.ozelIndirim.oran);
+  return Math.min(50, Math.max(0, oran));
+}
 
 /* ---------- iyzico Checkout Form (anahtar girilince aktifleşir) ----------
    env.json → iyzicoApiKey, iyzicoSecret, iyzicoCanli (true = api.iyzipay.com)
@@ -281,7 +301,17 @@ const sunucu = http.createServer(async (req, res) => {
           yaz('cms.json', cfg);
         }
       }
-      const indirimliAra = Math.max(0, Math.round((araToplam - indirim) * 100) / 100);
+      // Üye indirimi (giriş yapmış üyeye sadakat seviyesi / özel indirim)
+      let uyeIndirimTutar = 0, uyeIndirimOran = 0;
+      const uyeB = uyeBul(req);
+      if (uyeB) {
+        uyeIndirimOran = uyeOran(uyeB.u);
+        if (uyeIndirimOran > 0) {
+          uyeIndirimTutar = Math.round((araToplam - indirim) * uyeIndirimOran) / 100;
+          if (uyeIndirimTutar < 0) uyeIndirimTutar = 0;
+        }
+      }
+      const indirimliAra = Math.max(0, Math.round((araToplam - indirim - uyeIndirimTutar) * 100) / 100);
       const oran = araToplam > 0 ? indirimliAra / araToplam : 1;
       const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * oran * k.kdv / 100, 0) * 100) / 100;
       const kargo = (kargoBedava || indirimliAra >= 500) ? 0 : 80; // [KARGO AYARI]
@@ -300,7 +330,9 @@ const sunucu = http.createServer(async (req, res) => {
         durum: odemeYolu === 'kart' ? 'odeme-bekliyor' : 'yeni',
         odeme: odemeYolu, dil: g.dil === 'en' ? 'en' : 'tr',
         musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40), adres: temiz(m.adres, 1000), il: temiz(m.il, 60), ilce: temiz(m.ilce, 60), postaKodu: temiz(m.postaKodu, 10), not: temiz(m.not, 500) },
-        kalemler: kalemler, araToplam: araToplam, kupon: kuponBilgi, indirim: indirim, kdvToplam: kdvToplam, kargo: kargo, toplam: toplam
+        kalemler: kalemler, araToplam: araToplam, kupon: kuponBilgi, indirim: indirim,
+        uyeIndirim: uyeIndirimTutar > 0 ? { oran: uyeIndirimOran, tutar: uyeIndirimTutar, eposta: uyeB.u.eposta } : null,
+        kdvToplam: kdvToplam, kargo: kargo, toplam: toplam
       });
       yaz('siparisler.json', siparisler.slice(0, 5000));
       if (odemeYolu === 'kart') {
@@ -392,7 +424,12 @@ const sunucu = http.createServer(async (req, res) => {
           iadeDurum: s.iade ? s.iade.durum : '',
           kalemler: (s.kalemler || []).map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, img: k.img || '' }))
         }));
-      return json(res, 200, { ad: b.u.ad, eposta: e, uyelik: b.u.tarih, puan: puanHesapla(e), siparisler: siparisler });
+      return json(res, 200, {
+        ad: b.u.ad, eposta: e, uyelik: b.u.tarih, puan: puanHesapla(e),
+        indirimOran: uyeOran(b.u), seviyeler: uyeAyar().seviyeler,
+        ozelIndirim: b.u.ozelIndirim ? parseFloat(b.u.ozelIndirim.oran) || 0 : 0,
+        siparisler: siparisler
+      });
     }
 
     if (req.method === 'GET' && yol === '/api/odeme-durum') {
@@ -531,6 +568,58 @@ const sunucu = http.createServer(async (req, res) => {
       }
       return json(res, 200, { tamam: true, siparis: s });
     }
+    /* ---- üye yönetimi (admin) ---- */
+    if (req.method === 'GET' && yol === '/api/admin/uyeler') {
+      const siparisler = oku('siparisler.json', []);
+      const uyeler = oku('uyeler.json', []).map(u => {
+        const e = u.eposta;
+        let say = 0, harcama = 0;
+        siparisler.forEach(s => {
+          if ((s.musteri && (s.musteri.eposta || '').toLowerCase()) === e &&
+            ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1) { say++; harcama += s.toplam; }
+        });
+        return {
+          ad: u.ad, eposta: e, tarih: u.tarih,
+          puan: puanHesapla(e), siparisSay: say, harcama: Math.round(harcama * 100) / 100,
+          seviyeOran: uyeOran(u),
+          ozelIndirim: u.ozelIndirim || null
+        };
+      });
+      return json(res, 200, { uyeler: uyeler, ayar: uyeAyar() });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/uye-sifre') {
+      const g = await govde(req, 1);
+      const liste = oku('uyeler.json', []);
+      const u = liste.find(x => x.eposta === temiz(g.eposta, 200).toLowerCase());
+      if (!u) return json(res, 404, { hata: 'Üye bulunamadı.' });
+      if (String(g.sifre || '').length < 6) return json(res, 400, { hata: 'Şifre en az 6 karakter olmalı.' });
+      u.tuz = crypto.randomBytes(16).toString('hex');
+      u.hash = sifreHashle(String(g.sifre), u.tuz);
+      u.oturumlar = []; // tüm cihazlardan çıkış; yeni şifreyle girer
+      yaz('uyeler.json', liste);
+      return json(res, 200, { tamam: true });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/uye-indirim') {
+      const g = await govde(req, 1);
+      const liste = oku('uyeler.json', []);
+      const u = liste.find(x => x.eposta === temiz(g.eposta, 200).toLowerCase());
+      if (!u) return json(res, 404, { hata: 'Üye bulunamadı.' });
+      const o = Math.min(50, Math.max(0, parseFloat(g.oran) || 0));
+      if (o > 0) u.ozelIndirim = { oran: o, not: temiz(g.not, 200), tarih: new Date().toISOString() };
+      else delete u.ozelIndirim;
+      yaz('uyeler.json', liste);
+      return json(res, 200, { tamam: true });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/uye-ayar') {
+      const g = await govde(req, 1);
+      const seviyeler = (Array.isArray(g.seviyeler) ? g.seviyeler : []).slice(0, 10)
+        .map(s => ({ puan: Math.max(0, parseInt(s.puan, 10) || 0), oran: Math.min(50, Math.max(0, parseFloat(s.oran) || 0)), ad: temiz(s.ad, 30) }))
+        .sort((a, b) => a.puan - b.puan);
+      if (!seviyeler.length) return json(res, 400, { hata: 'En az bir seviye gerekli.' });
+      yaz('uye-ayar.json', { seviyeler: seviyeler });
+      return json(res, 200, { tamam: true, seviyeler: seviyeler });
+    }
+
     /* ---- pazarlama ---- */
     if (req.method === 'GET' && yol === '/api/admin/pazarlama') {
       const env = oku('env.json', {});

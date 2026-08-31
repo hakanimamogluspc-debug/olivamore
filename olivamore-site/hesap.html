@@ -242,9 +242,21 @@ document.addEventListener('DOMContentLoaded', function () {
     var harcama = gecerli.reduce(function (t, s) { return t + s.toplam; }, 0);
     document.getElementById('hs-sipsay').textContent = gecerli.length;
     document.getElementById('hs-harcama').textContent = tl(Math.round(harcama));
-    var kalan = 50 - (harcama % 50);
-    document.getElementById('hs-puan-bar').style.width = Math.round((harcama % 50) / 50 * 100) + '%';
-    document.getElementById('hs-puan-ipucu').textContent = 'Sonraki puana ' + tl(Math.ceil(kalan)) + ' kaldı · her ₺50 = 1 puan';
+    // Sadakat seviyesi: geçerli indirim + sonraki seviye hedefi
+    var sonraki = (v.seviyeler || []).filter(function (s) { return s.puan > v.puan && s.oran > (v.indirimOran || 0); })
+      .sort(function (a, b) { return a.puan - b.puan; })[0];
+    if (sonraki) {
+      var onceki = (v.seviyeler || []).filter(function (s) { return s.puan <= v.puan; }).sort(function (a, b) { return b.puan - a.puan; })[0] || { puan: 0 };
+      document.getElementById('hs-puan-bar').style.width = Math.min(100, Math.round((v.puan - onceki.puan) / (sonraki.puan - onceki.puan) * 100)) + '%';
+      document.getElementById('hs-puan-ipucu').textContent =
+        (v.indirimOran ? 'Şu an her siparişte %' + v.indirimOran + ' üye indirimin var · ' : '') +
+        '%' + sonraki.oran + ' indirim için ' + (sonraki.puan - v.puan) + ' puan kaldı' + (sonraki.ad ? ' (' + sonraki.ad + ' seviyesi)' : '');
+    } else {
+      document.getElementById('hs-puan-bar').style.width = '100%';
+      document.getElementById('hs-puan-ipucu').textContent = v.indirimOran
+        ? 'En üst seviyedesin: her siparişte %' + v.indirimOran + ' üye indirimi 🎉'
+        : 'Her ₺50 harcama = 1 puan';
+    }
     var host = document.getElementById('hs-siparisler');
     if (!v.siparisler.length) {
       host.innerHTML = '<div class="sp-bos"><div class="i">🫒</div><p>Henüz siparişin yok. İlk şişenle hem sofranı hem puan birikimini başlat.<br><small>Not: hesabındaki e-posta ile verilen siparişler burada görünür.</small></p><a class="btn btn-gold" href="koleksiyon.html">Koleksiyonu Keşfet</a></div>';

@@ -97,6 +97,7 @@
         <h3>Sipariş Özeti</h3>
         <div class="sum-row"><span>Ara toplam</span><span id="sum-ara">₺0</span></div>
         <div class="sum-row" id="row-kupon" style="display:none;color:#2e7d32;"><span>Kupon (<span id="kupon-lbl"></span>)</span><span id="sum-kupon">-₺0</span></div>
+        <div class="sum-row" id="row-uye" style="display:none;color:#806A36;"><span>Üyelik indirimi (%<span id="uye-lbl"></span>)</span><span id="sum-uye">-₺0</span></div>
         <div class="sum-row"><span>Kargo</span><span id="sum-kargo">₺0</span></div>
         <div class="sum-row"><span>KDV</span><span>Fiyatlara dahil</span></div>
         <div class="sum-row total"><span>Toplam</span><span id="sum-toplam">₺0</span></div>
@@ -169,13 +170,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var kp = null;
     try { kp = JSON.parse(localStorage.getItem('om-kupon') || 'null'); } catch (e) { }
     var indirim = kp ? Math.min(kp.indirim || 0, ara) : 0;
-    var indAra = Math.max(0, ara - indirim);
+    // Üye indirimi (giriş yapmış üyeye sadakat/özel oran — sunucu siparişte yeniden hesaplar)
+    var uyeInd = (window.OM_UYE_ORAN > 0) ? Math.round((ara - indirim) * window.OM_UYE_ORAN) / 100 : 0;
+    var indAra = Math.max(0, ara - indirim - uyeInd);
     var kargo = ((kp && kp.ucretsizKargo) || indAra >= KARGO_ESIK) ? 0 : KARGO;
     document.getElementById('sum-ara').textContent = fmt(ara);
     document.getElementById('row-kupon').style.display = indirim > 0 ? 'flex' : 'none';
     if (indirim > 0) {
       document.getElementById('kupon-lbl').textContent = kp.kod;
       document.getElementById('sum-kupon').textContent = '-' + fmt(indirim);
+    }
+    document.getElementById('row-uye').style.display = uyeInd > 0 ? 'flex' : 'none';
+    if (uyeInd > 0) {
+      document.getElementById('uye-lbl').textContent = window.OM_UYE_ORAN;
+      document.getElementById('sum-uye').textContent = '-' + fmt(uyeInd);
     }
     document.getElementById('sum-kargo').textContent = kargo ? fmt(kargo) : 'Ücretsiz';
     document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo) * 100) / 100);
@@ -298,8 +306,10 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.disabled = true;
     btn.textContent = 'Gönderiliyor...';
     var odemeYolu = (document.querySelector('input[name="odeme"]:checked') || {}).value || 'havale';
+    var uyeToken = localStorage.getItem('om-uye-token');
     fetch('/api/siparis', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: uyeToken ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uyeToken } : { 'Content-Type': 'application/json' },
       body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'tr', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
@@ -325,6 +335,17 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.textContent = 'Siparişi Tamamla';
       });
   });
+
+  // Üye indirim oranı (giriş yapılmışsa) — geldiğinde toplamlar yeniden çizilir
+  window.OM_UYE_ORAN = 0;
+  (function () {
+    var t = localStorage.getItem('om-uye-token');
+    if (!t) return;
+    fetch('/api/uye/ben', { headers: { 'Authorization': 'Bearer ' + t } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) { if (v && v.indirimOran > 0) { window.OM_UYE_ORAN = v.indirimOran; if (window.omCart) render(); } })
+      .catch(function () {});
+  })();
 
   // Kartla ödeme aktifse seçeneği göster
   fetch('/api/odeme-durum').then(function (r) { return r.json(); })

@@ -137,6 +137,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <a data-view="orders">▦ Siparişler</a>
       <a data-view="analytics">◔ Analiz</a>
       <a data-view="marketing">➤ Pazarlama</a>
+      <a data-view="members">☺ Üyeler</a>
       <a data-view="coupons">⛁ Kuponlar</a>
       <a data-view="library">🖼 Görseller</a>
       <a data-view="msgs">✉ Mesajlar</a>
@@ -313,6 +314,32 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
           <h2>Gönderim geçmişi</h2>
           <div id="mk-gecmis" style="font-size:.85rem;"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ ÜYELER ============ -->
+    <section class="view" id="view-members">
+      <div class="note"><b>Üyeler:</b> Hesap sayfasından kayıt olan müşteriler. Sadakat seviyesi ve özel indirim, üye giriş yapıp sipariş verdiğinde sepette otomatik uygulanır. Şifre atadığında üyenin tüm oturumları kapanır; yeni şifreyi üyeye sen iletirsin.</div>
+      <div class="stats" id="uy-stats"></div>
+
+      <div class="panel">
+        <h2>Sadakat seviyeleri</h2>
+        <div class="desc">Üye, puanı eşiğe ulaştığında o seviyenin indirim oranını kazanır (puan: her ₺50 harcama = 1 puan). Oranlar sepette KDV hariç tutara uygulanır.</div>
+        <div id="uy-seviyeler"></div>
+        <div class="row-actions" style="margin-top:10px;">
+          <button class="btn btn-ghost btn-sm" id="uy-sev-ekle" type="button">+ Seviye Ekle</button>
+          <button class="btn btn-dark btn-sm" id="uy-sev-kaydet" type="button">Seviyeleri Kaydet</button>
+          <span id="uy-sev-durum" style="font-size:.82rem;color:var(--soft);"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Üye listesi</h2>
+        <div class="row-actions" style="margin-bottom:12px;">
+          <input type="text" id="uy-ara" placeholder="Ad veya e-posta ara..." style="max-width:260px;">
+          <button class="btn btn-ghost btn-sm" id="uy-yenile" type="button">↻ Yenile</button>
+        </div>
+        <div id="uy-liste"></div>
       </div>
     </section>
 
@@ -548,7 +575,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', marketing: 'Pazarlama', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', marketing: 'Pazarlama', members: 'Üyeler', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -1066,7 +1093,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     // Sipariş/Analiz/Pazarlama ekranlarındaki alanlar CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
     // (İstisna: pp-* popup ayarları CMS'e kaydedilir, uyarı tetiklesin)
     var ppAlani = e.target.id && e.target.id.indexOf('pp-') === 0;
-    if (!ppAlani && e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing'))) return;
+    if (!ppAlani && e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing') || e.target.closest('#view-members'))) return;
     dirty();
   });
 
@@ -1392,6 +1419,111 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     a.click();
   });
   document.querySelector('[data-view="marketing"]').addEventListener('click', renderMarketing);
+
+  /* ================== ÜYELER ================== */
+  var UY_LISTE = [], UY_AYAR = { seviyeler: [] };
+  function uySeviyeCiz() {
+    document.getElementById('uy-seviyeler').innerHTML = (UY_AYAR.seviyeler || []).map(function (s, i) {
+      return '<div class="row-actions" style="margin-bottom:8px;flex-wrap:wrap;" data-i="' + i + '">' +
+        '<input type="text" class="uy-sev-ad" value="' + esc(s.ad || '') + '" placeholder="Seviye adı" style="max-width:130px;">' +
+        '<input type="number" class="uy-sev-puan" value="' + s.puan + '" min="0" style="max-width:100px;" title="Puan eşiği"> <span style="font-size:.8rem;color:var(--soft);">puandan itibaren</span>' +
+        '<input type="number" class="uy-sev-oran" value="' + s.oran + '" min="0" max="50" step="0.5" style="max-width:90px;" title="İndirim %"> <span style="font-size:.8rem;color:var(--soft);">% indirim</span>' +
+        '<button class="btn btn-ghost btn-sm uy-sev-sil" data-i="' + i + '" type="button">✕</button></div>';
+    }).join('');
+  }
+  document.getElementById('uy-seviyeler').addEventListener('click', function (e) {
+    if (!e.target.classList.contains('uy-sev-sil')) return;
+    UY_AYAR.seviyeler.splice(parseInt(e.target.dataset.i, 10), 1);
+    uySeviyeCiz();
+  });
+  document.getElementById('uy-sev-ekle').addEventListener('click', function () {
+    UY_AYAR.seviyeler.push({ ad: '', puan: 0, oran: 0 });
+    uySeviyeCiz();
+  });
+  document.getElementById('uy-sev-kaydet').addEventListener('click', function () {
+    var seviyeler = [];
+    document.querySelectorAll('#uy-seviyeler > div').forEach(function (d) {
+      seviyeler.push({
+        ad: d.querySelector('.uy-sev-ad').value.trim(),
+        puan: parseInt(d.querySelector('.uy-sev-puan').value, 10) || 0,
+        oran: parseFloat(d.querySelector('.uy-sev-oran').value) || 0
+      });
+    });
+    var durum = document.getElementById('uy-sev-durum');
+    fetch('/api/admin/uye-ayar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seviyeler: seviyeler }) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (c.hata) { durum.textContent = c.hata; return; }
+        durum.textContent = 'Kaydedildi ✓ (üyelere anında yansır)';
+        renderMembers();
+      })
+      .catch(function () { durum.textContent = 'Sunucuya ulaşılamadı.'; });
+  });
+  function uyListeCiz() {
+    var q = (document.getElementById('uy-ara').value || '').toLowerCase().trim();
+    var liste = UY_LISTE.filter(function (u) { return !q || (u.ad + ' ' + u.eposta).toLowerCase().indexOf(q) !== -1; });
+    var host = document.getElementById('uy-liste');
+    if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Üye bulunamadı.</p>'; return; }
+    host.innerHTML = liste.map(function (u) {
+      var oz = u.ozelIndirim;
+      return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + esc(u.ad) + '</b>' +
+        '<span>' + esc(u.eposta) + ' · üyelik ' + fmtTarih(u.tarih).split(' ')[0] + '</span></div>' +
+        '<span class="pill" style="background:#BFA25D1a;color:#806A36;border:1px solid #BFA25D55;">' + u.puan + ' puan · %' + u.seviyeOran + '</span></summary>' +
+        '<div class="body">' +
+        '<p style="font-size:.85rem;margin-bottom:14px;"><b>' + u.siparisSay + '</b> sipariş · toplam <b>₺' + Number(u.harcama).toLocaleString('tr-TR') + '</b> · geçerli indirimi <b>%' + u.seviyeOran + '</b>' +
+        (oz ? ' · özel indirim: <b>%' + oz.oran + '</b>' + (oz.not ? ' (' + esc(oz.not) + ')' : '') : '') + '</p>' +
+        '<div class="row-actions" style="flex-wrap:wrap;margin-bottom:10px;">' +
+        '<input type="text" class="uy-sifre" data-eposta="' + esc(u.eposta) + '" placeholder="Yeni şifre (en az 6)" style="max-width:200px;">' +
+        '<button class="btn btn-ghost btn-sm uy-sifre-ata" data-eposta="' + esc(u.eposta) + '" type="button">Şifre Ata</button></div>' +
+        '<div class="row-actions" style="flex-wrap:wrap;">' +
+        '<input type="number" class="uy-ind-oran" data-eposta="' + esc(u.eposta) + '" value="' + (oz ? oz.oran : '') + '" placeholder="%" min="0" max="50" step="0.5" style="max-width:90px;">' +
+        '<input type="text" class="uy-ind-not" data-eposta="' + esc(u.eposta) + '" value="' + (oz ? esc(oz.not || '') : '') + '" placeholder="Not (üye görmez)" style="max-width:220px;">' +
+        '<button class="btn btn-dark btn-sm uy-ind-kaydet" data-eposta="' + esc(u.eposta) + '" type="button">Özel İndirim Kaydet</button>' +
+        (oz ? '<button class="btn btn-ghost btn-sm uy-ind-kaldir" data-eposta="' + esc(u.eposta) + '" type="button">Kaldır</button>' : '') +
+        '</div></div></details>';
+    }).join('');
+  }
+  function renderMembers() {
+    fetch('/api/admin/uyeler')
+      .then(function (r) { return r.json(); })
+      .then(function (v) {
+        UY_LISTE = v.uyeler || []; UY_AYAR = v.ayar || { seviyeler: [] };
+        var ay = Date.now() - 30 * 86400000;
+        var yeni = UY_LISTE.filter(function (u) { return Date.parse(u.tarih) >= ay; }).length;
+        var ozel = UY_LISTE.filter(function (u) { return u.ozelIndirim; }).length;
+        document.getElementById('uy-stats').innerHTML =
+          '<div class="stat"><div class="num">' + UY_LISTE.length + '</div><div class="lbl">Toplam üye</div></div>' +
+          '<div class="stat"><div class="num">+' + yeni + '</div><div class="lbl">Son 30 günde yeni</div></div>' +
+          '<div class="stat"><div class="num">' + ozel + '</div><div class="lbl">Özel indirimli üye</div></div>' +
+          '<div class="stat"><div class="num">' + (UY_AYAR.seviyeler || []).length + '</div><div class="lbl">Sadakat seviyesi</div></div>';
+        uySeviyeCiz();
+        uyListeCiz();
+      })
+      .catch(function () { document.getElementById('uy-liste').innerHTML = '<p style="color:var(--soft);">Üye listesi yalnız canlı sunucuda görünür.</p>'; });
+  }
+  document.getElementById('uy-liste').addEventListener('click', function (e) {
+    var ep = e.target.dataset.eposta;
+    if (!ep) return;
+    function v(cls) { var el = document.querySelector('.' + cls + '[data-eposta="' + ep + '"]'); return el ? el.value : ''; }
+    if (e.target.classList.contains('uy-sifre-ata')) {
+      var sifre = v('uy-sifre');
+      if (sifre.length < 6) { alert('Şifre en az 6 karakter olmalı.'); return; }
+      if (!confirm(ep + ' için yeni şifre atansın mı? Üyenin tüm oturumları kapanır.')) return;
+      fetch('/api/admin/uye-sifre', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: ep, sifre: sifre }) })
+        .then(function (r) { return r.json(); })
+        .then(function (c) { alert(c.hata || 'Şifre atandı ✓ Yeni şifreyi üyeye ilet.'); renderMembers(); });
+    } else if (e.target.classList.contains('uy-ind-kaydet')) {
+      fetch('/api/admin/uye-indirim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: ep, oran: v('uy-ind-oran'), not: v('uy-ind-not') }) })
+        .then(function (r) { return r.json(); })
+        .then(function (c) { if (c.hata) alert(c.hata); renderMembers(); });
+    } else if (e.target.classList.contains('uy-ind-kaldir')) {
+      fetch('/api/admin/uye-indirim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: ep, oran: 0 }) })
+        .then(function () { renderMembers(); });
+    }
+  });
+  document.getElementById('uy-ara').addEventListener('input', uyListeCiz);
+  document.getElementById('uy-yenile').addEventListener('click', renderMembers);
+  document.querySelector('[data-view="members"]').addEventListener('click', renderMembers);
   document.querySelector('[data-view="msgs"]').addEventListener('click', renderMsgs);
 
   /* ================== KUPONLAR ================== */

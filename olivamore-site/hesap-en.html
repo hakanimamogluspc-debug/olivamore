@@ -233,9 +233,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var harcama = gecerli.reduce(function (t, s) { return t + s.toplam; }, 0);
     document.getElementById('hs-sipsay').textContent = gecerli.length;
     document.getElementById('hs-harcama').textContent = tl(Math.round(harcama));
-    var kalan = 50 - (harcama % 50);
-    document.getElementById('hs-puan-bar').style.width = Math.round((harcama % 50) / 50 * 100) + '%';
-    document.getElementById('hs-puan-ipucu').textContent = tl(Math.ceil(kalan)) + ' to your next point · every ₺50 = 1 pt';
+    var sonraki = (v.seviyeler || []).filter(function (s) { return s.puan > v.puan && s.oran > (v.indirimOran || 0); })
+      .sort(function (a, b) { return a.puan - b.puan; })[0];
+    if (sonraki) {
+      var onceki = (v.seviyeler || []).filter(function (s) { return s.puan <= v.puan; }).sort(function (a, b) { return b.puan - a.puan; })[0] || { puan: 0 };
+      document.getElementById('hs-puan-bar').style.width = Math.min(100, Math.round((v.puan - onceki.puan) / (sonraki.puan - onceki.puan) * 100)) + '%';
+      document.getElementById('hs-puan-ipucu').textContent =
+        (v.indirimOran ? 'You get ' + v.indirimOran + '% member discount on every order · ' : '') +
+        (sonraki.puan - v.puan) + ' points to unlock ' + sonraki.oran + '% off' + (sonraki.ad ? ' (' + sonraki.ad + ' tier)' : '');
+    } else {
+      document.getElementById('hs-puan-bar').style.width = '100%';
+      document.getElementById('hs-puan-ipucu').textContent = v.indirimOran
+        ? 'Top tier: ' + v.indirimOran + '% member discount on every order 🎉'
+        : 'Every ₺50 spent = 1 point';
+    }
     var host = document.getElementById('hs-siparisler');
     if (!v.siparisler.length) {
       host.innerHTML = '<div class="sp-bos"><div class="i">🫒</div><p>No orders yet. Start your table — and your points — with your first bottle.<br><small>Note: orders placed with your account email appear here.</small></p><a class="btn btn-gold" href="koleksiyon-en.html">Explore the Collection</a></div>';
