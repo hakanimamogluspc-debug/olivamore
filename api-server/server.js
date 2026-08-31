@@ -952,15 +952,47 @@ function epostaBildir(konu, metin) {
   if (!env.bildirimEposta) return;
   epostaGonder(env.bildirimEposta, konu, metin);
 }
+/* Markalı HTML e-posta şablonu: düz metni şık bir zarfa koyar.
+   Satır sonları korunur, URL'ler tıklanabilir olur, son "—" sonrası dipnot sayılır. */
+function epostaHtmlYap(konu, metin) {
+  const kacir = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const linkle = s => s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#806A36;">$1</a>');
+  // Gövde / dipnot ayrımı (çıkış linki vb. "—" ile ayrılıyor)
+  const parcalar = String(metin).split(/\n—\n/);
+  const govdeHtml = linkle(kacir(parcalar[0])).replace(/\n/g, '<br>');
+  const dipnotHtml = parcalar[1] ? linkle(kacir(parcalar.slice(1).join('\n'))).replace(/\n/g, '<br>') : '';
+  return '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background-color:#F7F6F3;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F3;padding:28px 12px;"><tr><td align="center">' +
+    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">' +
+    // Başlık bandı
+    '<tr><td style="background-color:#000000;border-radius:14px 14px 0 0;padding:26px 20px;text-align:center;">' +
+    '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:22px;letter-spacing:8px;color:#F5F1E6;">OLIVAMORE</div>' +
+    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:3px;color:#BFA25D;margin-top:6px;">AYVALIK &middot; NATUREL SIZMA ZEYTİNYAĞI</div>' +
+    '</td></tr>' +
+    // Gövde
+    '<tr><td style="background-color:#ffffff;padding:32px 34px;border-left:1px solid #ECEAE6;border-right:1px solid #ECEAE6;">' +
+    '<div style="font-family:Georgia,serif;font-size:20px;color:#1E1C19;margin-bottom:16px;">' + kacir(konu) + '</div>' +
+    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4A463F;">' + govdeHtml + '</div>' +
+    '</td></tr>' +
+    // Alt bant
+    '<tr><td style="background-color:#ffffff;border-radius:0 0 14px 14px;border:1px solid #ECEAE6;border-top:1px dashed #ECEAE6;padding:18px 34px;text-align:center;">' +
+    '<div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:#806A36;margin-bottom:8px;">&ldquo;Her şişe, tek bir hasadın izini taşır.&rdquo;</div>' +
+    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8377;"><a href="https://olivamore.de" style="color:#8a8377;">olivamore.de</a></div>' +
+    (dipnotHtml ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0aa9e;margin-top:10px;line-height:1.6;">' + dipnotHtml + '</div>' : '') +
+    '</td></tr></table></td></tr></table></body></html>';
+}
+
 // Herhangi bir alıcıya e-posta — Resend (öncelikli) veya Brevo (yedek)
 function epostaGonder(kime, konu, metin) {
   const env = oku('env.json', {});
   if (!epostaMi(kime)) return;
+  const html = epostaHtmlYap(konu, metin);
   let secenek, veri;
   if (env.resendKey) {
     veri = JSON.stringify({
       from: 'Olivamore <' + (env.gonderen || 'site@olivamore.de') + '>',
-      to: [kime], subject: konu, text: metin
+      to: [kime], subject: konu, text: metin, html: html
     });
     secenek = {
       hostname: 'api.resend.com', path: '/emails', method: 'POST',
@@ -970,7 +1002,7 @@ function epostaGonder(kime, konu, metin) {
     veri = JSON.stringify({
       sender: { name: 'Olivamore', email: env.gonderen || 'site@olivamore.de' },
       to: [{ email: kime }],
-      subject: konu, textContent: metin
+      subject: konu, textContent: metin, htmlContent: html
     });
     secenek = {
       hostname: 'api.brevo.com', path: '/v3/smtp/email', method: 'POST',
