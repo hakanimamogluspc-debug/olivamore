@@ -966,9 +966,8 @@ function epostaHtmlYap(konu, metin) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F3;padding:28px 12px;"><tr><td align="center">' +
     '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">' +
     // Başlık bandı
-    '<tr><td style="background-color:#000000;border-radius:14px 14px 0 0;padding:26px 20px;text-align:center;">' +
-    '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:22px;letter-spacing:8px;color:#F5F1E6;">OLIVAMORE</div>' +
-    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:3px;color:#BFA25D;margin-top:6px;">AYVALIK &middot; NATUREL SIZMA ZEYTİNYAĞI</div>' +
+    '<tr><td style="background-color:#000000;border-radius:14px 14px 0 0;padding:28px 20px;text-align:center;">' +
+    '<img src="https://olivamore.de/assets/img/logo-eposta.png" alt="OLIVAMORE" width="180" style="width:180px;height:auto;border:0;display:inline-block;">' +
     '</td></tr>' +
     // Gövde
     '<tr><td style="background-color:#ffffff;padding:32px 34px;border-left:1px solid #ECEAE6;border-right:1px solid #ECEAE6;">' +
