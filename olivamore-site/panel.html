@@ -132,6 +132,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <a data-view="blogs">✎ Blog</a>
       <a data-view="batches">◉ Partiler</a>
       <a data-view="orders">▦ Siparişler</a>
+      <a data-view="analytics">◔ Analiz</a>
       <a data-view="coupons">⛁ Kuponlar</a>
       <a data-view="library">🖼 Görseller</a>
       <a data-view="msgs">✉ Mesajlar</a>
@@ -234,6 +235,28 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         </div>
       </div>
       <div id="orders-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
+    </section>
+
+    <!-- ============ ANALİZ ============ -->
+    <section class="view" id="view-analytics">
+      <div class="note"><b>Analiz:</b> Veriler sipariş kayıtlarından anlık hesaplanır. İptal ve iade edilen siparişler ciroya dahil edilmez.</div>
+      <div class="row-actions" style="margin-bottom:16px;">
+        <select id="an-donem" style="max-width:170px;">
+          <option value="7">Son 7 gün</option>
+          <option value="30" selected>Son 30 gün</option>
+          <option value="90">Son 90 gün</option>
+          <option value="0">Tüm zamanlar</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="an-yenile" type="button">↻ Yenile</button>
+      </div>
+      <div class="stats" id="an-stats"></div>
+      <div class="panel"><h2>Ciro grafiği</h2><div id="an-grafik" style="margin-top:10px;"></div></div>
+      <div class="grid2" style="margin-top:14px;">
+        <div class="panel"><h2>En çok satan ürünler</h2><div id="an-urunler" style="margin-top:10px;"></div></div>
+        <div class="panel"><h2>Sipariş durumları</h2><div id="an-durum" style="margin-top:10px;"></div></div>
+        <div class="panel"><h2>Kupon performansı</h2><div id="an-kupon" style="margin-top:10px;"></div></div>
+        <div class="panel"><h2>Ödeme yöntemleri</h2><div id="an-odeme" style="margin-top:10px;"></div></div>
+      </div>
     </section>
 
     <!-- ============ MESAJLAR ============ -->
@@ -461,7 +484,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -959,8 +982,8 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 
   /* ================== DEĞİŞİKLİK TAKİBİ ================== */
   document.querySelector('.main').addEventListener('input', function (e) {
-    // Sipariş ekranındaki arama/durum alanları CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
-    if (e.target.closest && e.target.closest('#view-orders')) return;
+    // Sipariş/Analiz ekranlarındaki alanlar CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
+    if (e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics'))) return;
     dirty();
   });
 
@@ -1110,6 +1133,103 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       .catch(function () { document.getElementById('bulten-list').textContent = 'Yalnız canlı sunucuda görünür.'; });
   }
   document.querySelector('[data-view="orders"]').addEventListener('click', renderOrders);
+
+  /* ================== ANALİZ ================== */
+  function anBar(satirlar) {
+    if (!satirlar.length) return '<p style="color:var(--soft);font-size:.85rem;">Bu dönemde veri yok.</p>';
+    var max = Math.max.apply(null, satirlar.map(function (r) { return r.deger; }).concat([1]));
+    return satirlar.map(function (r) {
+      return '<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;margin-bottom:3px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.ad) + '</span><b style="white-space:nowrap;">' + r.etiket + '</b></div>' +
+        '<div style="height:8px;background:var(--line);border-radius:99px;"><div style="height:8px;width:' + Math.max(2, r.deger / max * 100) + '%;background:' + (r.renk || 'var(--gold)') + ';border-radius:99px;"></div></div></div>';
+    }).join('');
+  }
+  function anGrafik(aktif, gunSay) {
+    var kova = {}, etiketler = [];
+    var aylik = !gunSay; // "tüm zamanlar" → aylık grupla
+    if (aylik) {
+      aktif.forEach(function (s) { var k = s.tarih.slice(0, 7); kova[k] = (kova[k] || 0) + s.toplam; });
+      etiketler = Object.keys(kova).sort();
+    } else {
+      for (var i = gunSay - 1; i >= 0; i--) {
+        var t = new Date(Date.now() - i * 86400000);
+        etiketler.push(t.toISOString().slice(0, 10));
+      }
+      aktif.forEach(function (s) { var k = s.tarih.slice(0, 10); if (kova[k] !== undefined || etiketler.indexOf(k) !== -1) kova[k] = (kova[k] || 0) + s.toplam; });
+    }
+    var max = Math.max.apply(null, etiketler.map(function (k) { return kova[k] || 0; }).concat([1]));
+    var genis = Math.max(2, Math.floor(100 / Math.max(etiketler.length, 1)) - 1);
+    return '<div style="display:flex;align-items:flex-end;gap:2px;height:140px;">' +
+      etiketler.map(function (k) {
+        var v = kova[k] || 0;
+        var y = Math.round(v / max * 130);
+        var ad = aylik ? k : k.slice(8) + '.' + k.slice(5, 7);
+        return '<div title="' + ad + ' · ' + tl(v) + '" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;">' +
+          '<div style="height:' + Math.max(v ? 3 : 1, y) + 'px;background:' + (v ? 'var(--gold)' : 'var(--line)') + ';border-radius:3px 3px 0 0;"></div></div>';
+      }).join('') + '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--soft);margin-top:6px;"><span>' +
+      (etiketler.length ? (aylik ? etiketler[0] : fmtGun(etiketler[0])) : '') + '</span><span>' +
+      (etiketler.length ? (aylik ? etiketler[etiketler.length - 1] : fmtGun(etiketler[etiketler.length - 1])) : '') + '</span></div>';
+  }
+  function fmtGun(k) { return k.slice(8) + '.' + k.slice(5, 7) + '.' + k.slice(0, 4); }
+  function renderAnalytics() {
+    fetch('/api/admin/siparisler')
+      .then(function (r) { return r.json(); })
+      .then(function (liste) {
+        var gunSay = parseInt(document.getElementById('an-donem').value, 10);
+        var esik = gunSay ? Date.now() - gunSay * 86400000 : 0;
+        var donem = liste.filter(function (s) { return Date.parse(s.tarih) >= esik; });
+        var aktif = donem.filter(function (s) { return s.durum !== 'iptal' && s.durum !== 'iade'; });
+        var ciro = aktif.reduce(function (t, s) { return t + s.toplam; }, 0);
+        var iptalIade = donem.length - aktif.length;
+        document.getElementById('an-stats').innerHTML =
+          '<div class="stat"><div class="num">' + tl(ciro) + '</div><div class="lbl">Ciro (KDV + kargo dahil)</div></div>' +
+          '<div class="stat"><div class="num">' + aktif.length + '</div><div class="lbl">Sipariş</div></div>' +
+          '<div class="stat"><div class="num">' + tl(aktif.length ? ciro / aktif.length : 0) + '</div><div class="lbl">Ortalama sepet</div></div>' +
+          '<div class="stat"><div class="num">' + (donem.length ? Math.round(iptalIade / donem.length * 100) : 0) + '%</div><div class="lbl">İptal + iade oranı</div></div>';
+        document.getElementById('an-grafik').innerHTML = anGrafik(aktif, gunSay);
+        // En çok satanlar (net kalem cirosu)
+        var urun = {};
+        aktif.forEach(function (s) {
+          s.kalemler.forEach(function (k) {
+            urun[k.ad] = urun[k.ad] || { adet: 0, ciro: 0 };
+            urun[k.ad].adet += k.adet; urun[k.ad].ciro += k.fiyat * k.adet;
+          });
+        });
+        document.getElementById('an-urunler').innerHTML = anBar(Object.keys(urun)
+          .map(function (ad) { return { ad: ad, deger: urun[ad].ciro, etiket: urun[ad].adet + ' adet · ' + tl(urun[ad].ciro) }; })
+          .sort(function (a, b) { return b.deger - a.deger; }).slice(0, 8));
+        // Durum dağılımı
+        var durum = {};
+        donem.forEach(function (s) { durum[s.durum] = (durum[s.durum] || 0) + 1; });
+        document.getElementById('an-durum').innerHTML = anBar(DURUMLAR
+          .filter(function (d) { return durum[d]; })
+          .map(function (d) { return { ad: d, deger: durum[d], etiket: durum[d] + ' sipariş', renk: DURUM_RENK[d] }; }));
+        // Kupon performansı
+        var kupon = {};
+        donem.forEach(function (s) {
+          if (s.kupon && s.kupon.kod) {
+            kupon[s.kupon.kod] = kupon[s.kupon.kod] || { say: 0, indirim: 0 };
+            kupon[s.kupon.kod].say++; kupon[s.kupon.kod].indirim += s.indirim || 0;
+          }
+        });
+        document.getElementById('an-kupon').innerHTML = anBar(Object.keys(kupon)
+          .map(function (k) { return { ad: k, deger: kupon[k].say, etiket: kupon[k].say + ' kullanım · -' + tl(kupon[k].indirim) }; })
+          .sort(function (a, b) { return b.deger - a.deger; }));
+        // Ödeme yöntemleri
+        var odeme = {};
+        aktif.forEach(function (s) { odeme[s.odeme || 'belirtilmemiş'] = (odeme[s.odeme || 'belirtilmemiş'] || 0) + 1; });
+        document.getElementById('an-odeme').innerHTML = anBar(Object.keys(odeme)
+          .map(function (o) { return { ad: o, deger: odeme[o], etiket: odeme[o] + ' sipariş' }; })
+          .sort(function (a, b) { return b.deger - a.deger; }));
+      })
+      .catch(function () {
+        document.getElementById('an-stats').innerHTML = '';
+        document.getElementById('an-grafik').innerHTML = '<p style="color:var(--soft);">Analiz yalnız canlı sunucuda (olivamore.de/panel) görünür.</p>';
+      });
+  }
+  document.querySelector('[data-view="analytics"]').addEventListener('click', renderAnalytics);
+  document.getElementById('an-donem').addEventListener('change', renderAnalytics);
+  document.getElementById('an-yenile').addEventListener('click', renderAnalytics);
   document.querySelector('[data-view="msgs"]').addEventListener('click', renderMsgs);
 
   /* ================== KUPONLAR ================== */
