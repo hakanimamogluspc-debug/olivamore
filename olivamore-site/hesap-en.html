@@ -7,34 +7,93 @@
 <meta name="description" content="Your Olivamore account: orders, shipment tracking and points in one place.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <style>
-.hs-kart{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;max-width:440px;margin:0 auto;box-shadow:0 14px 32px rgba(30,28,25,.07)}
-.hs-sekme{display:flex;gap:0;border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:22px}
-.hs-sekme button{flex:1;border:none;background:none;font:inherit;font-size:.88rem;padding:9px;border-radius:999px;cursor:pointer;color:var(--ink-soft)}
-.hs-sekme button.on{background:var(--ink);color:#fff}
-.hs-alan{margin-bottom:13px}
-.hs-alan label{display:block;font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
-.hs-alan input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit;font-size:.92rem;box-sizing:border-box}
-.hs-alan input:focus{outline:2px solid rgba(128,106,54,.22);border-color:#806A36}
-.hs-hata{color:#a33;font-size:.82rem;margin-top:10px;display:none}
-.hs-ust{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
-.hs-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
-@media(max-width:640px){.hs-stats{grid-template-columns:1fr}}
-.hs-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;text-align:center}
-.hs-stat .n{font-family:Fraunces,serif;font-size:1.7rem;color:var(--gold)}
-.hs-stat .l{font-size:.76rem;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
-.hs-sip{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
-.hs-sip summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;cursor:pointer;list-style:none;flex-wrap:wrap}
-.hs-sip summary::-webkit-details-marker{display:none}
-.hs-sip .b{font-size:.9rem}
-.hs-sip .t{font-size:.76rem;color:var(--ink-soft)}
-.hs-pill{font-size:.72rem;padding:5px 12px;border-radius:999px;white-space:nowrap}
-.hs-govde{border-top:1px dashed var(--line);padding:16px 18px;font-size:.86rem}
-.hs-kargo{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:.84rem;color:var(--gold);font-weight:600}
-.hs-puan-not{font-size:.78rem;color:var(--ink-soft);max-width:560px;margin:0 auto 26px;text-align:center;line-height:1.6}
+.gr-sahne{display:grid;grid-template-columns:1fr 1fr;max-width:900px;margin:0 auto;border-radius:22px;overflow:hidden;box-shadow:0 30px 70px rgba(30,28,25,.16);background:#fff}
+@media(max-width:760px){.gr-sahne{grid-template-columns:1fr}}
+.gr-foto{position:relative;min-height:380px;background:var(--ink)}
+.gr-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.82}
+.gr-foto::after{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(30,28,25,.15) 30%,rgba(30,28,25,.78))}
+.gr-soz{position:absolute;left:26px;right:26px;bottom:26px;z-index:2;color:#fff}
+.gr-soz .k{font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.gr-soz p{font-family:Fraunces,serif;font-style:italic;font-size:1.18rem;line-height:1.45;font-weight:300}
+@media(max-width:760px){.gr-foto{min-height:200px}}
+.gr-form{padding:44px 40px}
+@media(max-width:760px){.gr-form{padding:32px 24px}}
+.gr-form h1{font-family:Fraunces,serif;font-weight:400;font-size:1.65rem;margin:0 0 6px}
+.gr-form .alt{font-size:.85rem;color:var(--ink-soft);margin-bottom:24px;line-height:1.55}
+.hs-sekme{display:flex;border-bottom:1px solid var(--line);margin-bottom:24px}
+.hs-sekme button{flex:1;border:none;background:none;font:inherit;font-size:.88rem;font-weight:600;letter-spacing:.04em;padding:12px 0;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .25s}
+.hs-sekme button.on{color:var(--ink);border-bottom-color:var(--gold)}
+.hs-alan{margin-bottom:15px}
+.hs-alan label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+.hs-alan input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px 14px;font:inherit;font-size:.93rem;box-sizing:border-box;transition:border .2s}
+.hs-alan input:focus{outline:2px solid rgba(128,106,54,.2);border-color:#806A36}
+.hs-hata{color:#a33;font-size:.82rem;margin-top:12px;display:none}
+.uk{position:relative;border-radius:22px;overflow:hidden;color:#EFEAE0;background:radial-gradient(120% 160% at 85% -20%,#3A342B 0%,#26221D 45%,var(--ink) 100%);padding:38px 40px;margin-bottom:34px;box-shadow:0 30px 60px rgba(30,28,25,.28)}
+.uk::before{content:'';position:absolute;inset:0;border-radius:22px;padding:1px;background:linear-gradient(135deg,rgba(191,162,93,.75),rgba(191,162,93,.08) 45%,rgba(191,162,93,.5));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.uk-dal{position:absolute;right:-30px;top:-40px;width:300px;opacity:.07;pointer-events:none}
+.uk-ust{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.uk .marka{font-size:.68rem;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.uk h1{font-family:Fraunces,serif;font-weight:300;font-style:italic;font-size:clamp(1.7rem,4vw,2.5rem);color:#fff;margin:0 0 4px;line-height:1.15}
+.uk .uyelik{font-size:.78rem;color:#A99E8A;letter-spacing:.06em}
+.uk-cikis{border:1px solid rgba(191,162,93,.45);background:none;color:#D8CDB6;font:inherit;font-size:.78rem;letter-spacing:.06em;border-radius:999px;padding:9px 20px;cursor:pointer;transition:all .25s}
+.uk-cikis:hover{background:rgba(191,162,93,.15);color:#fff}
+.uk-veriler{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:26px;margin-top:34px;padding-top:26px;border-top:1px solid rgba(191,162,93,.22)}
+@media(max-width:680px){.uk-veriler{grid-template-columns:1fr;gap:20px}}
+.uk-v .n{font-family:Fraunces,serif;font-size:2rem;color:var(--gold);line-height:1}
+.uk-v .n small{font-size:.9rem;color:#A99E8A;font-family:Figtree,sans-serif}
+.uk-v .l{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#A99E8A;margin-top:7px}
+.uk-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.12);margin-top:12px;overflow:hidden;max-width:230px}
+.uk-bar i{display:block;height:100%;background:linear-gradient(90deg,#8f7a45,var(--gold));border-radius:99px;transition:width 1s ease}
+.uk-v .ipucu{font-size:.72rem;color:#A99E8A;margin-top:8px}
+.sp-baslik{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:0 0 18px}
+.sp-baslik h2{font-family:Fraunces,serif;font-weight:400;font-size:1.5rem;margin:0}
+.sp-baslik span{font-size:.8rem;color:var(--ink-soft)}
+.sp{background:#fff;border:1px solid var(--line);border-radius:18px;margin-bottom:18px;overflow:hidden;transition:box-shadow .3s}
+.sp:hover{box-shadow:0 16px 40px rgba(30,28,25,.09)}
+.sp-ust{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 24px;cursor:pointer;list-style:none}
+.sp-ust::-webkit-details-marker{display:none}
+.sp-no{font-family:Fraunces,serif;font-size:1.08rem}
+.sp-meta{font-size:.78rem;color:var(--ink-soft);margin-top:3px}
+.sp-sag{display:flex;align-items:center;gap:14px}
+.sp-tutar{font-weight:700;font-size:.95rem}
+.sp-pill{font-size:.72rem;font-weight:600;padding:6px 14px;border-radius:999px;white-space:nowrap}
+.sp-ok{color:var(--ink-soft);transition:transform .3s;font-size:.8rem}
+details[open] .sp-ok{transform:rotate(180deg)}
+.sp-adim{display:flex;padding:4px 24px 20px;gap:0}
+.sp-adim .a{flex:1;text-align:center;position:relative;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:#b6b0a5;padding-top:20px}
+.sp-adim .a::before{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;background:#E4E1DA;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);z-index:2}
+.sp-adim .a::after{content:'';position:absolute;top:10px;left:-50%;width:100%;height:2px;background:var(--line);z-index:1}
+.sp-adim .a:first-child::after{display:none}
+.sp-adim .a.ok{color:var(--ink)}
+.sp-adim .a.ok::before{background:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.sp-adim .a.ok::after{background:var(--gold)}
+.sp-adim .a.simdi::before{animation:spNabiz 2s infinite}
+@keyframes spNabiz{0%,100%{box-shadow:0 0 0 1px var(--gold)}50%{box-shadow:0 0 0 5px rgba(191,162,93,.25)}}
+@media(prefers-reduced-motion:reduce){.sp-adim .a.simdi::before{animation:none}}
+.sp-uyari{margin:0 24px 18px;padding:12px 16px;border-radius:11px;font-size:.83rem;line-height:1.5}
+.sp-govde{border-top:1px dashed var(--line);padding:22px 24px;display:grid;grid-template-columns:1.5fr 1fr;gap:28px}
+@media(max-width:680px){.sp-govde{grid-template-columns:1fr;gap:18px}}
+.sp-kalem{display:flex;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid #F3F1EC}
+.sp-kalem:last-child{border-bottom:none}
+.sp-kalem img{width:46px;height:62px;object-fit:contain;background:#FAF9F6;border:1px solid var(--line);border-radius:9px;padding:4px;flex-shrink:0}
+.sp-kalem .ad{font-size:.87rem;line-height:1.35}
+.sp-kalem .adet{font-size:.74rem;color:var(--ink-soft);margin-top:2px}
+.sp-kalem .f{margin-left:auto;font-size:.85rem;font-weight:600;white-space:nowrap}
+.sp-dokum{background:#FAF9F6;border:1px solid var(--line);border-radius:13px;padding:18px 20px;font-size:.84rem;align-self:start}
+.sp-dokum .s{display:flex;justify-content:space-between;padding:5px 0;color:var(--ink-soft)}
+.sp-dokum .s.ind{color:#3d7a3d}
+.sp-dokum .s.top{border-top:1px solid var(--line);margin-top:8px;padding-top:11px;color:var(--ink);font-weight:700;font-size:.95rem}
+.sp-dokum .s.top b{font-family:Fraunces,serif;color:#806A36;font-size:1.05rem}
+.sp-kargo{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:linear-gradient(120deg,#F6F0E3,#FAF7EF);border:1px solid rgba(191,162,93,.4);border-radius:13px;padding:14px 18px}
+.sp-kargo .b{font-size:.85rem}
+.sp-kargo .b small{display:block;color:var(--ink-soft);font-size:.75rem;margin-top:2px}
+.sp-bos{text-align:center;padding:60px 20px;background:#fff;border:1px dashed var(--line);border-radius:18px}
+.sp-bos .i{font-size:2rem;margin-bottom:10px}
+.sp-bos p{color:var(--ink-soft);font-size:.9rem;max-width:400px;margin:0 auto 18px;line-height:1.6}
 </style>
 </head>
 <body data-page="hesap" data-lang="en">
@@ -44,41 +103,59 @@
   <div class="container">
 
     <div id="hs-giris" style="display:none;">
-      <div class="sec-head center">
-        <div class="kicker">Your Olivamore Account</div>
-        <h2>Your orders, shipments and points</h2>
-        <p class="lead">If you sign up with the email you used at checkout, your past orders appear in your account too.</p>
-      </div>
-      <div class="hs-kart">
-        <div class="hs-sekme">
-          <button type="button" id="hs-t-giris" class="on">Sign In</button>
-          <button type="button" id="hs-t-kayit">Sign Up</button>
+      <div class="gr-sahne">
+        <div class="gr-foto">
+          <img src="assets/img/story-sofra.jpg" alt="" onerror="this.style.display='none'">
+          <div class="gr-soz">
+            <div class="k">Olivamore Membership</div>
+            <p>"Every bottle has a story; every member has a table."</p>
+          </div>
         </div>
-        <form id="hs-form">
-          <div class="hs-alan" id="hs-ad-alan" style="display:none;"><label for="hs-ad">Full name</label><input type="text" id="hs-ad" autocomplete="name"></div>
-          <div class="hs-alan"><label for="hs-eposta">Email</label><input type="email" id="hs-eposta" autocomplete="email" required></div>
-          <div class="hs-alan"><label for="hs-sifre">Password</label><input type="password" id="hs-sifre" autocomplete="current-password" required minlength="6"></div>
-          <button class="btn btn-gold" type="submit" id="hs-btn" style="width:100%;margin-top:6px;">Sign In</button>
-          <p class="hs-hata" id="hs-hataMsj"></p>
-        </form>
+        <div class="gr-form">
+          <h1>Back to your table</h1>
+          <p class="alt">Follow your orders, track shipments and earn points with every purchase. Sign up with your checkout email and your past orders appear automatically.</p>
+          <div class="hs-sekme">
+            <button type="button" id="hs-t-giris" class="on">Sign In</button>
+            <button type="button" id="hs-t-kayit">Join</button>
+          </div>
+          <form id="hs-form">
+            <div class="hs-alan" id="hs-ad-alan" style="display:none;"><label for="hs-ad">Full name</label><input type="text" id="hs-ad" autocomplete="name"></div>
+            <div class="hs-alan"><label for="hs-eposta">Email</label><input type="email" id="hs-eposta" autocomplete="email" required></div>
+            <div class="hs-alan"><label for="hs-sifre">Password</label><input type="password" id="hs-sifre" autocomplete="current-password" required minlength="6"></div>
+            <button class="btn btn-gold" type="submit" id="hs-btn" style="width:100%;margin-top:8px;">Sign In</button>
+            <p class="hs-hata" id="hs-hataMsj"></p>
+          </form>
+        </div>
       </div>
     </div>
 
     <div id="hs-panel" style="display:none;">
-      <div class="hs-ust">
-        <div>
-          <div class="kicker">My Account</div>
-          <h2 style="margin:0;">Welcome, <span id="hs-isim"></span></h2>
+      <div class="uk">
+        <svg class="uk-dal" viewBox="0 0 200 200" fill="currentColor"><path d="M100 10c-8 30-30 48-30 78s16 52 30 92c14-40 30-62 30-92s-22-48-30-78zM52 60c12 18 10 36 24 48-2-22 4-38-8-54-6-8-12-4-16 6zm96 0c-12 18-10 36-24 48 2-22-4-38 8-54 6-8 12-4 16 6z"/></svg>
+        <div class="uk-ust">
+          <div>
+            <div class="marka">Olivamore · Membership</div>
+            <h1 id="hs-isim"></h1>
+            <div class="uyelik">Member since <span id="hs-uyelik"></span></div>
+          </div>
+          <button class="uk-cikis" type="button" id="hs-cikis">Sign Out</button>
         </div>
-        <button class="btn btn-ghost" type="button" id="hs-cikis">Sign Out</button>
+        <div class="uk-veriler">
+          <div class="uk-v">
+            <div class="n" id="hs-puan">0<small> pts</small></div>
+            <div class="l">Your balance · 1 pt = ₺1</div>
+            <div class="uk-bar"><i id="hs-puan-bar" style="width:0%;"></i></div>
+            <div class="ipucu" id="hs-puan-ipucu"></div>
+          </div>
+          <div class="uk-v"><div class="n" id="hs-sipsay">0</div><div class="l">Orders</div></div>
+          <div class="uk-v"><div class="n" id="hs-harcama">₺0</div><div class="l">Total spent</div></div>
+        </div>
       </div>
-      <div class="hs-stats">
-        <div class="hs-stat"><div class="n" id="hs-puan">0</div><div class="l">Points (1 point = ₺1)</div></div>
-        <div class="hs-stat"><div class="n" id="hs-sipsay">0</div><div class="l">Total orders</div></div>
-        <div class="hs-stat"><div class="n" id="hs-uyelik">—</div><div class="l">Member since</div></div>
+
+      <div class="sp-baslik">
+        <h2>My Orders</h2>
+        <span>Tap an order for details</span>
       </div>
-      <p class="hs-puan-not">You earn 2 points for every ₺100 spent. Soon you'll be able to redeem points as a discount; for now they keep adding up.</p>
-      <h3 style="font-family:Fraunces,serif;font-weight:400;margin-bottom:14px;">My Orders</h3>
       <div id="hs-siparisler"></div>
     </div>
 
@@ -91,7 +168,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var KEY = 'om-uye-token';
   var mod = 'giris';
   var RENK = { 'yeni': '#2563eb', 'hazırlanıyor': '#d97706', 'kargolandı': '#7c3aed', 'tamamlandı': '#16a34a', 'iptal': '#6b7280', 'iade': '#dc2626', 'odeme-bekliyor': '#0891b2', 'odeme-basarisiz': '#9f1239' };
-  var ETIKET = { 'yeni': 'Received', 'hazırlanıyor': 'Preparing', 'kargolandı': 'Shipped', 'tamamlandı': 'Delivered', 'iptal': 'Cancelled', 'iade': 'Refunded', 'odeme-bekliyor': 'Awaiting payment', 'odeme-basarisiz': 'Payment failed' };
+  var ETIKET = { 'yeni': 'Order Received', 'hazırlanıyor': 'Preparing', 'kargolandı': 'Shipped', 'tamamlandı': 'Delivered', 'iptal': 'Cancelled', 'iade': 'Refunded', 'odeme-bekliyor': 'Awaiting Payment', 'odeme-basarisiz': 'Payment Failed' };
+  var ADIMLAR = ['Received', 'Preparing', 'Shipped', 'Delivered'];
+  var ADIM_IDX = { 'yeni': 0, 'hazırlanıyor': 1, 'kargolandı': 2, 'tamamlandı': 3 };
   var KARGO_URL = {
     'Yurtiçi': 'https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=',
     'Aras': 'https://kargotakip.araskargo.com.tr/mainpage.aspx?code=',
@@ -102,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   function tl(n) { return '₺' + Number(n || 0).toLocaleString('tr-TR'); }
-  function fmtTarih(t) { try { return new Date(t).toLocaleDateString('en-GB'); } catch (e) { return ''; } }
+  function fmtTarih(t) { try { return new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return ''; } }
   function goster(id) {
     document.getElementById('hs-giris').style.display = id === 'giris' ? '' : 'none';
     document.getElementById('hs-panel').style.display = id === 'panel' ? '' : 'none';
@@ -112,35 +191,73 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('hs-t-giris').classList.toggle('on', m === 'giris');
     document.getElementById('hs-t-kayit').classList.toggle('on', m === 'kayit');
     document.getElementById('hs-ad-alan').style.display = m === 'kayit' ? '' : 'none';
-    document.getElementById('hs-btn').textContent = m === 'kayit' ? 'Sign Up' : 'Sign In';
+    document.getElementById('hs-btn').textContent = m === 'kayit' ? 'Join' : 'Sign In';
     document.getElementById('hs-sifre').autocomplete = m === 'kayit' ? 'new-password' : 'current-password';
   }
   document.getElementById('hs-t-giris').addEventListener('click', function () { sekme('giris'); });
   document.getElementById('hs-t-kayit').addEventListener('click', function () { sekme('kayit'); });
 
-  function kargoLink(s) {
+  function adimlar(s) {
+    var i = ADIM_IDX[s.durum];
+    if (i === undefined) {
+      var r = RENK[s.durum] || '#6b7280';
+      var m = s.durum === 'iade' ? 'This order has been refunded.' :
+        s.durum === 'iptal' ? 'This order was cancelled; any payment will be refunded.' :
+        s.durum === 'odeme-bekliyor' ? 'Card payment has not been completed yet.' :
+        'Payment could not be completed; your card was not charged. Feel free to order again.';
+      return '<div class="sp-uyari" style="background:' + r + '14;border:1px solid ' + r + '44;color:' + r + ';">' + m + '</div>';
+    }
+    return '<div class="sp-adim">' + ADIMLAR.map(function (a, j) {
+      return '<div class="a' + (j <= i ? ' ok' : '') + (j === i && i < 3 ? ' simdi' : '') + '">' + a + '</div>';
+    }).join('') + '</div>';
+  }
+  function kargoBlok(s) {
     if (!s.kargoNo) return '';
     var url = (KARGO_URL[s.kargoFirma] || 'https://www.google.com/search?q=') + encodeURIComponent(s.kargoNo);
-    return '<a class="hs-kargo" href="' + url + '" target="_blank" rel="noopener">📦 Track shipment: ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) + ' →</a>';
+    return '<div class="sp-kargo"><div class="b">Your parcel is on its way 📦<small>' + esc(s.kargoFirma || 'Courier') + ' · Tracking no: ' + esc(s.kargoNo) + '</small></div>' +
+      '<a class="btn btn-gold btn-sm" style="padding:9px 20px;font-size:.8rem;" href="' + url + '" target="_blank" rel="noopener">Track Shipment →</a></div>';
+  }
+  function dokum(s) {
+    var h = '<div class="s"><span>Subtotal</span><span>' + tl(s.araToplam) + '</span></div>';
+    if (s.indirim) h += '<div class="s ind"><span>Coupon' + (s.kuponKod ? ' (' + esc(s.kuponKod) + ')' : '') + '</span><span>−' + tl(s.indirim) + '</span></div>';
+    if (s.kdvToplam !== undefined) h += '<div class="s"><span>VAT</span><span>' + tl(s.kdvToplam) + '</span></div>';
+    h += '<div class="s"><span>Shipping</span><span>' + (s.kargo ? tl(s.kargo) : 'Free') + '</span></div>';
+    h += '<div class="s top"><span>Total</span><b>' + tl(s.toplam) + '</b></div>';
+    return '<div class="sp-dokum">' + h + '</div>';
   }
   function panelDoldur(v) {
     document.getElementById('hs-isim').textContent = v.ad;
-    document.getElementById('hs-puan').textContent = v.puan;
-    document.getElementById('hs-sipsay').textContent = v.siparisler.length;
     document.getElementById('hs-uyelik').textContent = fmtTarih(v.uyelik);
+    document.getElementById('hs-puan').innerHTML = v.puan + '<small> pts</small>';
+    var gecerli = v.siparisler.filter(function (s) { return ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1; });
+    var harcama = gecerli.reduce(function (t, s) { return t + s.toplam; }, 0);
+    document.getElementById('hs-sipsay').textContent = gecerli.length;
+    document.getElementById('hs-harcama').textContent = tl(Math.round(harcama));
+    var kalan = 50 - (harcama % 50);
+    document.getElementById('hs-puan-bar').style.width = Math.round((harcama % 50) / 50 * 100) + '%';
+    document.getElementById('hs-puan-ipucu').textContent = tl(Math.ceil(kalan)) + ' to your next point · every ₺50 = 1 pt';
     var host = document.getElementById('hs-siparisler');
     if (!v.siparisler.length) {
-      host.innerHTML = '<p style="color:var(--ink-soft);">No orders yet. <a class="link-arrow" href="koleksiyon-en.html">Browse the collection →</a><br><small>Note: orders placed with your account email appear here.</small></p>';
+      host.innerHTML = '<div class="sp-bos"><div class="i">🫒</div><p>No orders yet. Start your table — and your points — with your first bottle.<br><small>Note: orders placed with your account email appear here.</small></p><a class="btn btn-gold" href="koleksiyon-en.html">Explore the Collection</a></div>';
       return;
     }
     host.innerHTML = v.siparisler.map(function (s) {
       var r = RENK[s.durum] || '#6b7280';
-      return '<details class="hs-sip"><summary>' +
-        '<span><span class="b"><b>' + s.no + '</b> · ' + tl(s.toplam) + '</span><br><span class="t">' + fmtTarih(s.tarih) + ' · ' + (s.odeme === 'kart' ? 'Card' : 'Bank transfer') + '</span></span>' +
-        '<span class="hs-pill" style="background:' + r + '1a;color:' + r + ';border:1px solid ' + r + '55;">' + (ETIKET[s.durum] || s.durum) + (s.iadeDurum === 'talep' ? ' · refund requested' : '') + '</span></summary>' +
-        '<div class="hs-govde">' +
-        s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad); }).join('<br>') +
-        kargoLink(s) + '</div></details>';
+      return '<details class="sp"><summary class="sp-ust">' +
+        '<span><span class="sp-no">' + s.no + '</span><div class="sp-meta">' + fmtTarih(s.tarih) + ' · ' + (s.odeme === 'kart' ? 'Paid by card' : 'Bank transfer') +
+        (s.iadeDurum === 'talep' ? ' · <b style="color:#dc2626;">refund request under review</b>' : '') + '</div></span>' +
+        '<span class="sp-sag"><span class="sp-tutar">' + tl(s.toplam) + '</span>' +
+        '<span class="sp-pill" style="background:' + r + '14;color:' + r + ';border:1px solid ' + r + '44;">' + (ETIKET[s.durum] || s.durum) + '</span>' +
+        '<span class="sp-ok">▾</span></span></summary>' +
+        adimlar(s) +
+        '<div class="sp-govde"><div>' +
+        s.kalemler.map(function (k) {
+          return '<div class="sp-kalem">' +
+            (k.img ? '<img src="' + esc(k.img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') +
+            '<span><div class="ad">' + esc(k.ad) + '</div><div class="adet">' + k.adet + ' × ' + tl(k.fiyat) + '</div></span>' +
+            '<span class="f">' + tl(k.fiyat * k.adet) + '</span></div>';
+        }).join('') +
+        '</div>' + dokum(s) + kargoBlok(s) + '</div></details>';
     }).join('');
   }
   function beniGetir() {

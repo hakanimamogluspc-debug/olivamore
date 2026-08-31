@@ -385,10 +385,12 @@ const sunucu = http.createServer(async (req, res) => {
         .filter(s => (s.musteri && (s.musteri.eposta || '').toLowerCase()) === e)
         .slice(0, 100)
         .map(s => ({
-          no: s.no, tarih: s.tarih, durum: s.durum, odeme: s.odeme, toplam: s.toplam,
+          no: s.no, tarih: s.tarih, durum: s.durum, odeme: s.odeme,
+          araToplam: s.araToplam, indirim: s.indirim || 0, kuponKod: (s.kupon && s.kupon.kod) || '',
+          kdvToplam: s.kdvToplam, kargo: s.kargo, toplam: s.toplam,
           kargoFirma: s.kargoFirma || '', kargoNo: s.kargoNo || '',
           iadeDurum: s.iade ? s.iade.durum : '',
-          kalemler: (s.kalemler || []).map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat }))
+          kalemler: (s.kalemler || []).map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, img: k.img || '' }))
         }));
       return json(res, 200, { ad: b.u.ad, eposta: e, uyelik: b.u.tarih, puan: puanHesapla(e), siparisler: siparisler });
     }
