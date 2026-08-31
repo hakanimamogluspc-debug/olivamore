@@ -726,8 +726,9 @@
         markSweep();
         if (window.omBoySenkron) window.omBoySenkron();
         urunOdakla();
+        omPopupKur();
       })
-      .catch(() => { applyAdminOverrides(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); });
+      .catch(() => { applyAdminOverrides(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); omPopupKur(); });
 
     // Derin bağlantı: koleksiyon.html#p=<urunId> → o ürünün kartına kaydır ve vurgula
     function urunOdakla() {
@@ -1064,6 +1065,89 @@
         setSticky(true);
       }
     }
+
+    // Hoş geldin popup'ı (lead toplama) — panel > Pazarlama'dan yönetilir
+    window.omPopupKur = function () {
+      const pp = (typeof AC === 'object' && AC && AC.popup) || {};
+      if (!pp.aktif || document.getElementById('om-popup')) return;
+      if (/sepet|panel/.test(location.pathname)) return; // ödeme akışını bölme
+      try {
+        if (localStorage.getItem('om-popup-abone')) return;
+        if (Date.now() - parseInt(localStorage.getItem('om-popup-son') || '0', 10) < 7 * 86400000) return;
+      } catch (e) { return; }
+      const baslik = (EN ? pp.baslikEN : pp.baslikTR) || pp.baslikTR || '';
+      const metin = (EN ? pp.metinEN : pp.metinTR) || pp.metinTR || '';
+      let acildi = false;
+      function ac() {
+        if (acildi) return; acildi = true;
+        try { localStorage.setItem('om-popup-son', String(Date.now())); } catch (e) {}
+        const ort = document.createElement('div');
+        ort.id = 'om-popup';
+        ort.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,25,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        const kart = document.createElement('div');
+        kart.style.cssText = 'background:#fff;border-radius:16px;max-width:400px;width:100%;padding:32px 28px;text-align:center;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.25);border-top:3px solid #BFA25D;';
+        const kapat = document.createElement('button');
+        kapat.textContent = '✕';
+        kapat.setAttribute('aria-label', EN ? 'Close' : 'Kapat');
+        kapat.style.cssText = 'position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:#8a8377;';
+        const h = document.createElement('h3');
+        h.textContent = baslik;
+        h.style.cssText = 'font-family:Fraunces,serif;font-size:1.4rem;margin:0 0 10px;';
+        const p = document.createElement('p');
+        p.textContent = metin;
+        p.style.cssText = 'font-size:.9rem;color:#4A463F;margin:0 0 18px;line-height:1.55;';
+        const form = document.createElement('form');
+        form.style.cssText = 'display:flex;gap:8px;';
+        const inp = document.createElement('input');
+        inp.type = 'email'; inp.required = true;
+        inp.placeholder = EN ? 'Your email' : 'E-posta adresin';
+        inp.style.cssText = 'flex:1;padding:11px 14px;border:1px solid #ECEAE6;border-radius:10px;font:inherit;font-size:.9rem;min-width:0;';
+        const btn = document.createElement('button');
+        btn.type = 'submit';
+        btn.textContent = EN ? 'Get code' : 'Kodu Al';
+        btn.className = 'btn btn-gold';
+        btn.style.cssText = 'white-space:nowrap;';
+        const durum = document.createElement('p');
+        durum.style.cssText = 'font-size:.8rem;color:#8a8377;margin:10px 0 0;min-height:1em;';
+        form.append(inp, btn);
+        kart.append(kapat, h, p, form, durum);
+        ort.appendChild(kart);
+        document.body.appendChild(ort);
+        const kapa = () => ort.remove();
+        kapat.addEventListener('click', kapa);
+        ort.addEventListener('click', e => { if (e.target === ort) kapa(); });
+        document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { kapa(); document.removeEventListener('keydown', esc); } });
+        form.addEventListener('submit', e => {
+          e.preventDefault();
+          btn.disabled = true;
+          fetch('/api/bulten', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: inp.value.trim(), kaynak: 'popup' }) })
+            .then(r => r.json())
+            .then(c => {
+              if (c && c.tamam) {
+                try { localStorage.setItem('om-popup-abone', '1'); } catch (err) {}
+                form.style.display = 'none';
+                p.textContent = EN ? 'Welcome! Use this code at checkout:' : 'Hoş geldin! Sepette bu kodu kullan:';
+                if (pp.kupon) {
+                  const kod = document.createElement('div');
+                  kod.textContent = pp.kupon;
+                  kod.style.cssText = 'font-size:1.3rem;font-weight:700;letter-spacing:.15em;color:#BFA25D;border:1px dashed #BFA25D;border-radius:10px;padding:12px;margin-top:6px;';
+                  durum.before(kod);
+                } else {
+                  p.textContent = EN ? 'Welcome! You are on the list.' : 'Hoş geldin! Listeye eklendin.';
+                }
+                setTimeout(kapa, 6000);
+              } else {
+                btn.disabled = false;
+                durum.textContent = (c && c.hata) || (EN ? 'Please try again.' : 'Lütfen tekrar dene.');
+              }
+            })
+            .catch(() => { btn.disabled = false; durum.textContent = EN ? 'Connection error.' : 'Bağlantı hatası.'; });
+        });
+        setTimeout(() => inp.focus(), 150);
+      }
+      setTimeout(ac, Math.max(3, pp.gecikme || 15) * 1000);
+      document.addEventListener('mouseout', e => { if (!e.relatedTarget && e.clientY <= 0) ac(); });
+    };
 
     // çerez bandı (KVKK) — bir kez gösterilir
     if (!localStorage.getItem('om-cookie-ok')) {
