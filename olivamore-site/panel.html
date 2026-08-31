@@ -6,6 +6,7 @@
 <title>Yönetim Paneli | Olivamore</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#BFA25D;--ink:#1E1C19;--soft:#4A463F;--line:#ECEAE6;--bg:#F7F6F3;--ok:#3d7a3d}
@@ -104,6 +105,19 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
 textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 </style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Yönetim Paneli | Olivamore">
+<meta property="og:description" content="Ayvalık'tan sofraya Olivamore.">
+<meta property="og:image" content="https://olivamore.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Yönetim Paneli | Olivamore">
+<meta name="twitter:description" content="Ayvalık'tan sofraya Olivamore.">
+<meta name="twitter:image" content="https://olivamore.com/og.png">
+<link rel="canonical" href="https://olivamore.com/panel.html">
+<meta property="og:url" content="https://olivamore.com/panel.html">
+<meta property="og:locale" content="tr_TR">
+
+<meta property="og:site_name" content="Olivamore">
 </head>
 <body>
 <div class="layout">
@@ -193,7 +207,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 
     <!-- ============ PARTİLER (HASAT PASAPORTU) ============ -->
     <section class="view" id="view-batches">
-      <div class="note"><b>Hasat Pasaportu:</b> Buradaki partiler pasaport.html'de sorgulanabilir (QR kod etikete <code>olivamore.de/pasaport.html?parti=KOD</code> adresiyle basılır). Not: panelden eklenen partiler bu tarayıcıda görünür; canlıda backend'e bağlanır.</div>
+      <div class="note"><b>Hasat Pasaportu:</b> Buradaki partiler pasaport.html'de sorgulanabilir (QR kod etikete <code>olivamore.com/pasaport.html?parti=KOD</code> adresiyle basılır). Not: panelden eklenen partiler bu tarayıcıda görünür; canlıda backend'e bağlanır.</div>
       <div id="batches-list"></div>
       <button class="btn btn-dark" id="btn-add-batch">+ Yeni Parti Ekle</button>
     </section>
@@ -333,7 +347,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     pdp: { ay750: 1250 },
     modules: { announce: true, trust: true, club: false, reviews: false, newsletter: true, hediyelik: true, blogPreview: true, hediye: true, tarif: true },
     pages: {
-      'koleksiyon': { tTR: 'Sızma Zeytinyağı', tEN: 'Extra Virgin Olive Oil', lTR: "Hepsi tek bahçeden, hepsi izlenebilir, hepsi hasat tarihli. Ayvalık'ın yumuşak dokusundan Trilye'nin yoğun karakterine, hangisiyle başlayacağını aşağıda seç.", lEN: "All from single groves, all traceable, all harvest-dated. From Ayvalık's smooth texture to Trilye's intense character, pick where to start below." },
+      'koleksiyon': { tTR: 'Sızma Zeytinyağı', tEN: 'Extra Virgin Olive Oil', lTR: "Ayvalık'ın yumuşak dokusundan Trilye'nin yoğun karakterine; menşe, hasat ve parti bilgileri yayımlanan kayıtlarla birlikte okunur. Hangisiyle başlayacağını aşağıda seç.", lEN: "From Ayvalık's smooth texture to Trilye's intense character, origin, harvest and batch details are shown with their published records. Pick where to start below." },
       'kulup': { tTR: 'Olivamore Club hazırlanıyor', tEN: 'Olivamore Club is being prepared', lTR: 'Club şu anda aktif bir abonelik ürünü değil. Koşullar kesinleştiğinde bekleme listesindekilere haber vereceğiz.', lEN: 'Club is not an active subscription product. We will notify the waitlist when the terms are final.' },
       'ureticiler': { tTR: 'Şişenin arkasındaki üretim yaklaşımı', tEN: 'The production approach behind the bottle', lTR: "Olivamore'un üretim yaklaşımı Ayvalık'ta 2017'de edinilen bahçeyle başladı. Yalnızca doğrulayabildiğimiz köken, üretim ve analiz bilgisini yayınlıyoruz.", lEN: "Olivamore's production journey began with a grove acquired in Ayvalık in 2017. We publish only origin, production and analysis details we can verify." },
 
@@ -592,7 +606,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function productItem(p, i) {
     var badge = p.visible === false ? '<span class="pill hid">Gizli</span>' : (p.featured > 0 ? '<span class="pill">Vitrin #' + p.featured + '</span>' : '');
     return '<details class="item" data-idx="' + i + '">' +
-      '<summary>' + (p.type === 'club' ? '<img src="assets/logo-mark.svg">' : '<img src="' + p.img + '">') +
+      '<summary>' + (p.type === 'club' ? '<img src="assets/logo-mark.svg" width="166" height="136">' : '<img src="' + p.img + '">') +
       '<div class="t"><b>' + esc(p.nameTR) + '</b><span>₺' + Number(p.price).toLocaleString('tr-TR') + ' ' + esc(p.unitTR) + '</span></div>' + badge + '</summary>' +
       '<div class="body">' +
       '<div class="grid2">' +
@@ -1273,7 +1287,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
-  fetch('/api/config', { cache: 'no-store' })
+  fetch('/api/admin/config', { cache: 'no-store' })
     .then(function (r) { if (!r.ok) throw 0; return r.json(); })
     .then(function (cfg) {
       MODE = 'api';

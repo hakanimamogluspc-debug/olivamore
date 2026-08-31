@@ -162,8 +162,11 @@ section.block.tight{padding:64px 0}
 @media(max-width:560px){.prod-grid,.prod-grid.three{grid-template-columns:1fr}}
 .card{
   background:#fff;border:1px solid var(--line);border-radius:var(--radius);
-  overflow:hidden;transition:transform .3s ease,box-shadow .3s ease;display:flex;flex-direction:column;
+  overflow:hidden;transition:transform .3s ease,box-shadow .3s ease;display:flex;flex-direction:column;position:relative;
 }
+.card-hit{position:absolute;inset:0;z-index:1;border-radius:inherit}
+.card-hit:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+.card .add-bag{z-index:3}
 .card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
 .prod-img{
   aspect-ratio:4/4.6;display:flex;align-items:center;justify-content:center;
@@ -424,6 +427,12 @@ footer.site{background:var(--ink);color:#B8B2A6;padding:70px 0 34px;font-size:.9
   opacity:0;transition:all .35s ease;z-index:200;pointer-events:none;letter-spacing:.04em;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.is-error{background:#7b2d2d}
+
+.checkout-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:.86rem;font-weight:600}
+.checkout-field input,.checkout-field textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;font-weight:400;background:#fff;color:var(--ink)}
+.checkout-field [aria-invalid="true"]{border-color:#a33;box-shadow:0 0 0 2px rgba(163,51,51,.1)}
+.field-error{display:block;color:#a33;font-size:.76rem;font-weight:500;line-height:1.35}
 
 /* Article */
 .article-body{max-width:760px;margin:0 auto;padding:60px 24px}
@@ -1087,7 +1096,7 @@ html,body{overflow-x:clip}
 .pdp-sticky .t span{font-weight:700;color:var(--gold)}
 .pdp-sticky .btn{padding:12px 22px;font-size:.88rem;white-space:nowrap}
 @media(max-width:860px){
-  .pdp-sticky{display:flex}
+  .pdp-sticky.show{display:flex}
   body.has-pdp-sticky{padding-bottom:78px}
   /* İlk ziyarette çerez bandı sabit sepete ekle düğmesini kapatmasın. */
   body.has-pdp-sticky .cookie-bar{bottom:calc(88px + env(safe-area-inset-bottom))}
