@@ -17,9 +17,9 @@ a{color:inherit;text-decoration:none}
 @media(max-width:860px){.layout{grid-template-columns:1fr}}
 
 /* Kenar çubuğu */
-.side{background:var(--ink);color:#CFC9BC;padding:26px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.side{background:#fff;color:var(--ink);border-right:1px solid var(--line);padding:26px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
 @media(max-width:860px){.side{position:static;height:auto;flex-direction:row;align-items:center;gap:10px;overflow-x:auto;padding:14px 16px}}
-.side .brand{color:#fff;font-weight:700;letter-spacing:.22em;font-size:.92rem;margin-bottom:8px}
+.side .brand{color:var(--ink);font-weight:700;letter-spacing:.22em;font-size:.92rem;margin-bottom:8px}
 .side .brand-sub{font-size:.7rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:30px}
 @media(max-width:860px){.side .brand-sub{display:none}.side .brand{flex-shrink:0;margin-right:8px}}
 .side nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:0;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(191,162,93,.45) transparent}
@@ -27,12 +27,12 @@ a{color:inherit;text-decoration:none}
 .side nav::-webkit-scrollbar-thumb{background:rgba(191,162,93,.45);border-radius:99px}
 .side nav::-webkit-scrollbar-track{background:transparent}
 @media(max-width:860px){.side nav{flex-direction:row;overflow-y:visible;flex:initial}}
-.side nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;font-size:.9rem;cursor:pointer;white-space:nowrap;transition:all .2s}
-.side nav a:hover,.side nav a.on{background:rgba(191,162,93,.16);color:#fff}
+.side nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;font-size:.92rem;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap;transition:all .2s}
+.side nav a:hover,.side nav a.on{background:rgba(191,162,93,.14);color:#806A36}
 .side nav a.on{box-shadow:inset 3px 0 0 var(--gold)}
 .side nav a .nbadge{margin-left:auto;background:#dc2626;color:#fff;font-size:.64rem;font-weight:700;border-radius:99px;padding:2px 7px;min-width:14px;text-align:center;line-height:1.3}
 .side nav a .nbadge.sari{background:#d97706}
-.side .foot{margin-top:auto;font-size:.7rem;color:#7d776b;padding-top:20px}
+.side .foot{margin-top:auto;font-size:.7rem;color:#8a8377;padding-top:20px}
 @media(max-width:860px){.side .foot{display:none}}
 
 /* İçerik */
@@ -129,7 +129,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 <div class="layout">
 
   <aside class="side">
-    <div class="brand"><img src="assets/logo-word-light.svg" alt="OLIVAMORE" style="height:15px;width:auto;display:block;"></div>
+    <div class="brand"><img src="assets/logo-word.svg" alt="OLIVAMORE" style="height:15px;width:auto;display:block;"></div>
     <div class="brand-sub">İçerik Yönetim Sistemi</div>
     <nav id="nav">
       <a data-view="dash" class="on">◈ Panel</a>
