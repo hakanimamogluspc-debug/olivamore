@@ -641,8 +641,10 @@
       priceHtml = EN ? `from ₺${fmtTL(gp)}` : `₺${fmtTL(gp)}<small>'dan</small>`;
     } else {
       const altImg = (p.galeri && p.galeri[0]) ? `<img class="alt-img" src="${p.galeri[0]}" alt="">` : '';
-      const addBtn = p.price ? `<button class="add-bag" data-add>${EN ? 'Add to Bag' : 'Sepete Ekle'} <span>→</span></button>` : '';
-      media = `<div class="prod-img photo">${badgeHtml}<img src="${p.img}" alt="${name}">${altImg}${addBtn}</div>`;
+      const tukendi = typeof p.stok === 'number' && p.stok <= 0;
+      const addBtn = (p.price && !tukendi) ? `<button class="add-bag" data-add>${EN ? 'Add to Bag' : 'Sepete Ekle'} <span>→</span></button>` : '';
+      const stokBadge = tukendi ? `<span class="badge" style="background:#6b7280;color:#fff;">${EN ? 'Sold Out' : 'Tükendi'}</span>` : badgeHtml;
+      media = `<div class="prod-img photo"${tukendi ? ' style="opacity:.65;"' : ''}>${stokBadge}<img src="${p.img}" alt="${name}">${altImg}${addBtn}</div>`;
       let unitProof = EN ? 'VAT included' : 'KDV dahil';
       const volume = String(unit || '').toLowerCase();
       const amount = volume.includes('ml') ? Number(volume.replace(/[^0-9]/g, '')) / 1000 : (/\b(?:l|lt|litre)\b/.test(volume) ? Number(volume.replace(/[^0-9]/g, '')) : 0);

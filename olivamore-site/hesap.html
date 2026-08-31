@@ -353,11 +353,15 @@ document.addEventListener('DOMContentLoaded', function () {
         adimlar(s) +
         '<div class="sp-govde"><div>' +
         s.kalemler.map(function (k) {
+          var degerlendir = ['kargolandı', 'tamamlandı'].indexOf(s.durum) !== -1
+            ? '<button type="button" class="yr-ac" data-ad="' + esc(k.ad) + '" style="border:none;background:none;color:#806A36;font-size:.74rem;font-weight:600;cursor:pointer;padding:0;margin-top:3px;text-align:left;font-family:inherit;">★ Değerlendir · puan kazan</button>'
+            : '';
           return '<div class="sp-kalem">' +
             (k.img ? '<img src="' + esc(k.img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') +
-            '<span><div class="ad">' + esc(k.ad) + '</div><div class="adet">' + k.adet + ' adet × ' + tl(k.fiyat) + '</div></span>' +
+            '<span><div class="ad">' + esc(k.ad) + '</div><div class="adet">' + k.adet + ' adet × ' + tl(k.fiyat) + '</div>' + degerlendir + '</span>' +
             '<span class="f">' + tl(k.fiyat * k.adet) + '</span></div>';
         }).join('') +
+        (s.partiKod ? '<a style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:.84rem;color:#806A36;font-weight:600;" href="pasaport.html?parti=' + encodeURIComponent(s.partiKod) + '">🌿 Şişenin hasat kaydını gör: ' + esc(s.partiKod) + ' →</a>' : '') +
         '</div>' + dokum(s) + kargoBlok(s) + '</div></details>';
     }).join('');
   }
@@ -456,6 +460,59 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(function () { btn.disabled = false; hata.textContent = 'Bağlantı hatası; tekrar dene.'; hata.style.display = 'block'; });
   });
+  /* ---- ürün değerlendirme ---- */
+  var YR_YILDIZ = 5;
+  function yorumFormAc(urunAd) {
+    var eski = document.getElementById('yr-overlay');
+    if (eski) eski.remove();
+    YR_YILDIZ = 5;
+    var ort = document.createElement('div');
+    ort.id = 'yr-overlay';
+    ort.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,25,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ort.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:28px;border-top:3px solid #BFA25D;">' +
+      '<h3 style="font-family:Fraunces,serif;font-weight:400;margin:0 0 4px;">Değerlendir</h3>' +
+      '<p style="font-size:.82rem;color:var(--ink-soft);margin:0 0 14px;">' + urunAd.replace(/</g, '&lt;') + '</p>' +
+      '<div id="yr-yildizlar" style="font-size:1.8rem;cursor:pointer;margin-bottom:12px;user-select:none;"></div>' +
+      '<textarea id="yr-metin" rows="4" placeholder="Tadı, kokusu, hangi yemekte kullandın..." style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit;font-size:.9rem;box-sizing:border-box;"></textarea>' +
+      '<div style="display:flex;gap:10px;margin-top:14px;">' +
+      '<button type="button" id="yr-gonder" class="btn btn-gold btn-sm">Gönder</button>' +
+      '<button type="button" id="yr-kapat" class="btn btn-ghost btn-sm">Vazgeç</button></div>' +
+      '<p id="yr-msj" style="font-size:.8rem;margin:10px 0 0;color:var(--ink-soft);"></p></div>';
+    document.body.appendChild(ort);
+    function yildizCiz() {
+      document.getElementById('yr-yildizlar').innerHTML = [1, 2, 3, 4, 5].map(function (i) {
+        return '<span data-y="' + i + '" style="color:' + (i <= YR_YILDIZ ? '#BFA25D' : '#E4E1DA') + ';">★</span>';
+      }).join('');
+    }
+    yildizCiz();
+    document.getElementById('yr-yildizlar').addEventListener('click', function (e) {
+      var y = parseInt(e.target.dataset.y, 10);
+      if (y) { YR_YILDIZ = y; yildizCiz(); }
+    });
+    document.getElementById('yr-kapat').addEventListener('click', function () { ort.remove(); });
+    ort.addEventListener('click', function (e) { if (e.target === ort) ort.remove(); });
+    document.getElementById('yr-gonder').addEventListener('click', function () {
+      var msj = document.getElementById('yr-msj');
+      var metin = document.getElementById('yr-metin').value.trim();
+      if (!metin) { msj.textContent = 'Birkaç kelime de olsa yorum yaz.'; return; }
+      this.disabled = true;
+      fetch('/api/yorum', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(KEY) },
+        body: JSON.stringify({ urunAd: urunAd, yildiz: YR_YILDIZ, metin: metin })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (c) {
+          msj.textContent = c.hata || c.mesaj || 'Yorumun alındı.';
+          if (!c.hata) setTimeout(function () { ort.remove(); }, 2500);
+          else document.getElementById('yr-gonder').disabled = false;
+        })
+        .catch(function () { msj.textContent = 'Bağlantı hatası.'; document.getElementById('yr-gonder').disabled = false; });
+    });
+  }
+  document.getElementById('hs-siparisler').addEventListener('click', function (e) {
+    if (e.target.classList.contains('yr-ac')) yorumFormAc(e.target.dataset.ad);
+  });
+
   document.getElementById('hs-cikis').addEventListener('click', function () {
     var t = localStorage.getItem(KEY);
     if (t) fetch('/api/uye/cikis', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } });

@@ -29,6 +29,8 @@ a{color:inherit;text-decoration:none}
 @media(max-width:860px){.side nav{flex-direction:row;overflow-y:visible;flex:initial}}
 .side nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;font-size:.9rem;cursor:pointer;white-space:nowrap;transition:all .2s}
 .side nav a:hover,.side nav a.on{background:rgba(191,162,93,.16);color:#fff}
+.side nav a .nbadge{margin-left:auto;background:#dc2626;color:#fff;font-size:.64rem;font-weight:700;border-radius:99px;padding:2px 7px;min-width:14px;text-align:center;line-height:1.3}
+.side nav a .nbadge.sari{background:#d97706}
 .side .foot{margin-top:auto;font-size:.7rem;color:#7d776b;padding-top:20px}
 @media(max-width:860px){.side .foot{display:none}}
 
@@ -138,6 +140,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <a data-view="analytics">◔ Analiz</a>
       <a data-view="marketing">➤ Pazarlama</a>
       <a data-view="members">☺ Üyeler</a>
+      <a data-view="reviews">★ Yorumlar</a>
       <a data-view="coupons">⛁ Kuponlar</a>
       <a data-view="library">🖼 Görseller</a>
       <a data-view="msgs">✉ Mesajlar</a>
@@ -299,6 +302,16 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         </div>
       </div>
 
+      <div class="panel" style="margin-top:14px;">
+        <h2>E-posta otomasyonları</h2>
+        <div class="desc">Otomatik mailler yalnız <b>bülten abonesi veya üye</b> olan e-postalara gider; her mailin altında çıkış linki bulunur. <span id="ot-bekleyen" style="color:#d97706;"></span></div>
+        <div id="ot-alanlar"></div>
+        <div class="row-actions">
+          <button class="btn btn-dark btn-sm" id="ot-kaydet" type="button">Otomasyonları Kaydet</button>
+          <span id="ot-durum" style="font-size:.82rem;color:var(--soft);"></span>
+        </div>
+      </div>
+
       <div class="grid2" style="margin-top:14px;">
         <div class="panel">
           <h2>Aboneler</h2>
@@ -326,6 +339,10 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         <h2>Sadakat seviyeleri</h2>
         <div class="desc">Üye, puanı eşiğe ulaştığında o seviyenin indirim oranını kazanır (puan: her ₺50 harcama = 1 puan). Oranlar sepette KDV hariç tutara uygulanır.</div>
         <div id="uy-seviyeler"></div>
+        <div class="row-actions" style="margin-top:12px;flex-wrap:wrap;align-items:center;">
+          <label style="text-transform:none;letter-spacing:0;font-size:.85rem;margin:0;display:flex;align-items:center;gap:8px;">Onaylanan yorum başına bonus puan:
+          <input type="number" id="uy-yorum-puan" min="0" max="500" style="max-width:90px;"></label>
+        </div>
         <div class="row-actions" style="margin-top:10px;">
           <button class="btn btn-ghost btn-sm" id="uy-sev-ekle" type="button">+ Seviye Ekle</button>
           <button class="btn btn-dark btn-sm" id="uy-sev-kaydet" type="button">Seviyeleri Kaydet</button>
@@ -341,6 +358,13 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         </div>
         <div id="uy-liste"></div>
       </div>
+    </section>
+
+    <!-- ============ YORUMLAR ============ -->
+    <section class="view" id="view-reviews">
+      <div class="note"><b>Yorumlar:</b> Üyeler hesaplarından satın aldıkları ürünlere yorum yazar. Onayladığın yorum ürün sayfasında yayınlanır ve üyeye bonus puan gider (puan miktarı Üyeler sekmesindeki sadakat ayarlarında). Reddedilen yorum yayınlanmaz.</div>
+      <div class="stats" id="yr-stats"></div>
+      <div id="yr-liste"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor...</p></div>
     </section>
 
     <!-- ============ MESAJLAR ============ -->
@@ -575,7 +599,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', marketing: 'Pazarlama', members: 'Üyeler', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', marketing: 'Pazarlama', members: 'Üyeler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -586,6 +610,33 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   document.getElementById('nav').addEventListener('click', function (e) {
     var a = e.target.closest('a'); if (a) show(a.dataset.view);
   });
+
+  /* ================== BİLDİRİM ROZETLERİ ================== */
+  function rozetKoy(view, sayi, sari) {
+    var a = document.querySelector('#nav a[data-view="' + view + '"]');
+    if (!a) return;
+    var eski = a.querySelector('.nbadge');
+    if (eski) eski.remove();
+    if (sayi > 0) {
+      var b = document.createElement('span');
+      b.className = 'nbadge' + (sari ? ' sari' : '');
+      b.textContent = sayi > 99 ? '99+' : sayi;
+      a.appendChild(b);
+    }
+  }
+  function rozetYenile() {
+    fetch('/api/admin/ozet')
+      .then(function (r) { return r.json(); })
+      .then(function (v) {
+        rozetKoy('orders', (v.yeniSiparis || 0) + (v.iadeTalep || 0) + (v.odemeBekleyen || 0));
+        rozetKoy('msgs', v.okunmamisMesaj || 0);
+        rozetKoy('products', v.dusukStok || 0, true);
+        rozetKoy('reviews', v.bekleyenYorum || 0);
+      })
+      .catch(function () {});
+  }
+  rozetYenile();
+  setInterval(rozetYenile, 60000);
   document.querySelectorAll('[data-goto]').forEach(function (b) {
     b.addEventListener('click', function () { show(b.dataset.goto); });
   });
@@ -719,6 +770,11 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   /* ================== ÜRÜNLER ================== */
   function productItem(p, i) {
     var badge = p.visible === false ? '<span class="pill hid">Gizli</span>' : (p.featured > 0 ? '<span class="pill">Vitrin #' + p.featured + '</span>' : '');
+    if (typeof p.stok === 'number') {
+      badge = (p.stok <= 0 ? '<span class="pill" style="background:#dc26261a;color:#dc2626;">Tükendi</span>'
+        : p.stok <= 5 ? '<span class="pill" style="background:#d977061a;color:#d97706;">Stok: ' + p.stok + '</span>'
+        : '<span class="pill">Stok: ' + p.stok + '</span>') + badge;
+    }
     return '<details class="item" data-idx="' + i + '">' +
       '<summary>' + (p.type === 'club' ? '<img src="assets/logo-mark.svg" width="166" height="136">' : '<img src="' + p.img + '">') +
       '<div class="t"><b>' + esc(p.nameTR) + '</b><span>₺' + Number(p.price).toLocaleString('tr-TR') + ' ' + esc(p.unitTR) + '</span></div>' + badge + '</summary>' +
@@ -741,7 +797,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       '<div class="grid3">' +
       '<div class="field"><label>Birim (TR, ör. / 500 ml)</label><input type="text" class="p-unitTR" value="' + esc(p.unitTR) + '"></div>' +
       '<div class="field"><label>Birim (EN)</label><input type="text" class="p-unitEN" value="' + esc(p.unitEN) + '"></div>' +
-      '<div class="field"></div>' +
+      '<div class="field"><label>Stok adedi (boş = sınırsız)</label><input type="number" class="p-stok" min="0" value="' + (typeof p.stok === 'number' ? p.stok : '') + '"></div>' +
       '</div>' +
       '<div class="grid3">' +
       '<div class="field"><label>Rozet (TR, boş = yok)</label><input type="text" class="p-badgeTR" value="' + esc(p.badgeTR) + '"></div>' +
@@ -833,6 +889,8 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       p.price = parseFloat(g('p-price')) || 0; // sabit fiyat (KDV hariç) — sitede bu görünür
       var kdvSec = parseInt(g('p-kdv'), 10); p.kdv = isNaN(kdvSec) ? 1 : kdvSec; // 0 = KDV dahil
       p.unitTR = g('p-unitTR'); p.unitEN = g('p-unitEN');
+      var stok = g('p-stok');
+      p.stok = (stok === '' || stok === undefined) ? undefined : Math.max(0, parseInt(stok, 10) || 0);
       p.badgeTR = g('p-badgeTR'); p.badgeEN = g('p-badgeEN');
       p.featured = parseInt(g('p-featured'), 10) || 0;
       p.role = g('p-role') || '';
@@ -1093,7 +1151,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     // Sipariş/Analiz/Pazarlama ekranlarındaki alanlar CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
     // (İstisna: pp-* popup ayarları CMS'e kaydedilir, uyarı tetiklesin)
     var ppAlani = e.target.id && e.target.id.indexOf('pp-') === 0;
-    if (!ppAlani && e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing') || e.target.closest('#view-members'))) return;
+    if (!ppAlani && e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing') || e.target.closest('#view-members') || e.target.closest('#view-reviews'))) return;
     dirty();
   });
 
@@ -1170,8 +1228,13 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         '</select><select class="ord-firma" data-no="' + s.no + '" style="max-width:120px;">' +
         KARGOLAR.map(function (k) { return '<option value="' + k + '"' + (k === (s.kargoFirma || '') ? ' selected' : '') + '>' + (k || 'Kargo firması') + '</option>'; }).join('') +
         '</select><input type="text" class="ord-kargo" data-no="' + s.no + '" placeholder="Kargo takip no" value="' + esc(s.kargoNo || '') + '" style="max-width:180px;">' +
-        '<button class="btn btn-dark btn-sm ord-kaydet" data-no="' + s.no + '" type="button">Güncelle</button></div>' +
-        '<div class="field" style="margin-top:10px;"><label>Yönetici notu (müşteri görmez)</label><input type="text" class="ord-not" data-no="' + s.no + '" value="' + esc(s.adminNot || '') + '"></div>' +
+        '<button class="btn btn-dark btn-sm ord-kaydet" data-no="' + s.no + '" type="button">Güncelle</button>' +
+        '<button class="btn btn-ghost btn-sm ord-fis" data-no="' + s.no + '" type="button">🖨 Fiş</button></div>' +
+        '<div class="grid2" style="margin-top:10px;">' +
+        '<div class="field"><label>Yönetici notu (müşteri görmez)</label><input type="text" class="ord-not" data-no="' + s.no + '" value="' + esc(s.adminNot || '') + '"></div>' +
+        '<div class="field"><label>Hasat parti kodu (müşteri hesabında pasaport linki olur)</label><input type="text" class="ord-parti" data-no="' + s.no + '" list="parti-listesi" placeholder="Örn: AYV-2510" value="' + esc(s.partiKod || '') + '"></div>' +
+        '</div>' +
+        '<datalist id="parti-listesi">' + (C.batches || []).map(function (b) { return '<option value="' + esc(b.kod) + '">' + esc(b.urun) + '</option>'; }).join('') + '</datalist>' +
         ordIadeBlok(s) +
         (s.gecmis && s.gecmis.length ? '<div style="margin-top:12px;font-size:.75rem;color:var(--soft);">' +
           s.gecmis.slice(0, 8).map(function (g) { return fmtTarih(g.tarih) + ' — ' + esc(g.islem); }).join('<br>') + '</div>' : '') +
@@ -1195,15 +1258,55 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     if (!no) return;
     function v(cls) { var el = document.querySelector('.' + cls + '[data-no="' + no + '"]'); return el ? el.value : undefined; }
     if (e.target.classList.contains('ord-kaydet')) {
-      ordGonder({ no: no, durum: v('ord-durum'), kargoNo: v('ord-kargo'), kargoFirma: v('ord-firma'), adminNot: v('ord-not') });
+      ordGonder({ no: no, durum: v('ord-durum'), kargoNo: v('ord-kargo'), kargoFirma: v('ord-firma'), adminNot: v('ord-not'), partiKod: v('ord-parti') });
     } else if (e.target.classList.contains('ord-iade-talep')) {
       ordGonder({ no: no, iade: { islem: 'talep', tutar: v('ord-iade-tutar'), neden: v('ord-iade-neden') } });
     } else if (e.target.classList.contains('ord-iade-onay')) {
       if (confirm('İade onaylansın mı? Müşteriye bilgilendirme e-postası gönderilir.')) ordGonder({ no: no, iade: { islem: 'onay' } });
     } else if (e.target.classList.contains('ord-iade-red')) {
       ordGonder({ no: no, iade: { islem: 'red' } });
+    } else if (e.target.classList.contains('ord-fis')) {
+      var sip = ORD_LISTE.find(function (x) { return x.no === no; });
+      if (sip) fisYazdir(sip);
     }
   });
+  // Markalı sipariş fişi (pakete konur) — yazdırma penceresi açar
+  function fisYazdir(s) {
+    var kalemSatir = s.kalemler.map(function (k) {
+      return '<tr><td>' + esc(k.ad) + '</td><td class="o">' + k.adet + '</td><td class="r">' + tl(k.fiyat) + '</td><td class="r">' + tl(k.fiyat * k.adet) + '</td></tr>';
+    }).join('');
+    var dokum = '<tr class="ust"><td colspan="3">Ara toplam</td><td class="r">' + tl(s.araToplam) + '</td></tr>' +
+      (s.indirim ? '<tr><td colspan="3">İndirim' + (s.kupon && s.kupon.kod ? ' (' + esc(s.kupon.kod) + ')' : '') + '</td><td class="r">−' + tl(s.indirim) + '</td></tr>' : '') +
+      (s.uyeIndirim ? '<tr><td colspan="3">Üye indirimi (%' + s.uyeIndirim.oran + ')</td><td class="r">−' + tl(s.uyeIndirim.tutar) + '</td></tr>' : '') +
+      '<tr><td colspan="3">KDV</td><td class="r">' + tl(s.kdvToplam) + '</td></tr>' +
+      '<tr><td colspan="3">Kargo</td><td class="r">' + (s.kargo ? tl(s.kargo) : 'Ücretsiz') + '</td></tr>' +
+      '<tr class="toplam"><td colspan="3">TOPLAM</td><td class="r">' + tl(s.toplam) + '</td></tr>';
+    var w = window.open('', '_blank');
+    w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + s.no + ' · Olivamore</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;600&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=swap" rel="stylesheet">' +
+      '<style>@page{size:A5;margin:14mm}body{font-family:Figtree,sans-serif;color:#1E1C19;font-size:9.5pt;line-height:1.5;margin:0}' +
+      '.marka{text-align:center;letter-spacing:.35em;font-weight:600;font-size:13pt;margin-bottom:2px}' +
+      '.alt{text-align:center;font-size:7pt;letter-spacing:.2em;color:#BFA25D;text-transform:uppercase;margin-bottom:18px}' +
+      'hr{border:none;border-top:1px solid #BFA25D;margin:12px 0}' +
+      '.satir{display:flex;justify-content:space-between;font-size:8.5pt;margin-bottom:14px}' +
+      'h2{font-family:Fraunces,serif;font-weight:400;font-size:11pt;margin:0 0 6px}' +
+      '.adres{font-size:8.5pt;color:#4A463F;margin-bottom:14px}' +
+      'table{width:100%;border-collapse:collapse;font-size:8.5pt}' +
+      'th{text-align:left;font-size:7pt;letter-spacing:.1em;text-transform:uppercase;color:#8a8377;border-bottom:1px solid #ECEAE6;padding:4px 0}' +
+      'td{padding:5px 0;border-bottom:1px solid #F3F1EC}.r{text-align:right;white-space:nowrap}.o{text-align:center}' +
+      'tr.ust td{border-top:2px solid #ECEAE6}tr.toplam td{font-weight:700;font-size:10pt;border-bottom:none;padding-top:8px;color:#806A36}' +
+      '.tesekkur{text-align:center;margin-top:22px;font-family:Fraunces,serif;font-style:italic;font-size:10pt}' +
+      '.site{text-align:center;font-size:7.5pt;color:#8a8377;margin-top:6px}</style></head><body>' +
+      '<div class="marka">OLIVAMORE</div><div class="alt">Ayvalık · Naturel Sızma Zeytinyağı</div>' +
+      '<div class="satir"><span><b>Sipariş:</b> ' + s.no + '</span><span>' + fmtTarih(s.tarih) + '</span><span>' + esc(s.odeme === 'kart' ? 'Kart' : 'Havale/EFT') + '</span></div>' +
+      '<h2>Teslimat</h2><div class="adres">' + esc(s.musteri.ad) + '<br>' + esc(s.musteri.adres) + '<br>' + esc(s.musteri.telefon) +
+      (s.musteri.not ? '<br><i>Not: ' + esc(s.musteri.not) + '</i>' : '') + '</div>' +
+      '<table><tr><th>Ürün</th><th class="o">Adet</th><th class="r">Birim</th><th class="r">Tutar</th></tr>' + kalemSatir + dokum + '</table>' +
+      '<div class="tesekkur">"Sofrana sağlık — bu şişe, tek bir hasadın izini taşır."</div>' +
+      '<div class="site">olivamore.de · Sorular için bu e-postayı yanıtlayabilirsiniz</div>' +
+      '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print()},400)}</scr' + 'ipt></body></html>');
+    w.document.close();
+  }
   document.getElementById('ord-filtre').addEventListener('change', ordListe);
   document.getElementById('ord-ara').addEventListener('input', ordListe);
   document.getElementById('ord-yenile').addEventListener('click', renderOrders);
@@ -1223,6 +1326,8 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     a.click();
   });
   function renderMsgs() {
+    // Sekme açılınca mesajlar okundu sayılır; rozet temizlenir
+    fetch('/api/admin/mesaj-okundu', { method: 'POST' }).then(function () { rozetKoy('msgs', 0); }).catch(function () {});
     fetch('/api/admin/mesajlar')
       .then(function (r) { return r.json(); })
       .then(function (liste) {
@@ -1391,6 +1496,47 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       })
       .catch(function () { durum.textContent = 'Sunucuya ulaşılamadı.'; });
   }
+  /* --- otomasyon ayarları --- */
+  function otCiz(a, bekleyen) {
+    function alan(k, baslik, ekstra) {
+      var v = a[k] || {};
+      return '<div style="border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;">' +
+        '<label style="display:flex;gap:8px;align-items:center;margin-bottom:10px;text-transform:none;letter-spacing:0;font-size:.9rem;cursor:pointer;"><input type="checkbox" id="ot-' + k + '-aktif"' + (v.aktif ? ' checked' : '') + '> <b>' + baslik + '</b></label>' +
+        (ekstra || '') +
+        '<div class="grid2"><div class="field"><label>Konu</label><input type="text" id="ot-' + k + '-konu" value="' + esc(v.konu || '') + '"></div>' +
+        '<div class="field"><label>Metin</label><textarea id="ot-' + k + '-metin" rows="3">' + esc(v.metin || '') + '</textarea></div></div></div>';
+    }
+    document.getElementById('ot-alanlar').innerHTML =
+      alan('hosgeldin', 'Hoş geldin maili — yeni bülten abonesine anında gider') +
+      alan('sepet', 'Terk edilmiş sepet hatırlatması',
+        '<div class="field"><label>Sepet bırakıldıktan kaç saat sonra</label><input type="number" id="ot-sepet-saat" min="1" max="168" value="' + ((a.sepet && a.sepet.saat) || 24) + '" style="max-width:120px;"></div>') +
+      alan('tekrar', 'Tekrar sipariş hatırlatması — "yağın azalmıştır"',
+        '<div class="field"><label>Siparişten kaç gün sonra</label><input type="number" id="ot-tekrar-gun" min="7" max="365" value="' + ((a.tekrar && a.tekrar.gun) || 35) + '" style="max-width:120px;"></div>');
+    document.getElementById('ot-bekleyen').textContent = bekleyen ? '· Şu an ' + bekleyen + ' sepet hatırlatma sırasında.' : '';
+  }
+  function otYukle() {
+    fetch('/api/admin/otomasyon')
+      .then(function (r) { return r.json(); })
+      .then(function (v) { otCiz(v.ayar || {}, v.bekleyenSepet || 0); })
+      .catch(function () { document.getElementById('ot-alanlar').innerHTML = '<p style="color:var(--soft);font-size:.85rem;">Yalnız canlı sunucuda düzenlenir.</p>'; });
+  }
+  document.getElementById('ot-kaydet').addEventListener('click', function () {
+    function d(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function c(id) { var el = document.getElementById(id); return el ? el.checked : false; }
+    var durum = document.getElementById('ot-durum');
+    fetch('/api/admin/otomasyon', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hosgeldin: { aktif: c('ot-hosgeldin-aktif'), konu: d('ot-hosgeldin-konu'), metin: d('ot-hosgeldin-metin') },
+        sepet: { aktif: c('ot-sepet-aktif'), konu: d('ot-sepet-konu'), metin: d('ot-sepet-metin'), saat: d('ot-sepet-saat') },
+        tekrar: { aktif: c('ot-tekrar-aktif'), konu: d('ot-tekrar-konu'), metin: d('ot-tekrar-metin'), gun: d('ot-tekrar-gun') }
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (v) { durum.textContent = v.hata || 'Kaydedildi ✓'; })
+      .catch(function () { durum.textContent = 'Sunucuya ulaşılamadı.'; });
+  });
+
   document.getElementById('mk-test').addEventListener('click', function () { mkKampanya(true); });
   document.getElementById('mk-gonder').addEventListener('click', function () { mkKampanya(false); });
   document.getElementById('mk-ara').addEventListener('input', mkListe);
@@ -1418,7 +1564,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     a.download = 'olivamore-aboneler-' + new Date().toISOString().slice(0, 10) + '.csv';
     a.click();
   });
-  document.querySelector('[data-view="marketing"]').addEventListener('click', renderMarketing);
+  document.querySelector('[data-view="marketing"]').addEventListener('click', function () { renderMarketing(); otYukle(); });
 
   /* ================== ÜYELER ================== */
   var UY_LISTE = [], UY_AYAR = { seviyeler: [] };
@@ -1450,7 +1596,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       });
     });
     var durum = document.getElementById('uy-sev-durum');
-    fetch('/api/admin/uye-ayar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seviyeler: seviyeler }) })
+    fetch('/api/admin/uye-ayar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seviyeler: seviyeler, yorumPuan: document.getElementById('uy-yorum-puan').value }) })
       .then(function (r) { return r.json(); })
       .then(function (c) {
         if (c.hata) { durum.textContent = c.hata; return; }
@@ -1497,6 +1643,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
           '<div class="stat"><div class="num">' + ozel + '</div><div class="lbl">Özel indirimli üye</div></div>' +
           '<div class="stat"><div class="num">' + (UY_AYAR.seviyeler || []).length + '</div><div class="lbl">Sadakat seviyesi</div></div>';
         uySeviyeCiz();
+        document.getElementById('uy-yorum-puan').value = UY_AYAR.yorumPuan == null ? 10 : UY_AYAR.yorumPuan;
         uyListeCiz();
       })
       .catch(function () { document.getElementById('uy-liste').innerHTML = '<p style="color:var(--soft);">Üye listesi yalnız canlı sunucuda görünür.</p>'; });
@@ -1524,6 +1671,51 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   document.getElementById('uy-ara').addEventListener('input', uyListeCiz);
   document.getElementById('uy-yenile').addEventListener('click', renderMembers);
   document.querySelector('[data-view="members"]').addEventListener('click', renderMembers);
+
+  /* ================== YORUMLAR ================== */
+  function yildizlar(n) {
+    var h = '';
+    for (var i = 1; i <= 5; i++) h += '<span style="color:' + (i <= n ? '#BFA25D' : '#E4E1DA') + ';">★</span>';
+    return h;
+  }
+  function renderReviews() {
+    fetch('/api/admin/yorumlar')
+      .then(function (r) { return r.json(); })
+      .then(function (liste) {
+        var bekleyen = liste.filter(function (y) { return y.durum === 'bekliyor'; });
+        var onayli = liste.filter(function (y) { return y.durum === 'onaylandı'; });
+        var ort = onayli.length ? (onayli.reduce(function (t, y) { return t + y.yildiz; }, 0) / onayli.length).toFixed(1) : '—';
+        document.getElementById('yr-stats').innerHTML =
+          '<div class="stat"><div class="num"' + (bekleyen.length ? ' style="color:#d97706;"' : '') + '>' + bekleyen.length + '</div><div class="lbl">Onay bekleyen</div></div>' +
+          '<div class="stat"><div class="num">' + onayli.length + '</div><div class="lbl">Yayında</div></div>' +
+          '<div class="stat"><div class="num">' + ort + '</div><div class="lbl">Ortalama yıldız</div></div>' +
+          '<div class="stat"><div class="num">' + liste.filter(function (y) { return y.durum === 'red'; }).length + '</div><div class="lbl">Reddedilen</div></div>';
+        var sirali = bekleyen.concat(liste.filter(function (y) { return y.durum !== 'bekliyor'; }));
+        document.getElementById('yr-liste').innerHTML = sirali.length ? sirali.map(function (y) {
+          var pill = y.durum === 'bekliyor' ? '<span class="pill" style="background:#d977061a;color:#d97706;">Bekliyor</span>'
+            : y.durum === 'onaylandı' ? '<span class="pill" style="background:#16a34a1a;color:#16a34a;">Yayında</span>'
+            : '<span class="pill" style="background:#6b72801a;color:#6b7280;">Red</span>';
+          return '<details class="item"' + (y.durum === 'bekliyor' ? ' open' : '') + '><summary><div class="t" style="margin-left:4px;"><b>' + esc(y.urunAd) + ' · ' + yildizlar(y.yildiz) + '</b>' +
+            '<span>' + esc(y.ad) + ' · ' + fmtTarih(y.tarih) + (y.dogrulanmis ? ' · ✓ satın aldı' : '') + '</span></div>' + pill + '</summary>' +
+            '<div class="body"><p style="font-size:.9rem;white-space:pre-wrap;margin-bottom:12px;">' + esc(y.metin) + '</p>' +
+            '<div class="row-actions">' +
+            (y.durum !== 'onaylandı' ? '<button class="btn btn-dark btn-sm yr-onay" data-id="' + y.id + '" type="button">Onayla ve Yayınla' + (y.puanVerildi ? '' : ' (+puan)') + '</button>' : '') +
+            (y.durum !== 'red' ? '<button class="btn btn-ghost btn-sm yr-red" data-id="' + y.id + '" type="button">Reddet</button>' : '') +
+            '</div></div></details>';
+        }).join('') : '<p style="color:var(--soft);">Henüz yorum yok.</p>';
+      })
+      .catch(function () { document.getElementById('yr-liste').innerHTML = '<p style="color:var(--soft);">Yorumlar yalnız canlı sunucuda görünür.</p>'; });
+  }
+  document.getElementById('yr-liste').addEventListener('click', function (e) {
+    var id = e.target.dataset.id;
+    if (!id) return;
+    var durum = e.target.classList.contains('yr-onay') ? 'onaylandı' : e.target.classList.contains('yr-red') ? 'red' : null;
+    if (!durum) return;
+    fetch('/api/admin/yorum-durum', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, durum: durum }) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) { if (c.hata) alert(c.hata); renderReviews(); rozetYenile(); });
+  });
+  document.querySelector('[data-view="reviews"]').addEventListener('click', renderReviews);
   document.querySelector('[data-view="msgs"]').addEventListener('click', renderMsgs);
 
   /* ================== KUPONLAR ================== */

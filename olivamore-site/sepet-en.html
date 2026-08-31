@@ -98,6 +98,14 @@
         <div class="sum-row"><span>Shipping</span><span id="sum-kargo">₺0</span></div>
         <div class="sum-row"><span>VAT</span><span>Included in prices</span></div>
         <div class="sum-row total"><span>Total</span><span id="sum-toplam">₺0</span></div>
+        <div id="kargo-tesvik" style="margin-top:12px;display:none;">
+          <div id="kargo-tesvik-msj" style="font-size:.78rem;margin-bottom:6px;color:var(--ink-soft);"></div>
+          <div style="height:6px;background:var(--line);border-radius:99px;overflow:hidden;"><div id="kargo-tesvik-bar" style="height:100%;width:0;background:linear-gradient(90deg,#BFA25D,#D8C48E);border-radius:99px;transition:width .5s ease;"></div></div>
+        </div>
+        <div id="sepet-oneri" style="margin-top:18px;display:none;">
+          <div style="font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;">Goes well with it</div>
+          <div id="sepet-oneri-liste"></div>
+        </div>
 
         <div style="display:flex;gap:8px;margin-top:16px;">
           <input type="text" id="kupon-kod" placeholder="Coupon code" style="flex:1;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font:inherit;text-transform:uppercase;">
@@ -179,7 +187,80 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     document.getElementById('sum-kargo').textContent = kargo ? fmt(kargo) : 'Free';
     document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo) * 100) / 100);
+    var kt = document.getElementById('kargo-tesvik');
+    if (c.length && kargo > 0 && indAra < KARGO_ESIK) {
+      kt.style.display = 'block';
+      document.getElementById('kargo-tesvik-msj').innerHTML = 'Add <b>' + fmt(KARGO_ESIK - indAra) + '</b> more for <b>free shipping</b> 🚚';
+      document.getElementById('kargo-tesvik-bar').style.width = Math.min(100, Math.round(indAra / KARGO_ESIK * 100)) + '%';
+    } else if (c.length && kargo === 0) {
+      kt.style.display = 'block';
+      document.getElementById('kargo-tesvik-msj').innerHTML = 'Your shipping is <b>free</b> 🎉';
+      document.getElementById('kargo-tesvik-bar').style.width = '100%';
+    } else kt.style.display = 'none';
+    oneriCiz();
+    sepetKaydet();
   }
+
+  var ONERI_CFG = null;
+  fetch('/api/config').then(function (r) { return r.ok ? r.json() : null; }).then(function (cfg) { ONERI_CFG = cfg; oneriCiz(); }).catch(function () {});
+  function oneriCiz() {
+    var kutu = document.getElementById('sepet-oneri');
+    if (!ONERI_CFG || !window.omCart) { kutu.style.display = 'none'; return; }
+    var c = window.omCart.get();
+    if (!c.length) { kutu.style.display = 'none'; return; }
+    var adlar = c.map(function (k) { return (k.ad || '').toLowerCase(); });
+    var urunler = (ONERI_CFG.products || []).filter(function (p) {
+      return p.visible !== false && p.price > 0 && p.type !== 'club' && p.type !== 'builder' &&
+        !(typeof p.stok === 'number' && p.stok <= 0) &&
+        !adlar.some(function (a) { return (p.nameEN && a.indexOf(p.nameEN.toLowerCase()) === 0) || (p.nameTR && a.indexOf(p.nameTR.toLowerCase()) === 0); });
+    });
+    function al(id) { return urunler.find(function (p) { return p.id === id; }); }
+    var yagVar = adlar.some(function (a) { return /harvest|olive oil|hasat/.test(a); });
+    var cesniliVar = adlar.some(function (a) { return /infused|çeşnili|cesnili/.test(a); });
+    var sirkeVar = adlar.some(function (a) { return /vinegar|molasses|sirke/.test(a); });
+    var secim = [];
+    if (yagVar && !cesniliVar) secim.push(al('ces-berg') || al('ces-kek'));
+    if (yagVar && !sirkeVar) secim.push(al('sir-nar') || al('sir-bal'));
+    if (!yagVar && sirkeVar) secim.push(al('ay500'));
+    if (cesniliVar && !yagVar) secim.push(al('ay500'));
+    secim = secim.filter(Boolean).slice(0, 2);
+    if (!secim.length) secim = urunler.filter(function (p) { return ['ay500', 'ces-berg', 'sir-nar'].indexOf(p.id) !== -1; }).slice(0, 2);
+    if (!secim.length) { kutu.style.display = 'none'; return; }
+    kutu.style.display = 'block';
+    document.getElementById('sepet-oneri-liste').innerHTML = secim.map(function (p) {
+      return '<div style="display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff;">' +
+        '<img src="' + p.img + '" alt="" style="width:38px;height:52px;object-fit:contain;background:#FAF9F6;border-radius:8px;padding:3px;">' +
+        '<div style="flex:1;min-width:0;"><div style="font-size:.84rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (p.nameEN || p.nameTR) + '</div>' +
+        '<div style="font-size:.76rem;color:var(--ink-soft);">₺' + Number(p.price).toLocaleString('tr-TR') + ' ' + (p.unitEN || p.unitTR || '') + '</div></div>' +
+        '<button type="button" class="btn btn-outline btn-sm oneri-ekle" data-id="' + p.id + '" style="white-space:nowrap;padding:7px 14px;font-size:.78rem;">+ Add</button></div>';
+    }).join('');
+  }
+  document.getElementById('sepet-oneri-liste').addEventListener('click', function (e) {
+    if (!e.target.classList.contains('oneri-ekle') || !ONERI_CFG) return;
+    var p = (ONERI_CFG.products || []).find(function (x) { return x.id === e.target.dataset.id; });
+    if (!p) return;
+    var hacim = String(p.unitEN || p.unitTR || '').replace(/^\s*\/\s*/, '').trim();
+    var c = window.omCart.get();
+    c.push({ ad: (p.nameEN || p.nameTR) + (hacim ? ' · ' + hacim : ''), fiyat: p.price, adet: 1, img: p.img, kdv: (p.kdv == null ? 1 : p.kdv), hacim: hacim, kod: p.id });
+    window.omCart.save(c);
+    render();
+  });
+
+  // Abandoned cart: note the cart server-side when the visitor's email is known
+  var spZaman = null;
+  function sepetKaydet() {
+    clearTimeout(spZaman);
+    spZaman = setTimeout(function () {
+      var e = (typeof OM_UYE === 'object' && OM_UYE && OM_UYE.eposta) || (document.getElementById('co-eposta') || {}).value || '';
+      e = String(e).trim();
+      if (e.indexOf('@') === -1) return;
+      fetch('/api/sepet-kayit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eposta: e, kalemler: window.omCart ? window.omCart.get() : [] })
+      }).catch(function () {});
+    }, 2500);
+  }
+  document.getElementById('co-eposta').addEventListener('blur', sepetKaydet);
 
   function kuponDogrula(kod, sessiz) {
     var msj = document.getElementById('kupon-msj');

@@ -102,6 +102,36 @@
   </div>
 </section>
 
+<section class="block tight" id="yorum-bolum" style="display:none;">
+  <div class="container" style="max-width:720px;">
+    <div class="sec-head"><div class="kicker">Reviews</div><h2 id="yb-baslik"></h2></div>
+    <div id="yb-liste"></div>
+    <p style="font-size:.8rem;color:var(--ink-soft);margin-top:14px;">Bought this product? <a class="link-arrow" href="hesap-en.html">Review it from your account and earn points →</a></p>
+  </div>
+</section>
+<script>
+(function () {
+  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var id = new URLSearchParams(location.search).get('id');
+  if (!id) return;
+  fetch('/api/yorumlar?urun=' + encodeURIComponent(id))
+    .then(function (r) { return r.json(); })
+    .then(function (v) {
+      if (!v.say) return;
+      document.getElementById('yorum-bolum').style.display = '';
+      document.getElementById('yb-baslik').innerHTML = '★ ' + v.ortalama + ' <small style="font-size:.95rem;color:var(--ink-soft);font-weight:400;">/ 5 · ' + v.say + ' reviews</small>';
+      document.getElementById('yb-liste').innerHTML = v.yorumlar.map(function (y) {
+        var yl = '';
+        for (var i = 1; i <= 5; i++) yl += '<span style="color:' + (i <= y.yildiz ? '#BFA25D' : '#E4E1DA') + ';">★</span>';
+        return '<div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:12px;">' +
+          '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;"><b style="font-size:.9rem;">' + esc(y.ad) +
+          (y.dogrulanmis ? ' <span style="color:#16a34a;font-size:.72rem;font-weight:600;">✓ verified purchase</span>' : '') + '</b><span>' + yl + '</span></div>' +
+          '<p style="font-size:.88rem;line-height:1.6;margin:0;white-space:pre-wrap;">' + esc(y.metin) + '</p></div>';
+      }).join('');
+    })
+    .catch(function () {});
+})();
+</script>
 <div id="om-footer"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -198,7 +228,13 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.dataset.pid = p.id || id;
       btn.dataset.volume = String(p.unitEN || p.unitTR || '').replace(/^\s*\/\s*/, '').trim();
       btn.dataset.img = p.img || '';
-      if (p.price > 0) {
+      if (typeof p.stok === 'number' && p.stok <= 0) {
+        document.getElementById('fiyat-tek').textContent = p.price > 0 ? '₺' + p.price.toLocaleString('tr-TR') : '';
+        btn.style.display = 'none';
+        var yk = document.getElementById('dp-yakinda');
+        yk.textContent = 'Sold out — back with the new harvest';
+        yk.style.display = 'inline-block';
+      } else if (p.price > 0) {
         var f = p.price.toLocaleString('tr-TR');
         document.getElementById('fiyat-tek').textContent = '₺' + f;
         btn.textContent = 'Add to Bag · ₺' + f;

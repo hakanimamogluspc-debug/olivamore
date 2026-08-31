@@ -113,6 +113,96 @@ function kampanyaArkaplan(aboneler, konu, metin) {
   })();
 }
 
+/* ---------- e-posta otomasyonları ---------- */
+function otomasyonAyar() {
+  return oku('otomasyon.json', {
+    sepet: { aktif: true, saat: 24, konu: 'Sepetindekiler seni bekliyor 🫒', metin: 'Merhaba,\n\nSepetinde birkaç güzel şişe kalmış. Hasat sınırlı; tükenmeden tamamlamak istersen sepetin seni bekliyor:\nhttps://olivamore.de/sepet\n\nAfiyet olsun,\nOlivamore' },
+    hosgeldin: { aktif: true, konu: 'Olivamore sofrasına hoş geldin', metin: 'Merhaba,\n\nAramıza hoş geldin! Ayvalık bahçemizden sofrana uzanan yolculuğu artık birlikte izleyeceğiz. Hangi yağın sana göre olduğunu merak ediyorsan 90 saniyelik damak testimizi dene:\nhttps://olivamore.de/damak-testi\n\nAfiyet olsun,\nOlivamore' },
+    tekrar: { aktif: true, gun: 35, konu: 'Şişenin dibi görünmüş olmalı 🫒', metin: 'Merhaba,\n\nSon siparişinin üzerinden bir süre geçti; yağın azalmıştır diye düşündük. Aynı hasattan stoklar sürerken tazelemek istersen:\nhttps://olivamore.de/koleksiyon\n\nAfiyet olsun,\nOlivamore' }
+  });
+}
+function aboneVeyaUye(eposta) {
+  const e = String(eposta || '').toLowerCase();
+  if (oku('bulten.json', []).some(a => (a.eposta || '').toLowerCase() === e)) return true;
+  return oku('uyeler.json', []).some(u => u.eposta === e);
+}
+function otomasyonPosta(kime, konu, metin) {
+  const link = 'https://olivamore.de/api/bulten-cik?e=' + encodeURIComponent(kime) + '&t=' + bultenImza(kime);
+  epostaGonder(kime, konu, metin + '\n\n—\nBu e-postayı Olivamore ile paylaştığınız adrese gönderdik.\nBenzer e-postaları almamak için: ' + link);
+}
+function otomasyonCalistir() {
+  if (!epostaServisiVar()) return;
+  const ayar = otomasyonAyar();
+  const simdi = Date.now();
+  // 1) Terk edilmiş sepet hatırlatması
+  if (ayar.sepet && ayar.sepet.aktif) {
+    const sepetler = oku('sepetler.json', []);
+    let degisti = false;
+    sepetler.forEach(sp => {
+      const yas = simdi - Date.parse(sp.tarih);
+      if (!sp.hatirlatildi && yas > (ayar.sepet.saat || 24) * 3600000 && yas < 7 * 86400000 &&
+        (sp.kalemler || []).length && aboneVeyaUye(sp.eposta)) {
+        const liste = sp.kalemler.map(k => '· ' + k.adet + ' × ' + k.ad).join('\n');
+        otomasyonPosta(sp.eposta, ayar.sepet.konu, ayar.sepet.metin + '\n\nSepetinde:\n' + liste);
+        sp.hatirlatildi = true;
+        degisti = true;
+      }
+    });
+    if (degisti) yaz('sepetler.json', sepetler);
+  }
+  // 2) Tekrar sipariş hatırlatması (teslim edilen siparişten N gün sonra, bir kez)
+  if (ayar.tekrar && ayar.tekrar.aktif) {
+    const siparisler = oku('siparisler.json', []);
+    let degisti = false;
+    siparisler.forEach(s => {
+      if (s.tekrarMail || ['kargolandı', 'tamamlandı'].indexOf(s.durum) === -1) return;
+      const yas = simdi - Date.parse(s.tarih);
+      const esik = (ayar.tekrar.gun || 35) * 86400000;
+      if (yas > esik && yas < esik + 30 * 86400000 && s.musteri && aboneVeyaUye(s.musteri.eposta)) {
+        otomasyonPosta(s.musteri.eposta, ayar.tekrar.konu, 'Merhaba ' + s.musteri.ad + ',\n\n' + ayar.tekrar.metin.replace(/^Merhaba,?\n*/i, ''));
+        s.tekrarMail = true;
+        degisti = true;
+      }
+    });
+    if (degisti) yaz('siparisler.json', siparisler);
+  }
+}
+setInterval(otomasyonCalistir, 30 * 60000);
+setTimeout(otomasyonCalistir, 20000);
+
+/* ---------- stok takibi (cms.json içindeki ürünlerde "stok" alanı) ---------- */
+function urunKaydi(cfg, ad) {
+  const urunler = (cfg && cfg.products) || [];
+  return urunler.find(p => (p.nameTR && ad.indexOf(p.nameTR) === 0) || (p.nameEN && ad.indexOf(p.nameEN) === 0));
+}
+// Yeterliyse stoğu düşer; yetersizse {hata} döner. Stok alanı olmayan ürün sınırsız sayılır.
+function stokDus(kalemler) {
+  const cfg = oku('cms.json', {});
+  for (const k of kalemler) {
+    const p = urunKaydi(cfg, k.ad);
+    if (p && typeof p.stok === 'number' && p.stok < k.adet) {
+      return { hata: '"' + k.ad + '" için stok yetersiz' + (p.stok > 0 ? ' (kalan: ' + p.stok + ' adet).' : ' (tükendi).') };
+    }
+  }
+  kalemler.forEach(k => {
+    const p = urunKaydi(cfg, k.ad);
+    if (p && typeof p.stok === 'number') p.stok = Math.max(0, p.stok - k.adet);
+  });
+  yaz('cms.json', cfg);
+  return {};
+}
+// İptal/iade/ödeme başarısız → stok geri eklenir (sipariş başına bir kez)
+function stokGeriEkle(s) {
+  if (!s || s.stokIade) return;
+  const cfg = oku('cms.json', {});
+  (s.kalemler || []).forEach(k => {
+    const p = urunKaydi(cfg, k.ad);
+    if (p && typeof p.stok === 'number') p.stok += k.adet;
+  });
+  yaz('cms.json', cfg);
+  s.stokIade = true;
+}
+
 /* ---------- üye sistemi (uyeler.json) ---------- */
 function sifreHashle(sifre, tuz) { return crypto.scryptSync(String(sifre), tuz, 64).toString('hex'); }
 function uyeBul(req) {
@@ -139,11 +229,12 @@ function puanHesapla(eposta) {
     if ((s.musteri && (s.musteri.eposta || '').toLowerCase()) === e &&
       ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1) harcama += s.toplam;
   });
-  return Math.floor(harcama * 0.02); // her ₺100 harcama = 2 puan (1 puan = ₺1)
+  const u = oku('uyeler.json', []).find(x => x.eposta === e);
+  return Math.floor(harcama * 0.02) + ((u && u.bonusPuan) || 0); // her ₺50 = 1 puan + bonuslar (yorum vb.)
 }
 /* Sadakat seviyeleri (panelden düzenlenir): puan eşiği → üye indirim oranı (%) */
 function uyeAyar() {
-  return oku('uye-ayar.json', {
+  const a = oku('uye-ayar.json', {
     seviyeler: [
       { puan: 0, oran: 0, ad: 'Fidan' },
       { puan: 100, oran: 3, ad: 'Dal' },
@@ -151,6 +242,8 @@ function uyeAyar() {
       { puan: 500, oran: 8, ad: 'Bahçe' }
     ]
   });
+  if (a.yorumPuan == null) a.yorumPuan = 10;
+  return a;
 }
 function uyeOran(u) {
   const puan = puanHesapla(u.eposta);
@@ -237,7 +330,24 @@ const sunucu = http.createServer(async (req, res) => {
       if (!liste.find(x => x.eposta === g.eposta)) {
         liste.unshift({ tarih: new Date().toISOString(), eposta: temiz(g.eposta, 200), kaynak: temiz(g.kaynak, 60) });
         yaz('bulten.json', liste.slice(0, 20000));
+        // Hoş geldin otomasyonu (yalnız yeni abonelere)
+        const oa = otomasyonAyar();
+        if (oa.hosgeldin && oa.hosgeldin.aktif) otomasyonPosta(g.eposta, oa.hosgeldin.konu, oa.hosgeldin.metin);
       }
+      return json(res, 200, { tamam: true });
+    }
+
+    /* Terk edilmiş sepet anlık görüntüsü (e-postası bilinen ziyaretçi için) */
+    if (req.method === 'POST' && yol === '/api/sepet-kayit') {
+      const g = await govde(req, 1);
+      if (!epostaMi(g.eposta)) return json(res, 200, { tamam: true }); // sessizce geç
+      const e = temiz(g.eposta, 200).toLowerCase();
+      let sepetler = oku('sepetler.json', []).filter(x => x.eposta !== e);
+      const kal = Array.isArray(g.kalemler) ? g.kalemler.slice(0, 50).map(k => ({
+        ad: temiz(k.ad, 200), adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1))
+      })).filter(k => k.ad) : [];
+      if (kal.length) sepetler.unshift({ eposta: e, kalemler: kal, tarih: new Date().toISOString(), hatirlatildi: false });
+      yaz('sepetler.json', sepetler.slice(0, 2000));
       return json(res, 200, { tamam: true });
     }
 
@@ -285,6 +395,9 @@ const sunucu = http.createServer(async (req, res) => {
         adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1)), img: temiz(k.img, 300),
         kdv: Math.min(20, Math.max(0, parseFloat(k.kdv) || 1))
       }));
+      // Stok kontrolü + düşümü (yetersizse sipariş alınmaz)
+      const stokSonuc = stokDus(kalemler);
+      if (stokSonuc.hata) return json(res, 400, { hata: stokSonuc.hata });
       // Fiyatlar KDV HARİÇ sabittir; KDV oranına göre üzerine eklenir
       const araToplam = kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0);
       // Kupon (sunucu tarafında doğrulanır; kullanım sayacı artar)
@@ -335,6 +448,9 @@ const sunucu = http.createServer(async (req, res) => {
         kdvToplam: kdvToplam, kargo: kargo, toplam: toplam
       });
       yaz('siparisler.json', siparisler.slice(0, 5000));
+      // Sipariş tamamlandı → terk edilmiş sepet kaydı silinir
+      const spListe = oku('sepetler.json', []).filter(x => x.eposta !== temiz(m.eposta, 200).toLowerCase());
+      yaz('sepetler.json', spListe);
       if (odemeYolu === 'kart') {
         // iyzico Checkout Form başlat; müşteri ödeme sayfasına yönlendirilir
         const parcalar = temiz(m.ad, 120).split(/\s+/);
@@ -365,7 +481,7 @@ const sunucu = http.createServer(async (req, res) => {
           console.error('[iyzico]', y && y.errorMessage);
         } catch (e) { console.error('[iyzico]', e.message); }
         const s = siparisler.find(x => x.no === no);
-        if (s) { s.durum = 'odeme-basarisiz'; yaz('siparisler.json', siparisler); }
+        if (s) { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', siparisler); }
         return json(res, 502, { hata: 'Ödeme sayfası açılamadı; lütfen tekrar dene veya Havale/EFT seç.' });
       }
       epostaBildir('Yeni sipariş ' + no + ' · ₺' + toplam.toLocaleString('tr-TR'),
@@ -421,6 +537,7 @@ const sunucu = http.createServer(async (req, res) => {
           araToplam: s.araToplam, indirim: s.indirim || 0, kuponKod: (s.kupon && s.kupon.kod) || '',
           kdvToplam: s.kdvToplam, kargo: s.kargo, toplam: s.toplam,
           kargoFirma: s.kargoFirma || '', kargoNo: s.kargoNo || '',
+          partiKod: s.partiKod || '',
           iadeDurum: s.iade ? s.iade.durum : '',
           kalemler: (s.kalemler || []).map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, img: k.img || '' }))
         }));
@@ -431,6 +548,53 @@ const sunucu = http.createServer(async (req, res) => {
         adresler: b.u.adresler || [],
         siparisler: siparisler
       });
+    }
+
+    /* Onaylı yorumlar (herkese açık): /api/yorumlar?urun=ID */
+    if (req.method === 'GET' && yol === '/api/yorumlar') {
+      const u = new URL(req.url, 'http://x');
+      const urunId = String(u.searchParams.get('urun') || '').slice(0, 40);
+      const liste = oku('yorumlar.json', [])
+        .filter(y => y.durum === 'onaylandı' && (!urunId || y.urunId === urunId))
+        .slice(0, 100)
+        .map(y => {
+          const parcalar = String(y.ad || '').trim().split(/\s+/);
+          const gizliAd = parcalar[0] + (parcalar[1] ? ' ' + parcalar[1][0] + '.' : '');
+          return { ad: gizliAd, yildiz: y.yildiz, metin: y.metin, tarih: y.tarih, dogrulanmis: !!y.dogrulanmis };
+        });
+      const ort = liste.length ? Math.round(liste.reduce((t, y) => t + y.yildiz, 0) / liste.length * 10) / 10 : 0;
+      return json(res, 200, { yorumlar: liste, ortalama: ort, say: liste.length });
+    }
+    /* Yorum gönder (üye; ürün adıyla eşleştirilir) */
+    if (req.method === 'POST' && yol === '/api/yorum') {
+      const b = uyeBul(req);
+      if (!b) return json(res, 401, { hata: 'Yorum yapmak için giriş yapmalısın.' });
+      const g = await govde(req, 1);
+      const yildiz = Math.min(5, Math.max(1, parseInt(g.yildiz, 10) || 0));
+      const metin = temiz(g.metin, 1000);
+      if (!g.yildiz || !metin) return json(res, 400, { hata: 'Yıldız ve yorum metni zorunlu.' });
+      const cfg = oku('cms.json', {});
+      const urun = urunKaydi(cfg, temiz(g.urunAd, 200));
+      if (!urun) return json(res, 400, { hata: 'Ürün bulunamadı.' });
+      // Satın alma doğrulaması
+      const dogrulanmis = oku('siparisler.json', []).some(s =>
+        (s.musteri && (s.musteri.eposta || '').toLowerCase()) === b.u.eposta &&
+        ['iptal', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1 &&
+        (s.kalemler || []).some(k => k.ad.indexOf(urun.nameTR) === 0 || (urun.nameEN && k.ad.indexOf(urun.nameEN) === 0)));
+      const yorumlar = oku('yorumlar.json', []);
+      const eski = yorumlar.find(y => y.eposta === b.u.eposta && y.urunId === urun.id);
+      if (eski) {
+        eski.yildiz = yildiz; eski.metin = metin; eski.tarih = new Date().toISOString(); eski.durum = 'bekliyor';
+      } else {
+        yorumlar.unshift({
+          id: 'Y-' + Date.now(), urunId: urun.id, urunAd: urun.nameTR,
+          eposta: b.u.eposta, ad: b.u.ad, yildiz: yildiz, metin: metin,
+          tarih: new Date().toISOString(), durum: 'bekliyor', dogrulanmis: dogrulanmis
+        });
+      }
+      yaz('yorumlar.json', yorumlar.slice(0, 5000));
+      epostaBildir('Yeni ürün yorumu bekliyor: ' + urun.nameTR, b.u.ad + ' · ' + yildiz + '★\n\n' + metin + '\n\nPanelden onaylayabilirsin: https://olivamore.de/panel');
+      return json(res, 200, { tamam: true, mesaj: 'Yorumun alındı; onaylandığında yayınlanır' + (uyeAyar().yorumPuan ? ' ve ' + uyeAyar().yorumPuan + ' puan kazanırsın' : '') + '.' });
     }
 
     if (req.method === 'POST' && yol === '/api/uye/adres-kaydet') {
@@ -498,7 +662,7 @@ const sunucu = http.createServer(async (req, res) => {
         }
         return yonlendir(sepetYolu + '#odeme-ok-' + s.no);
       }
-      if (s && s.durum === 'odeme-bekliyor') { s.durum = 'odeme-basarisiz'; yaz('siparisler.json', liste); }
+      if (s && s.durum === 'odeme-bekliyor') { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', liste); }
       return yonlendir(sepetYolu + '#odeme-hata');
     }
 
@@ -557,6 +721,7 @@ const sunucu = http.createServer(async (req, res) => {
       if (g.kargoNo !== undefined) s.kargoNo = temiz(g.kargoNo, 60);
       if (g.kargoFirma !== undefined) s.kargoFirma = temiz(g.kargoFirma, 40);
       if (g.adminNot !== undefined) s.adminNot = temiz(g.adminNot, 1000);
+      if (g.partiKod !== undefined) s.partiKod = temiz(g.partiKod, 30).toUpperCase();
       // İade yönetimi: {iade:{islem:'talep'|'onay'|'red', tutar, neden}}
       if (g.iade && g.iade.islem) {
         const islem = temiz(g.iade.islem, 20);
@@ -574,6 +739,8 @@ const sunucu = http.createServer(async (req, res) => {
           s.iade.durum = 'reddedildi';
         }
       }
+      // İptal/iade → stok geri eklenir
+      if (['iptal', 'iade', 'odeme-basarisiz'].indexOf(s.durum) !== -1) stokGeriEkle(s);
       // İşlem geçmişi
       s.gecmis = s.gecmis || [];
       const kayit = [];
@@ -649,11 +816,60 @@ const sunucu = http.createServer(async (req, res) => {
         .map(s => ({ puan: Math.max(0, parseInt(s.puan, 10) || 0), oran: Math.min(50, Math.max(0, parseFloat(s.oran) || 0)), ad: temiz(s.ad, 30) }))
         .sort((a, b) => a.puan - b.puan);
       if (!seviyeler.length) return json(res, 400, { hata: 'En az bir seviye gerekli.' });
-      yaz('uye-ayar.json', { seviyeler: seviyeler });
+      const yorumPuan = Math.min(500, Math.max(0, parseInt(g.yorumPuan, 10) || 0));
+      yaz('uye-ayar.json', { seviyeler: seviyeler, yorumPuan: yorumPuan });
       return json(res, 200, { tamam: true, seviyeler: seviyeler });
+    }
+    /* ---- yorum yönetimi (admin) ---- */
+    if (req.method === 'GET' && yol === '/api/admin/yorumlar') {
+      return json(res, 200, oku('yorumlar.json', []));
+    }
+    if (req.method === 'POST' && yol === '/api/admin/yorum-durum') {
+      const g = await govde(req, 1);
+      const yorumlar = oku('yorumlar.json', []);
+      const y = yorumlar.find(x => x.id === temiz(g.id, 30));
+      if (!y) return json(res, 404, { hata: 'Yorum bulunamadı.' });
+      const durum = temiz(g.durum, 20);
+      if (['onaylandı', 'red'].indexOf(durum) === -1) return json(res, 400, { hata: 'Geçersiz durum.' });
+      y.durum = durum;
+      // Onayda bir kez bonus puan
+      if (durum === 'onaylandı' && !y.puanVerildi) {
+        const bonus = uyeAyar().yorumPuan || 0;
+        if (bonus > 0) {
+          const uyeler = oku('uyeler.json', []);
+          const u = uyeler.find(x => x.eposta === y.eposta);
+          if (u) {
+            u.bonusPuan = (u.bonusPuan || 0) + bonus;
+            yaz('uyeler.json', uyeler);
+            y.puanVerildi = true;
+            epostaGonder(y.eposta, 'Yorumun yayında — ' + bonus + ' puan kazandın 🫒',
+              'Merhaba ' + y.ad + ',\n\n"' + y.urunAd + '" için yazdığın yorum yayına alındı ve hesabına ' + bonus + ' puan eklendi (1 puan = ₺1).\n\nTeşekkürler,\nOlivamore');
+          }
+        }
+      }
+      yaz('yorumlar.json', yorumlar);
+      return json(res, 200, { tamam: true });
     }
 
     /* ---- pazarlama ---- */
+    if (req.method === 'GET' && yol === '/api/admin/otomasyon') {
+      return json(res, 200, { ayar: otomasyonAyar(), bekleyenSepet: oku('sepetler.json', []).filter(s => !s.hatirlatildi).length });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/otomasyon') {
+      const g = await govde(req, 1);
+      const mevcut = otomasyonAyar();
+      ['sepet', 'hosgeldin', 'tekrar'].forEach(k => {
+        if (!g[k]) return;
+        mevcut[k] = mevcut[k] || {};
+        mevcut[k].aktif = !!g[k].aktif;
+        if (g[k].konu) mevcut[k].konu = temiz(g[k].konu, 200);
+        if (g[k].metin) mevcut[k].metin = temiz(g[k].metin, 5000);
+        if (k === 'sepet') mevcut[k].saat = Math.min(168, Math.max(1, parseInt(g[k].saat, 10) || 24));
+        if (k === 'tekrar') mevcut[k].gun = Math.min(365, Math.max(7, parseInt(g[k].gun, 10) || 35));
+      });
+      yaz('otomasyon.json', mevcut);
+      return json(res, 200, { tamam: true });
+    }
     if (req.method === 'GET' && yol === '/api/admin/pazarlama') {
       const env = oku('env.json', {});
       return json(res, 200, {
@@ -699,6 +915,24 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, { tamam: true });
     }
 
+    if (req.method === 'GET' && yol === '/api/admin/ozet') {
+      const siparisler = oku('siparisler.json', []);
+      const cfg = oku('cms.json', {});
+      return json(res, 200, {
+        yeniSiparis: siparisler.filter(s => s.durum === 'yeni').length,
+        iadeTalep: siparisler.filter(s => s.iade && s.iade.durum === 'talep').length,
+        odemeBekleyen: siparisler.filter(s => s.durum === 'odeme-bekliyor').length,
+        okunmamisMesaj: oku('mesajlar.json', []).filter(m => !m.okundu).length,
+        dusukStok: ((cfg.products) || []).filter(p => p.visible !== false && typeof p.stok === 'number' && p.stok <= 5).length,
+        bekleyenYorum: oku('yorumlar.json', []).filter(y => y.durum === 'bekliyor').length
+      });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/mesaj-okundu') {
+      const liste = oku('mesajlar.json', []);
+      liste.forEach(m => { m.okundu = true; });
+      yaz('mesajlar.json', liste);
+      return json(res, 200, { tamam: true });
+    }
     if (req.method === 'GET' && yol === '/api/admin/mesajlar') {
       return json(res, 200, oku('mesajlar.json', []));
     }
