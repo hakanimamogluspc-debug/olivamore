@@ -2046,10 +2046,10 @@ footer.site{background:#1B1A18}
 .omx-intro .amblem{height:56px;width:auto;margin-bottom:22px;opacity:.9}
 
 /* Rozet şeridi */
-.omx-rozetler{background:#fff;padding:56px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.omx-rozet-ic{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:30px;text-align:center}
-.omx-rozet-ic img{height:88px;width:auto;margin:0 auto;display:block}
-@media(max-width:700px){.omx-rozet-ic{grid-template-columns:repeat(2,1fr);gap:26px}.omx-rozet-ic img{height:70px}}
+.omx-rozetler{background:#fff;padding:30px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.omx-rozet-ic{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:30px;text-align:center;align-items:center}
+.omx-rozet-ic img{height:140px;width:auto;margin:0 auto;display:block}
+@media(max-width:700px){.omx-rozet-ic{grid-template-columns:repeat(2,1fr);gap:22px}.omx-rozet-ic img{height:104px}}
 
 /* Dönüşümlü split bölümler */
 .omx-split{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;max-width:1140px;margin:0 auto;padding:90px 24px}
