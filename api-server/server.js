@@ -841,7 +841,7 @@ const sunucu = http.createServer(async (req, res) => {
       const uzanti = m[1] ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : m[2];
       const dosya = ad + '.' + uzanti;
       try {
-        require('fs').writeFileSync(require('path').join(IMG_DIZIN, dosya), Buffer.from(m[2], 'base64'));
+        require('fs').writeFileSync(require('path').join(IMG_DIZIN, dosya), Buffer.from(m[3], 'base64'));
         return json(res, 200, { tamam: true, yol: 'assets/img/' + dosya });
       } catch (e) { return json(res, 500, { hata: 'Yazılamadı (izin?).' }); }
     }
