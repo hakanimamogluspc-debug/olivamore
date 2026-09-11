@@ -1859,7 +1859,7 @@ footer.site{background:#1B1A18}
   border:1px solid var(--line);
   transition:background .3s ease,border-color .3s ease;
 }
-.product-edit .refined-card:hover .prod-img{background:#F3EEE2;border-color:#D8C69C;box-shadow:none}
+.product-edit .refined-card:hover .prod-img{background:#fff;border-color:#D8C69C;box-shadow:0 14px 36px rgba(30,28,25,.10)}
 .product-edit .refined-card .add-bag{border-radius:3px;border-color:rgba(39,39,39,.2)}
 .product-edit .refined-card .card-body{padding-top:20px}
 
