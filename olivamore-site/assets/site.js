@@ -187,7 +187,7 @@
             <li><a href="${P('koleksiyon.html')}">${T.fAll}</a></li>
             <li><a href="${P('koleksiyon.html#serin')}">${T.fEvoo}</a></li>
             <li><a href="${P('koleksiyon.html#hediyelik')}">${T.fGift}</a></li>
-            <li><a href="${P('damak-testi.html')}">${EN ? 'Palate Quiz' : 'Damak Pusulası'}</a></li>
+            <li><a href="${P('damak-testi.html')}">${EN ? 'Palate Quiz' : 'Damak Testi'}</a></li>
           </ul>
         </div>
         <div>
