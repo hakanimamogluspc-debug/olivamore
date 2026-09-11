@@ -2,9 +2,10 @@
 # ============================================================
 # OLIVAMORE DEPLOY — GitHub main dalini canliya alir
 # Kullanim (sunucuda): bash /root/olivamore-repo/deploy.sh
-# Ilk kurulumda repoyu klonlar, sonrakilerde gunceller.
-# Sunucuda panelden yuklenen gorseller SILINMEZ (rsync --delete yok).
+# Not: tum govde main() icinde; git pull betigi guncellese de
+# calisan kopya bozulmaz.
 # ============================================================
+main() {
 set -e
 REPO=/root/olivamore-repo
 
@@ -23,6 +24,9 @@ fi
 echo "==> Site dosyalari /var/www/olivamore icine kopyalaniyor..."
 rsync -a "$REPO/olivamore-site/" /var/www/olivamore/
 
+# Panelden gorsel/video yuklenebilmesi icin klasor www-data'ya ait olmali
+chown -R www-data:www-data /var/www/olivamore/assets/img
+
 echo "==> Nginx temiz URL yapilandirmasi..."
 mkdir -p /etc/nginx/snippets
 cp "$REPO/api-server/nginx-temiz-url.conf" /etc/nginx/snippets/olivamore-temiz-url.conf
@@ -38,3 +42,5 @@ fi
 
 nginx -t >/dev/null 2>&1 && systemctl reload nginx
 echo "DEPLOY-TAMAM"
+}
+main "$@"
