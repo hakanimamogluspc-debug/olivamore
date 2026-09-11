@@ -1460,9 +1460,9 @@ button:disabled{cursor:not-allowed;opacity:.62}
   --gold-pale:#F3EEE2;
   --ink:#272727;
   --ink-soft:#5D594F;
-  --cream:#F7F3EA;
-  --paper:#FBF9F4;
-  --line:#E7E0D3;
+  --cream:#FFFFFF;
+  --paper:#FFFFFF;
+  --line:#ECEAE6;
   --radius:8px;
 }
 
