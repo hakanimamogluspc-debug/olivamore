@@ -2074,3 +2074,7 @@ footer.site{background:#1B1A18}
 /* Bölüm başlığı (ızgara üstü, ürün/tarif bölümleri için) */
 .omx-sec-head{text-align:center;margin-bottom:42px}
 .omx-sec-head .omx-h{font-size:clamp(1.6rem,3vw,2.1rem)}
+
+/* Rol kartları: numara kaldırıldı, alt etiket eklendi */
+.role-card h3{margin-top:4px}
+.role-alt{display:block;font-family:'Poppins',sans-serif;font-weight:400;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:2px 0 14px}
