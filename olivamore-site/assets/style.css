@@ -1535,10 +1535,10 @@ header.site{background:rgba(251,249,244,.96);backdrop-filter:blur(16px)}
 
 .section-intro{margin:14px auto 0;color:var(--ink-soft);max-width:560px}
 .role-section{background:var(--paper)}
-.role-cards{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.role-card{padding:44px 34px 40px;color:var(--ink);border-right:1px solid var(--line);transition:background .25s ease;overflow:hidden}
-.role-card:last-child{border-right:0}
-.role-card:hover{background:#fff}
+.role-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.role-card{padding:44px 34px 40px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 36px rgba(30,28,25,.09);transition:transform .3s ease,box-shadow .3s ease;overflow:hidden}
+.role-card:hover{transform:translateY(-6px);box-shadow:0 26px 56px rgba(30,28,25,.16);border-color:#D8C69C}
+.role-card .role-media{border-radius:13px 13px 0 0}
 .role-media{display:block;height:190px;overflow:hidden;background:#E9E3D8}
 .role-media img{width:100%;height:100%;object-fit:cover;transition:transform .55s ease}
 .role-card .role-media{margin:-44px -34px 30px}
