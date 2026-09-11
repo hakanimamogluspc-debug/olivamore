@@ -471,6 +471,22 @@
       const lead = document.querySelector('.hero-light .lead');
       if (t && h1) h1.textContent = t;
       if (l && lead) lead.textContent = l;
+      // Hero medyası: kayan kampanya görselleri + video (panel > Ayarlar'dan yönetilir)
+      const hs = document.getElementById('oh2-slider');
+      if (hs) {
+        const hm = C.heroMedya || {};
+        const resimler = hs.querySelectorAll('.oh2-g');
+        (hm.gorseller || []).forEach((g, i) => { if (g && resimler[i]) resimler[i].src = g; });
+        const vid = document.getElementById('oh2-video');
+        const yedek = document.getElementById('oh2-yedek');
+        if (vid && hm.video) {
+          vid.src = hm.video;
+          vid.style.display = 'block';
+          if (yedek) yedek.style.display = 'none';
+          vid.onerror = () => { vid.style.display = 'none'; if (yedek) yedek.style.display = 'block'; };
+          vid.play && vid.play().catch(() => {});
+        }
+      }
     }
 
     // ---- 3) Sayfa başlıkları/metinleri (page-hero veya koyu hero) ----
@@ -1153,6 +1169,32 @@
       setTimeout(ac, Math.max(3, pp.gecikme || 15) * 1000);
       document.addEventListener('mouseout', e => { if (!e.relatedTarget && e.clientY <= 0) ac(); });
     };
+
+    // Hero kampanya slider'ı (3 görsel, 4.5 sn'de bir; noktalarla elle geçiş)
+    (function () {
+      const hs = document.getElementById('oh2-slider');
+      if (!hs) return;
+      const gs = hs.querySelectorAll('.oh2-g');
+      const nk = document.getElementById('oh2-nokta');
+      if (!gs.length || !nk) return;
+      let i = 0;
+      nk.innerHTML = Array.from(gs).map((_, j) =>
+        `<button type="button" data-j="${j}"${j === 0 ? ' class="on"' : ''} aria-label="${EN ? 'Slide' : 'Görsel'} ${j + 1}"></button>`).join('');
+      function git(j) {
+        gs[i].classList.remove('on'); nk.children[i].classList.remove('on');
+        i = ((j % gs.length) + gs.length) % gs.length;
+        gs[i].classList.add('on'); nk.children[i].classList.add('on');
+      }
+      const azHareket = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let oto = azHareket ? null : setInterval(() => git(i + 1), 4500);
+      nk.addEventListener('click', e => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        if (oto) clearInterval(oto);
+        git(+b.dataset.j);
+        if (!azHareket) oto = setInterval(() => git(i + 1), 4500);
+      });
+    })();
 
     // çerez bandı (KVKK) — bir kez gösterilir
     if (!localStorage.getItem('om-cookie-ok')) {

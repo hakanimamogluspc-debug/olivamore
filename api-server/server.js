@@ -826,19 +826,20 @@ const sunucu = http.createServer(async (req, res) => {
       try {
         const IMG_DIZIN = process.env.OM_WEB_IMG || '/var/www/olivamore/assets/img';
         const dosyalar = require('fs').readdirSync(IMG_DIZIN)
-          .filter(f => /\.(jpe?g|png|webp)$/i.test(f)).sort();
+          .filter(f => /\.(jpe?g|png|webp|mp4|webm)$/i.test(f)).sort();
         return json(res, 200, dosyalar.map(f => 'assets/img/' + f));
       } catch (e) { return json(res, 500, { hata: 'Kütüphane listelenemedi.' }); }
     }
     if (req.method === 'POST' && yol === '/api/admin/gorsel-yukle') {
-      const g = await govde(req, 8);
+      const g = await govde(req, 90); // video yüklemeleri için geniş limit
       const ad = String(g.ad || '').toLowerCase()
         .replace(/[ğ]/g, 'g').replace(/[üu]/g, 'u').replace(/[şs]/g, 's').replace(/[ıi]/g, 'i').replace(/[öo]/g, 'o').replace(/[ç]/g, 'c')
         .replace(/[^a-z0-9-_]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
-      const m = String(g.veri || '').match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
-      if (!ad || !m) return json(res, 400, { hata: 'Geçersiz dosya.' });
+      const m = String(g.veri || '').match(/^data:(?:image\/(jpeg|png|webp)|video\/(mp4|webm));base64,([A-Za-z0-9+/=]+)$/);
+      if (!ad || !m) return json(res, 400, { hata: 'Geçersiz dosya (jpg/png/webp görsel veya mp4/webm video olmalı).' });
       const IMG_DIZIN = process.env.OM_WEB_IMG || '/var/www/olivamore/assets/img';
-      const dosya = ad + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]);
+      const uzanti = m[1] ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : m[2];
+      const dosya = ad + '.' + uzanti;
       try {
         require('fs').writeFileSync(require('path').join(IMG_DIZIN, dosya), Buffer.from(m[2], 'base64'));
         return json(res, 200, { tamam: true, yol: 'assets/img/' + dosya });
@@ -847,7 +848,7 @@ const sunucu = http.createServer(async (req, res) => {
     if (req.method === 'POST' && yol === '/api/admin/gorsel-sil') {
       const g = await govde(req, 1);
       const ad = String(g.ad || '').replace(/^assets\/img\//, '');
-      if (!/^[a-z0-9-_.]+\.(jpe?g|png|webp)$/i.test(ad)) return json(res, 400, { hata: 'Geçersiz ad.' });
+      if (!/^[a-z0-9-_.]+\.(jpe?g|png|webp|mp4|webm)$/i.test(ad)) return json(res, 400, { hata: 'Geçersiz ad.' });
       const IMG_DIZIN = process.env.OM_WEB_IMG || '/var/www/olivamore/assets/img';
       try { require('fs').unlinkSync(require('path').join(IMG_DIZIN, ad)); } catch (e) { }
       return json(res, 200, { tamam: true });

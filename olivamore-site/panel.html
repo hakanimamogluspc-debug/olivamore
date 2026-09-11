@@ -380,7 +380,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     <section class="view" id="view-library">
       <div class="note"><b>Görsel Kütüphanesi:</b> Buraya yüklediklerin sunucuya dosya olarak kaydedilir ve tüm görsel seçicilerde ("🖼 Galeri") anında görünür. Görseller otomatik küçültülür; sayfa hızını etkilemez.</div>
       <div class="panel" style="margin-bottom:16px;">
-        <label class="btn btn-gold" style="cursor:pointer;">+ Görsel Yükle (çoklu seçebilirsin)<input type="file" id="lib-file" accept="image/*" multiple style="display:none;"></label>
+        <label class="btn btn-gold" style="cursor:pointer;">+ Görsel / Video Yükle (çoklu seçebilirsin)<input type="file" id="lib-file" accept="image/*,video/mp4,video/webm" multiple style="display:none;"></label>
         <span id="lib-durum" style="margin-left:12px;font-size:.85rem;color:#8a8377;"></span>
       </div>
       <div id="lib-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;"></div>
@@ -414,6 +414,17 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         </div>
         <div class="field"><label>Tanıtım Metni (TR)</label><textarea id="f-heroLeadTR" rows="3"></textarea></div>
         <div class="field"><label>Tanıtım Metni (EN)</label><textarea id="f-heroLeadEN" rows="3"></textarea></div>
+      </div>
+      <div class="panel">
+        <h2>Ana Sayfa Hero Medyası</h2>
+        <div class="desc">Hero alanının <b>sol yarısında sırayla kayan 3 kampanya görseli</b>, <b>sağ yarısında video</b> gösterilir. Videoyu önce <b>Görseller</b> sekmesinden yükle (mp4/webm, en fazla 60 MB), sonra buradan seç. Video seçilmezse sağ yarıda zeytinlik fotoğrafı görünür.</div>
+        <div class="field"><label>Video (kütüphaneden seç)</label><select id="f-heroVideoSec"><option value="">— video seçilmedi —</option></select></div>
+        <div class="field"><label>veya harici video adresi (isteğe bağlı, .mp4)</label><input type="text" id="f-heroVideo" placeholder="https://..."></div>
+        <div id="hg-medya">
+          <div class="field"><label>Kayan Görsel 1</label><div id="hg1"></div></div>
+          <div class="field"><label>Kayan Görsel 2</label><div id="hg2"></div></div>
+          <div class="field"><label>Kayan Görsel 3</label><div id="hg3"></div></div>
+        </div>
       </div>
       <div class="panel">
         <h2>Hediye Kutusu Oluşturucu</h2>
@@ -477,6 +488,10 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     brandCopySource: 'nature-balance@2026-08-21',
     gift3: 1600, gift5: 1500,
     pdp: { ay750: 1250 },
+    heroMedya: {
+      video: '',
+      gorseller: ['assets/img/marka/marka-yemek.jpg', 'assets/img/hediye-seti-5li.jpg', 'assets/img/marka/marka-sise.jpg']
+    },
     popup: {
       aktif: false, gecikme: 15, kupon: '',
       baslikTR: 'Sofrana hoş geldin', baslikEN: 'Welcome to the table',
@@ -572,6 +587,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     ['announceTR','announceEN','heroTitleTR','heroTitleEN','heroLeadTR','heroLeadEN','gift3','gift5'].forEach(function (k) { if (saved[k] !== undefined) c[k] = saved[k]; });
     if (saved.pdp) c.pdp = Object.assign(c.pdp, saved.pdp);
     if (saved.popup) c.popup = Object.assign(c.popup, saved.popup);
+    if (saved.heroMedya) c.heroMedya = Object.assign(c.heroMedya, saved.heroMedya);
     if (saved.modules) c.modules = Object.assign(c.modules, saved.modules);
     if (saved.pages) Object.keys(c.pages).forEach(function (k) { if (saved.pages[k]) c.pages[k] = Object.assign(c.pages[k], saved.pages[k]); });
     if (saved.products) c.products = saved.products;
@@ -683,7 +699,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   }
 
   /* Görsel seçici olayları (ürün + blog listelerinde ortak) */
-  ['products-list', 'blogs-list'].forEach(function (hostId) {
+  ['products-list', 'blogs-list', 'hg-medya'].forEach(function (hostId) {
     var host = document.getElementById(hostId);
     // Bilgisayardan dosya seçildi
     host.addEventListener('change', function (e) {
@@ -1047,6 +1063,16 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     document.getElementById('f-heroLeadEN').value = C.heroLeadEN;
     document.getElementById('f-gift3').value = C.gift3;
     document.getElementById('f-gift5').value = C.gift5;
+    var hm = C.heroMedya || {};
+    var vsec = document.getElementById('f-heroVideoSec');
+    vsec.innerHTML = '<option value="">— video seçilmedi —</option>' + VIDEOS.map(function (v) {
+      return '<option value="' + v + '"' + (v === hm.video ? ' selected' : '') + '>🎬 ' + v.replace('assets/img/', '') + '</option>';
+    }).join('');
+    document.getElementById('f-heroVideo').value = (hm.video && VIDEOS.indexOf(hm.video) === -1) ? hm.video : '';
+    [['hg1', 'h2g1', 0], ['hg2', 'h2g2', 1], ['hg3', 'h2g3', 2]].forEach(function (x) {
+      var varsayilan = ['assets/img/marka/marka-yemek.jpg', 'assets/img/hediye-seti-5li.jpg', 'assets/img/marka/marka-sise.jpg'][x[2]];
+      document.getElementById(x[0]).innerHTML = imgPicker((hm.gorseller || [])[x[2]] || varsayilan, x[1]);
+    });
     var pp = C.popup || {};
     document.getElementById('pp-aktif').value = pp.aktif ? '1' : '0';
     document.getElementById('pp-gecikme').value = pp.gecikme || 15;
@@ -1084,6 +1110,14 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     C.gift3 = parseInt(document.getElementById('f-gift3').value, 10) || 0;
     C.gift5 = parseInt(document.getElementById('f-gift5').value, 10) || 0;
     C.pdp.ay750 = parseInt(document.getElementById('f-pdp750').value, 10) || 0;
+    C.heroMedya = {
+      video: document.getElementById('f-heroVideo').value.trim() || document.getElementById('f-heroVideoSec').value,
+      gorseller: ['h2g1', 'h2g2', 'h2g3'].map(function (cls) {
+        var veri = document.querySelector('.' + cls + '-data');
+        var sec = document.querySelector('.' + cls);
+        return (veri && veri.value) || (sec && sec.value) || '';
+      }).filter(Boolean)
+    };
     C.popup = {
       aktif: document.getElementById('pp-aktif').value === '1',
       gecikme: Math.min(120, Math.max(3, parseInt(document.getElementById('pp-gecikme').value, 10) || 15)),
@@ -1815,13 +1849,17 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   });
 
   /* ================== GÖRSEL KÜTÜPHANESİ (dosya bazlı) ================== */
+  var VIDEOS = []; // kütüphanedeki videolar (mp4/webm)
+  function videoMu(yol) { return /\.(mp4|webm)$/i.test(yol); }
   function renderLibrary() {
     var g = document.getElementById('lib-grid');
     if (!g) return;
-    g.innerHTML = IMAGES.map(function (i) {
-      return '<div style="text-align:center;">' +
-        '<img src="' + i + '" loading="lazy" style="width:100%;height:120px;object-fit:contain;background:#f6f3ec;border:1px solid #e8e2d5;border-radius:10px;">' +
-        '<div style="font-size:.68rem;color:#8a8377;margin:6px 0 4px;word-break:break-all;">' + i.replace('assets/img/', '') + '</div>' +
+    g.innerHTML = IMAGES.concat(VIDEOS).map(function (i) {
+      var onizleme = videoMu(i)
+        ? '<video src="' + i + '" preload="metadata" muted style="width:100%;height:120px;object-fit:cover;background:#111;border:1px solid #e8e2d5;border-radius:10px;"></video>'
+        : '<img src="' + i + '" loading="lazy" style="width:100%;height:120px;object-fit:contain;background:#f6f3ec;border:1px solid #e8e2d5;border-radius:10px;">';
+      return '<div style="text-align:center;">' + onizleme +
+        '<div style="font-size:.68rem;color:#8a8377;margin:6px 0 4px;word-break:break-all;">' + (videoMu(i) ? '🎬 ' : '') + i.replace('assets/img/', '') + '</div>' +
         (MODE === 'api' ? '<button type="button" class="btn btn-danger btn-sm lib-sil" data-yol="' + i + '">Sil</button>' : '') +
         '</div>';
     }).join('');
@@ -1831,7 +1869,10 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     fetch('/api/admin/gorseller')
       .then(function (r) { return r.json(); })
       .then(function (l) {
-        if (Array.isArray(l) && l.length) { IMAGES.length = 0; l.forEach(function (x) { IMAGES.push(x); }); }
+        if (Array.isArray(l) && l.length) {
+          IMAGES.length = 0; VIDEOS.length = 0;
+          l.forEach(function (x) { (videoMu(x) ? VIDEOS : IMAGES).push(x); });
+        }
         var mg = document.getElementById('im-grid'); if (mg) mg.innerHTML = ''; // modal önbelleğini tazele
         renderLibrary(); if (cb) cb();
       })
@@ -1846,7 +1887,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       if (i >= fl.length) { durum.textContent = '✓ ' + fl.length + ' görsel yüklendi'; libYenile(renderAll); return; }
       var f = fl[i];
       durum.textContent = (i + 1) + '/' + fl.length + ' yükleniyor: ' + f.name;
-      resizeImage(f, function (dataUrl) {
+      function gonder(dataUrl) {
         fetch('/api/admin/gorsel-yukle', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ad: f.name.replace(/\.[^.]+$/, ''), veri: dataUrl })
@@ -1857,7 +1898,16 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
             i++; sirada();
           })
           .catch(function () { durum.textContent = 'Bağlantı hatası: ' + f.name; });
-      });
+      }
+      if (f.type.indexOf('video/') === 0) {
+        if (f.size > 60 * 1024 * 1024) { durum.textContent = f.name + ' çok büyük (en fazla 60 MB video).'; return; }
+        durum.textContent = (i + 1) + '/' + fl.length + ' video yükleniyor (büyük dosya, bekle): ' + f.name;
+        var okuyucu = new FileReader();
+        okuyucu.onload = function () { gonder(okuyucu.result); };
+        okuyucu.readAsDataURL(f);
+      } else {
+        resizeImage(f, gonder);
+      }
     })();
     this.value = '';
   });
