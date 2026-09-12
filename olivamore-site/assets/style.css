@@ -2051,16 +2051,14 @@ footer.site{background:#1B1A18}
 .omx-rozet-ic img{height:140px;width:auto;margin:0 auto;display:block}
 @media(max-width:700px){.omx-rozet-ic{grid-template-columns:repeat(2,1fr);gap:22px}.omx-rozet-ic img{height:104px}}
 
-/* Ödüller bandı */
-.omx-oduller{background:#fff;padding:74px 20px 66px}
-.odul-ic{display:grid;grid-template-columns:repeat(3,1fr);gap:44px;max-width:1000px;margin:0 auto;align-items:start;text-align:center}
-.odul{margin:0}
-.odul img{height:180px;width:auto;margin:0 auto 18px;display:block;filter:drop-shadow(0 12px 26px rgba(30,28,25,.16))}
-.odul figcaption b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:#1a1a1a;margin-bottom:6px}
-.odul figcaption span{font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:300;color:#666;line-height:1.6}
+/* Ödül rozetleri: hero ile beyaz alanın birleşim çizgisine ortalı */
+.omx-oduller{background:transparent;padding:0 20px;position:relative;z-index:6;margin-top:-82px;pointer-events:none}
+.odul-serit{display:flex;justify-content:center;align-items:center;gap:54px;max-width:1000px;margin:0 auto}
+.odul-serit img{height:164px;width:auto;display:block;filter:drop-shadow(0 14px 28px rgba(30,28,25,.28))}
 @media(max-width:760px){
-  .odul-ic{grid-template-columns:1fr;gap:36px}
-  .odul img{height:150px}
+  .omx-oduller{margin-top:-52px}
+  .odul-serit{gap:22px}
+  .odul-serit img{height:104px}
 }
 
 /* Ana sayfa ürün kaydırıcısı */
