@@ -2055,6 +2055,7 @@ footer.site{background:#1B1A18}
 .omx-split{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;max-width:1140px;margin:0 auto;padding:90px 24px}
 .omx-split .foto{position:relative;align-self:stretch;min-height:340px}
 .omx-split .foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;box-shadow:0 24px 60px rgba(30,28,25,.16)}
+#hediye .foto img{object-fit:contain;box-shadow:none}
 .omx-split .icerik .omx-p{margin-bottom:26px}
 .omx-split .omx-adimlar{display:flex;gap:26px;margin:6px 0 28px;flex-wrap:wrap}
 .omx-split .omx-adimlar span{font-family:'Poppins',sans-serif;font-size:.78rem;color:#555;letter-spacing:.04em}
