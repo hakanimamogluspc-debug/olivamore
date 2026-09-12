@@ -2051,6 +2051,18 @@ footer.site{background:#1B1A18}
 .omx-rozet-ic img{height:140px;width:auto;margin:0 auto;display:block}
 @media(max-width:700px){.omx-rozet-ic{grid-template-columns:repeat(2,1fr);gap:22px}.omx-rozet-ic img{height:104px}}
 
+/* Ödüller bandı */
+.omx-oduller{background:#fff;padding:74px 20px 66px}
+.odul-ic{display:grid;grid-template-columns:repeat(3,1fr);gap:44px;max-width:1000px;margin:0 auto;align-items:start;text-align:center}
+.odul{margin:0}
+.odul img{height:180px;width:auto;margin:0 auto 18px;display:block;filter:drop-shadow(0 12px 26px rgba(30,28,25,.16))}
+.odul figcaption b{display:block;font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:#1a1a1a;margin-bottom:6px}
+.odul figcaption span{font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:300;color:#666;line-height:1.6}
+@media(max-width:760px){
+  .odul-ic{grid-template-columns:1fr;gap:36px}
+  .odul img{height:150px}
+}
+
 /* Ana sayfa ürün kaydırıcısı */
 .prod-kaydir-sarma{position:relative}
 .prod-kaydir{display:flex;gap:26px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:none;-ms-overflow-style:none}
