@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 150" fill="none">
+  <!-- küçük yaprak demeti -->
+  <path d="M18 138 C 52 110, 86 78, 148 30" stroke="#8a9468" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="56" cy="106" rx="32" ry="11.5" fill="#93a277" transform="rotate(-34 56 106)"/>
+  <ellipse cx="94" cy="92" rx="33" ry="12" fill="#7c8b5f" transform="rotate(16 94 92)"/>
+  <ellipse cx="102" cy="52" rx="31" ry="11" fill="#8a9b6e" transform="rotate(-44 102 52)"/>
+  <ellipse cx="146" cy="48" rx="28" ry="10" fill="#6f7f55" transform="rotate(10 146 48)"/>
+</svg>

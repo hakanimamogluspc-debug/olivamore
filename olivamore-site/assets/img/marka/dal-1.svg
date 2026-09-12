@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260" fill="none">
+  <!-- kavisli zeytin dalı: yapraklar + iki zeytin -->
+  <path d="M28 250 C 60 200, 88 150, 118 96 C 138 60, 162 32, 196 14" stroke="#8a9468" stroke-width="4" stroke-linecap="round"/>
+  <g>
+    <ellipse cx="56" cy="196" rx="34" ry="12" fill="#7c8b5f" transform="rotate(-38 56 196)"/>
+    <ellipse cx="106" cy="176" rx="36" ry="12.5" fill="#93a277" transform="rotate(24 106 176)"/>
+    <ellipse cx="94" cy="120" rx="33" ry="11.5" fill="#6f7f55" transform="rotate(-46 94 120)"/>
+    <ellipse cx="150" cy="102" rx="35" ry="12" fill="#8a9b6e" transform="rotate(18 150 102)"/>
+    <ellipse cx="140" cy="52" rx="31" ry="11" fill="#7c8b5f" transform="rotate(-52 140 52)"/>
+    <ellipse cx="192" cy="42" rx="30" ry="10.5" fill="#93a277" transform="rotate(12 192 42)"/>
+  </g>
+  <g>
+    <circle cx="70" cy="236" r="17" fill="#4c5637"/>
+    <ellipse cx="64" cy="230" rx="5.5" ry="3.5" fill="#8a9468" opacity=".85" transform="rotate(-30 64 230)"/>
+    <circle cx="104" cy="224" r="15" fill="#5a6642"/>
+    <ellipse cx="99" cy="219" rx="4.8" ry="3" fill="#9aa87c" opacity=".85" transform="rotate(-30 99 219)"/>
+  </g>
+</svg>

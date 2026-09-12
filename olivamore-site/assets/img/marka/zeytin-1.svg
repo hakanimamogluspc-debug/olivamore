@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 140" fill="none">
+  <!-- iki zeytin tanesi + yaprak -->
+  <path d="M74 66 C 80 44, 92 26, 112 14" stroke="#8a9468" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="118" cy="34" rx="30" ry="10.5" fill="#93a277" transform="rotate(-24 118 34)"/>
+  <circle cx="52" cy="96" r="26" fill="#4c5637"/>
+  <ellipse cx="43" cy="87" rx="8" ry="5" fill="#8a9468" opacity=".85" transform="rotate(-30 43 87)"/>
+  <circle cx="98" cy="104" r="22" fill="#5a6642"/>
+  <ellipse cx="91" cy="96" rx="6.5" ry="4" fill="#9aa87c" opacity=".85" transform="rotate(-30 91 96)"/>
+</svg>
