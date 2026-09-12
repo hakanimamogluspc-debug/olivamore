@@ -2052,13 +2052,13 @@ footer.site{background:#1B1A18}
 @media(max-width:700px){.omx-rozet-ic{grid-template-columns:repeat(2,1fr);gap:22px}.omx-rozet-ic img{height:104px}}
 
 /* Ödül rozetleri: hero ile beyaz alanın birleşim çizgisine ortalı */
-.omx-oduller{background:transparent;padding:0 20px;position:relative;z-index:6;margin-top:-82px;pointer-events:none}
-.odul-serit{display:flex;justify-content:center;align-items:center;gap:54px;max-width:1000px;margin:0 auto}
-.odul-serit img{height:164px;width:auto;display:block;filter:drop-shadow(0 14px 28px rgba(30,28,25,.28))}
+.omx-oduller{background:transparent;padding:0 20px;position:relative;z-index:6;margin-top:-68px;pointer-events:none}
+.odul-serit{display:flex;justify-content:center;align-items:center;gap:96px;max-width:1000px;margin:0 auto}
+.odul-serit img{height:136px;width:auto;display:block;filter:drop-shadow(0 14px 28px rgba(30,28,25,.28))}
 @media(max-width:760px){
-  .omx-oduller{margin-top:-52px}
-  .odul-serit{gap:22px}
-  .odul-serit img{height:104px}
+  .omx-oduller{margin-top:-46px}
+  .odul-serit{gap:30px}
+  .odul-serit img{height:92px}
 }
 
 /* Ana sayfa ürün kaydırıcısı */
