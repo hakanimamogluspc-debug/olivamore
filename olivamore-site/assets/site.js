@@ -734,6 +734,19 @@
     // Statik yedek kartlar da CMS kartlarıyla aynı varyant kimliğini taşır.
     hydrateProductCards(document);
 
+    // Ana sayfa ürün kaydırıcısı: oklarla kart genişliği kadar kaydır
+    document.querySelectorAll('.prod-kaydir-sarma').forEach(function (sarma) {
+      var serit = sarma.querySelector('.prod-kaydir');
+      if (!serit) return;
+      sarma.querySelectorAll('.pk-ok').forEach(function (ok) {
+        ok.addEventListener('click', function () {
+          var kart = serit.querySelector('.card');
+          var adim = kart ? kart.getBoundingClientRect().width + 26 : 340;
+          serit.scrollBy({ left: (ok.classList.contains('sag') ? 1 : -1) * adim, behavior: 'smooth' });
+        });
+      });
+    });
+
     // Sunucu CMS config'i (panel kayıtları tüm ziyaretçilere buradan ulaşır);
     // API yoksa (yerel önizleme) localStorage yedeğiyle devam edilir.
     fetch('/api/config', { cache: 'no-store' })
