@@ -471,15 +471,12 @@
       const lead = document.querySelector('.hero-light .lead');
       if (t && h1) h1.textContent = t;
       if (l && lead) lead.textContent = l;
-      // Hero medyası: kayan kampanya görselleri + video (panel > Ayarlar'dan yönetilir)
-      const hs = document.getElementById('oh2-slider');
-      if (hs) {
+      // Hero videosu (panel > Ayarlar > Ana Sayfa Hero Medyası'ndan seçilir)
+      const vid = document.getElementById('oh2-video');
+      if (vid) {
         const hm = C.heroMedya || {};
-        const resimler = hs.querySelectorAll('.oh2-g');
-        (hm.gorseller || []).forEach((g, i) => { if (g && resimler[i]) resimler[i].src = g; });
-        const vid = document.getElementById('oh2-video');
         const yedek = document.getElementById('oh2-yedek');
-        if (vid && hm.video) {
+        if (hm.video) {
           vid.src = hm.video;
           vid.style.display = 'block';
           if (yedek) yedek.style.display = 'none';

@@ -417,14 +417,9 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       </div>
       <div class="panel">
         <h2>Ana Sayfa Hero Medyası</h2>
-        <div class="desc">Hero alanının <b>sol yarısında sırayla kayan 3 kampanya görseli</b>, <b>sağ yarısında video</b> gösterilir. Videoyu önce <b>Görseller</b> sekmesinden yükle (mp4/webm, en fazla 60 MB), sonra buradan seç. Video seçilmezse sağ yarıda zeytinlik fotoğrafı görünür.</div>
+        <div class="desc">Ana sayfa hero'su <b>tek parça, tüm genişlikte dönen bir videodur</b>. Videoyu önce <b>Görseller</b> sekmesinden yükle (mp4/webm, en fazla 60 MB), sonra buradan seç. Video seçilmezse zeytinlik fotoğrafı görünür.</div>
         <div class="field"><label>Video (kütüphaneden seç)</label><select id="f-heroVideoSec"><option value="">— video seçilmedi —</option></select></div>
         <div class="field"><label>veya harici video adresi (isteğe bağlı, .mp4)</label><input type="text" id="f-heroVideo" placeholder="https://..."></div>
-        <div id="hg-medya">
-          <div class="field"><label>Kayan Görsel 1</label><div id="hg1"></div></div>
-          <div class="field"><label>Kayan Görsel 2</label><div id="hg2"></div></div>
-          <div class="field"><label>Kayan Görsel 3</label><div id="hg3"></div></div>
-        </div>
       </div>
       <div class="panel">
         <h2>Hediye Kutusu Oluşturucu</h2>
@@ -699,7 +694,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   }
 
   /* Görsel seçici olayları (ürün + blog listelerinde ortak) */
-  ['products-list', 'blogs-list', 'hg-medya'].forEach(function (hostId) {
+  ['products-list', 'blogs-list'].forEach(function (hostId) {
     var host = document.getElementById(hostId);
     // Bilgisayardan dosya seçildi
     host.addEventListener('change', function (e) {
@@ -1069,10 +1064,6 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       return '<option value="' + v + '"' + (v === hm.video ? ' selected' : '') + '>🎬 ' + v.replace('assets/img/', '') + '</option>';
     }).join('');
     document.getElementById('f-heroVideo').value = (hm.video && VIDEOS.indexOf(hm.video) === -1) ? hm.video : '';
-    [['hg1', 'h2g1', 0], ['hg2', 'h2g2', 1], ['hg3', 'h2g3', 2]].forEach(function (x) {
-      var varsayilan = ['assets/img/marka/marka-yemek.jpg', 'assets/img/hediye-seti-5li.jpg', 'assets/img/marka/marka-sise.jpg'][x[2]];
-      document.getElementById(x[0]).innerHTML = imgPicker((hm.gorseller || [])[x[2]] || varsayilan, x[1]);
-    });
     var pp = C.popup || {};
     document.getElementById('pp-aktif').value = pp.aktif ? '1' : '0';
     document.getElementById('pp-gecikme').value = pp.gecikme || 15;
@@ -1111,12 +1102,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     C.gift5 = parseInt(document.getElementById('f-gift5').value, 10) || 0;
     C.pdp.ay750 = parseInt(document.getElementById('f-pdp750').value, 10) || 0;
     C.heroMedya = {
-      video: document.getElementById('f-heroVideo').value.trim() || document.getElementById('f-heroVideoSec').value,
-      gorseller: ['h2g1', 'h2g2', 'h2g3'].map(function (cls) {
-        var veri = document.querySelector('.' + cls + '-data');
-        var sec = document.querySelector('.' + cls);
-        return (veri && veri.value) || (sec && sec.value) || '';
-      }).filter(Boolean)
+      video: document.getElementById('f-heroVideo').value.trim() || document.getElementById('f-heroVideoSec').value
     };
     C.popup = {
       aktif: document.getElementById('pp-aktif').value === '1',
