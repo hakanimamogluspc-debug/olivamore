@@ -2065,6 +2065,7 @@ footer.site{background:#1B1A18}
 
 /* Ana sayfa ürün kaydırıcısı */
 .prod-kaydir-sarma{position:relative}
+.prod-kaydir .card-body{padding:18px 20px 6px}
 .prod-kaydir{display:flex;gap:26px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:none;-ms-overflow-style:none}
 .prod-kaydir::-webkit-scrollbar{display:none}
 .prod-kaydir .card{flex:0 0 calc((100% - 52px)/3);scroll-snap-align:start}
