@@ -1565,16 +1565,16 @@ header.site{background:rgba(251,249,244,.96);backdrop-filter:blur(16px)}
 .passport-feature h2,.story-editorial h2,.gift-editorial h2{font-size:clamp(2.5rem,4.2vw,4.5rem);line-height:1.02}
 .passport-points{display:grid;gap:0;margin:30px 0 34px;border-top:1px solid rgba(39,39,39,.22)}
 .passport-points span{padding:14px 0;border-bottom:1px solid rgba(39,39,39,.22);font-size:.88rem}
-.passport-card{background:var(--ink);color:#F7F3EA;min-height:430px;padding:46px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 28px 70px rgba(39,39,39,.22)}
-.passport-card-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:18px}
-.passport-card-top span{font-family:var(--font-serif);font-size:1.4rem;letter-spacing:.08em}
-.passport-card-top small{font-size:.62rem;letter-spacing:.18em;color:var(--gold-soft)}
+.passport-card{background:var(--omx-gold);color:#fff;min-height:430px;padding:46px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 28px 70px rgba(146,120,60,.35)}
+.passport-card-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.45);padding-bottom:18px}
+.passport-card-top .pp-logo{height:30px;width:auto;display:block}
+.passport-card-top small{font-size:.62rem;letter-spacing:.18em;color:#fff;font-weight:600}
 .passport-lot{font-family:var(--font-serif);font-size:clamp(2.7rem,5vw,4.8rem);font-weight:300;line-height:1}
 .passport-card dl{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.passport-card dl div{border-top:1px solid rgba(255,255,255,.18);padding-top:12px}
-.passport-card dt{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:#BDB5A5}
-.passport-card dd{margin:7px 0 0;font-size:.92rem}
-.passport-note{font-size:.72rem;color:#BDB5A5}
+.passport-card dl div{border-top:1px solid rgba(255,255,255,.4);padding-top:12px}
+.passport-card dt{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.8)}
+.passport-card dd{margin:7px 0 0;font-size:.92rem;color:#fff;font-weight:500}
+.passport-note{font-size:.72rem;color:rgba(255,255,255,.85)}
 
 .story-editorial{background:var(--paper)}
 .story-photo,.gift-photo{height:620px;border-radius:0;overflow:hidden}
