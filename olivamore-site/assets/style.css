@@ -2103,7 +2103,7 @@ footer.site{background:#1B1A18}
 body[data-page="home"]{overflow-x:hidden}
 body[data-page="home"] section{position:relative}
 body[data-page="home"] section > .container{position:relative;z-index:1}
-.zsus{position:absolute;pointer-events:none;user-select:none;z-index:0;opacity:.9}
+.zsus{position:absolute;pointer-events:none;user-select:none;z-index:0;opacity:.92;filter:drop-shadow(0 10px 18px rgba(30,28,25,.18))}
 .zsus img{display:block;width:100%;height:auto}
 @keyframes zsalinim{0%,100%{transform:rotate(var(--zd,0deg)) translateY(0)}50%{transform:rotate(calc(var(--zd,0deg) + 4deg)) translateY(-10px)}}
 .zsus{animation:zsalinim 7s ease-in-out infinite}
@@ -2114,8 +2114,9 @@ body[data-page="home"] section > .container{position:relative;z-index:1}
 .zsus.sol-alt{left:-24px;bottom:40px}
 .zsus.sag-ust{right:-26px;top:44px}
 .zsus.sag-alt{right:-30px;bottom:36px}
-.zsus.b1{width:150px;--zd:-12deg}
-.zsus.b2{width:110px;--zd:20deg}
-.zsus.b3{width:90px;--zd:-6deg}
+.zsus.b1{width:120px;--zd:-24deg}
+.zsus.b2{width:88px;--zd:38deg}
+.zsus.b3{width:72px;--zd:-10deg}
 @media(max-width:860px){.zsus{width:70px!important;opacity:.55}.zsus.sol-ust,.zsus.sol-alt{left:-18px}.zsus.sag-ust,.zsus.sag-alt{right:-18px}}
-body[data-page="home"] .omx-split > *{position:relative;z-index:1}
+body[data-page="home"] .omx-split > *:not(.zsus){position:relative;z-index:1}
+body[data-page="home"] section .zsus{position:absolute}
