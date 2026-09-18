@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Cormorant+Garamond:wght@300;400;500;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Cormorant+Garamond:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&family=Italianno&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <meta name="twitter:title" content="Olivamore — Doğanın Dengesi | Ayvalık Zeytinyağı">
@@ -30,13 +30,23 @@
 <meta property="og:site_name" content="Olivamore">
 </head>
 <body data-page="home">
+<div class="omx-duyuru">Londra Uluslararası Zeytinyağı Yarışması'ndan (LIOOC 2025) Altın Ödüllü Lezzetler!</div>
 <div id="om-header"></div>
 
-<section class="hero-light omx-hero3">
-  <h1 class="sr-only">Ayvalık'ın Saf Lezzetleri</h1>
-  <p class="lead sr-only">Doğanın mucizesi zeytin, Ayvalık'ın eşsiz havası ve toprağında hayat buluyor.</p>
-  <video id="oh2-video" autoplay muted loop playsinline preload="metadata" poster="assets/img/marka/hero-zeytinlik.jpg" style="display:none;"></video>
-  <img class="oh2-yedek" id="oh2-yedek" src="assets/img/marka/hero-zeytinlik.jpg" alt="Ayvalık zeytinlikleri">
+<section class="hero-light fig-manset">
+  <div class="fm-sol">
+    <img class="fm-bg" src="assets/img/marka/hero-zeytinlik.jpg" alt="Ayvalık zeytinlikleri">
+    <div class="fm-ort" aria-hidden="true"></div>
+    <div class="fm-icerik">
+      <h1>Ayvalık'ın<br>Saf Lezzetleri</h1>
+      <p class="lead">Doğanın mucizesi zeytin, Ayvalık'ın eşsiz havası ve toprağında hayat buluyor. Olivamore'un özenle ürettiği zeytinyağları, her damlasında saflığı ve kaliteyi sunuyor. Sağlıkla dolu sofralar için, doğanın en saf lezzetini deneyimleyin.</p>
+      <a class="fig-btn" href="koleksiyon.html">Ürünleri İncele <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+  <div class="fm-sag">
+    <img class="fm-bg" src="assets/img/marka/manset-sag.jpg" alt="Olivamore ürün sofrası" onerror="this.onerror=null;this.src='assets/img/marka/marka-sise.jpg'">
+    <div class="fm-ort" aria-hidden="true"></div>
+  </div>
 </section>
 
 <section class="omx-oduller" id="oduller" aria-label="Uluslararası ödüllerimiz">
@@ -47,78 +57,21 @@
   </div>
 </section>
 
-<section class="block role-section" id="rol-sec">
-  <span class="zsus b1 sol-ust" aria-hidden="true"><img src="assets/img/marka/yaprak.png" alt=""></span>
-  <span class="zsus b3 sag-alt yavas" aria-hidden="true"><img src="assets/img/marka/zeytin.png" alt=""></span>
-  <div class="container">
-    <div class="omx-sec-head">
-      <div class="omx-eyebrow">Sofrandaki Rolü</div>
-      <h2 class="omx-h">Bugün ne için arıyorsun?</h2>
-    </div>
-    <div class="role-cards">
-      <a class="role-card" href="koleksiyon.html#ocak">
-        <span class="role-media media-cook"><img src="assets/img/editorial/editorial-pisir.webp" alt="Olivamore zeytinyağı tavada sebzelerin üzerine dökülürken" loading="lazy" width="1536" height="1024"></span>
-        <h3>Pişir</h3><span class="role-alt">Olgun Hasat Zeytinyağı</span>
-        <p>Tencere, tava ve fırın için günlük mutfak yağları.</p>
-        <span class="link-arrow">Pişirme yağlarını gör →</span>
-      </a>
-      <a class="role-card" href="koleksiyon.html#serin">
-        <span class="role-media media-finish"><img src="assets/img/editorial/editorial-bitir.webp" alt="Olivamore zeytinyağıyla yemeğe son dokunuş" loading="lazy" width="1600" height="2000"></span>
-        <h3>Bitir</h3><span class="role-alt">Erken Hasat Zeytinyağı</span>
-        <p>Balık, kahvaltı, salata ve mezeye son dokunuş.</p>
-        <span class="link-arrow">Bitirme yağlarını gör →</span>
-      </a>
-      <a class="role-card" href="koleksiyon.html#hediyelik">
-        <span class="role-media media-gift"><img src="assets/img/editorial/editorial-hediye-deniz.webp" alt="Deniz kıyısında kutulu Olivamore Ayvalık zeytinyağı" loading="lazy" width="1238" height="2200"></span>
-        <h3>Hediye Et</h3><span class="role-alt">Hediye Setleri</span>
-        <p>Açmaya değer kutular, sofrada karşılığı olan ürünler.</p>
-        <span class="link-arrow">Hediye setlerini gör →</span>
-      </a>
-    </div>
-    <p class="vs-foot">Kararsız mısın? <a class="link-arrow" href="damak-testi.html">Damak Testi'ni çöz</a>; sana en uygun yağı bulalım.</p>
+<section class="fig-dogal" id="dogal-uretim">
+  <img class="fd-bg" src="assets/img/marka/dogal-uretim-bg.jpg" alt="" aria-hidden="true" onerror="this.style.display='none'">
+  <div class="fd-ic">
+    <div class="fd-ust">YÜKSEK STANDARTLARDA</div>
+    <div class="fd-el">Doğal Üretim</div>
+    <p>Olivamore, kurulduğu günden bu yana en yüksek standartlarda, çevreci ve doğal üretim yapmayı misyon edinerek tüm altyapısını buna göre oluşturmuş, sahip olduğumuz doğal ve kültürel mirası geliştirerek, gelecek nesillere aktarmayı görev edinmiştir.</p>
+    <img class="fd-amblem" src="assets/img/marka/amblem-gold.png" alt="Olivamore amblemi" onerror="this.onerror=null;this.src='assets/img/marka/amblem-koyu.svg'">
   </div>
 </section>
 
-<section class="block product-edit" id="sec-urunler">
-  <span class="zsus b2 sag-ust yavas" aria-hidden="true"><img src="assets/img/marka/yaprak-2.png" alt=""></span>
-  <span class="zsus b1 sol-alt" aria-hidden="true"><img src="assets/img/marka/yaprak-3.png" alt=""></span>
-  <div class="container">
-    <div class="omx-sec-head">
-      <div class="omx-eyebrow">Sağlık, Doğallık ve Lezzet</div>
-      <h2 class="omx-h">Doğanın sunduğu en saf lezzetleri keşfedin</h2>
-    </div>
-    <div class="prod-kaydir-sarma">
-      <button class="pk-ok sol" type="button" aria-label="Önceki ürünler">←</button>
-      <button class="pk-ok sag" type="button" aria-label="Sonraki ürünler">→</button>
-      <div class="prod-kaydir">
-      <article class="card refined-card" data-pid="ay500"><a class="card-hit" href="urun.html?variant=ay500" aria-label="Ayvalık Erken Hasat"></a>
-        <div class="prod-img photo"><span class="badge">Bitir</span><img src="assets/img/ayvalik-500.jpg" alt="Ayvalık Erken Hasat 500 ml" width="834" height="1250"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><span class="role-tag">Bitirme · Dengeli</span><div class="card-row"><h3>Ayvalık Erken Hasat</h3><span class="price">₺850 <small>/ 500 ml</small></span></div><p class="card-note">Domates–beyaz peynir salatasına, humusa ve kahvaltı tabağına serviste.</p></div>
-      </article>
-      <article class="card refined-card" data-pid="tr750"><a class="card-hit" href="urun-trilye.html?variant=tr750" aria-label="Trilye Erken Hasat"></a>
-        <div class="prod-img photo"><span class="badge">Keşfet</span><img src="assets/img/trilye-750.jpg" alt="Trilye Erken Hasat 750 ml" width="834" height="1250"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><span class="role-tag">Bitirme · Karakterli</span><div class="card-row"><h3>Trilye Erken Hasat</h3><span class="price">₺1.350 <small>/ 750 ml</small></span></div><p class="card-note">Fırından çıkan levreğe, köz patlıcana ve humusa son dokunuşta.</p></div>
-      </article>
-      <article class="card refined-card" data-pid="og5l"><a class="card-hit" href="p.html?id=og5l" aria-label="Olgun Hasat"></a>
-        <div class="prod-img photo"><span class="badge">Pişir</span><img src="assets/img/ayvalik-5l.jpg" alt="Olgun Hasat 5 litre teneke" width="834" height="1250"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><span class="role-tag">Pişirme · Günlük</span><div class="card-row"><h3>Olgun Hasat</h3><span class="price">₺3.450 <small>/ 5 lt</small></span></div><p class="card-note">Nohut, türlü, taze fasulye ve fırın sebzede tencerenin başından itibaren.</p></div>
-      </article>
-      <article class="card refined-card" data-pid="ay250"><a class="card-hit" href="urun.html?variant=ay250" aria-label="Ayvalık 250 ml"></a>
-        <div class="prod-img photo"><img src="assets/img/ayvalik-250.jpg" alt="Ayvalık Erken Hasat 250 ml" width="834" height="1250"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><span class="role-tag">Bitirme · Dengeli</span><div class="card-row"><h3>Ayvalık 250 ml</h3><span class="price">₺425 <small>/ 250 ml</small></span></div><p class="card-note">İlk tanışma ve küçük sofralar için deneme boyu.</p></div>
-      </article>
-      <article class="card refined-card" data-pid="kutu750"><a class="card-hit" href="p.html?id=kutu750" aria-label="Hediye Kutulu 750 ml"></a>
-        <div class="prod-img photo"><span class="badge">Hediye</span><img src="assets/img/kutulu-750.jpg" alt="Hediye kutulu Ayvalık Erken Hasat 750 ml" width="834" height="1250"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><span class="role-tag">Setler</span><div class="card-row"><h3>Hediye Kutulu 750 ml</h3><span class="price">₺1.250 <small>/ 750 ml</small></span></div><p class="card-note">Açmaya değer kutusunda, sofraya hazır bir hediye.</p></div>
-      </article>
-      <article class="card refined-card" data-pid="ay2l"><a class="card-hit" href="urun.html?variant=ay2l" aria-label="Ayvalık 2 L Teneke"></a>
-        <div class="prod-img photo"><img src="assets/img/ayvalik-2l.jpg" alt="Ayvalık Erken Hasat 2 L teneke" width="834" height="1250"><button class="add-bag" data-add>Sepete Ekle <span>→</span></button></div>
-        <div class="card-body"><span class="role-tag">Bitirme · Aile Boyu</span><div class="card-row"><h3>Ayvalık 2 L Teneke</h3><span class="price">₺2.500 <small>/ 2 L</small></span></div><p class="card-note">Kalabalık sofralar için gün be gün aynı karakter.</p></div>
-      </article>
-      </div>
-    </div>
-    <p class="omx-center" style="margin-top:38px;"><a class="omx-btn" href="koleksiyon.html">Tüm Ürünler</a></p>
-  </div>
+<section class="fig-kampanya" aria-label="Avantajlı ürün kampanyaları">
+  <a href="koleksiyon.html"><img src="assets/img/marka/kampanya-1.png" alt="Avantajlı Ürünler — Özel" loading="lazy" onerror="this.closest('a').style.display='none'"></a>
+  <a href="koleksiyon.html"><img src="assets/img/marka/kampanya-2.png" alt="Avantajlı Ürünler — Grande" loading="lazy" onerror="this.closest('a').style.display='none'"></a>
+  <a href="koleksiyon.html"><img src="assets/img/marka/kampanya-3.png" alt="Avantajlı Ürünler — Selecto" loading="lazy" onerror="this.closest('a').style.display='none'"></a>
+  <a href="koleksiyon.html"><img src="assets/img/marka/kampanya-4.png" alt="Avantajlı Ürünler — Üç Lezzet" loading="lazy" onerror="this.closest('a').style.display='none'"></a>
 </section>
 
 <section class="omx-rozetler" aria-label="Üretim değerlerimiz">
@@ -138,23 +91,118 @@
   </div>
 </section>
 
-<section class="omx-split" id="damak">
-  <span class="zsus b3 sol-ust" aria-hidden="true"><img src="assets/img/marka/zeytin.png" alt=""></span>
-  <div class="icerik">
-    <div class="omx-eyebrow">Damak Testi</div>
-    <h2 class="omx-h"><span class="ust">10 Soruda</span>Damak Haritanı Çıkar</h2>
-    <p class="omx-p">Doğru ya da yanlış cevap yok; sevdiğin tatlardan yola çıkıyoruz. Yaklaşık 90 saniyede damak testini tamamlayıp yedi yağımız içinden sana en yakın olanını ve keşfetmeye değer alternatiflerini söylüyoruz.</p>
-    <div class="omx-adimlar">
-      <span><b>01</b>Soruları yanıtla</span>
-      <span><b>02</b>Damak haritanı gör</span>
-      <span><b>03</b>Yağını keşfet</span>
-    </div>
-    <a class="omx-btn" href="damak-testi.html">Teste Başla</a>
+<section class="fig-magaza" id="magaza">
+  <div class="fm-head">
+    <div class="fh-baslik">SAĞLIK, DOĞALLIK VE LEZZET</div>
+    <div class="fh-alt">Doğanın sunduğu en saf lezzetleri keşfedin.</div>
   </div>
-  <div class="foto"><img src="assets/img/marka/marka-yemek.jpg" alt="Olivamore zeytinyağıyla hazırlanmış Ege sofrası" loading="lazy" width="526" height="788" onerror="this.src='assets/img/tarif-firin-levrek.jpg'"></div>
+
+  <div class="fig-sira">
+    <div class="fs-baslik">AVANTAJ PAKETLERİ</div>
+    <div class="fs-kartlar">
+      <article class="fig-kart">
+        <a class="fk-hit" href="koleksiyon.html#hediyelik" aria-label="Avantaj Paketi Selecto"></a>
+        <div class="fk-img"><img src="assets/img/marka/avantaj-selecto.png" alt="Avantaj Paketi Selecto" loading="lazy" onerror="this.onerror=null;this.src='assets/img/hediye-seti-3lu.jpg'"></div>
+        <h3>Avantaj Paketi | Selecto</h3>
+        <div class="fk-fiyat"><s>3.285,00 ₺</s> 2.700,00 ₺</div>
+        <a class="fig-btn" href="koleksiyon.html#hediyelik">İncele</a>
+      </article>
+      <article class="fig-kart">
+        <a class="fk-hit" href="koleksiyon.html#hediyelik" aria-label="Avantaj Paketi Üç Lezzet"></a>
+        <div class="fk-img"><img src="assets/img/marka/avantaj-uclezzet.png" alt="Avantaj Paketi Üç Lezzet" loading="lazy" onerror="this.onerror=null;this.src='assets/img/hediye-seti-3lu.jpg'"></div>
+        <h3>Avantaj Paketi | Üç Lezzet</h3>
+        <div class="fk-fiyat"><s>6.435,00 ₺</s> 4.500,00 ₺</div>
+        <a class="fig-btn" href="koleksiyon.html#hediyelik">İncele</a>
+      </article>
+      <article class="fig-kart">
+        <a class="fk-hit" href="koleksiyon.html#hediyelik" aria-label="Avantaj Paketi Özel"></a>
+        <div class="fk-img"><img src="assets/img/marka/avantaj-ozel.png" alt="Avantaj Paketi Özel" loading="lazy" onerror="this.onerror=null;this.src='assets/img/hediye-seti-3lu.jpg'"></div>
+        <h3>Avantaj Paketi | Özel</h3>
+        <div class="fk-fiyat"><s>2.035,00 ₺</s> 1.500,00 ₺</div>
+        <a class="fig-btn" href="koleksiyon.html#hediyelik">İncele</a>
+      </article>
+      <article class="fig-kart">
+        <a class="fk-hit" href="koleksiyon.html#hediyelik" aria-label="Avantaj Paketi Grande"></a>
+        <div class="fk-img"><img src="assets/img/marka/avantaj-grande.png" alt="Avantaj Paketi Grande" loading="lazy" onerror="this.onerror=null;this.src='assets/img/hediye-seti-5li.jpg'"></div>
+        <h3>Avantaj Paketi | Grande</h3>
+        <div class="fk-fiyat"><s>8.700,00 ₺</s> 7.000,00 ₺</div>
+        <a class="fig-btn" href="koleksiyon.html#hediyelik">İncele</a>
+      </article>
+    </div>
+  </div>
+
+  <div class="fig-sira">
+    <div class="fs-baslik">SOĞUK SIKIM ZEYTİNYAĞLARI</div>
+    <div class="fs-kartlar">
+      <article class="fig-kart card" data-pid="kutu750" data-price="1250" data-volume="750 ml" data-img="assets/img/kutulu-750.jpg">
+        <a class="fk-hit" href="p.html?id=kutu750" aria-label="Ayvalık 750 ml Kutulu"></a>
+        <div class="fk-img"><img src="assets/img/kutulu-750.jpg" alt="Ayvalık 750 ml Kutulu" loading="lazy"></div>
+        <h3>Ayvalık 750 ml | Kutulu</h3>
+        <div class="fk-fiyat">1.250,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+      <article class="fig-kart card" data-pid="ay2l" data-price="2500" data-volume="2 L" data-img="assets/img/ayvalik-2l.jpg">
+        <a class="fk-hit" href="urun.html?variant=ay2l" aria-label="Ayvalık 2 L Teneke"></a>
+        <div class="fk-img"><img src="assets/img/ayvalik-2l.jpg" alt="Ayvalık 2 L Teneke" loading="lazy"></div>
+        <h3>Ayvalık 2 lt</h3>
+        <div class="fk-fiyat">2.500,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+      <article class="fig-kart card" data-pid="tr750" data-price="1350" data-volume="750 ml" data-img="assets/img/trilye-750.jpg">
+        <a class="fk-hit" href="urun-trilye.html?variant=tr750" aria-label="Trilye 750 ml"></a>
+        <div class="fk-img"><img src="assets/img/trilye-750.jpg" alt="Trilye 750 ml" loading="lazy"></div>
+        <h3>Trilye 750 ml</h3>
+        <div class="fk-fiyat">1.350,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+      <article class="fig-kart card" data-pid="tr2l" data-price="2900" data-volume="2 L" data-img="assets/img/trilye-2l.jpg">
+        <a class="fk-hit" href="urun-trilye.html?variant=tr2l" aria-label="Trilye 2 L Teneke"></a>
+        <div class="fk-img"><img src="assets/img/trilye-2l.jpg" alt="Trilye 2 L Teneke" loading="lazy"></div>
+        <h3>Trilye 2 lt</h3>
+        <div class="fk-fiyat">2.900,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+    </div>
+  </div>
+
+  <div class="fig-sira">
+    <div class="fs-baslik">ÇOK SATAN ÜRÜNLER</div>
+    <div class="fs-kartlar">
+      <article class="fig-kart card" data-pid="ces-mand" data-price="650" data-volume="250 ml" data-img="assets/img/cesnili-mandalina.jpg">
+        <a class="fk-hit" href="p.html?id=ces-mand" aria-label="Mandalina Çeşnili Zeytinyağı"></a>
+        <div class="fk-img"><img src="assets/img/cesnili-mandalina.jpg" alt="Mandalina Çeşnili Zeytinyağı" loading="lazy"></div>
+        <h3>Mandalina Çeşnili Zeytinyağı</h3>
+        <div class="fk-fiyat">650,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+      <article class="fig-kart card" data-pid="ces-berg" data-price="650" data-volume="250 ml" data-img="assets/img/cesnili-bergamot.jpg">
+        <a class="fk-hit" href="p.html?id=ces-berg" aria-label="Bergamot Çeşnili Zeytinyağı"></a>
+        <div class="fk-img"><img src="assets/img/cesnili-bergamot.jpg" alt="Bergamot Çeşnili Zeytinyağı" loading="lazy"></div>
+        <h3>Bergamot Çeşnili Zeytinyağı</h3>
+        <div class="fk-fiyat">650,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+      <article class="fig-kart card" data-pid="zey-siyah" data-price="360" data-volume="500 g" data-img="assets/img/zeytin-siyah.jpg">
+        <a class="fk-hit" href="p.html?id=zey-siyah" aria-label="Doğal Fermente Siyah Zeytin"></a>
+        <div class="fk-img"><img src="assets/img/zeytin-siyah.jpg" alt="Doğal Fermente Siyah Zeytin" loading="lazy"></div>
+        <h3>Doğal Fermente Siyah Zeytin</h3>
+        <div class="fk-fiyat">360,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+      <article class="fig-kart card" data-pid="zey-yesil" data-price="325" data-volume="500 g" data-img="assets/img/zeytin-yesil.jpg">
+        <a class="fk-hit" href="p.html?id=zey-yesil" aria-label="Doğal Salamura Yeşil Zeytin"></a>
+        <div class="fk-img"><img src="assets/img/zeytin-yesil.jpg" alt="Doğal Salamura Yeşil Zeytin" loading="lazy"></div>
+        <h3>Doğal Salamura Yeşil Zeytin</h3>
+        <div class="fk-fiyat">325,00 ₺</div>
+        <button class="fig-btn" data-add type="button">Sepete Ekle</button>
+      </article>
+    </div>
+  </div>
+
+  <div class="fig-tum"><a href="koleksiyon.html">Tüm Ürünler</a></div>
 </section>
 
-<section class="omx-split" id="hediye" style="padding-top:0;">
+<section class="omx-split" id="hediye">
   <span class="zsus b2 sag-ust yavas" aria-hidden="true"><img src="assets/img/marka/yaprak-2.png" alt=""></span>
   <div class="foto"><img src="assets/img/hediye-seti-5li.jpg" alt="Olivamore keşif ve hediye kutusu" loading="lazy" width="1000" height="1380"></div>
   <div class="icerik">
@@ -170,35 +218,20 @@
   </div>
 </section>
 
-<section class="omx-split" id="yolculuk" style="padding-top:0;">
-  <span class="zsus b1 sol-alt yavas" aria-hidden="true"><img src="assets/img/marka/yaprak-3.png" alt=""></span>
+<section class="omx-split" id="damak" style="padding-top:0;">
+  <span class="zsus b3 sol-ust" aria-hidden="true"><img src="assets/img/marka/zeytin.png" alt=""></span>
   <div class="icerik">
-    <div class="omx-eyebrow">İzlenebilirlik</div>
-    <h2 class="omx-h"><span class="ust">Bahçeden Şişeye</span>Hasat Pasaportu</h2>
-    <p class="omx-p">Her şişenin bir kimliği var: hasat ve sıkım tarihi, zeytin çeşidi, üretim yeri ve partiye ait analizler. Pazarlama cümlesi olarak değil, parti bilgisi olarak — şişendeki kodla sorgula, yağının izini bahçeye kadar sür.</p>
-    <a class="omx-btn" href="pasaport.html">Pasaportu İncele</a>
-  </div>
-  <div class="passport-card" aria-label="Örnek Hasat Pasaportu">
-    <div class="passport-card-top"><img class="pp-logo" src="assets/logo-word-light.svg" alt="Olivamore"><small>HASAT PASAPORTU</small></div>
-    <div class="passport-lot">2025 / AYVALIK</div>
-    <dl><div><dt>Çeşit</dt><dd>Ayvalık</dd></div><div><dt>Hasat</dt><dd>Ekim 2025</dd></div><div><dt>Rol</dt><dd>Bitirme</dd></div></dl>
-    <span class="passport-note">Ayrıntılar şişedeki parti koduyla açılır.</span>
-  </div>
-</section>
-
-<section class="omx-belgeler">
-  <span class="zsus b3 sag-ust" aria-hidden="true"><img src="assets/img/marka/zeytin.png" alt=""></span>
-  <div class="container">
-    <div class="omx-eyebrow">Olivamore</div>
-    <h2 class="omx-h">Kalite Belgeleri ve Analiz Raporları</h2>
-    <div class="omx-belge-ic">
-      <img src="assets/img/marka/iso-9001.svg" alt="ISO 9001" loading="lazy" onerror="this.style.display='none'">
-      <img src="assets/img/marka/iso-14001.svg" alt="ISO 14001" loading="lazy" onerror="this.style.display='none'">
-      <img src="assets/img/marka/iso-22000.svg" alt="ISO 22000" loading="lazy" onerror="this.style.display='none'">
-      <a href="kalite.html"><img src="assets/img/marka/analiz-raporu.svg" alt="Analiz raporları" loading="lazy" onerror="this.style.display='none'"></a>
+    <div class="omx-eyebrow">Damak Testi</div>
+    <h2 class="omx-h"><span class="ust">10 Soruda</span>Damak Haritanı Çıkar</h2>
+    <p class="omx-p">Doğru ya da yanlış cevap yok; sevdiğin tatlardan yola çıkıyoruz. Yaklaşık 90 saniyede damak testini tamamlayıp yedi yağımız içinden sana en yakın olanını ve keşfetmeye değer alternatiflerini söylüyoruz.</p>
+    <div class="omx-adimlar">
+      <span><b>01</b>Soruları yanıtla</span>
+      <span><b>02</b>Damak haritanı gör</span>
+      <span><b>03</b>Yağını keşfet</span>
     </div>
-    <a class="omx-btn" href="kalite.html">Belgeleri ve Analizleri Gör</a>
+    <a class="omx-btn" href="damak-testi.html">Teste Başla</a>
   </div>
+  <div class="foto"><img src="assets/img/marka/marka-yemek.jpg" alt="Olivamore zeytinyağıyla hazırlanmış Ege sofrası" loading="lazy" width="526" height="788" onerror="this.src='assets/img/tarif-firin-levrek.jpg'"></div>
 </section>
 
 <section class="block recipe-edit">
