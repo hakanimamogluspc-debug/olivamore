@@ -2054,21 +2054,25 @@ footer.site{background:#1B1A18}
 @media(prefers-reduced-motion:reduce){.omx-rozet-ic{animation:none}}
 @media(max-width:700px){.rozet-grup{gap:70px;padding-right:70px}.omx-rozet-ic img{height:104px}}
 
-/* Pasaport: tarih katmanı — Bu Toprağın Kaydı */
-.tk-blok{border-top:1px solid var(--line);background:#FBF9F4}
-.tk-baslik{font-family:var(--font-serif);font-weight:300;font-size:clamp(1.6rem,2.6vw,2.2rem);margin:6px 0 12px}
-.tk-giris{color:var(--ink-soft);max-width:640px;margin-bottom:34px}
+/* Pasaport: tarih katmanı — Bu Toprağın Kaydı (ana sayfa dili) */
+.tk-blok{border-top:1px solid var(--line);background:#f3f3f3}
+.tk-blok .kicker{font-family:'Poppins',sans-serif;font-weight:300;letter-spacing:.24em;text-transform:uppercase;color:#BFA25D}
+.tk-baslik{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(1.7rem,2.8vw,2.4rem);color:#1D1F1C;margin:6px 0 12px}
+.tk-giris{font-family:'Poppins',sans-serif;font-weight:300;color:#4D5358;max-width:640px;margin-bottom:34px}
 .tk-liste{display:flex;flex-direction:column;gap:0;max-width:760px}
-.tk-kayit{display:grid;grid-template-columns:96px 1fr;gap:22px;padding:20px 0;border-top:1px solid var(--line)}
+.tk-kayit{display:grid;grid-template-columns:96px 1fr;gap:22px;padding:20px;background:#fff;border-top:1px solid var(--line)}
 .tk-kayit:last-child{border-bottom:1px solid var(--line)}
-.tk-yil{font-family:var(--font-serif);font-size:1.7rem;font-weight:300;color:var(--gold-text,#8a6f3c)}
-.tk-kayit p{margin:2px 0 6px;line-height:1.6}
-.tk-kayit small{font-size:.76rem;color:var(--ink-soft)}
-.tk-kapanis{margin-top:28px;max-width:640px;font-family:var(--font-serif);font-size:1.12rem;font-style:italic;color:var(--ink)}
+.tk-yil{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:#BFA25D}
+.tk-kayit p{margin:2px 0 6px;line-height:1.7;font-family:'Poppins',sans-serif;font-weight:300;font-size:.9rem;color:#1D1F1C}
+.tk-kayit p b{font-weight:500}
+.tk-kayit small{font-size:.74rem;color:#4D5358;font-family:'Poppins',sans-serif;font-weight:300}
+.tk-kapanis{margin-top:28px;max-width:640px;font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-style:italic;color:#1D1F1C}
 @media(max-width:560px){.tk-kayit{grid-template-columns:64px 1fr;gap:14px}.tk-yil{font-size:1.35rem}}
 
 /* Pasaport: hasat → sıkım → dolum zaman çizgisi */
-.pp-zaman{display:flex;align-items:center;justify-content:center;gap:18px;padding:18px 14px;border:1px solid var(--line);background:#FBF9F4;flex-wrap:wrap}
+.pp-zaman{display:flex;align-items:center;justify-content:center;gap:18px;padding:18px 14px;border:1px solid #D8C69C;background:#fff;flex-wrap:wrap}
+.pp-zaman .pz-adim b{font-family:'Poppins',sans-serif}
+.pp-zaman .pz-adim span:last-child{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1rem;color:#1D1F1C}
 .pp-zaman .pz-adim{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:86px;text-align:center}
 .pp-zaman .pz-ikon{font-size:1.25rem}
 .pp-zaman .pz-adim b{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
