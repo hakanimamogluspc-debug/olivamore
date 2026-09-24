@@ -145,11 +145,11 @@ document.addEventListener('DOMContentLoaded', function () {
     koy('pp-urun', d.urun_adi || 'Olive Oil');
     koy('pp-kod', d.parti_kodu);
     koy('pp-hasat', enTarih(d.hasat_tarihi));
-    var sinif = String(d.sinif || '');
-    koy('pp-sikim', /naturel s[ıi]zma/i.test(sinif) ? 'Yes ✓' : '—');
+    koy('pp-sikim', d.soguk_sikim === true ? 'Yes ✓' : '—');
     koy('pp-cesit', d.cesit);
-    koy('pp-sinif', sinif || '—');
-    koy('pp-parsel', (d.ilce && d.il) ? (d.ilce + ', ' + d.il) : (d.ilce || d.il || '—'));
+    koy('pp-sinif', d.sinif || '—');
+    var yer = d.bahce || d.ilce || '';
+    koy('pp-parsel', (yer && d.il) ? (yer + ', ' + d.il) : (yer || d.il || '—'));
     koy('pp-asidite', enAsitlik(d.asitlik));
     var zaman = document.getElementById('pp-zaman');
     if (d.hasat_tarihi || d.sikim_tarihi || d.dolum_tarihi) {

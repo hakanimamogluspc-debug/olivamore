@@ -152,11 +152,11 @@ document.addEventListener('DOMContentLoaded', function () {
     koy('pp-urun', d.urun_adi || 'Zeytinyağı');
     koy('pp-kod', d.parti_kodu);
     koy('pp-hasat', trTarih(d.hasat_tarihi));
-    var sinif = String(d.sinif || '');
-    koy('pp-sikim', /naturel s[ıi]zma/i.test(sinif) ? 'Evet ✓' : '—');
+    koy('pp-sikim', d.soguk_sikim === true ? 'Evet ✓' : '—');
     koy('pp-cesit', d.cesit);
-    koy('pp-sinif', sinif || '—');
-    koy('pp-parsel', (d.ilce && d.il) ? (d.ilce + ', ' + d.il) : (d.ilce || d.il || '—'));
+    koy('pp-sinif', d.sinif || '—');
+    var yer = d.bahce || d.ilce || '';
+    koy('pp-parsel', (yer && d.il) ? (yer + ', ' + d.il) : (yer || d.il || '—'));
     koy('pp-asidite', trAsitlik(d.asitlik));
     // Zaman çizgisi: Hasat → Sıkım → Dolum
     var zaman = document.getElementById('pp-zaman');
