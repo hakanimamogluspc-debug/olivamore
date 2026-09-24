@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeytinin İki Yakası — Ayvalık ve Kuzey Ege'nin Belgeli Tarihi | Olivamore</title>
+<meta name="description" content="MÖ 3300 Kumtepe'den 2019 gen araştırmasına: Ayvalık, Lesbos ve Kuzey Ege'de zeytinin belgelerle izlenen yolculuğu. Altı kaynaklı hikâye, rota haritası ve söylemediklerimiz.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Poppins:wght@300;400;500;600&family=Italianno&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<link rel="canonical" href="https://olivamore.de/zeytinin-iki-yakasi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Zeytinin İki Yakası — Ayvalık ve Kuzey Ege'nin Belgeli Tarihi">
+<meta property="og:description" content="Efsane değil, belge: zeytinin Kuzey Ege'deki yolculuğu altı kaynaklı hikâyede.">
+<style>
+:root{--zy-koyu:#22301F;--zy-koyu2:#1B261A;--zy-krem:#F5F0E4;--zy-krem2:#EFE7D5;--zy-gold:#BFA25D;--zy-kiremit:#B3672B;--zy-metin:#3C4237}
+.zy *{box-sizing:border-box}
+.zy{font-family:'Poppins',sans-serif;color:var(--zy-metin);background:var(--zy-krem);overflow-x:hidden}
+.zy h1,.zy h2,.zy h3{font-family:'Cormorant Garamond',serif;font-weight:600;margin:0}
+.zy .ic{max-width:860px;margin:0 auto;padding:0 22px}
+
+/* Kaydırma ilerleme çubuğu */
+.zy-bar{position:fixed;top:0;left:0;height:3px;background:var(--zy-gold);width:0;z-index:400;transition:width .1s linear}
+
+/* Yüzen dönem pusulası */
+.zy-pusula{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:300;display:flex;flex-direction:column;gap:14px}
+.zy-pusula a{display:flex;align-items:center;gap:8px;text-decoration:none}
+.zy-pusula .nokta{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--zy-gold);background:transparent;transition:.25s}
+.zy-pusula .etiket{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8574;opacity:0;transform:translateX(6px);transition:.25s;white-space:nowrap}
+.zy-pusula a.aktif .nokta{background:var(--zy-gold);box-shadow:0 0 0 4px rgba(191,162,93,.25)}
+.zy-pusula a.aktif .etiket,.zy-pusula a:hover .etiket{opacity:1;transform:none}
+@media(max-width:900px){.zy-pusula{display:none}}
+
+/* Kapak */
+.zy-kapak{min-height:92vh;background:var(--zy-koyu);color:var(--zy-krem);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;text-align:center;padding:90px 22px 70px}
+.zy-kapak .ust-not{font-size:.7rem;letter-spacing:.34em;text-transform:uppercase;color:var(--zy-gold);margin-bottom:26px}
+.zy-kapak h1{font-size:clamp(3rem,9vw,6.4rem);line-height:.98;font-weight:500;color:#F7F3E8}
+.zy-kapak .alt{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(1.1rem,2.4vw,1.6rem);color:var(--zy-gold);margin-top:22px}
+.zy-kapak .aciklama{max-width:520px;margin:26px auto 0;font-weight:300;font-size:.92rem;line-height:1.8;color:rgba(245,240,228,.75)}
+.zy-kapak .dal{position:absolute;font-size:clamp(7rem,16vw,13rem);opacity:.07;user-select:none;pointer-events:none}
+.zy-kapak .dal.d1{left:-2%;top:6%}.zy-kapak .dal.d2{right:-2%;bottom:4%;transform:rotate(160deg)}
+.zy-asagi{margin:44px auto 0;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--zy-gold);font-size:.68rem;letter-spacing:.28em;text-transform:uppercase}
+.zy-asagi .ok{width:1px;height:52px;background:linear-gradient(var(--zy-gold),transparent);animation:zyok 2.2s ease-in-out infinite}
+@keyframes zyok{0%,100%{transform:scaleY(.5);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+
+/* Kronoloji şeridi */
+.zy-krono{background:var(--zy-koyu2);padding:64px 0 70px;color:var(--zy-krem)}
+.zy-krono .baslik{text-align:center;margin-bottom:38px}
+.zy-krono .baslik .kck{font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--zy-gold)}
+.zy-krono .baslik h2{font-size:clamp(1.7rem,3.4vw,2.6rem);color:#F7F3E8;font-weight:500;margin-top:8px}
+.zy-serit{display:flex;gap:0;overflow-x:auto;padding:26px 6vw 34px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--zy-gold) transparent;position:relative}
+.zy-serit::before{content:'';position:absolute;left:0;right:0;top:57px;height:1px;background:rgba(191,162,93,.35)}
+.zy-durak{flex:0 0 205px;scroll-snap-align:start;position:relative;padding:44px 22px 0 0}
+.zy-durak::before{content:'';position:absolute;top:53px;left:0;width:9px;height:9px;border-radius:50%;background:var(--zy-gold)}
+.zy-durak .yil{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--zy-gold);line-height:1.1;min-height:2.6rem;display:flex;align-items:flex-end;padding-bottom:20px}
+.zy-durak p{font-size:.76rem;font-weight:300;line-height:1.65;color:rgba(245,240,228,.82);margin:14px 0 0}
+.zy-durak small{color:rgba(191,162,93,.7);font-size:.62rem;letter-spacing:.08em}
+.zy-krono .ipucu{text-align:center;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,240,228,.45);margin-top:6px}
+
+/* Hikâye bölümleri */
+.zy-hikaye{padding:96px 0;position:relative}
+.zy-hikaye.krem{background:var(--zy-krem)}
+.zy-hikaye.krem2{background:var(--zy-krem2)}
+.zy-hikaye.koyu{background:var(--zy-koyu);color:rgba(245,240,228,.88)}
+.zy-hikaye .no{font-family:'Cormorant Garamond',serif;font-size:5.6rem;line-height:1;color:var(--zy-gold);opacity:.35;position:absolute;top:34px;right:6vw;font-style:italic}
+.zy-hikaye .kck{font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--zy-kiremit)}
+.zy-hikaye.koyu .kck{color:var(--zy-gold)}
+.zy-hikaye h2{font-size:clamp(1.9rem,4vw,3rem);font-weight:500;margin:12px 0 26px;color:#2A2E26}
+.zy-hikaye.koyu h2{color:#F7F3E8}
+.zy-anafikir{border-left:3px solid var(--zy-gold);background:rgba(191,162,93,.09);padding:16px 20px;font-family:'Cormorant Garamond',serif;font-size:1.22rem;font-style:italic;line-height:1.5;margin-bottom:30px}
+.zy-hikaye p.md{font-weight:300;font-size:.95rem;line-height:1.9;margin:0 0 20px}
+.zy-hikaye p.md b{font-weight:500}
+.zy-kaynakkod{font-size:.68rem;color:var(--zy-kiremit);letter-spacing:.06em}
+.zy-hikaye.koyu .zy-kaynakkod{color:var(--zy-gold)}
+.zy-sinir{border:1px solid rgba(179,103,43,.4);padding:14px 18px;margin-top:26px;font-size:.78rem;line-height:1.7;color:#7a6a52;background:rgba(255,255,255,.35)}
+.zy-sinir b{display:block;font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;color:var(--zy-kiremit);margin-bottom:6px}
+.zy-hikaye.koyu .zy-sinir{background:rgba(0,0,0,.18);color:rgba(245,240,228,.7);border-color:rgba(191,162,93,.4)}
+.zy-hikaye.koyu .zy-sinir b{color:var(--zy-gold)}
+
+/* Görünürlük animasyonu */
+.zy-goster{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.zy-goster.gorunur{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.zy-goster{opacity:1;transform:none;transition:none}.zy-asagi .ok{animation:none}}
+
+/* Rota haritası */
+.zy-harita{margin:40px auto 8px;max-width:860px}
+.zy-harita svg{width:100%;height:auto;display:block}
+.zy-harita .liman{font-family:'Poppins',sans-serif;font-size:11.5px;letter-spacing:.12em;fill:#EDE5D2;text-transform:uppercase}
+.zy-harita .liman.merkez{fill:var(--zy-gold);font-weight:600}
+.zy-harita .rota{fill:none;stroke:var(--zy-gold);stroke-width:1.6;stroke-dasharray:5 6;opacity:.9}
+.zy-harita .nokta-l{fill:#EDE5D2}
+.zy-harita .nokta-m{fill:var(--zy-gold)}
+.zy-harita.canlan .rota{stroke-dashoffset:600;animation:zyrota 3.2s ease forwards}
+@keyframes zyrota{to{stroke-dashoffset:0}}
+.zy-harita-not{text-align:center;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,228,.5);margin-top:12px}
+
+/* Neyi söylemiyoruz */
+.zy-durust{background:#171F16;color:rgba(245,240,228,.85);padding:96px 0}
+.zy-durust h2{color:#F7F3E8;font-weight:500;font-size:clamp(1.9rem,4vw,3rem);margin:12px 0 14px}
+.zy-durust .giris{font-weight:300;font-size:.95rem;line-height:1.85;max-width:600px;margin-bottom:40px;color:rgba(245,240,228,.75)}
+.zy-iddia{display:grid;grid-template-columns:26px 1fr;gap:16px;padding:18px 0;border-top:1px solid rgba(191,162,93,.22)}
+.zy-iddia:last-of-type{border-bottom:1px solid rgba(191,162,93,.22)}
+.zy-iddia .x{color:var(--zy-kiremit);font-family:'Cormorant Garamond',serif;font-size:1.3rem;line-height:1.2}
+.zy-iddia b{display:block;font-weight:500;font-size:.9rem;color:#F7F3E8;margin-bottom:4px}
+.zy-iddia p{margin:0;font-weight:300;font-size:.8rem;line-height:1.7;color:rgba(245,240,228,.65)}
+.zy-durust .soz{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.35rem;color:var(--zy-gold);margin-top:40px;max-width:640px;line-height:1.5}
+
+/* Kapanış köprüsü */
+.zy-kapris{background:var(--zy-krem);padding:90px 0;text-align:center}
+.zy-kapris .el{font-family:'Italianno',cursive;font-size:clamp(2.2rem,4.5vw,3.2rem);color:var(--zy-kiremit)}
+.zy-kapris h2{font-size:clamp(1.7rem,3.4vw,2.5rem);font-weight:500;margin:4px 0 18px}
+.zy-kapris p{max-width:560px;margin:0 auto 30px;font-weight:300;font-size:.93rem;line-height:1.85}
+.zy-kapris .dgm{display:inline-flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.zy-btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 32px;background:var(--zy-gold);color:#fff;text-decoration:none;font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;transition:.2s}
+.zy-btn:hover{background:#a98e4e;color:#fff}
+.zy-btn.dis{background:transparent;border:1px solid var(--zy-gold);color:#7a6a3e}
+.zy-btn.dis:hover{background:var(--zy-gold);color:#fff}
+.zy-kaynak-detay{max-width:860px;margin:0 auto;padding:0 22px 70px;background:var(--zy-krem)}
+.zy-kaynak-detay details{border:1px solid rgba(179,103,43,.3);padding:16px 20px}
+.zy-kaynak-detay summary{cursor:pointer;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--zy-kiremit)}
+.zy-kaynak-detay p{font-size:.76rem;line-height:1.8;color:#6d6653;margin:12px 0 0}
+</style>
+</head>
+<body data-page="ureticiler">
+<div id="om-header"></div>
+
+<div class="zy">
+<div class="zy-bar" id="zy-bar"></div>
+
+<nav class="zy-pusula" id="zy-pusula" aria-label="Sayfa bölümleri">
+  <a href="#krono"><span class="etiket">Kronoloji</span><span class="nokta"></span></a>
+  <a href="#h1"><span class="etiket">Ortak Ege</span><span class="nokta"></span></a>
+  <a href="#h2"><span class="etiket">Saray ve İaşe</span><span class="nokta"></span></a>
+  <a href="#h3"><span class="etiket">Dünya Yolculuğu</span><span class="nokta"></span></a>
+  <a href="#h4"><span class="etiket">Bilgi ve İnsan</span><span class="nokta"></span></a>
+  <a href="#h5"><span class="etiket">Emekten Yönetime</span><span class="nokta"></span></a>
+  <a href="#h6"><span class="etiket">Ağaçtan Şehre</span><span class="nokta"></span></a>
+  <a href="#durust"><span class="etiket">Neyi Söylemiyoruz</span><span class="nokta"></span></a>
+</nav>
+
+<!-- KAPAK -->
+<section class="zy-kapak">
+  <span class="dal d1" aria-hidden="true">🫒</span>
+  <span class="dal d2" aria-hidden="true">🫒</span>
+  <div class="ust-not">Olivamore Araştırma Dosyası</div>
+  <h1>ZEYTİNİN<br>İKİ YAKASI</h1>
+  <div class="alt">Ayvalık, Kuzey Ege ve zeytinyağının yolculuğu</div>
+  <p class="aciklama">Bu sayfada efsane anlatmıyoruz. Poleninden gen haritasına, saray defterlerinden konsolosluk raporlarına — yalnız belgelerin söylediğini söylüyoruz. Aşağı kaydır; on binlerce yıl seninle birlikte aksın.</p>
+  <div class="zy-asagi"><span>Kaydır</span><span class="ok"></span></div>
+</section>
+
+<!-- KRONOLOJİ ŞERİDİ -->
+<section class="zy-krono" id="krono">
+  <div class="baslik zy-goster">
+    <div class="kck">Seçili Kronoloji</div>
+    <h2>Ağaçtan limana, limandan dünyaya</h2>
+  </div>
+  <div class="zy-serit">
+    <div class="zy-durak"><div class="yil">~62.000 yıl önce</div><p>Lesbos'taki Megali Limni tortularında doğal zeytin poleni görülür. Tarım değil; ağacın insandan önceki varlığı.</p><small>[A1]</small></div>
+    <div class="zy-durak"><div class="yil">MÖ ~3300</div><p>Karşı kıyıda, Kumtepe'de zeytin odunu bulunur.</p><small>[A2]</small></div>
+    <div class="zy-durak"><div class="yil">MÖ 3. binyıl</div><p>Troya IIa'da bölgenin bilinen ilk zeytin çekirdekleri ortaya çıkar.</p><small>[A2]</small></div>
+    <div class="zy-durak"><div class="yil">MS 285–305</div><p>Mytilene sicillerinde zeytinlikler mülkiyet kaydına girer: ağaç artık ölçülen bir değerdir.</p><small>[B1]</small></div>
+    <div class="zy-durak"><div class="yil">1515</div><p>Saray, Edremit ve Midilli'den "en iyi üründen" sekiz varil zeytin ister.</p><small>[A6]</small></div>
+    <div class="zy-durak"><div class="yil">1768</div><p>İki köyde 22.896 zeytin ağacı tek tek mali kayda geçirilir.</p><small>[A6]</small></div>
+    <div class="zy-durak"><div class="yil">1799</div><p>Ayvalık, İstanbul'a 2.000 kantar (~113 ton) yağ taahhüt eder.</p><small>[A6]</small></div>
+    <div class="zy-durak"><div class="yil">1875</div><p>Robert Hadkinson Ayvalık'ta makineli üretim yatırımı kurar.</p><small>[A10]</small></div>
+    <div class="zy-durak"><div class="yil">1893</div><p>Servet-i Fünun sayar: 78 yağ değirmeni, 26 sabunhane, 40 tabakhane.</p><small>[B3]</small></div>
+    <div class="zy-durak"><div class="yil">1907</div><p>İngiliz raporu: 6.780 ton yağ, 1.895 ton sabun ihracatı.</p><small>[B4]</small></div>
+    <div class="zy-durak"><div class="yil">1920</div><p>İngiliz Dışişleri el kitabı: bölgenin yağı, döneminin en iyi yemeklik yağı.</p><small>[B5]</small></div>
+    <div class="zy-durak"><div class="yil">2019</div><p>Gen araştırması: Ayvalık ile Lesbos'un Adramitini'si aynı genetik imzayı taşıyor.</p><small>[A5]</small></div>
+  </div>
+  <div class="ipucu">← Şeridi kaydırarak ilerle →</div>
+</section>
+
+<!-- HİKÂYE 1 -->
+<section class="zy-hikaye krem" id="h1">
+  <span class="no" aria-hidden="true">I</span>
+  <div class="ic zy-goster">
+    <div class="kck">Ortak Ege</div>
+    <h2>Denizin İki Yakasında Aynı İmza</h2>
+    <div class="zy-anafikir">İki kıyının ortaklığı bir soy efsanesinden değil; doğadan, arkeolojiden, adlardan ve genlerden kuruluyor.</div>
+    <p class="md">Bugün Ayvalık'tan Midilli'ye bakınca arada bir sınır görülür. Oysa zeytinin hikâyesi bu sınırdan da, şehirlerden de eskidir. Lesbos'un göl tortularındaki polenler, yabani zeytinin on binlerce yıl önce bu coğrafyanın parçası olduğunu gösteriyor; binlerce yıl sonra karşı kıyıda Kumtepe'de zeytin odunu, Troya'da çekirdekler ortaya çıkıyor. <span class="zy-kaynakkod">[A1, A2]</span></p>
+    <p class="md">Roma çağına gelindiğinde ağaç artık yalnız doğanın ürünü değil: Mytilene'nin mülkiyet yazıtlarında zeytinlikler <b>ölçülen, sahipliği kaydedilen bir servet</b> olarak görünür. <span class="zy-kaynakkod">[B1, K8]</span></p>
+    <p class="md">Ve bugün bu ortaklığın en şaşırtıcı kanıtı genlerde: Türkiye'de <b>Ayvalık</b> denilen çeşitle Lesbos'ta <b>Adramitini</b> denilen çeşit, 2019 tarihli gen bankası araştırmasında <b>aynı genetik imzayı</b> taşıyor. Farklı bayraklar, farklı adlar — aynı ağaç. <span class="zy-kaynakkod">[A5, K1]</span></p>
+    <div class="zy-sinir"><b>Veri sınırı</b>Bilim ağacın hangi kıyıda doğduğunu söylemiyor. Bu hikâye tek bir kıyının sahiplik iddiası değil; denizin kurduğu ortak bir Ege hafızasıdır.</div>
+  </div>
+</section>
+
+<!-- HİKÂYE 2 -->
+<section class="zy-hikaye krem2" id="h2">
+  <span class="no" aria-hidden="true">II</span>
+  <div class="ic zy-goster">
+    <div class="kck">Saray ve İaşe</div>
+    <h2>Sarayın Sofrasından İstanbul'un Kandillerine</h2>
+    <div class="zy-anafikir">Kuzey Ege yağı İstanbul'a yalnız lezzet değil; ışık, temizlik ve koca bir başkenti ayakta tutan düzeni taşıdı.</div>
+    <p class="md">3 Kasım 1515: saraydan Edremit ve Midilli'ye bir emir gider — "en iyi üründen sekiz varil." Zeytinyağı sofrada kalmaz; kandillerde yanar, sabun olur, mutfakta ve bakımda kullanılır. <span class="zy-kaynakkod">[A6, A7]</span></p>
+    <p class="md">Avrupa talebi büyüyünce başkent ile dış pazar arasında gerilim başlar: 1769'da önce İstanbul'un ihtiyacı, sonra ihracat denir; 1776'da yağ yeniden başkente yönlendirilir. 1799'da Ayvalık tek başına <b>2.000 kantar — yaklaşık 113 ton</b> yağ taahhüt eder. 1815–1817 arasında on altı gemiyle 4.662 kantar yağın İstanbul'a ulaştığı <b>gerçekleşmiş sevkiyat</b> olarak kayıtlıdır. <span class="zy-kaynakkod">[A6, A9]</span></p>
+    <p class="md">1872'de saray kileri Kilâr-ı Hümâyun için yağın Midilli ve Edremit'ten satın alınması, bu uzun hattın doğrudan belgelenmiş saray bağlantısıdır. <span class="zy-kaynakkod">[A7]</span></p>
+    <div class="zy-sinir"><b>Belge dili</b>Emir ve taahhüt, teslim demek değildir. Bu sayfada sipariş, kota, taahhüt ve gerçekleşmiş sevkiyat birbirinden özenle ayrılır.</div>
+  </div>
+</section>
+
+<!-- HİKÂYE 3: HARİTA -->
+<section class="zy-hikaye koyu" id="h3">
+  <span class="no" aria-hidden="true">III</span>
+  <div class="ic zy-goster">
+    <div class="kck">İhracat</div>
+    <h2>Ayvalık Yağının Dünya Yolculuğu</h2>
+    <div class="zy-anafikir">Tek bir lüks yağ değil; yemeklik yağ, kandil yağı ve sabun hammaddesinin farklı limanlara ayrıldığı bütüncül bir ekonomi.</div>
+    <p class="md">1827'de yayımlanan bir dönem anlatısı, 1821 öncesinde Ayvalık yağının tam gemi yükleri hâlinde <b>Odessa ve Taganrog'a</b> gittiğini aktarır. 1907 İngiliz konsolosluk raporu kesin sayı verir: <b>6.780 ton yağ, 1.895 ton sabun.</b> Yemeklik yağ sofralara, yere düşmüş zeytinden elde edilen yüksek asitli yağ <b>Marsilya sabunhanelerine</b> — meyvenin niteliğine göre pazar ayıran gelişmiş bir sistem. <span class="zy-kaynakkod">[B2, B4, A11]</span></p>
+  </div>
+  <div class="zy-harita zy-goster" id="zy-harita">
+    <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ayvalık'tan İstanbul, Odessa, Taganrog, Marsilya, Fransa ve İtalya'ya ihracat rotaları">
+      <rect width="900" height="480" fill="#1B261A"/>
+      <g stroke="rgba(191,162,93,.08)" stroke-width="1">
+        <line x1="0" y1="120" x2="900" y2="120"/><line x1="0" y1="240" x2="900" y2="240"/><line x1="0" y1="360" x2="900" y2="360"/>
+        <line x1="150" y1="0" x2="150" y2="480"/><line x1="450" y1="0" x2="450" y2="480"/><line x1="750" y1="0" x2="750" y2="480"/>
+      </g>
+      <path class="rota" d="M560 300 C 590 260, 600 240, 608 212"/>
+      <path class="rota" d="M560 300 C 610 220, 640 150, 662 96"/>
+      <path class="rota" d="M560 300 C 640 210, 730 120, 792 72"/>
+      <path class="rota" d="M560 300 C 420 330, 250 300, 118 212"/>
+      <path class="rota" d="M560 300 C 460 320, 340 300, 262 246"/>
+      <circle class="nokta-m" cx="560" cy="300" r="7"/>
+      <circle class="nokta-m" cx="560" cy="300" r="12" fill="none" stroke="#BFA25D" stroke-width="1" opacity=".5"/>
+      <circle class="nokta-l" cx="608" cy="212" r="4"/>
+      <circle class="nokta-l" cx="662" cy="96" r="4"/>
+      <circle class="nokta-l" cx="792" cy="72" r="4"/>
+      <circle class="nokta-l" cx="118" cy="212" r="4"/>
+      <circle class="nokta-l" cx="262" cy="246" r="4"/>
+      <text class="liman merkez" x="560" y="336" text-anchor="middle">Ayvalık</text>
+      <text class="liman" x="620" y="204">İstanbul</text>
+      <text class="liman" x="674" y="90">Odessa</text>
+      <text class="liman" x="804" y="66">Taganrog</text>
+      <text class="liman" x="106" y="200" text-anchor="end">Marsilya</text>
+      <text class="liman" x="262" y="274" text-anchor="middle">İtalya</text>
+      <text x="560" y="446" text-anchor="middle" fill="rgba(237,229,210,.35)" font-size="10" letter-spacing="3">1821 ÖNCESİ VE 1907 KAYITLARINA GÖRE BELGELİ ROTALAR</text>
+    </svg>
+  </div>
+  <div class="ic zy-goster">
+    <p class="md" style="margin-top:26px;">1920'de yayımlanan İngiliz Dışişleri el kitabı ise kendi dönemine ait bir hüküm verir: Ayvalık–Edremit yağı, Küçük Asya'nın <b>en iyi yemeklik yağıdır</b>; Fransızlar ve İtalyanlar büyük miktarlarda satın alır. <span class="zy-kaynakkod">[B5]</span></p>
+    <div class="zy-sinir"><b>Veri sınırı</b>Odessa–Taganrog bilgisi dönem anlatısının tanıklığıdır; tek tek gemi manifestoları elimizde yoktur. 1920 değerlendirmesi güncel bir ödül değil, o yılın resmî yayınıdır.</div>
+  </div>
+</section>
+
+<!-- HİKÂYE 4 -->
+<section class="zy-hikaye krem" id="h4">
+  <span class="no" aria-hidden="true">IV</span>
+  <div class="ic zy-goster">
+    <div class="kck">Bilgi ve İnsan</div>
+    <h2>Ürün Değil, Bilgi de Deniz Aştı</h2>
+    <div class="zy-anafikir">Makineler gemiyle geldi; üretimi asıl değiştiren, ustaların ve mektupların taşıdığı bilgiydi.</div>
+    <p class="md">1875'te İngiliz girişimci Robert Hadkinson, Ayvalık'a yaklaşık 1.500 sterlinlik makine getirir; 1891'de üretim süreçleri için bir <b>kimya mühendisi</b> işe alır. Üretim artık yalnız ustalıkla değil, ölçümle de gelişmektedir. <span class="zy-kaynakkod">[A10]</span></p>
+    <p class="md">Aynı yıllarda yağ üreticisi Sapoundjoglou konsolosluk temsilcisi olur; tüccar Sevasto yağ, gemi, sigorta ve yabancı alıcı arasında bağ kurar. 1906'da Marsilya sabunhanelerinde çıraklık yapan <b>Panagis Strongylis</b> Ayvalık'a döner, Avrupa usulü sabun denemelerine girişir. Öğrenilen yöntem, denizi aşıp eve dönmüştür. <span class="zy-kaynakkod">[K4, A11]</span></p>
+    <div class="zy-sinir"><b>Kapsam kararı</b>Ayvalık bağlantısı kanıtlanamayan anlatılar (örn. Anfré) bu sayfaya alınmamıştır.</div>
+  </div>
+</section>
+
+<!-- HİKÂYE 5 -->
+<section class="zy-hikaye krem2" id="h5">
+  <span class="no" aria-hidden="true">V</span>
+  <div class="ic zy-goster">
+    <div class="kck">Emekten Yönetime</div>
+    <h2>Fabrikadan Belediye Binasına</h2>
+    <div class="zy-anafikir">Cumhuriyet döneminde zeytin, Ayvalık'a yalnız gelir değil; yöneticilerini de verdi.</div>
+    <p class="md"><b>Muhip Özyiğit</b> belediye başkanlığından, Tariş adına zeytinyağı üretimini incelemek üzere gönderildiği Londra'ya uzanır. <b>İzzet Aygüner</b> on bir yaşında yağ fabrikasında işe başlar; 1973'te seçim akşamı fabrikadaki tezgâhının başındayken belediye başkanı seçildiğini öğrenir. Onu, zeytinyağı ihracatçısı <b>Ali Nedim Güreli</b> izler. <span class="zy-kaynakkod">[K2, K5, K6, K7]</span></p>
+    <p class="md">Biri araştırmak için Londra'ya giden örgütleyici, biri sabun kesme masasından çıkan işçi, biri ihracat dünyasından gelen tüccar: üçünün de yolu aynı ağaçtan geçti.</p>
+  </div>
+</section>
+
+<!-- HİKÂYE 6 -->
+<section class="zy-hikaye krem" id="h6">
+  <span class="no" aria-hidden="true">VI</span>
+  <div class="ic zy-goster">
+    <div class="kck">Endüstriyel Peyzaj</div>
+    <h2>Bir Ağacın Şehre Dönüşmesi</h2>
+    <div class="zy-anafikir">Ayvalık zeytinliğin kenarına kurulmadı; zeytinliğin ihtiyaçları etrafında biçimlendi.</div>
+    <p class="md">1768'de <b>22.896 ağaç</b> tek tek mali deftere yazılır. 1893'te ağaçların etrafında koca bir kent ekonomisi döner: değirmenler, sabunhaneler, depolar, gemiler. 1917'de kazadaki <b>yaklaşık 1,2 milyon ağacı</b> toplamak ve 22 fabrikayı çalıştırmak için iki bin kişilik işgücü hesaplanır. <span class="zy-kaynakkod">[A6, B3, A12]</span></p>
+    <p class="md">2017'de UNESCO Geçici Listesi'ne sunulan dosya, Ayvalık'ı tam da böyle anlatır: evler, fabrikalar, zeytinlikler, depolar ve liman — bir bütün olarak <b>endüstriyel peyzaj</b>. Merkezde tek bir kahraman yoktur; toprak, ağaç, işçi ve liman birbirini tamamlar. <span class="zy-kaynakkod">[K3]</span></p>
+    <div class="zy-sinir"><b>Statü notu</b>Ayvalık UNESCO Dünya Mirası olarak tescilli değildir; statüsü 2017 tarihli Geçici Liste'dir.</div>
+  </div>
+</section>
+
+<!-- NEYİ SÖYLEMİYORUZ -->
+<section class="zy-durust" id="durust">
+  <div class="ic zy-goster">
+    <div class="kck" style="color:var(--zy-gold);font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;">Araştırma Şeffaflığı</div>
+    <h2>Neyi Söylemiyoruz</h2>
+    <p class="giris">Güzel hikâye çoktu; belgesi olmayanları anlatmadık. Çok kaynaklı kontrolde doğrulanamayan iddialar bu sayfaya bilerek alınmadı:</p>
+    <div class="zy-iddia"><span class="x">✕</span><div><b>"Thermi'de zeytin presi bulundu"</b><p>Kazı raporundaki düzenek pişmiş toprak kaplı havuz ve kanaldır; zeytinyağı kalıntısı veya pres mekanizması gösterilmemiştir.</p></div></div>
+    <div class="zy-iddia"><span class="x">✕</span><div><b>"Esma Sultan için Edremit'ten 80 kıyye yağ istendi"</b><p>Bu miktar ve kaynak bağı doğrulanamadı. Belgelenen, aylık saray tayinatındaki 9 kıyye yağdır — kaynağı yazmaz. İkisini birleştirip güzel bir cümle kurmadık.</p></div></div>
+    <div class="zy-iddia"><span class="x">✕</span><div><b>"1907'de 'Huile d'Olive d'Aivaly' etiketi vardı"</b><p>Özgün rapor veya etiket görseli bulunamadı; coğrafi işaret benzetmesi anakronik kalır.</p></div></div>
+    <div class="zy-iddia"><span class="x">✕</span><div><b>"Konsolos Goutta 1910'da yağımızı övdü"</b><p>Kişi ve görevi doğrulanıyor; kendisine atfedilen değerlendirmenin özgün raporu bulunamadı.</p></div></div>
+    <p class="soz">"Bir markanın tarihe borcu, onu güzelleştirmek değil; doğru anlatmaktır."</p>
+  </div>
+</section>
+
+<!-- KAPANIŞ KÖPRÜSÜ -->
+<section class="zy-kapris">
+  <div class="ic zy-goster">
+    <div class="el">Kayıt devam ediyor</div>
+    <h2>Defterlerin yerini parti kodu aldı</h2>
+    <p>1768'de ağaçlar tek tek deftere yazılıyordu. Bugün aynı toprağın yağı, şişendeki parti koduyla hasadına ve bahçesine kadar izlenebiliyor. Bu sayfa geçmişin kaydıysa, Hasat Pasaportu bugünün kaydıdır.</p>
+    <div class="dgm">
+      <a class="zy-btn" href="pasaport.html">Hasat Pasaportu'nu Sorgula</a>
+      <a class="zy-btn dis" href="hikayemiz.html">Hikâyemiz</a>
+    </div>
+  </div>
+</section>
+<div class="zy-kaynak-detay">
+  <details>
+    <summary>Kaynaklar ve yöntem</summary>
+    <p>Bu sayfa, Olivamore "Zeytinin İki Yakası" araştırma dosyasına (24 Eylül 2026, tarihsel kaynak denetimli) dayanır. Köşeli parantezli kodlar dosyanın açıklamalı kaynakçasına işaret eder: [A] akademik araştırmalar (Margari vd. 2009; Riehl &amp; Marinova 2008; El Bakkali vd. 2019; Arıkan 2006; Doğan 2007; Kurmuş; Sifnaiou vd.), [B] birincil ve dönem kaynakları (Mytilene yazıtları; Néroulos 1827; Servet-i Fünun 1893; İngiliz konsolosluk raporları 1908; İngiliz Dışişleri 1920), [K] kurumsal ve yerel kaynaklar (T.C. Tarım ve Orman Bakanlığı; Ayvalık Belediyesi; UNESCO; arşiv dizinleri). Emir, taahhüt, kota ve gerçekleşmiş sevkiyat birbirinden ayrı tutulmuş; doğrulanamayan iddialar "Neyi Söylemiyoruz" bölümünde açıkça listelenmiştir.</p>
+  </details>
+</div>
+</div>
+
+<div id="om-footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // İlerleme çubuğu
+  var bar = document.getElementById('zy-bar');
+  function ilerleme() {
+    var h = document.documentElement;
+    var oran = h.scrollTop / (h.scrollHeight - h.clientHeight);
+    bar.style.width = (oran * 100) + '%';
+  }
+  window.addEventListener('scroll', ilerleme, { passive: true });
+  ilerleme();
+
+  // Görünürlük animasyonları
+  var izle = new IntersectionObserver(function (girisler) {
+    girisler.forEach(function (g) {
+      if (g.isIntersecting) {
+        g.target.classList.add('gorunur');
+        if (g.target.id === 'zy-harita') g.target.classList.add('canlan');
+        izle.unobserve(g.target);
+      }
+    });
+  }, { threshold: 0.18 });
+  document.querySelectorAll('.zy-goster').forEach(function (el) { izle.observe(el); });
+
+  // Pusula: aktif bölüm takibi
+  var linkler = Array.prototype.slice.call(document.querySelectorAll('#zy-pusula a'));
+  var hedefler = linkler.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  var aktifIzle = new IntersectionObserver(function (girisler) {
+    girisler.forEach(function (g) {
+      if (g.isIntersecting) {
+        linkler.forEach(function (a) { a.classList.toggle('aktif', a.getAttribute('href') === '#' + g.target.id); });
+      }
+    });
+  }, { rootMargin: '-40% 0px -50% 0px' });
+  hedefler.forEach(function (t) { aktifIzle.observe(t); });
+});
+</script>
+</body>
+</html>
