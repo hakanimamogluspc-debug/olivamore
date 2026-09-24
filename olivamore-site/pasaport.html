@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hasat Pasaportu: Şişendeki Yağın Hikâyesi | Olivamore</title>
-<meta name="description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe, çeşit ve laboratuvar sonuçlarıyla şişendeki yağın tüm hikâyesini gör.">
+<meta name="description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe ve çeşit bilgisiyle şişendeki yağın tüm hikâyesini gör.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
@@ -12,11 +12,11 @@
 <script src="assets/site.js" defer></script>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Hasat Pasaportu: Şişendeki Yağın Hikâyesi | Olivamore">
-<meta property="og:description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe, çeşit ve laboratuvar sonuçlarıyla şişendeki yağın tüm hikâyesini gör.">
+<meta property="og:description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe ve çeşit bilgisiyle şişendeki yağın tüm hikâyesini gör.">
 <meta property="og:image" content="https://olivamore.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Hasat Pasaportu: Şişendeki Yağın Hikâyesi | Olivamore">
-<meta name="twitter:description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe, çeşit ve laboratuvar sonuçlarıyla şişendeki yağın tüm hikâyesini gör.">
+<meta name="twitter:description" content="Etiketteki parti numarasını gir; hasat tarihi, bahçe ve çeşit bilgisiyle şişendeki yağın tüm hikâyesini gör.">
 <meta name="twitter:image" content="https://olivamore.com/og.png">
 
 <link rel="canonical" href="https://olivamore.com/pasaport.html">
@@ -36,19 +36,19 @@
   <div class="container">
     <div class="kicker">İzlenebilirlik</div>
     <h1>Hasat Pasaportu</h1>
-    <p class="lead">Etiketin arkasındaki parti numarasını gir; şişendeki yağın hangi bahçeden ve hangi hasattan geldiğini laboratuvar sonuçlarıyla birlikte gör.</p>
+    <p class="lead">Etiketin arkasındaki parti numarasını gir; şişendeki yağın hangi bahçeden ve hangi hasattan geldiğini görebilirsin.</p>
   </div>
 </div>
 
 <section class="block tight">
   <div class="container">
     <div class="pp-search">
-      <input type="text" id="pp-input" placeholder="Parti veya rapor no · örn. 2505969" maxlength="20">
+      <input type="text" id="partiInput" placeholder="Parti veya LOT no · örn. SP-20260915-001-01" maxlength="30">
       <button class="btn btn-dark" id="pp-btn">Sorgula</button>
     </div>
     <div class="pp-samples">
-      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Doğrulanmış rapor:</span>
-      <button class="chip" data-kod="2505969">2505969</button>
+      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Örnek parti:</span>
+      <button class="chip" data-kod="SP-20260915-001-01">SP-20260915-001-01</button>
     </div>
 
     <!-- SONUÇ KARTI -->
@@ -62,11 +62,17 @@
           <div class="pp-row"><b>Hasat tarihi</b><span id="pp-hasat"></span></div>
           <div class="pp-row"><b>Soğuk sıkım</b><span id="pp-sikim"></span></div>
           <div class="pp-row"><b>Zeytin çeşidi</b><span id="pp-cesit"></span></div>
+          <div class="pp-row"><b>Kalite sınıfı</b><span id="pp-sinif"></span></div>
           <div class="pp-row"><b>Bahçe / parsel</b><span id="pp-parsel"></span></div>
           <div class="pp-row"><b>Asidite (FFA)</b><span id="pp-asidite"></span></div>
-          <div class="pp-row"><b>Polifenol</b><span id="pp-polifenol"></span></div>
-          <div class="pp-row"><b>Peroksit</b><span id="pp-peroksit"></span></div>
-          <div class="pp-row"><b>Laboratuvar analizi</b><span id="pp-lab"></span></div>
+        </div>
+
+        <div class="pp-zaman" id="pp-zaman" style="display:none;margin:0 0 22px;">
+          <div class="pz-adim"><span class="pz-ikon">🍃</span><b>Hasat</b><span id="pz-hasat">—</span></div>
+          <span class="pz-ok">→</span>
+          <div class="pz-adim"><span class="pz-ikon">⚙️</span><b>Sıkım</b><span id="pz-sikim">—</span></div>
+          <span class="pz-ok">→</span>
+          <div class="pz-adim"><span class="pz-ikon">🧴</span><b>Dolum</b><span id="pz-dolum">—</span></div>
         </div>
 
         <div class="tasting" style="margin:0 0 22px;">
@@ -103,66 +109,106 @@
 <div id="om-footer"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  /* [PARTİLER] Varsayılan parti veritabanı — panelden (Partiler sekmesi)
-     eklenen partiler bununla birleştirilir. Canlıda backend'den gelir. */
-  var BATCHES = [
-    { kod: '2505969', urun: 'Trilye Erken Hasat · 250 ml × 2 numune', hasat: 'Raporda belirtilmiyor', sikim: 'Ürün adında “soğuk sıkım” olarak geçiyor; tarih ve sıcaklık belirtilmiyor', cesit: 'Trilye', parsel: 'Raporda belirtilmiyor', asidite: '%0,12 ±0,01', polifenol: 'Bu raporda yer almıyor', peroksit: '3,41 ±0,848 meq O₂/kg', lab: 'DEPPO · Rapor 2505969 · 11.03.2025', tadim: 'Rapor kimyasal ve fiziksel analiz sonuçlarını içerir; bağımsız duyusal tadım notu içermez.', uretici: 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık', avatar: 'PT', href: 'urun-trilye.html', rapor: 'https://olivamore.com/wp-content/uploads/2025/04/2505969-PEKTAS-TARIM-Trilye-Erken-Hasat-Soguk-Sikim-Naturel-Sizma-Zeytinyagi-TREN.pdf' }
-  ];
-  // Panelden eklenen partileri birleştir (aynı kod panelinkiyle değişir)
-  try {
-    var C = JSON.parse(localStorage.getItem('om-admin') || '{}');
-    (C.batches || []).forEach(function (b) {
-      var i = BATCHES.findIndex(function (x) { return x.kod === b.kod; });
-      if (i >= 0) BATCHES[i] = b; else BATCHES.push(b);
-    });
-  } catch (e) {}
+  var API = 'https://olivamore.greenopsturkey.com/api/public/trace?q=';
+  var giris = document.getElementById('partiInput');
+  var btn = document.getElementById('pp-btn');
+  var card = document.getElementById('pp-card');
+  var empty = document.getElementById('pp-empty');
 
-  function show(kod) {
-    kod = (kod || '').trim().toUpperCase();
-    var card = document.getElementById('pp-card');
-    var empty = document.getElementById('pp-empty');
-    var b = BATCHES.find(function (x) { return x.kod === kod; });
-    if (!b) {
-      card.classList.remove('on');
-      empty.classList.add('on');
-      return;
-    }
+  function trTarih(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function trTarihKisa(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function trAsitlik(v) {
+    if (v == null || v === '') return '—';
+    return '%' + String(v).replace('.', ',');
+  }
+  function koy(id, deger) { document.getElementById(id).textContent = (deger == null || deger === '') ? '—' : deger; }
+
+  function bekleme(acik) {
+    btn.disabled = acik;
+    btn.textContent = acik ? 'Sorgulanıyor…' : 'Sorgula';
+    card.style.opacity = acik ? '.45' : '';
+  }
+  function bulunamadi(mesaj) {
+    card.classList.remove('on');
+    empty.classList.add('on');
+    empty.querySelector('h3').textContent = mesaj ? 'Şu an sorgulayamadık' : 'Bu parti numarasını bulamadık';
+    empty.querySelector('p').innerHTML = mesaj
+      ? mesaj
+      : 'Bu numarayla eşleşen doğrulanmış kayıt henüz yayınlanmamış olabilir. <a class="link-arrow" href="iletisim.html">Bize yaz</a>; ürün ve hacim bilgisiyle doğru raporu kontrol edelim.';
+  }
+
+  function doldur(d) {
     empty.classList.remove('on');
-    document.getElementById('pp-urun').textContent = b.urun;
-    document.getElementById('pp-kod').textContent = b.kod;
-    document.getElementById('pp-hasat').textContent = b.hasat;
-    document.getElementById('pp-sikim').textContent = b.sikim;
-    document.getElementById('pp-cesit').textContent = b.cesit;
-    document.getElementById('pp-parsel').textContent = b.parsel;
-    document.getElementById('pp-asidite').textContent = b.asidite;
-    document.getElementById('pp-polifenol').textContent = b.polifenol;
-    document.getElementById('pp-peroksit').textContent = b.peroksit;
-    document.getElementById('pp-lab').textContent = b.lab;
-    document.getElementById('pp-tadim').textContent = b.tadim;
-    document.getElementById('pp-uretici').textContent = b.uretici;
-    document.getElementById('pp-avatar').textContent = b.avatar || b.uretici.slice(0, 2).toUpperCase();
-    document.getElementById('pp-link').href = b.href || 'urun.html';
-    document.getElementById('pp-report').href = b.rapor || 'kalite.html#analizler';
+    koy('pp-urun', d.urun_adi || 'Zeytinyağı');
+    koy('pp-kod', d.parti_kodu);
+    koy('pp-hasat', trTarih(d.hasat_tarihi));
+    var sinif = String(d.sinif || '');
+    koy('pp-sikim', /naturel s[ıi]zma/i.test(sinif) ? 'Evet ✓' : '—');
+    koy('pp-cesit', d.cesit);
+    koy('pp-sinif', sinif || '—');
+    koy('pp-parsel', (d.ilce && d.il) ? (d.ilce + ', ' + d.il) : (d.ilce || d.il || '—'));
+    koy('pp-asidite', trAsitlik(d.asitlik));
+    // Zaman çizgisi: Hasat → Sıkım → Dolum
+    var zaman = document.getElementById('pp-zaman');
+    if (d.hasat_tarihi || d.sikim_tarihi || d.dolum_tarihi) {
+      koy('pz-hasat', trTarihKisa(d.hasat_tarihi));
+      koy('pz-sikim', trTarihKisa(d.sikim_tarihi));
+      koy('pz-dolum', trTarihKisa(d.dolum_tarihi));
+      zaman.style.display = '';
+    } else { zaman.style.display = 'none'; }
+    // Sabit alanlar
+    koy('pp-tadim', 'Bu kart, GreenOps izlenebilirlik kaydında açıkça yer alan bilgileri gösterir; kayıtta bulunmayan ayrıntılar tahmin edilmez.');
+    koy('pp-uretici', 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık');
+    document.getElementById('pp-avatar').textContent = 'PT';
+    var ad = String(d.urun_adi || '').toUpperCase();
+    document.getElementById('pp-link').href = ad.indexOf('TRİLYE') >= 0 || ad.indexOf('TRILYE') >= 0 ? 'urun-trilye.html' : 'urun.html';
+    document.getElementById('pp-report').href = 'kalite.html#analizler';
     card.classList.add('on');
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  document.getElementById('pp-btn').addEventListener('click', function () {
-    show(document.getElementById('pp-input').value);
-  });
-  document.getElementById('pp-input').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') show(this.value);
-  });
+  var sorguda = false;
+  async function sorgula() {
+    var q = giris.value.trim();
+    if (!q || sorguda) return;
+    sorguda = true; bekleme(true);
+    try {
+      var res = await fetch(API + encodeURIComponent(q));
+      var data = await res.json().catch(function () { return {}; });
+      if (res.status === 429) {
+        bulunamadi('Çok fazla istek aldık. Lütfen bir dakika sonra tekrar dene.');
+      } else if (!data.found) {
+        bulunamadi();
+      } else {
+        doldur(data);
+      }
+    } catch (err) {
+      bulunamadi('Şu an sorgu servisine ulaşamıyoruz. Lütfen biraz sonra tekrar dene; sorun sürerse <a class="link-arrow" href="iletisim.html">bize yaz</a>.');
+    } finally {
+      sorguda = false; bekleme(false);
+    }
+  }
+
+  btn.addEventListener('click', sorgula);
+  giris.addEventListener('keydown', function (e) { if (e.key === 'Enter') sorgula(); });
   document.querySelectorAll('.pp-samples .chip').forEach(function (c) {
-    c.addEventListener('click', function () {
-      document.getElementById('pp-input').value = c.dataset.kod;
-      show(c.dataset.kod);
-    });
+    c.addEventListener('click', function () { giris.value = c.dataset.kod; sorgula(); });
   });
 
-  // QR hedefi: ?parti=2505969 ile gelindiyse doğrudan göster
-  var q = new URLSearchParams(location.search).get('parti');
-  if (q) { document.getElementById('pp-input').value = q.toUpperCase(); show(q); }
+  // Paylaşılabilir link: ?q=... (QR/eski linkler için ?parti=... da desteklenir)
+  var params = new URLSearchParams(location.search);
+  var q = params.get('q') || params.get('parti');
+  if (q) { giris.value = q; sorgula(); }
 });
 </script>
 </body>

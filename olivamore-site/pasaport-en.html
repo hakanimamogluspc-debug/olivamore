@@ -36,19 +36,19 @@
   <div class="container">
     <div class="kicker">Traceability</div>
     <h1>Harvest Passport</h1>
-    <p class="lead">Enter the batch number on the back of your label; see which grove and which harvest the oil in your bottle came from, together with its lab values.</p>
+    <p class="lead">Enter the batch number on the back of your label; see which grove and which harvest the oil in your bottle came from.</p>
   </div>
 </div>
 
 <section class="block tight">
   <div class="container">
     <div class="pp-search">
-      <input type="text" id="pp-input" placeholder="Batch or report no · e.g. 2505969" maxlength="20">
+      <input type="text" id="partiInput" placeholder="Batch or LOT no · e.g. SP-20260915-001-01" maxlength="30">
       <button class="btn btn-dark" id="pp-btn">Look Up</button>
     </div>
     <div class="pp-samples">
-      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Verified report:</span>
-      <button class="chip" data-kod="2505969">2505969</button>
+      <span style="font-size:.8rem;color:var(--ink-soft);align-self:center;">Sample batch:</span>
+      <button class="chip" data-kod="SP-20260915-001-01">SP-20260915-001-01</button>
     </div>
 
     <!-- RESULT CARD -->
@@ -62,11 +62,17 @@
           <div class="pp-row"><b>Harvest date</b><span id="pp-hasat"></span></div>
           <div class="pp-row"><b>Cold pressed</b><span id="pp-sikim"></span></div>
           <div class="pp-row"><b>Olive variety</b><span id="pp-cesit"></span></div>
+          <div class="pp-row"><b>Quality class</b><span id="pp-sinif"></span></div>
           <div class="pp-row"><b>Grove / parcel</b><span id="pp-parsel"></span></div>
           <div class="pp-row"><b>Acidity (FFA)</b><span id="pp-asidite"></span></div>
-          <div class="pp-row"><b>Polyphenols</b><span id="pp-polifenol"></span></div>
-          <div class="pp-row"><b>Peroxide</b><span id="pp-peroksit"></span></div>
-          <div class="pp-row"><b>Lab test</b><span id="pp-lab"></span></div>
+        </div>
+
+        <div class="pp-zaman" id="pp-zaman" style="display:none;margin:0 0 22px;">
+          <div class="pz-adim"><span class="pz-ikon">🍃</span><b>Harvest</b><span id="pz-hasat">—</span></div>
+          <span class="pz-ok">→</span>
+          <div class="pz-adim"><span class="pz-ikon">⚙️</span><b>Pressing</b><span id="pz-sikim">—</span></div>
+          <span class="pz-ok">→</span>
+          <div class="pz-adim"><span class="pz-ikon">🧴</span><b>Bottling</b><span id="pz-dolum">—</span></div>
         </div>
 
         <div class="tasting" style="margin:0 0 22px;">
@@ -102,64 +108,97 @@
 <div id="om-footer"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  /* [BATCHES] Default batch database — batches added from the admin panel
-     (Partiler tab) are merged in. In production this comes from the backend. */
-  var BATCHES = [
-    { kod: '2505969', urun: 'Trilye Early Harvest · two 250 ml samples', hasat: 'Not stated in the report', sikim: 'The sample name says “cold pressed”; date and temperature are not stated', cesit: 'Trilye', parsel: 'Not stated in the report', asidite: '0.12% ±0.01', polifenol: 'Not included in this report', peroksit: '3.41 ±0.848 meq O₂/kg', lab: 'DEPPO · Report 2505969 · 11 March 2025', tadim: 'The report contains chemical and physical results; it does not include an independent sensory tasting note.', uretici: 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık', avatar: 'PT', href: 'urun-trilye-en.html', rapor: 'https://olivamore.com/wp-content/uploads/2025/04/2505969-PEKTAS-TARIM-Trilye-Erken-Hasat-Soguk-Sikim-Naturel-Sizma-Zeytinyagi-TREN.pdf' }
-  ];
-  try {
-    var C = JSON.parse(localStorage.getItem('om-admin') || '{}');
-    (C.batches || []).forEach(function (b) {
-      var i = BATCHES.findIndex(function (x) { return x.kod === b.kod; });
-      if (i >= 0) BATCHES[i] = b; else BATCHES.push(b);
-    });
-  } catch (e) {}
+  var API = 'https://olivamore.greenopsturkey.com/api/public/trace?q=';
+  var giris = document.getElementById('partiInput');
+  var btn = document.getElementById('pp-btn');
+  var card = document.getElementById('pp-card');
+  var empty = document.getElementById('pp-empty');
 
-  function show(kod) {
-    kod = (kod || '').trim().toUpperCase();
-    var card = document.getElementById('pp-card');
-    var empty = document.getElementById('pp-empty');
-    var b = BATCHES.find(function (x) { return x.kod === kod; });
-    if (!b) {
-      card.classList.remove('on');
-      empty.classList.add('on');
-      return;
-    }
+  function enTarih(iso, kisa) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: kisa ? 'short' : 'long', year: 'numeric' });
+  }
+  function enAsitlik(v) {
+    if (v == null || v === '') return '—';
+    return String(v) + '%';
+  }
+  function koy(id, deger) { document.getElementById(id).textContent = (deger == null || deger === '') ? '—' : deger; }
+
+  function bekleme(acik) {
+    btn.disabled = acik;
+    btn.textContent = acik ? 'Looking up…' : 'Look Up';
+    card.style.opacity = acik ? '.45' : '';
+  }
+  function bulunamadi(mesaj) {
+    card.classList.remove('on');
+    empty.classList.add('on');
+    empty.querySelector('h3').textContent = mesaj ? "We couldn't run the lookup" : "We couldn't find that batch number";
+    empty.querySelector('p').innerHTML = mesaj
+      ? mesaj
+      : 'A verified record may not yet be published for that number. <a class="link-arrow" href="iletisim-en.html">Write to us</a> with the product and volume so we can check the correct report.';
+  }
+
+  function doldur(d) {
     empty.classList.remove('on');
-    document.getElementById('pp-urun').textContent = b.urun;
-    document.getElementById('pp-kod').textContent = b.kod;
-    document.getElementById('pp-hasat').textContent = b.hasat;
-    document.getElementById('pp-sikim').textContent = b.sikim;
-    document.getElementById('pp-cesit').textContent = b.cesit;
-    document.getElementById('pp-parsel').textContent = b.parsel;
-    document.getElementById('pp-asidite').textContent = b.asidite;
-    document.getElementById('pp-polifenol').textContent = b.polifenol;
-    document.getElementById('pp-peroksit').textContent = b.peroksit;
-    document.getElementById('pp-lab').textContent = b.lab;
-    document.getElementById('pp-tadim').textContent = b.tadim;
-    document.getElementById('pp-uretici').textContent = b.uretici;
-    document.getElementById('pp-avatar').textContent = b.avatar || b.uretici.slice(0, 2).toUpperCase();
-    document.getElementById('pp-link').href = b.href || 'urun-en.html';
-    document.getElementById('pp-report').href = b.rapor || 'kalite-en.html#analizler';
+    koy('pp-urun', d.urun_adi || 'Olive Oil');
+    koy('pp-kod', d.parti_kodu);
+    koy('pp-hasat', enTarih(d.hasat_tarihi));
+    var sinif = String(d.sinif || '');
+    koy('pp-sikim', /naturel s[ıi]zma/i.test(sinif) ? 'Yes ✓' : '—');
+    koy('pp-cesit', d.cesit);
+    koy('pp-sinif', sinif || '—');
+    koy('pp-parsel', (d.ilce && d.il) ? (d.ilce + ', ' + d.il) : (d.ilce || d.il || '—'));
+    koy('pp-asidite', enAsitlik(d.asitlik));
+    var zaman = document.getElementById('pp-zaman');
+    if (d.hasat_tarihi || d.sikim_tarihi || d.dolum_tarihi) {
+      koy('pz-hasat', enTarih(d.hasat_tarihi, true));
+      koy('pz-sikim', enTarih(d.sikim_tarihi, true));
+      koy('pz-dolum', enTarih(d.dolum_tarihi, true));
+      zaman.style.display = '';
+    } else { zaman.style.display = 'none'; }
+    koy('pp-tadim', 'This card shows the details explicitly present in the GreenOps traceability record; missing details are not inferred.');
+    koy('pp-uretici', 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık');
+    document.getElementById('pp-avatar').textContent = 'PT';
+    var ad = String(d.urun_adi || '').toUpperCase();
+    document.getElementById('pp-link').href = ad.indexOf('TRİLYE') >= 0 || ad.indexOf('TRILYE') >= 0 ? 'urun-trilye-en.html' : 'urun-en.html';
+    document.getElementById('pp-report').href = 'kalite-en.html#analizler';
     card.classList.add('on');
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  document.getElementById('pp-btn').addEventListener('click', function () {
-    show(document.getElementById('pp-input').value);
-  });
-  document.getElementById('pp-input').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') show(this.value);
-  });
+  var sorguda = false;
+  async function sorgula() {
+    var q = giris.value.trim();
+    if (!q || sorguda) return;
+    sorguda = true; bekleme(true);
+    try {
+      var res = await fetch(API + encodeURIComponent(q));
+      var data = await res.json().catch(function () { return {}; });
+      if (res.status === 429) {
+        bulunamadi('Too many requests. Please try again in a minute.');
+      } else if (!data.found) {
+        bulunamadi();
+      } else {
+        doldur(data);
+      }
+    } catch (err) {
+      bulunamadi('We can\'t reach the lookup service right now. Please try again shortly; if it persists, <a class="link-arrow" href="iletisim-en.html">write to us</a>.');
+    } finally {
+      sorguda = false; bekleme(false);
+    }
+  }
+
+  btn.addEventListener('click', sorgula);
+  giris.addEventListener('keydown', function (e) { if (e.key === 'Enter') sorgula(); });
   document.querySelectorAll('.pp-samples .chip').forEach(function (c) {
-    c.addEventListener('click', function () {
-      document.getElementById('pp-input').value = c.dataset.kod;
-      show(c.dataset.kod);
-    });
+    c.addEventListener('click', function () { giris.value = c.dataset.kod; sorgula(); });
   });
 
-  var q = new URLSearchParams(location.search).get('parti');
-  if (q) { document.getElementById('pp-input').value = q.toUpperCase(); show(q); }
+  var params = new URLSearchParams(location.search);
+  var q = params.get('q') || params.get('parti');
+  if (q) { giris.value = q; sorgula(); }
 });
 </script>
 </body>
