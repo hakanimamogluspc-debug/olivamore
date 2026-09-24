@@ -2054,6 +2054,19 @@ footer.site{background:#1B1A18}
 @media(prefers-reduced-motion:reduce){.omx-rozet-ic{animation:none}}
 @media(max-width:700px){.rozet-grup{gap:70px;padding-right:70px}.omx-rozet-ic img{height:104px}}
 
+/* Pasaport: tarih katmanı — Bu Toprağın Kaydı */
+.tk-blok{border-top:1px solid var(--line);background:#FBF9F4}
+.tk-baslik{font-family:var(--font-serif);font-weight:300;font-size:clamp(1.6rem,2.6vw,2.2rem);margin:6px 0 12px}
+.tk-giris{color:var(--ink-soft);max-width:640px;margin-bottom:34px}
+.tk-liste{display:flex;flex-direction:column;gap:0;max-width:760px}
+.tk-kayit{display:grid;grid-template-columns:96px 1fr;gap:22px;padding:20px 0;border-top:1px solid var(--line)}
+.tk-kayit:last-child{border-bottom:1px solid var(--line)}
+.tk-yil{font-family:var(--font-serif);font-size:1.7rem;font-weight:300;color:var(--gold-text,#8a6f3c)}
+.tk-kayit p{margin:2px 0 6px;line-height:1.6}
+.tk-kayit small{font-size:.76rem;color:var(--ink-soft)}
+.tk-kapanis{margin-top:28px;max-width:640px;font-family:var(--font-serif);font-size:1.12rem;font-style:italic;color:var(--ink)}
+@media(max-width:560px){.tk-kayit{grid-template-columns:64px 1fr;gap:14px}.tk-yil{font-size:1.35rem}}
+
 /* Pasaport: hasat → sıkım → dolum zaman çizgisi */
 .pp-zaman{display:flex;align-items:center;justify-content:center;gap:18px;padding:18px 14px;border:1px solid var(--line);background:#FBF9F4;flex-wrap:wrap}
 .pp-zaman .pz-adim{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:86px;text-align:center}
