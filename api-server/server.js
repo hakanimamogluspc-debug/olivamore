@@ -409,6 +409,165 @@ function uyeOran(u) {
   return Math.min(50, Math.max(0, oran));
 }
 
+/* ---------- Paraşüt e-Arşiv fatura (anahtarlar girilince aktifleşir) ----------
+   env.json → parasutClientId, parasutClientSecret, parasutKullanici, parasutSifre, parasutFirmaId
+   Sipariş "hazırlanıyor" durumuna geçince satış faturası oluşturulur ve e-Arşiv'e resmileştirme gönderilir. */
+function parasutAktif() {
+  const env = oku('env.json', {});
+  return !!(env.parasutClientId && env.parasutClientSecret && env.parasutKullanici && env.parasutSifre && env.parasutFirmaId);
+}
+let parasutJeton = { token: '', bitis: 0 };
+function parasutHttp(yontem, yolP, govdeObj, token) {
+  return new Promise((cozul, hataVer) => {
+    const g = govdeObj ? JSON.stringify(govdeObj) : '';
+    const basliklar = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    if (token) basliklar['Authorization'] = 'Bearer ' + token;
+    if (g) basliklar['Content-Length'] = Buffer.byteLength(g);
+    const istek = require('https').request({ hostname: 'api.parasut.com', path: yolP, method: yontem, headers: basliklar }, r => {
+      let p = '';
+      r.on('data', d => { p += d; });
+      r.on('end', () => {
+        let v = {};
+        try { v = p ? JSON.parse(p) : {}; } catch (e) { return hataVer(new Error('Paraşüt yanıtı okunamadı')); }
+        if (r.statusCode >= 400) {
+          const m = (v.errors && v.errors[0] && (v.errors[0].detail || v.errors[0].title)) || ('Paraşüt hatası ' + r.statusCode);
+          return hataVer(new Error(m));
+        }
+        cozul(v);
+      });
+    });
+    istek.on('error', hataVer);
+    if (g) istek.write(g);
+    istek.end();
+  });
+}
+async function parasutTokenAl() {
+  if (parasutJeton.token && Date.now() < parasutJeton.bitis) return parasutJeton.token;
+  const env = oku('env.json', {});
+  const v = await parasutHttp('POST', '/oauth/token', {
+    grant_type: 'password',
+    client_id: env.parasutClientId,
+    client_secret: env.parasutClientSecret,
+    username: env.parasutKullanici,
+    password: env.parasutSifre,
+    redirect_uri: 'urn:ietf:wg:oauth:2.0:oob'
+  });
+  if (!v.access_token) throw new Error('Paraşüt oturumu açılamadı');
+  parasutJeton = { token: v.access_token, bitis: Date.now() + ((v.expires_in || 7200) - 120) * 1000 };
+  return parasutJeton.token;
+}
+async function parasutFaturaKes(s) {
+  const env = oku('env.json', {});
+  const firma = env.parasutFirmaId;
+  const token = await parasutTokenAl();
+  const eposta = (s.musteri && s.musteri.eposta || '').toLowerCase();
+  // 1) Müşteri kartı: e-postayla bul, yoksa oluştur
+  let kisiId = null;
+  if (eposta) {
+    const bulunan = await parasutHttp('GET', '/v4/' + firma + '/contacts?filter[email]=' + encodeURIComponent(eposta), null, token);
+    if (bulunan.data && bulunan.data.length) kisiId = bulunan.data[0].id;
+  }
+  if (!kisiId) {
+    const yeni = await parasutHttp('POST', '/v4/' + firma + '/contacts', {
+      data: { type: 'contacts', attributes: {
+        name: (s.musteri && s.musteri.ad) || 'Müşteri',
+        email: eposta || undefined,
+        contact_type: 'person',
+        account_type: 'customer',
+        address: (s.teslimat && s.teslimat.adres) || undefined,
+        city: (s.teslimat && s.teslimat.il) || undefined
+      } }
+    }, token);
+    kisiId = yeni.data && yeni.data.id;
+  }
+  if (!kisiId) throw new Error('Paraşüt müşteri kartı oluşturulamadı');
+  // 2) Satış faturası (kalemler KDV dahil tutulur; Paraşüt'e KDV hariç birim fiyat gider)
+  const detaylar = (s.kalemler || []).map(k => {
+    const kdvOran = (typeof k.kdv === 'number' ? k.kdv : 1);
+    const birimHaric = (Number(k.fiyat) || 0) / (1 + kdvOran / 100);
+    return { type: 'sales_invoice_details', attributes: {
+      quantity: k.adet || 1,
+      unit_price: Math.round(birimHaric * 10000) / 10000,
+      vat_rate: kdvOran,
+      description: (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '')
+    } };
+  });
+  if (s.kargo && Number(s.kargo) > 0) {
+    detaylar.push({ type: 'sales_invoice_details', attributes: { quantity: 1, unit_price: Math.round((Number(s.kargo) / 1.20) * 10000) / 10000, vat_rate: 20, description: 'Kargo bedeli' } });
+  }
+  const fat = await parasutHttp('POST', '/v4/' + firma + '/sales_invoices', {
+    data: {
+      type: 'sales_invoices',
+      attributes: {
+        item_type: 'invoice',
+        issue_date: new Date().toISOString().slice(0, 10),
+        currency: 'TRL',
+        shipment_included: false,
+        description: 'Sipariş ' + s.no + (s.indirim ? ' · İndirim: ₺' + s.indirim : '')
+      },
+      relationships: {
+        contact: { data: { id: kisiId, type: 'contacts' } },
+        details: { data: detaylar }
+      }
+    }
+  }, token);
+  const fatId = fat.data && fat.data.id;
+  if (!fatId) throw new Error('Paraşüt faturası oluşturulamadı');
+  // 3) e-Arşiv resmileştirme (asenkron iş kuyruğuna girer)
+  let eArsivIs = '';
+  try {
+    const ea = await parasutHttp('POST', '/v4/' + firma + '/e_archives', {
+      data: { type: 'e_archives', attributes: {
+        internet_sale: {
+          url: 'https://olivamore.de',
+          payment_type: s.odeme === 'kart' ? 'KREDIKARTI/BANKAKARTI' : 'EFT/HAVALE',
+          payment_platform: 'olivamore.de',
+          payment_date: new Date().toISOString().slice(0, 10)
+        }
+      }, relationships: { sales_invoice: { data: { id: fatId, type: 'sales_invoices' } } } }
+    }, token);
+    eArsivIs = (ea.data && ea.data.id) || '';
+  } catch (e) {
+    // e-Arşiv gönderimi başarısızsa fatura taslak kalır; panelden tekrar denenebilir
+    s.fatura = { durum: 'hata', kaynak: 'parasut', parasutId: fatId, hata: 'Fatura taslak oluştu, e-Arşiv gönderilemedi: ' + e.message, tarih: new Date().toISOString() };
+    return s.fatura;
+  }
+  s.fatura = {
+    durum: 'kesildi', kaynak: 'parasut',
+    parasutId: fatId, eArsivIs: eArsivIs,
+    no: (fat.data.attributes && (fat.data.attributes.invoice_no || fat.data.attributes.invoice_id)) || ('P-' + fatId),
+    tarih: new Date().toISOString()
+  };
+  return s.fatura;
+}
+
+/* ---------- iyzico para iadesi ----------
+   İade onaylanınca kartla ödenmiş siparişlerde tutar otomatik iade edilir. */
+async function iyziParaIade(s, tutar) {
+  if (!iyzicoAktif() || !s.odemeId) throw new Error('Kart iadesi için ödeme kaydı yok.');
+  const detay = await iyziIstek('/payment/detail', { locale: 'tr', paymentId: s.odemeId });
+  const islemler = (detay && detay.itemTransactions) || [];
+  if (detay.status !== 'success' || !islemler.length) throw new Error('iyzico ödeme detayı alınamadı.');
+  let kalan = Math.min(Number(tutar) || 0, Number(s.toplam) || 0);
+  const sonuclar = [];
+  for (const it of islemler) {
+    if (kalan <= 0) break;
+    const parca = Math.min(kalan, Number(it.paidPrice) || 0);
+    if (parca <= 0) continue;
+    const y = await iyziIstek('/payment/refund', {
+      locale: 'tr',
+      paymentTransactionId: it.paymentTransactionId,
+      price: parca.toFixed(2),
+      currency: 'TRY',
+      ip: '85.95.0.1'
+    });
+    sonuclar.push({ islem: it.paymentTransactionId, tutar: parca, durum: y.status, hata: y.errorMessage || '' });
+    if (y.status === 'success') kalan -= parca;
+  }
+  const iadeEdilen = (Number(tutar) || 0) - kalan;
+  return { iadeEdilen: Math.round(iadeEdilen * 100) / 100, sonuclar: sonuclar, tamam: kalan <= 0.005 };
+}
+
 /* ---------- iyzico Checkout Form (anahtar girilince aktifleşir) ----------
    env.json → iyzicoApiKey, iyzicoSecret, iyzicoCanli (true = api.iyzipay.com)
    Akış: sepette "kart" seçilir → sipariş 'odeme-bekliyor' kaydedilir →
@@ -935,6 +1094,31 @@ const sunucu = http.createServer(async (req, res) => {
           s.iade.durum = 'reddedildi';
         }
       }
+      // İade onayı + kartla ödenmiş sipariş → iyzico'dan otomatik para iadesi
+      if (g.iade && g.iade.islem === 'onay' && s.odendi && s.odemeId && iyzicoAktif()) {
+        try {
+          const pi = await iyziParaIade(s, s.iade.tutar || s.toplam);
+          s.iade.parasal = pi;
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'iyzico para iadesi: ₺' + pi.iadeEdilen + (pi.tamam ? '' : ' (eksik kaldı — kontrol et)') });
+        } catch (e) {
+          s.iade.parasal = { hata: e.message };
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'iyzico para iadesi BAŞARISIZ: ' + e.message });
+        }
+      }
+      // "Hazırlanıyor"a geçiş + Paraşüt bağlı → otomatik e-Arşiv fatura
+      if (s.durum === 'hazırlanıyor' && eskiDurum !== 'hazırlanıyor' && !s.fatura && parasutAktif()) {
+        try {
+          await parasutFaturaKes(s);
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: s.fatura.durum === 'kesildi' ? ('Paraşüt e-Arşiv faturası kesildi · ' + (s.fatura.no || '')) : ('Paraşüt fatura uyarısı: ' + (s.fatura.hata || '')) });
+        } catch (e) {
+          s.fatura = { durum: 'hata', kaynak: 'parasut', hata: e.message, tarih: new Date().toISOString() };
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Paraşüt fatura hatası: ' + e.message });
+        }
+      }
       // İptal/iade → stok geri eklenir
       if (['iptal', 'iade', 'odeme-basarisiz'].indexOf(s.durum) !== -1) stokGeriEkle(s);
       // İşlem geçmişi
@@ -1167,8 +1351,48 @@ const sunucu = http.createServer(async (req, res) => {
         dusukStok: ((cfg.products) || []).filter(p => p.visible !== false && typeof p.stok === 'number' && p.stok <= 5).length,
         bekleyenYorum: oku('yorumlar.json', []).filter(y => y.durum === 'bekliyor').length,
         faturasiz: siparisler.filter(s => faturalanacak.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi')).length,
-        aktifAbonelik: oku('abonelikler.json', []).filter(a => a.durum === 'aktif').length
+        aktifAbonelik: oku('abonelikler.json', []).filter(a => a.durum === 'aktif').length,
+        parasut: parasutAktif(),
+        kartIade: iyzicoAktif()
       });
+    }
+
+    /* ---- Fatura: manuel Paraşüt kesimi / tekrar deneme ---- */
+    if (req.method === 'POST' && yol === '/api/admin/fatura-kes') {
+      if (!parasutAktif()) return json(res, 400, { hata: 'Paraşüt anahtarları env.json\'da tanımlı değil.' });
+      const g = await govde(req, 1);
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === g.no);
+      if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+      if (s.fatura && s.fatura.durum === 'kesildi') return json(res, 400, { hata: 'Bu siparişin faturası zaten kesilmiş.' });
+      try {
+        await parasutFaturaKes(s);
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: s.fatura.durum === 'kesildi' ? ('Paraşüt e-Arşiv faturası kesildi · ' + (s.fatura.no || '')) : ('Paraşüt fatura uyarısı: ' + (s.fatura.hata || '')) });
+      } catch (e) {
+        s.fatura = { durum: 'hata', kaynak: 'parasut', hata: e.message, tarih: new Date().toISOString() };
+      }
+      yaz('siparisler.json', liste);
+      if (s.fatura.durum !== 'kesildi') return json(res, 502, { hata: s.fatura.hata || 'Fatura kesilemedi.', fatura: s.fatura });
+      return json(res, 200, { tamam: true, fatura: s.fatura });
+    }
+    /* ---- Ödeme: manuel iyzico para iadesi ---- */
+    if (req.method === 'POST' && yol === '/api/admin/odeme-iade') {
+      const g = await govde(req, 1);
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === g.no);
+      if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+      try {
+        const pi = await iyziParaIade(s, parseFloat(g.tutar) || s.toplam);
+        s.iade = s.iade || {};
+        s.iade.parasal = pi;
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'iyzico para iadesi (manuel): ₺' + pi.iadeEdilen });
+        yaz('siparisler.json', liste);
+        return json(res, 200, { tamam: true, iade: pi });
+      } catch (e) {
+        return json(res, 502, { hata: e.message });
+      }
     }
 
     /* ---- Abonelikler (Faz A iskeleti; otomatik sipariş motoru Faz D'de) ---- */

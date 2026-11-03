@@ -732,6 +732,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         rozetKoy('products', v.dusukStok || 0, true);
         rozetKoy('reviews', v.bekleyenYorum || 0);
         rozetKoy('invoices', v.faturasiz || 0, true);
+        window.OZET = v;
       })
       .catch(function () {});
   }
@@ -1958,19 +1959,23 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       var bekleyen = liste.filter(function (s) { return kapsam.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi'); });
       var kesilen = liste.filter(function (s) { return s.fatura && s.fatura.durum === 'kesildi'; });
       var tutar = bekleyen.reduce(function (t, s) { return t + (Number(s.toplam) || 0); }, 0);
+      var parasut = !!(window.OZET && window.OZET.parasut);
       document.getElementById('fat-stats').innerHTML =
         '<div class="stat"><div class="num">' + bekleyen.length + '</div><div class="lbl">Faturalanacak sipariş</div></div>' +
         '<div class="stat"><div class="num">' + paraTL(tutar) + '</div><div class="lbl">Faturalanacak tutar</div></div>' +
         '<div class="stat"><div class="num">' + kesilen.length + '</div><div class="lbl">Kesilen fatura</div></div>' +
-        '<div class="stat"><div class="num">Mikro Jump</div><div class="lbl">Aktif yöntem · Paraşüt Faz B</div></div>';
+        '<div class="stat"><div class="num">' + (parasut ? 'Paraşüt ✓' : 'Mikro Jump') + '</div><div class="lbl">' + (parasut ? 'Otomatik e-Arşiv aktif' : 'Manuel · Paraşüt anahtarı bekleniyor') + '</div></div>';
       function satir(s, kesildi) {
-        return '<div class="item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+        var hata = s.fatura && s.fatura.durum === 'hata';
+        return '<div class="item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;' + (hata ? 'border-left:4px solid #c0392b;' : '') + '">' +
           '<div><b>' + s.no + '</b> · ' + (s.musteri ? (s.musteri.ad || '') : '') + ' · ' + paraTL(s.toplam) +
           '<div style="font-size:.76rem;color:#8a8377;">' + new Date(s.tarih).toLocaleDateString('tr-TR') + ' · ' + s.durum +
-          (kesildi && s.fatura.no ? ' · Fatura: ' + s.fatura.no : '') + '</div></div>' +
+          (kesildi && s.fatura.no ? ' · Fatura: ' + s.fatura.no + (s.fatura.kaynak === 'parasut' ? ' (Paraşüt)' : '') : '') +
+          (hata ? '<br><span style="color:#c0392b;">Fatura hatası: ' + (s.fatura.hata || '') + '</span>' : '') + '</div></div>' +
           (kesildi
             ? '<button class="btn btn-ghost btn-sm fat-geri" data-no="' + s.no + '" type="button">Geri Al</button>'
-            : '<button class="btn btn-dark btn-sm fat-kes" data-no="' + s.no + '" type="button">Faturalandı İşaretle</button>') +
+            : ((parasut ? '<button class="btn btn-dark btn-sm fat-parasut" data-no="' + s.no + '" type="button">' + (hata ? 'Tekrar Dene (Paraşüt)' : 'Paraşüt\'te Kes') + '</button> ' : '') +
+               '<button class="btn ' + (parasut ? 'btn-ghost' : 'btn-dark') + ' btn-sm fat-kes" data-no="' + s.no + '" type="button">' + (parasut ? 'Elle İşaretle' : 'Faturalandı İşaretle') + '</button>')) +
           '</div>';
       }
       document.getElementById('fat-bekleyen').innerHTML = bekleyen.length ? bekleyen.map(function (s) { return satir(s, false); }).join('') : '<div class="note">Faturalanacak sipariş yok. 🎉</div>';
@@ -1978,6 +1983,15 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     }).catch(function () {});
   };
   document.getElementById('view-invoices').addEventListener('click', function (e) {
+    var pk = e.target.closest('.fat-parasut');
+    if (pk) {
+      pk.disabled = true; pk.textContent = 'Kesiliyor…';
+      fetch('/api/admin/fatura-kes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: pk.dataset.no }) })
+        .then(function (r) { return r.json(); })
+        .then(function (c) { if (c.hata) alert(c.hata); fatYukle(); rozetYenile(); })
+        .catch(function () { alert('Paraşüt\'e ulaşılamadı.'); fatYukle(); });
+      return;
+    }
     var kes = e.target.closest('.fat-kes');
     var geri = e.target.closest('.fat-geri');
     if (!kes && !geri) return;
