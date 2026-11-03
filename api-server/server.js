@@ -409,6 +409,181 @@ function uyeOran(u) {
   return Math.min(50, Math.max(0, oran));
 }
 
+/* ---------- Satış kanalları: Trendyol + Hepsiburada (anahtarlar girilince aktifleşir) ----------
+   env.json → trendyolSaticiId, trendyolApiKey, trendyolApiSecret
+             hbMerchantId, hbKullanici, hbSifre
+   Eşleme: kanal-esleme.json → { "<pid>": { "barkod": "TY barkodu", "hbSku": "HB satıcı SKU" } }
+   10 dakikada bir: pazaryeri siparişleri çekilir (stok düşer, panele 'yeni' düşer) + stok anlık gönderilir. */
+function trendyolAktif() {
+  const env = oku('env.json', {});
+  return !!(env.trendyolSaticiId && env.trendyolApiKey && env.trendyolApiSecret);
+}
+function hbAktif() {
+  const env = oku('env.json', {});
+  return !!(env.hbMerchantId && env.hbKullanici && env.hbSifre);
+}
+function kanalHttp(secenek, govdeObj) {
+  return new Promise((cozul, hataVer) => {
+    const g = govdeObj ? JSON.stringify(govdeObj) : '';
+    secenek.headers = secenek.headers || {};
+    secenek.headers['Content-Type'] = 'application/json';
+    secenek.headers['Accept'] = 'application/json';
+    if (g) secenek.headers['Content-Length'] = Buffer.byteLength(g);
+    const istek = require('https').request(secenek, r => {
+      let p = '';
+      r.on('data', d => { p += d; });
+      r.on('end', () => {
+        let v = {};
+        try { v = p ? JSON.parse(p) : {}; } catch (e) { v = { ham: String(p).slice(0, 300) }; }
+        if (r.statusCode >= 400) return hataVer(new Error('HTTP ' + r.statusCode + ': ' + String(p).slice(0, 200)));
+        cozul(v);
+      });
+    });
+    istek.on('error', hataVer);
+    istek.setTimeout(20000, () => { istek.destroy(new Error('zaman aşımı')); });
+    if (g) istek.write(g);
+    istek.end();
+  });
+}
+function trendyolIstek(yontem, yolK, govdeObj) {
+  const env = oku('env.json', {});
+  const auth = 'Basic ' + Buffer.from(env.trendyolApiKey + ':' + env.trendyolApiSecret).toString('base64');
+  return kanalHttp({
+    hostname: 'apigw.trendyol.com', path: '/integration' + yolK, method: yontem,
+    headers: { 'Authorization': auth, 'User-Agent': env.trendyolSaticiId + ' - SelfIntegration' }
+  }, govdeObj);
+}
+function hbIstek(yontem, sunucu, yolK, govdeObj) {
+  const env = oku('env.json', {});
+  const auth = 'Basic ' + Buffer.from(env.hbKullanici + ':' + env.hbSifre).toString('base64');
+  return kanalHttp({
+    hostname: sunucu, path: yolK, method: yontem,
+    headers: { 'Authorization': auth, 'User-Agent': String(env.hbMerchantId) }
+  }, govdeObj);
+}
+function eslemeOku() { return oku('kanal-esleme.json', {}); }
+function kanalDurumYaz(k, v) {
+  const d = oku('kanal-durum.json', {});
+  d[k] = Object.assign(d[k] || {}, v, { zaman: new Date().toISOString() });
+  yaz('kanal-durum.json', d);
+}
+/* Stok + fiyat gönderimi (eşleşmiş ürünler) */
+async function kanalStokGonder() {
+  const cfg = oku('cms.json', {});
+  const esleme = eslemeOku();
+  const env = oku('env.json', {});
+  const urunler = (cfg.products || []).filter(p => p.type === 'product' && esleme[p.id]);
+  if (!urunler.length) return;
+  if (trendyolAktif()) {
+    const items = urunler.filter(p => esleme[p.id].barkod).map(p => ({
+      barcode: esleme[p.id].barkod,
+      quantity: typeof p.stok === 'number' ? Math.max(0, p.stok) : 999,
+      salePrice: Number(p.price) || 0,
+      listPrice: Number(p.price) || 0
+    }));
+    if (items.length) {
+      try {
+        await trendyolIstek('POST', '/inventory/sellers/' + env.trendyolSaticiId + '/products/price-and-inventory', { items: items });
+        kanalDurumYaz('trendyolStok', { ok: true, adet: items.length, hata: '' });
+      } catch (e) { kanalDurumYaz('trendyolStok', { ok: false, hata: e.message }); }
+    }
+  }
+  if (hbAktif()) {
+    const items = urunler.filter(p => esleme[p.id].hbSku).map(p => ({
+      merchantSku: esleme[p.id].hbSku,
+      availableStock: typeof p.stok === 'number' ? Math.max(0, p.stok) : 999
+    }));
+    if (items.length) {
+      try {
+        await hbIstek('POST', 'listing-external.hepsiburada.com', '/listings/merchantid/' + env.hbMerchantId + '/stock-uploads', items);
+        kanalDurumYaz('hbStok', { ok: true, adet: items.length, hata: '' });
+      } catch (e) { kanalDurumYaz('hbStok', { ok: false, hata: e.message }); }
+    }
+  }
+}
+/* Pazaryeri siparişlerini içeri al */
+function kanalSiparisEkle(liste, cfg, esleme, yeni) {
+  if (liste.some(s => s.kanal === yeni.kanal && s.kanalNo === yeni.kanalNo)) return false;
+  // Stok düş (eşleşen ürün bulunursa)
+  (yeni.kalemler || []).forEach(k => {
+    const pid = Object.keys(esleme).find(id => (esleme[id].barkod && esleme[id].barkod === k.barkod) || (esleme[id].hbSku && esleme[id].hbSku === k.sku));
+    if (!pid) return;
+    const p = (cfg.products || []).find(x => x.id === pid);
+    if (p && typeof p.stok === 'number') p.stok = Math.max(0, p.stok - (k.adet || 1));
+  });
+  liste.unshift(yeni);
+  return true;
+}
+async function kanalSiparisCek() {
+  const liste = oku('siparisler.json', []);
+  const cfg = oku('cms.json', {});
+  const esleme = eslemeOku();
+  const env = oku('env.json', {});
+  let eklenen = 0, cfgDegisti = false;
+  if (trendyolAktif()) {
+    try {
+      const y = await trendyolIstek('GET', '/order/sellers/' + env.trendyolSaticiId + '/orders?status=Created&size=50&orderByField=PackageLastModifiedDate&orderByDirection=DESC');
+      (y.content || []).forEach(pk => {
+        const kalemler = (pk.lines || []).map(l => ({ ad: l.productName || 'Trendyol ürünü', adet: l.quantity || 1, fiyat: Number(l.price) || 0, barkod: l.barcode || '', hacim: '' }));
+        const adres = pk.shipmentAddress || {};
+        const tamam = kanalSiparisEkle(liste, cfg, esleme, {
+          no: 'TY-' + (pk.orderNumber || pk.id),
+          kanal: 'trendyol', kanalNo: String(pk.orderNumber || pk.id),
+          tarih: new Date(pk.orderDate || Date.now()).toISOString(),
+          durum: 'yeni', odendi: true, odeme: 'pazaryeri',
+          musteri: { ad: ((pk.customerFirstName || '') + ' ' + (pk.customerLastName || '')).trim() || 'Trendyol Müşterisi', eposta: pk.customerEmail || '' },
+          teslimat: { adres: adres.fullAddress || '', il: adres.city || '', ilce: adres.district || '' },
+          kalemler: kalemler,
+          araToplam: Number(pk.totalPrice) || 0, kargo: 0, indirim: 0,
+          toplam: Number(pk.totalPrice) || kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0),
+          gecmis: [{ tarih: new Date().toISOString(), islem: 'Trendyol\'dan alındı · paket ' + pk.id }]
+        });
+        if (tamam) { eklenen++; cfgDegisti = true; }
+      });
+      kanalDurumYaz('trendyolSiparis', { ok: true, hata: '' });
+    } catch (e) { kanalDurumYaz('trendyolSiparis', { ok: false, hata: e.message }); }
+  }
+  if (hbAktif()) {
+    try {
+      const y = await hbIstek('GET', 'oms-external.hepsiburada.com', '/orders/merchantid/' + env.hbMerchantId + '?offset=0&limit=50');
+      const kayitlar = (y.items || y.content || (Array.isArray(y) ? y : [])) || [];
+      kayitlar.forEach(o => {
+        const satirlar = o.items || o.details || [];
+        const kalemler = satirlar.map(l => ({
+          ad: (l.productName || (l.product && l.product.name)) || 'Hepsiburada ürünü',
+          adet: l.quantity || 1,
+          fiyat: Number(l.totalPrice && l.totalPrice.amount != null ? l.totalPrice.amount : l.price) || 0,
+          sku: l.merchantSku || l.sku || '', hacim: ''
+        }));
+        const tamam = kanalSiparisEkle(liste, cfg, esleme, {
+          no: 'HB-' + (o.orderNumber || o.id),
+          kanal: 'hepsiburada', kanalNo: String(o.orderNumber || o.id),
+          tarih: new Date(o.orderDate || o.createdDate || Date.now()).toISOString(),
+          durum: 'yeni', odendi: true, odeme: 'pazaryeri',
+          musteri: { ad: (o.customer && (o.customer.name || o.customerName)) || 'Hepsiburada Müşterisi', eposta: '' },
+          teslimat: { adres: (o.shippingAddress && (o.shippingAddress.address || o.shippingAddress.fullAddress)) || '', il: (o.shippingAddress && o.shippingAddress.city) || '', ilce: (o.shippingAddress && (o.shippingAddress.district || o.shippingAddress.town)) || '' },
+          kalemler: kalemler,
+          araToplam: kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0), kargo: 0, indirim: 0,
+          toplam: kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0),
+          gecmis: [{ tarih: new Date().toISOString(), islem: 'Hepsiburada\'dan alındı' }]
+        });
+        if (tamam) { eklenen++; cfgDegisti = true; }
+      });
+      kanalDurumYaz('hbSiparis', { ok: true, hata: '' });
+    } catch (e) { kanalDurumYaz('hbSiparis', { ok: false, hata: e.message }); }
+  }
+  if (eklenen) yaz('siparisler.json', liste);
+  if (cfgDegisti) yaz('cms.json', cfg);
+  return eklenen;
+}
+async function kanalTur() {
+  if (!trendyolAktif() && !hbAktif()) return;
+  try { await kanalSiparisCek(); } catch (e) { console.error('[kanal]', e.message); }
+  try { await kanalStokGonder(); } catch (e) { console.error('[kanal]', e.message); }
+}
+setInterval(() => { kanalTur(); }, 10 * 60 * 1000);
+setTimeout(() => { kanalTur(); }, 20 * 1000);
+
 /* ---------- Paraşüt e-Arşiv fatura (anahtarlar girilince aktifleşir) ----------
    env.json → parasutClientId, parasutClientSecret, parasutKullanici, parasutSifre, parasutFirmaId
    Sipariş "hazırlanıyor" durumuna geçince satış faturası oluşturulur ve e-Arşiv'e resmileştirme gönderilir. */
@@ -1353,8 +1528,26 @@ const sunucu = http.createServer(async (req, res) => {
         faturasiz: siparisler.filter(s => faturalanacak.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi')).length,
         aktifAbonelik: oku('abonelikler.json', []).filter(a => a.durum === 'aktif').length,
         parasut: parasutAktif(),
-        kartIade: iyzicoAktif()
+        kartIade: iyzicoAktif(),
+        trendyol: trendyolAktif(),
+        hepsiburada: hbAktif()
       });
+    }
+
+    /* ---- Satış kanalları: eşleme + elle senkron + durum ---- */
+    if (req.method === 'GET' && yol === '/api/admin/kanal-esleme') {
+      return json(res, 200, { esleme: eslemeOku(), durum: oku('kanal-durum.json', {}) });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/kanal-esleme') {
+      const g = await govde(req, 1);
+      yaz('kanal-esleme.json', g.esleme || {});
+      return json(res, 200, { tamam: true });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/kanal-senkron') {
+      if (!trendyolAktif() && !hbAktif()) return json(res, 400, { hata: 'Hiçbir kanal anahtarı tanımlı değil (env.json).' });
+      const eklenen = await kanalSiparisCek();
+      await kanalStokGonder();
+      return json(res, 200, { tamam: true, yeniSiparis: eklenen, durum: oku('kanal-durum.json', {}) });
     }
 
     /* ---- Fatura: manuel Paraşüt kesimi / tekrar deneme ---- */

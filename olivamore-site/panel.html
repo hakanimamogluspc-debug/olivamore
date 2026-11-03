@@ -434,9 +434,16 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         </div>
       </div>
       <div class="grid3" style="margin-top:4px;">
-        <div class="panel"><h2>Trendyol <span style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc">Satıcı Paneli → Hesap Bilgileri → API anahtarını sunucudaki env.json'a girince ürün/stok senkronu ve sipariş çekme aktifleşecek (Faz C).</div></div>
-        <div class="panel"><h2>Hepsiburada <span style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc">Merchant anahtarı env.json'a girilince aktifleşecek (Faz C).</div></div>
+        <div class="panel"><h2>Trendyol <span id="kn-ty-durum" style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc" id="kn-ty-desc">env.json'a trendyolSaticiId, trendyolApiKey, trendyolApiSecret girilince sipariş çekme + stok senkronu aktifleşir.</div></div>
+        <div class="panel"><h2>Hepsiburada <span id="kn-hb-durum" style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc" id="kn-hb-desc">env.json'a hbMerchantId, hbKullanici, hbSifre girilince aktifleşir.</div></div>
         <div class="panel"><h2>Amazon TR <span style="font-size:.7rem;color:#8a8377;font-weight:600;letter-spacing:.06em;">● BAŞVURU AŞAMASI</span></h2><div class="desc">Seller Central'dan SP-API geliştirici başvurusu yapılmalı; onay haftalar sürebilir. Onay gelince entegre edilecek (Faz E).</div></div>
+      </div>
+      <div class="panel" style="margin-top:4px;">
+        <h2>Ürün eşleme <button class="btn btn-outline btn-sm" id="kn-senkron" type="button" style="float:right;">⟳ Şimdi Senkronla</button></h2>
+        <div class="desc">Pazaryerindeki ürünle paneldeki ürünü eşleştirir: Trendyol <b>barkod</b>, Hepsiburada <b>satıcı SKU</b>. Eşleşen ürünlerin stoğu 10 dakikada bir pazaryerlerine gönderilir; pazaryeri siparişi gelince buradaki stok düşer.</div>
+        <div id="kn-esleme"></div>
+        <button class="btn btn-dark btn-sm" id="kn-esleme-kaydet" type="button" style="margin-top:12px;">Eşlemeyi Kaydet</button>
+        <span id="kn-esleme-not" style="font-size:.78rem;color:#8a8377;margin-left:10px;"></span>
       </div>
     </section>
 
@@ -696,6 +703,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       eskiShow(v);
       if (v === 'invoices' && window.fatYukle) fatYukle();
       if (v === 'subs' && window.abYukle) abYukle();
+      if (v === 'channels' && window.knYukle) knYukle();
     };
   })();
 
@@ -1278,7 +1286,9 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function ordPill(s) {
     var r = DURUM_RENK[s.durum] || '#6b7280';
     var iadeTalep = s.iade && s.iade.durum === 'talep';
-    return '<span class="pill" style="background:' + r + '1a;color:' + r + ';border:1px solid ' + r + '55;">' + esc(s.durum) + '</span>' +
+    var kanalPill = s.kanal === 'trendyol' ? ' <span class="pill" style="background:#f271001a;color:#f27100;border:1px solid #f2710055;">Trendyol</span>'
+      : s.kanal === 'hepsiburada' ? ' <span class="pill" style="background:#ff60001a;color:#e85d04;border:1px solid #e85d0455;">Hepsiburada</span>' : '';
+    return '<span class="pill" style="background:' + r + '1a;color:' + r + ';border:1px solid ' + r + '55;">' + esc(s.durum) + '</span>' + kanalPill +
       (iadeTalep ? ' <span class="pill" style="background:#dc26261a;color:#dc2626;border:1px solid #dc262655;">iade talebi</span>' : '');
   }
   function ordStats() {
@@ -2006,6 +2016,63 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   });
   document.getElementById('feed-kopyala').addEventListener('click', function () {
     navigator.clipboard.writeText(document.getElementById('feed-url').textContent).then(function () { alert('Feed adresi kopyalandı.'); });
+  });
+
+  /* ================== SATIŞ KANALLARI MODÜLÜ ================== */
+  window.knYukle = function () {
+    var ty = !!(window.OZET && window.OZET.trendyol);
+    var hb = !!(window.OZET && window.OZET.hepsiburada);
+    fetch('/api/admin/kanal-esleme').then(function (r) { return r.json(); }).then(function (v) {
+      var esleme = v.esleme || {};
+      var durum = v.durum || {};
+      function rozet(el, aktif, d1, d2) {
+        var dHata = (d1 && d1.ok === false && d1.hata) || (d2 && d2.ok === false && d2.hata) || '';
+        el.innerHTML = aktif
+          ? (dHata ? '● HATA' : '● BAĞLI')
+          : '● ANAHTAR BEKLENİYOR';
+        el.style.color = aktif ? (dHata ? '#c0392b' : '#2e7d32') : '#b26a00';
+        return dHata;
+      }
+      var tyHata = rozet(document.getElementById('kn-ty-durum'), ty, durum.trendyolSiparis, durum.trendyolStok);
+      var hbHata = rozet(document.getElementById('kn-hb-durum'), hb, durum.hbSiparis, durum.hbStok);
+      if (ty) document.getElementById('kn-ty-desc').innerHTML = tyHata ? '<span style="color:#c0392b;">' + tyHata + '</span>' : 'Son senkron: ' + ((durum.trendyolSiparis || {}).zaman ? new Date(durum.trendyolSiparis.zaman).toLocaleString('tr-TR') : '—');
+      if (hb) document.getElementById('kn-hb-desc').innerHTML = hbHata ? '<span style="color:#c0392b;">' + hbHata + '</span>' : 'Son senkron: ' + ((durum.hbSiparis || {}).zaman ? new Date(durum.hbSiparis.zaman).toLocaleString('tr-TR') : '—');
+      // Eşleme tablosu (paneldeki ürünlerden)
+      var urunler = (C.products || []).filter(function (p) { return p.type === 'product'; });
+      document.getElementById('kn-esleme').innerHTML =
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:.74rem;color:#8a8377;letter-spacing:.06em;text-transform:uppercase;padding:6px 0;"><span>Ürün</span><span>Trendyol Barkod</span><span>Hepsiburada SKU</span></div>' +
+        urunler.map(function (p) {
+          var e = esleme[p.id] || {};
+          return '<div class="kn-satir" data-pid="' + p.id + '" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center;padding:5px 0;border-top:1px solid #efe9db;">' +
+            '<span style="font-size:.85rem;">' + p.nameTR + '</span>' +
+            '<input type="text" class="kn-barkod" value="' + (e.barkod || '') + '" placeholder="örn. 8680000000001">' +
+            '<input type="text" class="kn-hbsku" value="' + (e.hbSku || '') + '" placeholder="örn. OMAY2L">' +
+            '</div>';
+        }).join('');
+    }).catch(function () {});
+  };
+  document.getElementById('kn-esleme-kaydet').addEventListener('click', function () {
+    var esleme = {};
+    document.querySelectorAll('.kn-satir').forEach(function (d) {
+      var barkod = d.querySelector('.kn-barkod').value.trim();
+      var sku = d.querySelector('.kn-hbsku').value.trim();
+      if (barkod || sku) esleme[d.dataset.pid] = { barkod: barkod, hbSku: sku };
+    });
+    fetch('/api/admin/kanal-esleme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ esleme: esleme }) })
+      .then(function (r) { return r.json(); })
+      .then(function () { document.getElementById('kn-esleme-not').textContent = 'Kaydedildi ✓'; setTimeout(function () { document.getElementById('kn-esleme-not').textContent = ''; }, 2500); });
+  });
+  document.getElementById('kn-senkron').addEventListener('click', function () {
+    var b = this; b.disabled = true; b.textContent = '⟳ Senkronlanıyor…';
+    fetch('/api/admin/kanal-senkron', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        b.disabled = false; b.textContent = '⟳ Şimdi Senkronla';
+        if (c.hata) { alert(c.hata); return; }
+        alert((c.yeniSiparis || 0) + ' yeni pazaryeri siparişi alındı.');
+        knYukle(); rozetYenile();
+      })
+      .catch(function () { b.disabled = false; b.textContent = '⟳ Şimdi Senkronla'; alert('Senkron başarısız.'); });
   });
 
   /* ================== ABONELİKLER MODÜLÜ ================== */
