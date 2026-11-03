@@ -857,6 +857,38 @@ const sunucu = http.createServer(async (req, res) => {
     if (req.method === 'GET' && yol === '/api/admin/config') {
       return json(res, 200, oku('cms.json', {}));
     }
+    /* ---- Ürün feed'i: Google Merchant + Meta katalog (herkese açık) ---- */
+    if (req.method === 'GET' && yol === '/feed/urunler.xml') {
+      const cfg = oku('cms.json', {});
+      const taban = 'https://olivamore.de';
+      function xml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+      const urunler = (cfg.products || []).filter(p => p.type === 'product' && p.visible !== false && Number(p.price) > 0);
+      const kalemler = urunler.map(p => {
+        const href = String(p.href || ('p.html?id=' + p.id)).replace('.html', '');
+        const stokYok = typeof p.stok === 'number' && p.stok <= 0;
+        const birim = String(p.unitTR || '').replace(/^\//, '').trim();
+        return '<item>' +
+          '<g:id>' + xml(p.id) + '</g:id>' +
+          '<g:title>' + xml('Olivamore ' + p.nameTR + (birim ? ' ' + birim : '')) + '</g:title>' +
+          '<g:description>' + xml(p.noteTR || p.nameTR) + '</g:description>' +
+          '<g:link>' + xml(taban + '/' + href) + '</g:link>' +
+          '<g:image_link>' + xml(taban + '/' + (p.img || '')) + '</g:image_link>' +
+          '<g:availability>' + (stokYok ? 'out_of_stock' : 'in_stock') + '</g:availability>' +
+          '<g:price>' + Number(p.price).toFixed(2) + ' TRY</g:price>' +
+          '<g:brand>Olivamore</g:brand>' +
+          '<g:condition>new</g:condition>' +
+          '<g:product_type>' + xml(p.role === 'zeytin' ? 'Zeytin' : (p.role === 'sirke' ? 'Sirke' : 'Zeytinyağı')) + '</g:product_type>' +
+          '</item>';
+      }).join('\n');
+      const feed = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n<channel>\n' +
+        '<title>Olivamore Ürünleri</title>\n<link>' + taban + '</link>\n' +
+        '<description>Olivamore naturel sızma zeytinyağı ve doğal ürünler</description>\n' +
+        kalemler + '\n</channel>\n</rss>';
+      res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=1800' });
+      return res.end(feed);
+    }
+
     if (req.method === 'POST' && yol === '/api/admin/config') {
       const g = await govde(req, 8); // panel görsel yüklemeleri için geniş limit
       yaz('cms.json', g);
@@ -877,6 +909,15 @@ const sunucu = http.createServer(async (req, res) => {
       if (g.kargoFirma !== undefined) s.kargoFirma = temiz(g.kargoFirma, 40);
       if (g.adminNot !== undefined) s.adminNot = temiz(g.adminNot, 1000);
       if (g.partiKod !== undefined) s.partiKod = temiz(g.partiKod, 30).toUpperCase();
+      // Fatura yönetimi: {fatura:{islem:'kesildi'|'geri-al', no}}  (Paraşüt entegrasyonu Faz B'de otomatikleşir)
+      if (g.fatura && g.fatura.islem) {
+        const fIslem = temiz(g.fatura.islem, 20);
+        if (fIslem === 'kesildi') {
+          s.fatura = { durum: 'kesildi', no: temiz(g.fatura.no, 40), tarih: new Date().toISOString() };
+        } else if (fIslem === 'geri-al') {
+          s.fatura = null;
+        }
+      }
       // İade yönetimi: {iade:{islem:'talep'|'onay'|'red', tutar, neden}}
       if (g.iade && g.iade.islem) {
         const islem = temiz(g.iade.islem, 20);
@@ -902,6 +943,7 @@ const sunucu = http.createServer(async (req, res) => {
       if (s.durum !== eskiDurum) kayit.push('durum: ' + eskiDurum + ' → ' + s.durum);
       if (g.kargoNo) kayit.push('kargo: ' + (s.kargoFirma ? s.kargoFirma + ' ' : '') + s.kargoNo);
       if (g.iade && g.iade.islem) kayit.push('iade ' + g.iade.islem + (g.iade.neden ? ' (' + temiz(g.iade.neden, 200) + ')' : ''));
+      if (g.fatura && g.fatura.islem) kayit.push(g.fatura.islem === 'kesildi' ? ('fatura kesildi' + (s.fatura && s.fatura.no ? ' · ' + s.fatura.no : '')) : 'fatura kaydı geri alındı');
       if (g.adminNot !== undefined) kayit.push('not güncellendi');
       if (kayit.length) s.gecmis.unshift({ tarih: new Date().toISOString(), islem: kayit.join(' · ') });
       yaz('siparisler.json', liste);
@@ -1116,14 +1158,55 @@ const sunucu = http.createServer(async (req, res) => {
     if (req.method === 'GET' && yol === '/api/admin/ozet') {
       const siparisler = oku('siparisler.json', []);
       const cfg = oku('cms.json', {});
+      const faturalanacak = ['hazırlanıyor', 'kargolandı', 'teslim'];
       return json(res, 200, {
         yeniSiparis: siparisler.filter(s => s.durum === 'yeni').length,
         iadeTalep: siparisler.filter(s => s.iade && s.iade.durum === 'talep').length,
         odemeBekleyen: siparisler.filter(s => s.durum === 'odeme-bekliyor').length,
         okunmamisMesaj: oku('mesajlar.json', []).filter(m => !m.okundu).length,
         dusukStok: ((cfg.products) || []).filter(p => p.visible !== false && typeof p.stok === 'number' && p.stok <= 5).length,
-        bekleyenYorum: oku('yorumlar.json', []).filter(y => y.durum === 'bekliyor').length
+        bekleyenYorum: oku('yorumlar.json', []).filter(y => y.durum === 'bekliyor').length,
+        faturasiz: siparisler.filter(s => faturalanacak.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi')).length,
+        aktifAbonelik: oku('abonelikler.json', []).filter(a => a.durum === 'aktif').length
       });
+    }
+
+    /* ---- Abonelikler (Faz A iskeleti; otomatik sipariş motoru Faz D'de) ---- */
+    if (req.method === 'GET' && yol === '/api/admin/abonelikler') {
+      return json(res, 200, oku('abonelikler.json', []));
+    }
+    if (req.method === 'POST' && yol === '/api/admin/abonelik') {
+      const g = await govde(req, 1);
+      const liste = oku('abonelikler.json', []);
+      if (g.sil && g.id) {
+        const kalan = liste.filter(a => a.id !== g.id);
+        yaz('abonelikler.json', kalan);
+        return json(res, 200, { tamam: true });
+      }
+      if (g.id) {
+        const a = liste.find(x => x.id === g.id);
+        if (!a) return json(res, 404, { hata: 'Abonelik bulunamadı.' });
+        if (g.durum) a.durum = temiz(g.durum, 20);
+        if (g.periyotGun) a.periyotGun = parseInt(g.periyotGun, 10) || a.periyotGun;
+        if (g.sonrakiTarih) a.sonrakiTarih = temiz(g.sonrakiTarih, 10);
+        yaz('abonelikler.json', liste);
+        return json(res, 200, { tamam: true, abonelik: a });
+      }
+      const yeni = {
+        id: 'AB-' + Date.now().toString(36).toUpperCase(),
+        eposta: temiz(g.eposta, 120).toLowerCase(),
+        ad: temiz(g.ad, 80),
+        urun: temiz(g.urun, 120),
+        pid: temiz(g.pid, 40),
+        adet: Math.max(1, parseInt(g.adet, 10) || 1),
+        periyotGun: Math.max(7, parseInt(g.periyotGun, 10) || 30),
+        sonrakiTarih: temiz(g.sonrakiTarih, 10) || new Date(Date.now() + 2592000000).toISOString().slice(0, 10),
+        durum: 'aktif',
+        olusturma: new Date().toISOString()
+      };
+      liste.push(yeni);
+      yaz('abonelikler.json', liste);
+      return json(res, 200, { tamam: true, abonelik: yeni });
     }
     if (req.method === 'POST' && yol === '/api/admin/mesaj-okundu') {
       const liste = oku('mesajlar.json', []);

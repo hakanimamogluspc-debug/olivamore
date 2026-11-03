@@ -138,9 +138,12 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <a data-view="blogs">Blog</a>
       <a data-view="batches">Partiler</a>
       <a data-view="orders">Siparişler</a>
+      <a data-view="invoices">Fatura</a>
       <a data-view="analytics">Analiz</a>
       <a data-view="marketing">Pazarlama</a>
+      <a data-view="channels">Kanallar</a>
       <a data-view="members">Üyeler</a>
+      <a data-view="subs">Abonelikler</a>
       <a data-view="reviews">Yorumlar</a>
       <a data-view="coupons">Kuponlar</a>
       <a data-view="library">Görseller</a>
@@ -154,6 +157,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   <main class="main">
     <div class="topbar">
       <h1 id="view-title">Panel</h1>
+      <input type="text" id="genel-ara" placeholder="⌕ Sipariş no, müşteri, e-posta, parti ara..." style="flex:1;max-width:340px;margin:0 16px;padding:8px 12px;border:1px solid #D8C69C;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.82rem;">
       <div class="actions">
         <a class="btn btn-ghost" href="index.html" target="_blank">Siteyi Görüntüle ↗</a>
         <button class="btn btn-danger btn-sm" id="btn-reset">Varsayılanlara Dön</button>
@@ -391,6 +395,69 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <div class="note"><b>Kuponlar:</b> Kod sepette girilir; indirim yalnız kapsamdaki ürünlerin KDV hariç tutarına uygulanır. Tarih boş bırakılırsa süresizdir. Doğrulama sunucuda yapılır.</div>
       <div id="coupons-list"></div>
       <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
+
+      <div class="panel" style="margin-top:22px;">
+        <h2>Toplu tek kullanımlık kod üret</h2>
+        <div class="desc">Kampanyalar için benzersiz, tek kullanımlık kuponlar (örn. OM-X7K2P9). Üretilen kodlar aşağıdaki listeye eklenir; "Kaydet ve Yayınla" ile yayınlanır ve kutudan kopyalanıp dağıtılır.</div>
+        <div class="grid3">
+          <div class="field"><label>Adet</label><input type="number" id="tk-adet" value="10" min="1" max="200"></div>
+          <div class="field"><label>Ön ek</label><input type="text" id="tk-onek" value="OM" maxlength="8"></div>
+          <div class="field"><label>İndirim</label><div style="display:flex;gap:8px;"><select id="tk-tip" style="max-width:90px;"><option value="yuzde">%</option><option value="tutar">₺</option></select><input type="number" id="tk-deger" value="10"></div></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>Min. sepet (₺, 0=yok)</label><input type="number" id="tk-min" value="0"></div>
+          <div class="field"><label>Son kullanım (boş=süresiz)</label><input type="date" id="tk-bitis"></div>
+          <div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-dark" id="btn-toplu-kupon" type="button">Kodları Üret</button></div>
+        </div>
+        <textarea class="json" id="tk-cikti" placeholder="Üretilen kodlar burada listelenir (kopyala-dağıt)..." style="min-height:70px;"></textarea>
+      </div>
+    </section>
+
+    <!-- ============ FATURA ============ -->
+    <section class="view" id="view-invoices">
+      <div class="note"><b>Fatura:</b> Hazırlanan/kargolanan siparişlerden henüz faturalanmamış olanlar burada listelenir. Şimdilik kesim manuel (Mikro Jump); Paraşüt bağlanınca "hazırlanıyor" durumuna geçen sipariş için e-Arşiv fatura otomatik kesilecek.</div>
+      <div class="stats" id="fat-stats"></div>
+      <div class="panel"><h2>Faturalanacak siparişler</h2><div id="fat-bekleyen"></div></div>
+      <div class="panel"><h2>Kesilen faturalar</h2><div id="fat-kesilen"></div></div>
+    </section>
+
+    <!-- ============ SATIŞ KANALLARI ============ -->
+    <section class="view" id="view-channels">
+      <div class="note"><b>Satış Kanalları:</b> Ürünlerin site dışındaki vitrinleri ve pazaryerleri tek yerden. Stok havuzu ortaktır: panelde stok düşünce bağlı kanallarda da güncellenir (pazaryeri senkronu Faz C'de aktifleşir).</div>
+      <div class="panel">
+        <h2>Google Alışveriş + Instagram/Facebook kataloğu <span style="font-size:.7rem;color:#2e7d32;font-weight:600;letter-spacing:.06em;">● HAZIR</span></h2>
+        <div class="desc">Ürün feed'i yayında ve yarım saatte bir tazelenir. Google Merchant Center'da "Feed ekle → Zamanlanmış getirme", Meta Commerce Manager'da "Veri feed'i → URL ile" seçeneğine aşağıdaki adresi yapıştır.</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <code id="feed-url" style="background:#f6f3ec;border:1px solid #e8e2d5;border-radius:8px;padding:9px 14px;font-size:.82rem;">https://olivamore.de/feed/urunler.xml</code>
+          <button class="btn btn-outline btn-sm" id="feed-kopyala" type="button">Kopyala</button>
+          <a class="btn btn-ghost btn-sm" href="/feed/urunler.xml" target="_blank">Feed'i Gör ↗</a>
+        </div>
+      </div>
+      <div class="grid3" style="margin-top:4px;">
+        <div class="panel"><h2>Trendyol <span style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc">Satıcı Paneli → Hesap Bilgileri → API anahtarını sunucudaki env.json'a girince ürün/stok senkronu ve sipariş çekme aktifleşecek (Faz C).</div></div>
+        <div class="panel"><h2>Hepsiburada <span style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc">Merchant anahtarı env.json'a girilince aktifleşecek (Faz C).</div></div>
+        <div class="panel"><h2>Amazon TR <span style="font-size:.7rem;color:#8a8377;font-weight:600;letter-spacing:.06em;">● BAŞVURU AŞAMASI</span></h2><div class="desc">Seller Central'dan SP-API geliştirici başvurusu yapılmalı; onay haftalar sürebilir. Onay gelince entegre edilecek (Faz E).</div></div>
+      </div>
+    </section>
+
+    <!-- ============ ABONELİKLER ============ -->
+    <section class="view" id="view-subs">
+      <div class="note"><b>Abonelikler:</b> Düzenli teslimat kayıtları. Şimdilik kayıtlar buradan elle açılır; vade günü gelen abonelikler aşağıda vurgulanır ve siparişi tek tuşla oluşturursun. Otomatik sipariş + ödeme linki Faz D'de devreye girecek.</div>
+      <div class="panel">
+        <h2>Yeni abonelik</h2>
+        <div class="grid3">
+          <div class="field"><label>Müşteri e-posta</label><input type="email" id="ab-eposta"></div>
+          <div class="field"><label>Ad Soyad</label><input type="text" id="ab-ad"></div>
+          <div class="field"><label>Ürün</label><input type="text" id="ab-urun" placeholder="örn. Ayvalık 2 L Teneke"></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>Adet</label><input type="number" id="ab-adet" value="1" min="1"></div>
+          <div class="field"><label>Periyot (gün)</label><input type="number" id="ab-periyot" value="30" min="7"></div>
+          <div class="field"><label>İlk teslim tarihi</label><input type="date" id="ab-tarih"></div>
+        </div>
+        <button class="btn btn-dark" id="btn-ab-ekle" type="button">Abonelik Aç</button>
+      </div>
+      <div class="panel"><h2>Kayıtlı abonelikler</h2><div id="ab-liste"></div></div>
     </section>
 
     <section class="view" id="view-mods">
@@ -611,7 +678,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', analytics: 'Analiz', marketing: 'Pazarlama', members: 'Üyeler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', invoices: 'Fatura', analytics: 'Analiz', marketing: 'Pazarlama', channels: 'Satış Kanalları', members: 'Üyeler', subs: 'Abonelikler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -621,6 +688,26 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   }
   document.getElementById('nav').addEventListener('click', function (e) {
     var a = e.target.closest('a'); if (a) show(a.dataset.view);
+  });
+  // Görünüme girince taze veri çeken modüller
+  (function () {
+    var eskiShow = show;
+    show = function (v) {
+      eskiShow(v);
+      if (v === 'invoices' && window.fatYukle) fatYukle();
+      if (v === 'subs' && window.abYukle) abYukle();
+    };
+  })();
+
+  /* ================== GENEL ARAMA (sipariş no / müşteri / e-posta / parti) ================== */
+  document.getElementById('genel-ara').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var q = this.value.trim();
+    if (!q) return;
+    show('orders');
+    var kutu = document.getElementById('ord-ara');
+    kutu.value = q;
+    kutu.dispatchEvent(new Event('input'));
   });
 
   /* ================== BİLDİRİM ROZETLERİ ================== */
@@ -644,6 +731,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         rozetKoy('msgs', v.okunmamisMesaj || 0);
         rozetKoy('products', v.dusukStok || 0, true);
         rozetKoy('reviews', v.bekleyenYorum || 0);
+        rozetKoy('invoices', v.faturasiz || 0, true);
       })
       .catch(function () {});
   }
@@ -1172,7 +1260,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
     // Sipariş/Analiz/Pazarlama ekranlarındaki alanlar CMS içeriği değildir; "kaydet" uyarısı tetiklemesin
     // (İstisna: pp-* popup ayarları CMS'e kaydedilir, uyarı tetiklesin)
     var ppAlani = e.target.id && e.target.id.indexOf('pp-') === 0;
-    if (!ppAlani && e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing') || e.target.closest('#view-members') || e.target.closest('#view-reviews'))) return;
+    if (!ppAlani && e.target.closest && (e.target.closest('#view-orders') || e.target.closest('#view-analytics') || e.target.closest('#view-marketing') || e.target.closest('#view-members') || e.target.closest('#view-reviews') || e.target.closest('#view-invoices') || e.target.closest('#view-channels') || e.target.closest('#view-subs'))) return;
     dirty();
   });
 
@@ -1832,6 +1920,132 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       d.querySelector('.c-urun-alan').style.display = e.target.value === 'urun' ? '' : 'none';
     }
     dirty();
+  });
+
+  /* ================== TOPLU TEK KULLANIMLIK KUPON ================== */
+  document.getElementById('btn-toplu-kupon').addEventListener('click', function () {
+    syncCouponsFromDOM();
+    C.coupons = C.coupons || [];
+    var adet = Math.min(200, Math.max(1, parseInt(document.getElementById('tk-adet').value, 10) || 10));
+    var onek = (document.getElementById('tk-onek').value || 'OM').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    var tip = document.getElementById('tk-tip').value;
+    var deger = parseFloat(document.getElementById('tk-deger').value) || 10;
+    var min = parseFloat(document.getElementById('tk-min').value) || 0;
+    var bitis = document.getElementById('tk-bitis').value || '';
+    var H = 'ABCDEFGHJKLMNPRSTUVYZ23456789';
+    var varOlan = {};
+    C.coupons.forEach(function (c) { varOlan[(c.kod || '').toUpperCase()] = 1; });
+    var kodlar = [];
+    while (kodlar.length < adet) {
+      var k = onek + '-';
+      for (var i = 0; i < 6; i++) k += H[Math.floor(Math.random() * H.length)];
+      if (varOlan[k]) continue;
+      varOlan[k] = 1;
+      kodlar.push(k);
+      C.coupons.push({ kod: k, tip: tip, deger: deger, min: min, baslangic: '', bitis: bitis, limit: 1, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
+    }
+    document.getElementById('tk-cikti').value = kodlar.join('\n');
+    renderCoupons(); dirty();
+    alert(adet + ' adet tek kullanımlık kupon üretildi. "Kaydet ve Yayınla" ile yayınlamayı unutma.');
+  });
+
+  /* ================== FATURA MODÜLÜ ================== */
+  function paraTL(v) { return '₺' + (Number(v) || 0).toLocaleString('tr-TR'); }
+  window.fatYukle = function () {
+    fetch('/api/admin/siparisler').then(function (r) { return r.json(); }).then(function (liste) {
+      liste = Array.isArray(liste) ? liste : [];
+      var kapsam = ['hazırlanıyor', 'kargolandı', 'teslim', 'tamamlandı'];
+      var bekleyen = liste.filter(function (s) { return kapsam.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi'); });
+      var kesilen = liste.filter(function (s) { return s.fatura && s.fatura.durum === 'kesildi'; });
+      var tutar = bekleyen.reduce(function (t, s) { return t + (Number(s.toplam) || 0); }, 0);
+      document.getElementById('fat-stats').innerHTML =
+        '<div class="stat"><div class="num">' + bekleyen.length + '</div><div class="lbl">Faturalanacak sipariş</div></div>' +
+        '<div class="stat"><div class="num">' + paraTL(tutar) + '</div><div class="lbl">Faturalanacak tutar</div></div>' +
+        '<div class="stat"><div class="num">' + kesilen.length + '</div><div class="lbl">Kesilen fatura</div></div>' +
+        '<div class="stat"><div class="num">Mikro Jump</div><div class="lbl">Aktif yöntem · Paraşüt Faz B</div></div>';
+      function satir(s, kesildi) {
+        return '<div class="item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+          '<div><b>' + s.no + '</b> · ' + (s.musteri ? (s.musteri.ad || '') : '') + ' · ' + paraTL(s.toplam) +
+          '<div style="font-size:.76rem;color:#8a8377;">' + new Date(s.tarih).toLocaleDateString('tr-TR') + ' · ' + s.durum +
+          (kesildi && s.fatura.no ? ' · Fatura: ' + s.fatura.no : '') + '</div></div>' +
+          (kesildi
+            ? '<button class="btn btn-ghost btn-sm fat-geri" data-no="' + s.no + '" type="button">Geri Al</button>'
+            : '<button class="btn btn-dark btn-sm fat-kes" data-no="' + s.no + '" type="button">Faturalandı İşaretle</button>') +
+          '</div>';
+      }
+      document.getElementById('fat-bekleyen').innerHTML = bekleyen.length ? bekleyen.map(function (s) { return satir(s, false); }).join('') : '<div class="note">Faturalanacak sipariş yok. 🎉</div>';
+      document.getElementById('fat-kesilen').innerHTML = kesilen.length ? kesilen.slice(0, 50).map(function (s) { return satir(s, true); }).join('') : '<div class="note">Henüz fatura kaydı yok.</div>';
+    }).catch(function () {});
+  };
+  document.getElementById('view-invoices').addEventListener('click', function (e) {
+    var kes = e.target.closest('.fat-kes');
+    var geri = e.target.closest('.fat-geri');
+    if (!kes && !geri) return;
+    var no = (kes || geri).dataset.no;
+    var govde = kes
+      ? { no: no, fatura: { islem: 'kesildi', no: (prompt('Fatura numarası (Mikro Jump\'tan):') || '').trim() } }
+      : { no: no, fatura: { islem: 'geri-al' } };
+    if (kes && govde.fatura.no === '') return;
+    fetch('/api/admin/siparis-durum', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(govde) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) { if (c.hata) alert(c.hata); fatYukle(); rozetYenile(); });
+  });
+  document.getElementById('feed-kopyala').addEventListener('click', function () {
+    navigator.clipboard.writeText(document.getElementById('feed-url').textContent).then(function () { alert('Feed adresi kopyalandı.'); });
+  });
+
+  /* ================== ABONELİKLER MODÜLÜ ================== */
+  window.abYukle = function () {
+    fetch('/api/admin/abonelikler').then(function (r) { return r.json(); }).then(function (liste) {
+      liste = Array.isArray(liste) ? liste : [];
+      var bugun = new Date().toISOString().slice(0, 10);
+      var el = document.getElementById('ab-liste');
+      if (!liste.length) { el.innerHTML = '<div class="note">Henüz abonelik yok. Yukarıdan ilk kaydı aç.</div>'; return; }
+      liste.sort(function (a, b) { return (a.sonrakiTarih || '').localeCompare(b.sonrakiTarih || ''); });
+      el.innerHTML = liste.map(function (a) {
+        var vadeGeldi = a.durum === 'aktif' && a.sonrakiTarih && a.sonrakiTarih <= bugun;
+        return '<div class="item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;' + (vadeGeldi ? 'border-left:4px solid #BFA25D;' : '') + '">' +
+          '<div><b>' + (a.ad || a.eposta) + '</b> · ' + a.urun + ' × ' + a.adet +
+          '<div style="font-size:.76rem;color:#8a8377;">' + a.eposta + ' · her ' + a.periyotGun + ' günde · sonraki: ' + (a.sonrakiTarih || '—') +
+          (vadeGeldi ? ' · <b style="color:#b26a00;">VADE GELDİ</b>' : '') + ' · ' + a.durum + '</div></div>' +
+          '<div style="display:flex;gap:8px;">' +
+          (a.durum === 'aktif'
+            ? '<button class="btn btn-ghost btn-sm ab-durum" data-id="' + a.id + '" data-durum="durduruldu" type="button">Durdur</button>'
+            : '<button class="btn btn-outline btn-sm ab-durum" data-id="' + a.id + '" data-durum="aktif" type="button">Aktifleştir</button>') +
+          '<button class="btn btn-danger btn-sm ab-sil" data-id="' + a.id + '" type="button">Sil</button>' +
+          '</div></div>';
+      }).join('');
+    }).catch(function () {});
+  };
+  document.getElementById('btn-ab-ekle').addEventListener('click', function () {
+    var govde = {
+      eposta: document.getElementById('ab-eposta').value.trim(),
+      ad: document.getElementById('ab-ad').value.trim(),
+      urun: document.getElementById('ab-urun').value.trim(),
+      adet: document.getElementById('ab-adet').value,
+      periyotGun: document.getElementById('ab-periyot').value,
+      sonrakiTarih: document.getElementById('ab-tarih').value
+    };
+    if (!govde.eposta || !govde.urun) { alert('E-posta ve ürün zorunlu.'); return; }
+    fetch('/api/admin/abonelik', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(govde) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (c.hata) { alert(c.hata); return; }
+        document.getElementById('ab-eposta').value = ''; document.getElementById('ab-ad').value = '';
+        document.getElementById('ab-urun').value = ''; document.getElementById('ab-tarih').value = '';
+        abYukle(); rozetYenile();
+      });
+  });
+  document.getElementById('ab-liste').addEventListener('click', function (e) {
+    var d = e.target.closest('.ab-durum');
+    var sil = e.target.closest('.ab-sil');
+    if (d) {
+      fetch('/api/admin/abonelik', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: d.dataset.id, durum: d.dataset.durum }) })
+        .then(function (r) { return r.json(); }).then(function () { abYukle(); });
+    } else if (sil && confirm('Bu abonelik kaydı silinecek. Emin misin?')) {
+      fetch('/api/admin/abonelik', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sil.dataset.id, sil: true }) })
+        .then(function (r) { return r.json(); }).then(function () { abYukle(); });
+    }
   });
 
   /* ================== GÖRSEL KÜTÜPHANESİ (dosya bazlı) ================== */
