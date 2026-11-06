@@ -409,6 +409,109 @@ function uyeOran(u) {
   return Math.min(50, Math.max(0, oran));
 }
 
+/* ---------- Panel admin oturumu (env.json'a adminKullanici/adminTuz/adminHash girilince aktifleşir) ----------
+   Şifre atamak için sunucuda: bash /root/olivamore-repo/api-server/admin-sifre-ata.sh */
+function adminAktif() {
+  const env = oku('env.json', {});
+  return !!(env.adminKullanici && env.adminTuz && env.adminHash);
+}
+function adminYetkili(req) {
+  if (!adminAktif()) return true; // şifre atanana kadar eski düzen (nginx basic auth) geçerli
+  let t = String(req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+  if (!t) {
+    const sorgu = (req.url || '').split('?')[1] || '';
+    t = new URLSearchParams(sorgu).get('jeton') || '';
+  }
+  if (!t) return false;
+  const oturumlar = oku('admin-oturum.json', []).filter(o => o.bitis > Date.now());
+  return oturumlar.some(o => o.token === t);
+}
+
+/* ---------- Üye segmentleri (kampanya hedefleme) ---------- */
+function segmentUyeleri(ad) {
+  const gecersizDurum = ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'];
+  const siparisler = oku('siparisler.json', []).filter(s => gecersizDurum.indexOf(s.durum) === -1 && s.musteri && epostaMi(s.musteri.eposta));
+  const musteriler = {};
+  siparisler.forEach(s => {
+    const e = s.musteri.eposta.toLowerCase();
+    musteriler[e] = musteriler[e] || { eposta: e, adet: 0, harcama: 0, son: 0 };
+    musteriler[e].adet++;
+    musteriler[e].harcama += Number(s.toplam) || 0;
+    musteriler[e].son = Math.max(musteriler[e].son, Date.parse(s.tarih) || 0);
+  });
+  const liste = Object.values(musteriler);
+  const doksanGun = Date.now() - 90 * 86400000;
+  switch (ad) {
+    case 'uyeler': return oku('uyeler.json', []).filter(u => epostaMi(u.eposta)).map(u => ({ eposta: u.eposta }));
+    case 'musteriler': return liste.map(m => ({ eposta: m.eposta }));
+    case 'coklu': return liste.filter(m => m.adet >= 3).map(m => ({ eposta: m.eposta }));
+    case 'tek': return liste.filter(m => m.adet === 1).map(m => ({ eposta: m.eposta }));
+    case 'sessiz90': return liste.filter(m => m.son > 0 && m.son < doksanGun).map(m => ({ eposta: m.eposta }));
+    case 'vip': return liste.filter(m => m.harcama >= 5000).map(m => ({ eposta: m.eposta }));
+    default: return oku('bulten.json', []).filter(a => epostaMi(a.eposta)); // 'aboneler'
+  }
+}
+
+/* ---------- Abonelik motoru: vadesi gelen abonelikten otomatik sipariş ---------- */
+async function abonelikTur() {
+  const abonelikler = oku('abonelikler.json', []);
+  const bugun = new Date().toISOString().slice(0, 10);
+  const vadeli = abonelikler.filter(a => a.durum === 'aktif' && a.sonrakiTarih && a.sonrakiTarih <= bugun);
+  if (!vadeli.length) return;
+  const siparisler = oku('siparisler.json', []);
+  const cfg = oku('cms.json', {});
+  for (const a of vadeli) {
+    const p = (cfg.products || []).find(x => x.id === a.pid) || (cfg.products || []).find(x => x.nameTR && a.urun && a.urun.indexOf(x.nameTR) === 0);
+    const fiyat = Number(a.fiyat) || (p ? Number(p.price) : 0);
+    if (!fiyat) { a.sonHata = 'Fiyat bulunamadı (ürün eşleşmedi); sipariş oluşturulamadı.'; continue; }
+    const kdv = p && typeof p.kdv === 'number' ? p.kdv : 1;
+    const toplam = Math.round(fiyat * a.adet * 100) / 100;
+    const no = 'AB' + Date.now().toString().slice(-8);
+    const siparis = {
+      no: no, tarih: new Date().toISOString(),
+      durum: 'yeni', odeme: 'abonelik', abonelikId: a.id,
+      musteri: { ad: a.ad || a.eposta, eposta: a.eposta, telefon: a.telefon || '', adres: a.adres || '', il: a.il || '', ilce: a.ilce || '' },
+      kalemler: [{ ad: a.urun, adet: a.adet, fiyat: fiyat, kdv: kdv, img: p ? p.img : '' }],
+      araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: Math.round(toplam * (kdv / (100 + kdv)) * 100) / 100, toplam: toplam,
+      gecmis: [{ tarih: new Date().toISOString(), islem: 'abonelikten otomatik oluşturuldu (' + a.id + ')' }]
+    };
+    let odemeUrl = '';
+    if (iyzicoAktif() && a.adres) {
+      try {
+        const parcalar = String(a.ad || 'Abone').split(/\s+/);
+        const soyad = parcalar.length > 1 ? parcalar.pop() : '-';
+        const y = await iyziIstek('/payment/iyzipos/checkoutform/initialize/auth/ecom', {
+          locale: 'tr', conversationId: no, basketId: no,
+          price: String(toplam), paidPrice: String(toplam), currency: 'TRY', paymentGroup: 'PRODUCT',
+          callbackUrl: 'https://olivamore.de/api/odeme-sonuc',
+          buyer: { id: no, name: parcalar.join(' ') || soyad, surname: soyad, gsmNumber: a.telefon || '', email: a.eposta, identityNumber: '11111111111', registrationAddress: a.adres, ip: '0.0.0.0', city: a.il || 'Istanbul', country: 'Turkey' },
+          shippingAddress: { contactName: a.ad || 'Abone', city: a.il || 'Istanbul', country: 'Turkey', address: a.adres },
+          billingAddress: { contactName: a.ad || 'Abone', city: a.il || 'Istanbul', country: 'Turkey', address: a.adres },
+          basketItems: [{ id: no, name: 'Olivamore Abonelik ' + no, category1: 'Gıda', itemType: 'PHYSICAL', price: String(toplam) }]
+        });
+        if (y && y.status === 'success' && y.paymentPageUrl) { odemeUrl = y.paymentPageUrl; siparis.durum = 'odeme-bekliyor'; }
+      } catch (e) { console.error('[abonelik-iyzico]', e.message); }
+    }
+    siparisler.unshift(siparis);
+    // e-posta: ödeme linki varsa linkli, yoksa bilgilendirme
+    epostaGonder(a.eposta, 'Aboneliğinizin yeni dönemi hazır · ' + no,
+      'Merhaba ' + (a.ad || '') + ',\n\nAboneliğiniz kapsamında ' + a.adet + ' × ' + a.urun + ' için ' + no + ' numaralı siparişiniz oluşturuldu (₺' + toplam.toLocaleString('tr-TR') + ').\n\n' +
+      (odemeUrl ? 'Ödemeyi tamamlamak için: ' + odemeUrl : 'Ödeme için size ulaşacağız; dilerseniz bu e-postayı yanıtlayarak havale bilgisi isteyebilirsiniz.') +
+      '\n\nAboneliğinizi durdurmak isterseniz bu e-postayı yanıtlamanız yeterli.\n\nAfiyet olsun,\nOlivamore');
+    epostaBildir('Abonelik siparişi oluştu: ' + no, a.eposta + ' · ' + a.adet + ' × ' + a.urun + ' · ₺' + toplam + (odemeUrl ? '\nÖdeme linki gönderildi.' : '\nÖdeme linki YOK (adres/iyzico eksik).'));
+    // sonraki vade (bugünü geçene kadar ilerlet)
+    let sonraki = new Date(a.sonrakiTarih + 'T00:00:00');
+    while (sonraki.toISOString().slice(0, 10) <= bugun) sonraki = new Date(sonraki.getTime() + (a.periyotGun || 30) * 86400000);
+    a.sonrakiTarih = sonraki.toISOString().slice(0, 10);
+    a.sonSiparis = no;
+    a.sonHata = '';
+  }
+  yaz('siparisler.json', siparisler.slice(0, 5000));
+  yaz('abonelikler.json', abonelikler);
+}
+setInterval(() => { abonelikTur().catch(e => console.error('[abonelik]', e.message)); }, 6 * 60 * 60 * 1000);
+setTimeout(() => { abonelikTur().catch(e => console.error('[abonelik]', e.message)); }, 30 * 1000);
+
 /* ---------- Satış kanalları: Trendyol + Hepsiburada (anahtarlar girilince aktifleşir) ----------
    env.json → trendyolSaticiId, trendyolApiKey, trendyolApiSecret
              hbMerchantId, hbKullanici, hbSifre
@@ -794,6 +897,33 @@ const sunucu = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && hizAsimi(req)) {
       return json(res, 429, { hata: 'Çok fazla istek; bir dakika sonra tekrar dene.' });
+    }
+
+    /* ---- panel girişi ---- */
+    if (req.method === 'POST' && yol === '/api/admin/giris') {
+      const g = await govde(req, 1);
+      const env = oku('env.json', {});
+      if (!adminAktif()) return json(res, 400, { hata: 'Panel şifresi henüz atanmamış. Sunucuda admin-sifre-ata.sh çalıştırılmalı.' });
+      const kullaniciDogru = temiz(g.kullanici, 60) === env.adminKullanici;
+      const deneme = Buffer.from(sifreHashle(String(g.sifre || ''), env.adminTuz), 'hex');
+      const gercek = Buffer.from(env.adminHash, 'hex');
+      if (!kullaniciDogru || deneme.length !== gercek.length || !crypto.timingSafeEqual(deneme, gercek)) {
+        return json(res, 401, { hata: 'Kullanıcı adı veya şifre hatalı.' });
+      }
+      const token = crypto.randomBytes(32).toString('hex');
+      const oturumlar = oku('admin-oturum.json', []).filter(o => o.bitis > Date.now()).slice(0, 20);
+      oturumlar.push({ token: token, bitis: Date.now() + 30 * 86400000, tarih: new Date().toISOString() });
+      yaz('admin-oturum.json', oturumlar);
+      return json(res, 200, { tamam: true, token: token });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/cikis') {
+      const g = await govde(req, 1);
+      yaz('admin-oturum.json', oku('admin-oturum.json', []).filter(o => o.token !== g.token));
+      return json(res, 200, { tamam: true });
+    }
+    /* ---- admin uçları koruması (şifre atandıysa token zorunlu) ---- */
+    if (yol.indexOf('/api/admin/') === 0 && !adminYetkili(req)) {
+      return json(res, 401, { hata: 'Oturum gerekli.' });
     }
 
     if (req.method === 'POST' && yol === '/api/iletisim') {
@@ -1446,10 +1576,11 @@ const sunucu = http.createServer(async (req, res) => {
         epostaGonder(env.bildirimEposta, '[TEST] ' + konu, metin + '\n\n—\n(Bu bir test gönderimidir; listeden çıkma linki gerçek gönderimde eklenir.)');
         return json(res, 200, { tamam: true, test: true, alici: env.bildirimEposta });
       }
-      const aboneler = oku('bulten.json', []).filter(a => epostaMi(a.eposta));
-      if (!aboneler.length) return json(res, 400, { hata: 'Hiç abone yok.' });
+      const segment = temiz(g.segment, 20) || 'aboneler';
+      const aboneler = segmentUyeleri(segment);
+      if (!aboneler.length) return json(res, 400, { hata: 'Bu segmentte hiç alıcı yok.' });
       const kampanyalar = oku('kampanyalar.json', []);
-      kampanyalar.unshift({ tarih: new Date().toISOString(), konu: konu, alici: aboneler.length });
+      kampanyalar.unshift({ tarih: new Date().toISOString(), konu: konu, alici: aboneler.length, segment: segment });
       yaz('kampanyalar.json', kampanyalar.slice(0, 500));
       kampanyaArkaplan(aboneler, konu, metin);
       return json(res, 200, { tamam: true, alici: aboneler.length });
@@ -1534,6 +1665,14 @@ const sunucu = http.createServer(async (req, res) => {
       });
     }
 
+    /* ---- Üye segmentleri: sayılar ---- */
+    if (req.method === 'GET' && yol === '/api/admin/segmentler') {
+      const adlar = ['aboneler', 'uyeler', 'musteriler', 'coklu', 'tek', 'sessiz90', 'vip'];
+      const sonuc = {};
+      adlar.forEach(a => { sonuc[a] = segmentUyeleri(a).length; });
+      return json(res, 200, sonuc);
+    }
+
     /* ---- Satış kanalları: eşleme + elle senkron + durum ---- */
     if (req.method === 'GET' && yol === '/api/admin/kanal-esleme') {
       return json(res, 200, { esleme: eslemeOku(), durum: oku('kanal-durum.json', {}) });
@@ -1616,6 +1755,10 @@ const sunucu = http.createServer(async (req, res) => {
         urun: temiz(g.urun, 120),
         pid: temiz(g.pid, 40),
         adet: Math.max(1, parseInt(g.adet, 10) || 1),
+        fiyat: parseFloat(g.fiyat) || 0,
+        telefon: temiz(g.telefon, 40),
+        adres: temiz(g.adres, 1000),
+        il: temiz(g.il, 60), ilce: temiz(g.ilce, 60),
         periyotGun: Math.max(7, parseInt(g.periyotGun, 10) || 30),
         sonrakiTarih: temiz(g.sonrakiTarih, 10) || new Date(Date.now() + 2592000000).toISOString().slice(0, 10),
         durum: 'aktif',
