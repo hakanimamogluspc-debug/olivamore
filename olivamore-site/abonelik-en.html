@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olive Oil Subscription: Never Run Dry | Olivamore</title>
+<meta name="description" content="Your favourite Olivamore oil, delivered at the interval you choose. Pause, change or cancel anytime — no commitment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Cormorant+Garamond:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<link rel="canonical" href="https://olivamore.de/abonelik-en">
+<link rel="alternate" hreflang="tr" href="https://olivamore.de/abonelik">
+<link rel="alternate" hreflang="en" href="https://olivamore.de/abonelik-en">
+<meta property="og:title" content="Olive Oil Subscription | Olivamore">
+<meta property="og:description" content="Your favourite oil at your door, on your schedule. No commitment.">
+<style>
+.ab-sayfa .page-hero h1{font-family:'Cormorant Garamond',serif;font-weight:600;color:#1D1F1C}
+.ab-sayfa .kicker{font-family:'Poppins',sans-serif;font-weight:300;letter-spacing:.24em;text-transform:uppercase;color:#BFA25D}
+.ab-adimlar{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:960px;margin:0 auto 54px;padding:0 20px}
+.ab-adim{background:#fff;border:1px solid #EDE7D8;padding:26px 22px;text-align:center}
+.ab-adim b{display:block;font-family:'Cormorant Garamond',serif;font-size:2rem;color:#BFA25D;font-weight:600}
+.ab-adim h3{font-family:'Poppins',sans-serif;font-weight:500;font-size:.95rem;margin:6px 0 8px;color:#1D1F1C}
+.ab-adim p{font-family:'Poppins',sans-serif;font-weight:300;font-size:.8rem;line-height:1.7;color:#4D5358;margin:0}
+.ab-form{max-width:720px;margin:0 auto;background:#fff;border:1px solid #D8C69C;padding:34px 30px}
+.ab-form h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.7rem;color:#1D1F1C;margin:0 0 6px}
+.ab-form .alt{font-family:'Poppins',sans-serif;font-weight:300;font-size:.82rem;color:#4D5358;margin-bottom:24px}
+.ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ab-form label{display:block;font-family:'Poppins',sans-serif;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#4D5358;margin:0 0 6px}
+.ab-form input,.ab-form select,.ab-form textarea{width:100%;box-sizing:border-box;border:1px solid #D8C69C;padding:11px 12px;font-family:'Poppins',sans-serif;font-size:.9rem;background:#fff}
+.ab-alan{margin-bottom:16px}
+.ab-gonder{width:100%;margin-top:6px;background:#BFA25D;border:2px solid #BFA25D;color:#fff;padding:13px;font-family:'Poppins',sans-serif;font-size:1rem;letter-spacing:.5px;cursor:pointer;transition:.2s}
+.ab-gonder:hover{background:#a98e4e}
+.ab-gonder:disabled{opacity:.6;cursor:wait}
+.ab-mesaj{display:none;margin-top:16px;padding:13px 16px;font-family:'Poppins',sans-serif;font-size:.85rem;line-height:1.6}
+.ab-mesaj.ok{display:block;border:1px solid #9CBF8E;background:#F2F8EF;color:#2e5d26}
+.ab-mesaj.hata{display:block;border:1px solid #D99;background:#FBF0EF;color:#8f2f24}
+.ab-notlar{max-width:720px;margin:26px auto 0;padding:0 4px;font-family:'Poppins',sans-serif;font-weight:300;font-size:.78rem;color:#4D5358;line-height:1.8}
+@media(max-width:760px){.ab-adimlar{grid-template-columns:1fr}.ab-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-page="abonelik" data-lang="en" class="ab-sayfa">
+<div id="om-header"></div>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="kicker">Subscription</div>
+    <h1>Never let your table run dry</h1>
+    <p class="lead">Your favourite Olivamore product, delivered at the interval you choose. No commitment: pause, change or postpone anytime.</p>
+  </div>
+</div>
+
+<section class="block tight">
+  <div class="ab-adimlar">
+    <div class="ab-adim"><b>01</b><h3>Pick your product and interval</h3><p>Olive oil, olives or vinegar; monthly, every 45 days or every 2 months.</p></div>
+    <div class="ab-adim"><b>02</b><h3>We do the remembering</h3><p>We email you before every delivery; nothing ships without your nod.</p></div>
+    <div class="ab-adim"><b>03</b><h3>Always fresh, always first</h3><p>Subscribers taste the new harvest first; when stock runs low, subscribers come first.</p></div>
+  </div>
+
+  <form class="ab-form" id="ab-form">
+    <h2>Start your subscription</h2>
+    <div class="alt">Leave your request; we confirm within one business day and email your first delivery date.</div>
+    <div class="ab-grid">
+      <div class="ab-alan"><label for="abf-ad">Full name *</label><input id="abf-ad" type="text" required autocomplete="name"></div>
+      <div class="ab-alan"><label for="abf-eposta">Email *</label><input id="abf-eposta" type="email" required autocomplete="email"></div>
+    </div>
+    <div class="ab-grid">
+      <div class="ab-alan"><label for="abf-urun">Product *</label>
+        <select id="abf-urun" required>
+          <option value="">Select...</option>
+          <optgroup label="Olive Oils">
+            <option data-pid="ay500">Ayvalık Early Harvest · 500 ml</option>
+            <option data-pid="ay750">Ayvalık Early Harvest · 750 ml</option>
+            <option data-pid="ay2l">Ayvalık Early Harvest · 2 L Tin</option>
+            <option data-pid="ay5l">Ayvalık Early Harvest · 5 L Tin</option>
+            <option data-pid="tr750">Trilye Early Harvest · 750 ml</option>
+            <option data-pid="tr2l">Trilye Early Harvest · 2 L Tin</option>
+            <option data-pid="og5l">Ripe Harvest · 5 L Tin</option>
+          </optgroup>
+          <optgroup label="Olives">
+            <option data-pid="zey-siyah">Natural Fermented Black Olives · 500 g</option>
+            <option data-pid="zey-yesil">Natural Brine Green Olives · 500 g</option>
+          </optgroup>
+          <optgroup label="Infused Oils">
+            <option data-pid="ces-mand">Mandarin Infused · 250 ml</option>
+            <option data-pid="ces-berg">Bergamot Infused · 250 ml</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="ab-alan"><label for="abf-adet">Quantity</label><input id="abf-adet" type="number" value="1" min="1" max="20"></div>
+    </div>
+    <div class="ab-grid">
+      <div class="ab-alan"><label for="abf-periyot">Delivery interval</label>
+        <select id="abf-periyot">
+          <option value="30">Monthly</option>
+          <option value="45">Every 45 days</option>
+          <option value="60">Every 2 months</option>
+        </select>
+      </div>
+      <div class="ab-alan"><label for="abf-telefon">Phone</label><input id="abf-telefon" type="tel" autocomplete="tel"></div>
+    </div>
+    <div class="ab-alan"><label for="abf-adres">Delivery address</label><input id="abf-adres" type="text" autocomplete="street-address" placeholder="Street, no, district"></div>
+    <div class="ab-grid">
+      <div class="ab-alan"><label for="abf-il">City</label><input id="abf-il" type="text" autocomplete="address-level1"></div>
+      <div class="ab-alan"><label for="abf-not">Note (optional)</label><input id="abf-not" type="text" maxlength="200"></div>
+    </div>
+    <button class="ab-gonder" id="abf-gonder" type="submit">Send Subscription Request</button>
+    <div class="ab-mesaj" id="abf-mesaj"></div>
+  </form>
+
+  <p class="ab-notlar">A subscription never ties you down: we ask for your confirmation by email before every delivery; one reply is enough to postpone, change or stop entirely. Payment is taken per delivery — your card is never charged without notice.</p>
+</section>
+
+<div id="om-footer"></div>
+<script>
+document.getElementById('ab-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var btn = document.getElementById('abf-gonder');
+  var mesaj = document.getElementById('abf-mesaj');
+  mesaj.className = 'ab-mesaj';
+  var urunSec = document.getElementById('abf-urun');
+  var secili = urunSec.options[urunSec.selectedIndex];
+  btn.disabled = true; btn.textContent = 'Sending…';
+  fetch('/api/abonelik-talep', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ad: document.getElementById('abf-ad').value.trim(),
+      eposta: document.getElementById('abf-eposta').value.trim(),
+      urun: secili ? secili.text : '',
+      pid: secili ? (secili.dataset.pid || '') : '',
+      adet: document.getElementById('abf-adet').value,
+      periyotGun: document.getElementById('abf-periyot').value,
+      telefon: document.getElementById('abf-telefon').value.trim(),
+      adres: document.getElementById('abf-adres').value.trim(),
+      il: document.getElementById('abf-il').value.trim(),
+      not: document.getElementById('abf-not').value.trim()
+    })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (c) {
+      btn.disabled = false; btn.textContent = 'Send Subscription Request';
+      if (c.tamam) {
+        mesaj.textContent = 'Request received ✓ Confirmation and your first delivery date will arrive by email.';
+        mesaj.className = 'ab-mesaj ok';
+        document.getElementById('ab-form').reset();
+      } else {
+        mesaj.textContent = c.hata || 'Could not send; please try again.';
+        mesaj.className = 'ab-mesaj hata';
+      }
+    })
+    .catch(function () {
+      btn.disabled = false; btn.textContent = 'Send Subscription Request';
+      mesaj.textContent = 'We could not reach the server; please try again shortly.';
+      mesaj.className = 'ab-mesaj hata';
+    });
+});
+</script>
+</body>
+</html>

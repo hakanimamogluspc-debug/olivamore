@@ -2188,7 +2188,13 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var d = e.target.closest('.ab-durum');
     var sil = e.target.closest('.ab-sil');
     if (d) {
-      fetch('/api/admin/abonelik', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: d.dataset.id, durum: d.dataset.durum }) })
+      var govdeA = { id: d.dataset.id, durum: d.dataset.durum };
+      if (d.dataset.durum === 'aktif') {
+        var t = prompt('İlk/sonraki teslim tarihi (YYYY-AA-GG):', new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10));
+        if (t === null) return;
+        if (t.trim()) govdeA.sonrakiTarih = t.trim();
+      }
+      fetch('/api/admin/abonelik', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(govdeA) })
         .then(function (r) { return r.json(); }).then(function () { abYukle(); });
     } else if (sil && confirm('Bu abonelik kaydı silinecek. Emin misin?')) {
       fetch('/api/admin/abonelik', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sil.dataset.id, sil: true }) })

@@ -941,6 +941,38 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, { tamam: true });
     }
 
+    /* ---- abonelik talebi (site formu; panelden onaylanınca aktifleşir) ---- */
+    if (req.method === 'POST' && yol === '/api/abonelik-talep') {
+      const g = await govde(req, 1);
+      if (!temiz(g.ad, 80) || !epostaMi(g.eposta) || !temiz(g.urun, 120)) {
+        return json(res, 400, { hata: 'Ad, geçerli e-posta ve ürün seçimi zorunlu.' });
+      }
+      const liste = oku('abonelikler.json', []);
+      const yeni = {
+        id: 'AB-' + Date.now().toString(36).toUpperCase(),
+        eposta: temiz(g.eposta, 120).toLowerCase(),
+        ad: temiz(g.ad, 80),
+        urun: temiz(g.urun, 120),
+        pid: temiz(g.pid, 40),
+        adet: Math.max(1, Math.min(20, parseInt(g.adet, 10) || 1)),
+        telefon: temiz(g.telefon, 40),
+        adres: temiz(g.adres, 1000),
+        il: temiz(g.il, 60),
+        not: temiz(g.not, 500),
+        periyotGun: Math.max(7, Math.min(120, parseInt(g.periyotGun, 10) || 30)),
+        sonrakiTarih: '',
+        durum: 'talep',
+        olusturma: new Date().toISOString()
+      };
+      liste.push(yeni);
+      yaz('abonelikler.json', liste.slice(0, 5000));
+      epostaGonder(yeni.eposta, 'Abonelik talebin bize ulaştı · Olivamore',
+        'Merhaba ' + yeni.ad + ',\n\n' + yeni.adet + ' × ' + yeni.urun + ' için her ' + yeni.periyotGun + ' günde bir teslimat talebini aldık. En geç bir iş günü içinde onaylayıp ilk teslimat tarihini e-postayla bildireceğiz.\n\nDilediğin an bu e-postayı yanıtlayarak değişiklik yapabilir veya vazgeçebilirsin.\n\nAfiyet olsun,\nOlivamore');
+      epostaBildir('Yeni abonelik talebi: ' + yeni.urun,
+        yeni.ad + ' <' + yeni.eposta + '>\n' + yeni.adet + ' × ' + yeni.urun + ' · her ' + yeni.periyotGun + ' günde\nTel: ' + yeni.telefon + '\nAdres: ' + yeni.adres + ' / ' + yeni.il + (yeni.not ? '\nNot: ' + yeni.not : '') + '\n\nPanel → Abonelikler sekmesinden tarih verip aktifleştir.');
+      return json(res, 200, { tamam: true, id: yeni.id });
+    }
+
     if (req.method === 'POST' && yol === '/api/bulten') {
       const g = await govde(req, 1);
       if (!epostaMi(g.eposta)) return json(res, 400, { hata: 'Geçerli bir e-posta gir.' });

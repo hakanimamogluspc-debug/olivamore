@@ -22,7 +22,7 @@
   const currentStem = current.replace(/\.html$/, '') || 'index';
   const pairedPages = new Set([
     'index','damak-testi','hediye-olustur','hesap','hikayemiz','iletisim','kalite','koleksiyon',
-    'kulup','ogren','p','pasaport','sepet','sss','tarif-asistani','ureticiler','urun','urun-trilye',
+    'abonelik','kulup','ogren','p','pasaport','sepet','sss','tarif-asistani','ureticiler','urun','urun-trilye',
     'naturel-sizma-zeytinyagi-nedir','zeytinyagi-polifenol-acilik-yakicilik','erken-hasat-olgun-hasat',
     'zeytinyagi-saklama-raf-omru','zeytinyagi-efsaneleri','akdeniz-diyeti-zeytinyagi',
     'sabah-bir-kasik-zeytinyagi','zeytinyagi-geleneksel-kullanimlari','alic-sirkesi-nedir','dogal-fermente-sirke'
@@ -55,7 +55,7 @@
   /* ---------- Metinler ---------- */
   const T = EN ? {
     announce: '2025 harvest · Ayvalık and Trilye · Check published batch records in the Harvest Passport',
-    shop: 'Shop', club: 'Club', producers: 'Producers', learn: 'Learn', quality: 'Quality', story: 'Our Story',
+    shop: 'Shop', club: 'Club', producers: 'Producers', abonelik: 'Subscription', learn: 'Learn', quality: 'Quality', story: 'Our Story',
     megaCat: 'Category', megaAll: 'All Products', megaBest: 'Bestsellers', megaEvoo: 'Finishing Oils', megaEarly: 'Cooking Oils',
     megaPurpose: 'Purpose', megaGift: 'Gift Sets', megaBuild: 'Build Your Own Set', megaJoin: 'Join the Club', megaAcc: 'Accessories',
     megaNew: 'The new harvest is here', megaCta: 'Discover', megaRecipe: 'Recipe Assistant', megaQuiz: 'Palate Quiz',
@@ -73,7 +73,7 @@
     cookieOk: 'OK', cookieMore: 'Privacy'
   } : {
     announce: '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et',
-    shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
+    shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', abonelik: 'Abonelik', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
     megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Bitirme Zeytinyağları', megaEarly: 'Pişirme Zeytinyağları',
     megaPurpose: 'Amaç', megaGift: 'Hediyelik Setler', megaBuild: 'Kendi Setini Oluştur', megaJoin: "Club'a Katıl", megaAcc: 'Aksesuarlar',
     megaNew: 'Yeni hasat geldi', megaCta: 'Keşfet', megaRecipe: 'Tarif Asistanı', megaQuiz: 'Damak Testi',
@@ -137,7 +137,7 @@
           </div>
         </div>
         <div><a class="top" href="${P('damak-testi.html')}">${EN ? 'Find Your Oil' : 'Yağını Bul'}</a></div>
-        <div><a class="top" data-nav="ureticiler" href="${P('ureticiler.html')}">${T.producers}</a></div>
+        <div><a class="top" data-nav="abonelik" href="${P('abonelik.html')}">${T.abonelik}</a></div>
       </nav>
       <a class="logo-link" href="${EN ? '/en' : '/'}" aria-label="Olivamore">
         <img src="assets/logo-word.svg" style="height:17px;width:auto;" alt="OLIVAMORE">
@@ -162,7 +162,7 @@
     <div class="mobile-nav" id="mobile-nav">
       <a href="${P('koleksiyon.html')}">${T.shop}</a>
       <a href="${P('damak-testi.html')}">${EN ? 'Find Your Oil' : 'Yağını Bul'}</a>
-      <a href="${P('ureticiler.html')}">${T.producers}</a>
+      <a href="${P('abonelik.html')}">${T.abonelik}</a>
       <a href="${P('hikayemiz.html')}">${T.story}</a>
       <a href="${P('ogren.html')}">${T.learn}</a>
       <a href="${P('kalite.html')}">${T.quality}</a>
