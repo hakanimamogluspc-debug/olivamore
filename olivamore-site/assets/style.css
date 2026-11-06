@@ -279,6 +279,15 @@ footer.site{background:var(--ink);color:#B8B2A6;padding:70px 0 34px;font-size:.9
 /* ============ PDP ============ */
 .pdp{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;padding:64px 0}
 @media(max-width:900px){.pdp{grid-template-columns:1fr;gap:36px}}
+/* Parti/analiz + SSS blokları galerinin altında (masaüstü); mobilde satın alma bloğundan sonra */
+.pdp-spec{margin-top:26px}
+@media(max-width:900px){
+  .pdp > div:first-child{display:contents}
+  .pdp > div:first-child > .gallery-main,.pdp > div:first-child > .thumbs{order:1}
+  .pdp > div:first-child > .thumbs{margin-top:-24px}
+  .pdp > .buy{order:2}
+  .pdp-spec{order:3;margin-top:0}
+}
 .gallery-main{border-radius:var(--radius);aspect-ratio:1/1.05;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px}
 .gallery-main svg{height:80%;filter:drop-shadow(0 20px 26px rgba(30,28,25,.22))}
 .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}

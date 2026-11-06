@@ -851,10 +851,14 @@ async function parasutFaturaKes(s) {
   }
   // 3) Satış faturası (kalemler KDV dahil tutulur; Paraşüt'e KDV hariç birim fiyat gider)
   const katalog = oku('cms.json', {});
+  // Kupon + üyelik indirimi satırlara orantılı dağıtılır (fatura toplamı = tahsil edilen tutar)
+  const araT = Number(s.araToplam) || (s.kalemler || []).reduce((t, k) => t + (Number(k.fiyat) || 0) * (k.adet || 1), 0);
+  const indT = (Number(s.indirim) || 0) + (s.uyeIndirim && Number(s.uyeIndirim.tutar) || 0);
+  const indirimOran = araT > 0 ? Math.max(0, (araT - indT) / araT) : 1;
   const detaylar = [];
   for (const k of (s.kalemler || [])) {
     const kdvOran = (typeof k.kdv === 'number' ? k.kdv : 1);
-    const birimHaric = (Number(k.fiyat) || 0) / (1 + kdvOran / 100);
+    const birimHaric = (Number(k.fiyat) || 0) * indirimOran / (1 + kdvOran / 100);
     const urunAd = (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '');
     // Stok kodu: kalemde varsa o; yoksa (eski siparişler) üründen adıyla bulunur
     let siteKod = k.kod || k.id || '';
@@ -1270,7 +1274,7 @@ const sunucu = http.createServer(async (req, res) => {
       // Stok kontrolü + düşümü (yetersizse sipariş alınmaz)
       const stokSonuc = stokDus(kalemler);
       if (stokSonuc.hata) return json(res, 400, { hata: stokSonuc.hata });
-      // Fiyatlar KDV HARİÇ sabittir; KDV oranına göre üzerine eklenir
+      // Fiyatlar KDV DAHİLDİR (sitede/sepette görünen fiyat); KDV bu tutarın içinden ayrıştırılır
       const araToplam = kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0);
       // Kupon (sunucu tarafında doğrulanır; kullanım sayacı artar)
       let indirim = 0, kargoBedava = false, kuponBilgi = null;
@@ -1298,9 +1302,9 @@ const sunucu = http.createServer(async (req, res) => {
       }
       const indirimliAra = Math.max(0, Math.round((araToplam - indirim - uyeIndirimTutar) * 100) / 100);
       const oran = araToplam > 0 ? indirimliAra / araToplam : 1;
-      const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * oran * k.kdv / 100, 0) * 100) / 100;
+      const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * oran * (k.kdv / (100 + k.kdv)), 0) * 100) / 100;
       const kargo = (kargoBedava || indirimliAra >= 500) ? 0 : 80; // [KARGO AYARI]
-      const toplam = Math.round((indirimliAra + kdvToplam + kargo) * 100) / 100;
+      const toplam = Math.round((indirimliAra + kargo) * 100) / 100; // KDV fiyatın içinde
       const durum = oku('sayac.json', { son: 1000 });
       durum.son++;
       yaz('sayac.json', durum);

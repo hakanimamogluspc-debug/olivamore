@@ -385,7 +385,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
       <div class="panel">
         <h2>Sadakat seviyeleri</h2>
-        <div class="desc">Üye, puanı eşiğe ulaştığında o seviyenin indirim oranını kazanır (puan: her ₺50 harcama = 1 puan). Oranlar sepette KDV hariç tutara uygulanır.</div>
+        <div class="desc">Üye, puanı eşiğe ulaştığında o seviyenin indirim oranını kazanır (puan: her ₺50 harcama = 1 puan). Oranlar sepetteki ürün tutarına uygulanır.</div>
         <div id="uy-seviyeler"></div>
         <div class="row-actions" style="margin-top:12px;flex-wrap:wrap;align-items:center;">
           <label style="text-transform:none;letter-spacing:0;font-size:.85rem;margin:0;display:flex;align-items:center;gap:8px;">Onaylanan yorum başına bonus puan:
@@ -435,7 +435,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ KUPONLAR ============ -->
     <section class="view" id="view-coupons">
-      <div class="note"><b>Kuponlar:</b> Kod sepette girilir; indirim yalnız kapsamdaki ürünlerin KDV hariç tutarına uygulanır. Tarih boş bırakılırsa süresizdir. Doğrulama sunucuda yapılır.</div>
+      <div class="note"><b>Kuponlar:</b> Kod sepette girilir; indirim yalnız kapsamdaki ürünlerin tutarına uygulanır. Tarih boş bırakılırsa süresizdir. Doğrulama sunucuda yapılır.</div>
       <div id="coupons-list"></div>
       <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
 
@@ -987,11 +987,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Açıklama (EN)</label><textarea class="p-noteEN" rows="2">' + esc(p.noteEN) + '</textarea></div>' +
       '</div>' +
       '<div class="grid3">' +
-      '<div class="field"><label>Ürün Fiyatı — Sabit, KDV Hariç (₺)</label><input type="number" step="0.01" class="p-price" value="' + p.price + '"></div>' +
-      '<div class="field"><label>KDV Oranı (sepette eklenir)</label><select class="p-kdv">' +
-      [0, 1, 10, 20].map(function (k) { var cur = (p.kdv == null ? 1 : p.kdv); return '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + (k === 0 ? 'KDV Dahil (fiyata işli)' : '%' + k) + '</option>'; }).join('') +
+      '<div class="field"><label>Satış Fiyatı — KDV Dahil (₺)</label><input type="number" step="0.01" class="p-price" value="' + p.price + '"></div>' +
+      '<div class="field"><label>KDV Oranı (fiyatın içinde)</label><select class="p-kdv">' +
+      [0, 1, 10, 20].map(function (k) { var cur = (p.kdv == null ? 1 : p.kdv); return '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + (k === 0 ? '%0 (KDV yok)' : '%' + k) + '</option>'; }).join('') +
       '</select></div>' +
-      '<div class="field"><label>Sepette: +KDV ile</label><div class="p-gross" style="padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#FBFAF8;font-weight:700;">₺' + Math.round(p.price * (1 + (p.kdv == null ? 1 : p.kdv) / 100)).toLocaleString('tr-TR') + '</div></div>' +
+      '<div class="field"><label>KDV hariç (fatura matrahı)</label><div class="p-gross" style="padding:10px 12px;border:1px solid var(--line);border-radius:2px;background:#FBFAF8;font-weight:600;">₺' + (p.price / (1 + (p.kdv == null ? 1 : p.kdv) / 100)).toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + '</div></div>' +
       '</div>' +
       '<div class="grid3">' +
       '<div class="field"><label>Birim (TR, ör. / 500 ml)</label><input type="text" class="p-unitTR" value="' + esc(p.unitTR) + '"></div>' +
@@ -1033,7 +1033,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (e.target.classList.contains('p-price') || e.target.classList.contains('p-kdv')) {
       var net = parseFloat(d.querySelector('.p-price').value) || 0;
       var k = parseInt(d.querySelector('.p-kdv').value, 10); if (isNaN(k)) k = 1;
-      d.querySelector('.p-gross').textContent = '₺' + Math.round(net * (1 + k / 100)).toLocaleString('tr-TR');
+      d.querySelector('.p-gross').textContent = '₺' + (net / (1 + k / 100)).toLocaleString('tr-TR', { maximumFractionDigits: 2 });
     }
   });
   document.getElementById('products-list').addEventListener('click', function (e) {
@@ -1086,7 +1086,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var g = function (c) { var el = d.querySelector('.' + c); return el ? el.value : undefined; };
       p.nameTR = g('p-nameTR'); p.nameEN = g('p-nameEN');
       p.noteTR = g('p-noteTR'); p.noteEN = g('p-noteEN');
-      p.price = parseFloat(g('p-price')) || 0; // sabit fiyat (KDV hariç) — sitede bu görünür
+      p.price = parseFloat(g('p-price')) || 0; // KDV dahil satış fiyatı — sitede ve sepette bu görünür
       var kdvSec = parseInt(g('p-kdv'), 10); p.kdv = isNaN(kdvSec) ? 1 : kdvSec; // 0 = KDV dahil
       p.unitTR = g('p-unitTR'); p.unitEN = g('p-unitEN');
       var stok = g('p-stok');
@@ -1436,7 +1436,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
         '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + (s.kargoNo ? ' · ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) : '') + '</span></div>' + ordPill(s) + '</summary>' +
         '<div class="body"><p style="font-size:.85rem;margin-bottom:8px;">' +
-        s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad) + ' (₺' + k.fiyat + (typeof k.kdv === 'number' ? (k.kdv ? ' +KDV %' + k.kdv : ' · KDV dahil') : '') + ')'; }).join('<br>') +
+        s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad) + ' (₺' + k.fiyat + (typeof k.kdv === 'number' ? ' · KDV %' + k.kdv + ' dahil' : '') + ')'; }).join('<br>') +
         (s.kdvToplam !== undefined ? '<br><b>Ara: ' + tl(s.araToplam) + (s.indirim ? ' · Kupon ' + esc(s.kupon && s.kupon.kod || '') + ': -' + tl(s.indirim) : '') + ' · KDV: ' + tl(s.kdvToplam) + ' · Kargo: ' + (s.kargo ? tl(s.kargo) : 'Ücretsiz') + ' · Toplam: ' + tl(s.toplam) + '</b>' : '') + '</p>' +
         '<p style="font-size:.82rem;color:var(--soft);margin-bottom:12px;">' + esc(s.musteri.telefon) + ' · ' + esc(s.musteri.eposta) + '<br>' + esc(s.musteri.adres) +
         (s.musteri.not ? '<br>Müşteri notu: ' + esc(s.musteri.not) : '') + '</p>' +
