@@ -11,12 +11,12 @@
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <style>
-.cart-wrap{display:grid;grid-template-columns:1.3fr .7fr;gap:44px;align-items:start}
+.cart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
 @media(max-width:860px){.cart-wrap{grid-template-columns:1fr}}
-.cart-item{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(30,28,25,.05)}
-.cart-item img{width:64px;height:80px;object-fit:contain;flex-shrink:0;background:#fff}
+.cart-item{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(30,28,25,.05)}
+.cart-item img{width:46px;height:58px;object-fit:contain;flex-shrink:0;background:#fff}
 .cart-item .t{flex:1;min-width:0}
-.cart-item .t b{font-weight:700;font-size:.95rem;display:block}
+.cart-item .t b{font-weight:700;font-size:.9rem;display:block}
 .cart-item .t span{font-size:.85rem;color:var(--ink-soft)}
 .cart-item .cart-meta{display:block;margin:3px 0;color:var(--ink-soft);font-size:.76rem;letter-spacing:.02em}
 .cart-qty{display:flex;align-items:center;gap:8px}
@@ -157,6 +157,10 @@
 
 <div id="om-footer"></div>
 <script>
+  // Site ürün kodu -> Green Ops stok kodu (sepette görünen kod)
+  var GREEN_KODLAR = {'ay250':'152.04.01.01','ay500':'152.04.01.02','ay750':'152.04.01.03','ay2l':'152.04.01.05','ay5l':'152.04.01.06','tr250':'152.04.01.07','tr500':'152.04.01.10','tr750':'152.04.01.11','tr2l':'152.04.01.12','tr5l':'152.04.01.13','og5l':'152.04.01.14','kutu500':'152.04.01.02','kutu750':'152.04.01.03','custom-set-5':'152.06.01.05','custom-set-3':'152.06.01.01','palate-box-3':'152.06.01.01','ces-mand':'152.04.01.04','ces-bib':'152.04.02.04','ces-berg':'152.04.02.01','ces-kek':'152.04.02.02','zey-siyah':'152.05.01.05','zey-yesil':'152.05.01.03','sir-bal':'152.11.01.05','sir-alic':'152.11.01.06','sir-elma':'152.11.01.07','sir-uzum':'152.11.01.08','sir-nar':'152.11.01.04'};
+  function greenKod(k){ if(!k) return ''; if(GREEN_KODLAR[k]) return GREEN_KODLAR[k]; if(String(k).indexOf('custom-set')===0) return GREEN_KODLAR['custom-set-5']; return k; }
+
 document.addEventListener('DOMContentLoaded', function () {
   var KARGO = 80, KARGO_ESIK = 500;
   function fmt(n) { return '₺' + Number(n).toLocaleString('tr-TR'); }
@@ -173,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
     c.forEach(function (k, i) {
       var d = document.createElement('div');
       d.className = 'cart-item';
-      var meta = [k.hacim || '', k.kod ? ('Product code: ' + k.kod) : ''].filter(Boolean).join(' · ');
+      var meta = [k.hacim || '', (greenKod(k.kod || k.id)) ? ('Product code: ' + greenKod(k.kod || k.id)) : ''].filter(Boolean).join(' · ');
       d.innerHTML = '<img src="' + (k.img || 'assets/img/ayvalik-500.jpg') + '" alt="">' +
         '<div class="t"><b>' + k.ad + '</b>' + (meta ? '<small class="cart-meta">' + meta + '</small>' : '') + '<span>' + fmt(k.fiyat) + '</span><br>' +
         '<button class="cart-del" data-i="' + i + '">Remove</button></div>' +
