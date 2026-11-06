@@ -862,7 +862,10 @@ async function parasutFaturaKes(s) {
       const kayit = urunKaydi(katalog, k.ad);
       if (kayit && kayit.id) siteKod = kayit.id;
     }
-    const urunId = await parasutUrun(urunAd, kdvOran, greenOpsKodu(siteKod));
+    // Panelde ürüne girilmiş Green Ops kodu varsa o öncelikli
+    const katKayit = (katalog.products || []).find(x => x.id === siteKod);
+    const stokKodu = (katKayit && katKayit.stokKodu) ? katKayit.stokKodu : greenOpsKodu(siteKod);
+    const urunId = await parasutUrun(urunAd, kdvOran, stokKodu);
     detaylar.push({ type: 'sales_invoice_details', attributes: {
       quantity: k.adet || 1,
       unit_price: Math.round(birimHaric * 10000) / 10000,

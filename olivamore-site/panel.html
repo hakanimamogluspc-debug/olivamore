@@ -219,6 +219,17 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <button class="btn btn-dark" id="btn-add-product">+ Yeni Ürün Ekle</button>
 
       <div class="panel" style="margin-top:22px;">
+        <h2>Toplu Ürün Yükleme</h2>
+        <div class="desc">Şablonu indir, ürünleri doldur, buradan yükle. Ürün kodu sistemde varsa ürün <b>güncellenir</b> (boş hücreler mevcut değeri değiştirmez), yoksa <b>yeni ürün</b> eklenir. Fotoğrafları yükleme sonrası her ürünün "Ürün Görseli" alanından eklersin.</div>
+        <div class="row-actions" style="margin-top:0;">
+          <a class="btn btn-ghost btn-sm" href="assets/sablon/olivamore-urun-sablonu.xlsx" download>⬇ Boş Şablonu İndir</a>
+          <button class="btn btn-ghost btn-sm" id="btn-toplu-disa" type="button">⬇ Mevcut Ürünleri Excel'e Aktar</button>
+          <label class="btn btn-dark btn-sm" style="cursor:pointer;margin:0;">⬆ Dolu Şablonu Yükle<input type="file" id="toplu-dosya" accept=".xlsx,.xls,.csv" style="display:none;"></label>
+        </div>
+        <div id="toplu-onizleme" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
         <h2>Ürün Kategorileri</h2>
         <div class="desc">Koleksiyon sayfasındaki filtre düğmeleri ve kartlardaki kategori etiketi bu listeden gelir. Ürünün kategorisini yukarıda her ürünün "Kategori" alanından seçersin; oradan da yeni kategori ekleyebilirsin. Sıra, filtre düğmelerinin sırasıdır.</div>
         <div id="urunkat-list"></div>
@@ -992,6 +1003,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Rozet (EN)</label><input type="text" class="p-badgeEN" value="' + esc(p.badgeEN) + '"></div>' +
       '<div class="field"><label>Vitrin sırası (0-4)</label><input type="number" class="p-featured" min="0" max="4" value="' + (p.featured || 0) + '"></div>' +
       '</div>' +
+      '<div class="field"><label>Green Ops stok kodu (fatura)</label><input type="text" class="p-stokKodu" value="' + esc(p.stokKodu || '') + '" placeholder="Örn: 152.04.01.02 — boşsa standart eşleme kullanılır"></div>' +
       '<div class="field"><label>Kategori (koleksiyon filtresi)</label><select class="p-role">' +
       [['', 'Yok (yalnız Tümü\'nde görünür)']].concat(urunKategorileri().map(function (k) { return [k.id, k.adTR]; })).map(function (r) {
         return '<option value="' + r[0] + '"' + ((p.role || '') === r[0] ? ' selected' : '') + '>' + esc(r[1]) + '</option>';
@@ -1081,7 +1093,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       p.stok = (stok === '' || stok === undefined) ? undefined : Math.max(0, parseInt(stok, 10) || 0);
       p.badgeTR = g('p-badgeTR'); p.badgeEN = g('p-badgeEN');
       p.featured = parseInt(g('p-featured'), 10) || 0;
-      p.role = g('p-role') || '';
+      p.role = g('p-role') === '__yeni__' ? '' : (g('p-role') || '');
+      var sk = g('p-stokKodu'); if (sk !== undefined) p.stokKodu = sk.trim();
       var imgData = g('p-img-data'); var img = g('p-img');
       if (imgData) p.img = imgData; else if (img) p.img = img;
       p.galeri = [].map.call(d.querySelectorAll('.gal-item .g-val'), function (x) { return x.value; }).filter(Boolean);
@@ -2083,6 +2096,186 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       d.querySelector('.c-urun-alan').style.display = e.target.value === 'urun' ? '' : 'none';
     }
     dirty();
+  });
+
+  /* ================== TOPLU ÜRÜN YÜKLEME (Excel şablonu) ================== */
+  var TOPLU_KOLON = [
+    ['Ürün Kodu', 'id'], ['Ürün Adı (TR)', 'nameTR'], ['Ürün Adı (EN)', 'nameEN'],
+    ['Kısa Açıklama (TR)', 'noteTR'], ['Kısa Açıklama (EN)', 'noteEN'], ['Fiyat (₺)', 'price'],
+    ['Birim (TR)', 'unitTR'], ['Birim (EN)', 'unitEN'], ['KDV Oranı (%)', 'kdv'], ['Kategori Kodu', 'role'],
+    ['Rozet (TR)', 'badgeTR'], ['Rozet (EN)', 'badgeEN'], ['Stok Adedi', 'stok'], ['Vitrin Sırası', 'featured'],
+    ['Görünür', 'visible'], ['Green Ops Stok Kodu', 'stokKodu']
+  ];
+  var TOPLU_BEKLEYEN = null;
+  function xlsxYukle(cb) {
+    if (window.XLSX) return cb();
+    var sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload = cb;
+    sc.onerror = function () { alert('Excel okuyucu yüklenemedi; internet bağlantını kontrol et.'); };
+    document.head.appendChild(sc);
+  }
+  function baslikAnahtar(b) {
+    var t = String(b || '').replace(/\*/g, '').trim().toLowerCase();
+    for (var i = 0; i < TOPLU_KOLON.length; i++) {
+      if (TOPLU_KOLON[i][0].toLowerCase() === t || TOPLU_KOLON[i][1].toLowerCase() === t) return TOPLU_KOLON[i][1];
+    }
+    return null;
+  }
+  function sayiCoz(v) {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number') return v;
+    var s = String(v).replace(/₺|\s/g, '');
+    if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(',', '.');
+    var n = parseFloat(s);
+    return isNaN(n) ? NaN : n;
+  }
+  function birimDuzelt(u) {
+    u = String(u || '').trim();
+    if (!u) return '';
+    return u.indexOf('/') === 0 ? u : '/ ' + u;
+  }
+  function topluOku(dosya) {
+    xlsxYukle(function () {
+      var okuyucu = new FileReader();
+      okuyucu.onload = function (ev) {
+        try {
+          var wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          var sayfaAdi = wb.SheetNames.indexOf('Urunler') !== -1 ? 'Urunler' : wb.SheetNames.find(function (n) { return n !== 'Nasil Kullanilir' && n !== 'Kategoriler'; }) || wb.SheetNames[0];
+          var satirlar = XLSX.utils.sheet_to_json(wb.Sheets[sayfaAdi], { header: 1, defval: '' });
+          topluCoz(satirlar);
+        } catch (e) { alert('Dosya okunamadı: ' + e.message); }
+      };
+      okuyucu.readAsArrayBuffer(dosya);
+    });
+  }
+  function topluCoz(satirlar) {
+    if (!satirlar.length) { alert('Dosya boş.'); return; }
+    var harita = satirlar[0].map(baslikAnahtar);
+    if (harita.indexOf('id') === -1 || harita.indexOf('nameTR') === -1) { alert('Şablon başlıkları bulunamadı. Lütfen panelden indirdiğin şablonu kullan.'); return; }
+    var katlar = urunKategorileri().map(function (k) { return k.id; });
+    var mevcut = {}; (C.products || []).forEach(function (p) { mevcut[p.id] = p; });
+    var sonuc = [], gorulen = {};
+    for (var r = 1; r < satirlar.length; r++) {
+      var ham = {}; var dolu = false;
+      harita.forEach(function (k, i) { if (k) { ham[k] = satirlar[r][i]; if (String(satirlar[r][i]).trim() !== '') dolu = true; } });
+      if (!dolu) continue;
+      var id = String(ham.id || '').trim();
+      if (/^ornek-/.test(id) || /^↑/.test(id)) continue; // şablondaki örnek satırlar
+      var hatalar = [], uyarilar = [];
+      if (!id) hatalar.push('Ürün kodu boş');
+      else if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) hatalar.push('Ürün kodu yalnız küçük harf, rakam ve tire içermeli');
+      if (gorulen[id]) hatalar.push('Bu kod dosyada iki kez var');
+      gorulen[id] = true;
+      var var_ = !!mevcut[id];
+      if (!var_ && !String(ham.nameTR || '').trim()) hatalar.push('Yeni ürün için ad zorunlu');
+      var fiyat = sayiCoz(ham.price);
+      if (fiyat !== null && (isNaN(fiyat) || fiyat < 0)) hatalar.push('Fiyat sayı değil');
+      if (!var_ && (fiyat === null)) hatalar.push('Yeni ürün için fiyat zorunlu');
+      var kdv = sayiCoz(ham.kdv);
+      if (kdv !== null && (isNaN(kdv) || [0, 1, 10, 20].indexOf(kdv) === -1)) hatalar.push('KDV 0, 1, 10 veya 20 olmalı');
+      var stok = sayiCoz(ham.stok);
+      if (stok !== null && (isNaN(stok) || stok < 0)) hatalar.push('Stok geçersiz');
+      var vit = sayiCoz(ham.featured);
+      if (vit !== null && (isNaN(vit) || vit < 0 || vit > 4)) hatalar.push('Vitrin sırası 0-4 olmalı');
+      var rol = String(ham.role || '').trim();
+      if (rol && katlar.indexOf(rol) === -1) uyarilar.push('"' + rol + '" yeni kategori olarak açılacak');
+      var gorselYok = !(var_ && mevcut[id].img);
+      if (gorselYok) uyarilar.push('Görsel yok');
+      sonuc.push({ id: id, ham: ham, yeni: !var_, hatalar: hatalar, uyarilar: uyarilar, fiyat: fiyat, kdv: kdv, stok: stok, vit: vit, rol: rol });
+    }
+    TOPLU_BEKLEYEN = sonuc;
+    topluOnizle();
+  }
+  function topluOnizle() {
+    var el = document.getElementById('toplu-onizleme');
+    var s = TOPLU_BEKLEYEN || [];
+    if (!s.length) { el.innerHTML = '<div class="note">Dosyada işlenecek ürün satırı bulunamadı.</div>'; return; }
+    var hataliN = s.filter(function (x) { return x.hatalar.length; }).length;
+    var yeniN = s.filter(function (x) { return !x.hatalar.length && x.yeni; }).length;
+    var gunN = s.filter(function (x) { return !x.hatalar.length && !x.yeni; }).length;
+    el.innerHTML =
+      '<div class="note"><b>' + yeniN + '</b> yeni ürün · <b>' + gunN + '</b> güncelleme' + (hataliN ? ' · <b style="color:#a33;">' + hataliN + ' hatalı satır atlanacak</b>' : '') + '</div>' +
+      '<div style="max-height:320px;overflow:auto;border:1px solid var(--line);">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:.8rem;">' +
+      '<tr style="background:#f7f6f3;text-align:left;"><th style="padding:7px 10px;">Kod</th><th>Ad</th><th>Fiyat</th><th>Kategori</th><th>İşlem</th><th>Not</th></tr>' +
+      s.map(function (x) {
+        var renk = x.hatalar.length ? '#fbefef' : (x.yeni ? '#f2f8ef' : '#fff');
+        var islem = x.hatalar.length ? '<b style="color:#a33;">Atlanacak</b>' : (x.yeni ? 'Yeni' : 'Güncelle');
+        var not = x.hatalar.concat(x.uyarilar).join(' · ');
+        return '<tr style="background:' + renk + ';border-top:1px solid var(--line);"><td style="padding:6px 10px;">' + esc(x.id) + '</td><td>' + esc(x.ham.nameTR || (C.products.find(function (p) { return p.id === x.id; }) || {}).nameTR || '') + '</td><td>' + (x.fiyat === null ? '—' : x.fiyat) + '</td><td>' + esc(x.rol || '—') + '</td><td>' + islem + '</td><td style="color:' + (x.hatalar.length ? '#a33' : '#8a6f3c') + ';">' + esc(not) + '</td></tr>';
+      }).join('') + '</table></div>' +
+      '<div class="row-actions"><button class="btn btn-gold btn-sm" id="btn-toplu-uygula" type="button"' + ((yeniN + gunN) ? '' : ' disabled') + '>İçe Aktar (' + (yeniN + gunN) + ')</button>' +
+      '<button class="btn btn-ghost btn-sm" id="btn-toplu-iptal" type="button">Vazgeç</button></div>';
+  }
+  function topluUygula() {
+    syncProductsFromDOM(); syncUrunKategorilerFromDOM();
+    var islenen = 0, gorselsiz = 0;
+    (TOPLU_BEKLEYEN || []).forEach(function (x) {
+      if (x.hatalar.length) return;
+      var h = x.ham;
+      var dolu = function (v) { return v !== undefined && v !== null && String(v).trim() !== ''; };
+      var p = C.products.find(function (q) { return q.id === x.id; });
+      if (!p) {
+        p = { id: x.id, type: 'product', role: '', nameTR: '', nameEN: '', noteTR: '', noteEN: '', price: 0, unitTR: '', unitEN: '', badgeTR: '', badgeEN: '', img: '', galeri: [], href: '', featured: 0, visible: true, kdv: 1 };
+        C.products.push(p);
+      }
+      if (dolu(h.nameTR)) p.nameTR = String(h.nameTR).trim();
+      if (dolu(h.nameEN)) p.nameEN = String(h.nameEN).trim(); else if (!p.nameEN) p.nameEN = p.nameTR;
+      if (dolu(h.noteTR)) p.noteTR = String(h.noteTR).trim();
+      if (dolu(h.noteEN)) p.noteEN = String(h.noteEN).trim();
+      if (x.fiyat !== null) p.price = x.fiyat;
+      if (dolu(h.unitTR)) p.unitTR = birimDuzelt(h.unitTR);
+      if (dolu(h.unitEN)) p.unitEN = birimDuzelt(h.unitEN); else if (!p.unitEN) p.unitEN = p.unitTR;
+      if (x.kdv !== null) p.kdv = x.kdv;
+      if (x.rol) {
+        if (!urunKategorileri().some(function (k) { return k.id === x.rol; })) urunKategorileri().push({ id: x.rol, adTR: x.rol, adEN: x.rol, notTR: '', notEN: '' });
+        p.role = x.rol;
+      }
+      if (dolu(h.badgeTR)) p.badgeTR = String(h.badgeTR).trim();
+      if (dolu(h.badgeEN)) p.badgeEN = String(h.badgeEN).trim();
+      if (x.stok !== null) p.stok = Math.floor(x.stok);
+      if (x.vit !== null) p.featured = Math.floor(x.vit);
+      if (dolu(h.visible)) p.visible = !/^(hay[ıi]r|no|0|false)$/i.test(String(h.visible).trim());
+      if (dolu(h.stokKodu)) p.stokKodu = String(h.stokKodu).trim();
+      if (!p.img) gorselsiz++;
+      islenen++;
+    });
+    TOPLU_BEKLEYEN = null;
+    document.getElementById('toplu-onizleme').innerHTML = '<div class="note" style="border-left-color:#2e7d32;"><b>' + islenen + ' ürün içe aktarıldı.</b>' + (gorselsiz ? ' ' + gorselsiz + ' ürünün görseli eksik — aşağıdaki listeden ekle.' : '') + ' Yayınlamak için en altta <b>Kaydet ve Yayınla</b>.</div>';
+    renderProducts(); renderUrunKategorileri(); dirty();
+  }
+  function topluDisaAktar() {
+    syncProductsFromDOM();
+    xlsxYukle(function () {
+      var veri = [TOPLU_KOLON.map(function (k) { return k[0]; })];
+      (C.products || []).filter(function (p) { return p.type === 'product' || !p.type; }).forEach(function (p) {
+        veri.push(TOPLU_KOLON.map(function (k) {
+          var v = p[k[1]];
+          if (k[1] === 'unitTR' || k[1] === 'unitEN') return String(v || '').replace(/^\/\s*/, '');
+          if (k[1] === 'visible') return p.visible === false ? 'Hayır' : 'Evet';
+          if (k[1] === 'kdv') return typeof p.kdv === 'number' ? p.kdv : 1;
+          return v === undefined || v === null ? '' : v;
+        }));
+      });
+      var ws = XLSX.utils.aoa_to_sheet(veri);
+      ws['!cols'] = TOPLU_KOLON.map(function (k) { return { wch: Math.max(12, k[0].length + 4) }; });
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Urunler');
+      var kat = [['Kategori Kodu', 'Kategori Adı (TR)', 'Kategori Adı (EN)']].concat(urunKategorileri().map(function (k) { return [k.id, k.adTR, k.adEN]; }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kat), 'Kategoriler');
+      XLSX.writeFile(wb, 'olivamore-urunler-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+    });
+  }
+  document.getElementById('toplu-dosya').addEventListener('change', function () {
+    if (this.files && this.files[0]) topluOku(this.files[0]);
+    this.value = '';
+  });
+  document.getElementById('btn-toplu-disa').addEventListener('click', topluDisaAktar);
+  document.getElementById('toplu-onizleme').addEventListener('click', function (e) {
+    if (e.target.id === 'btn-toplu-uygula') topluUygula();
+    if (e.target.id === 'btn-toplu-iptal') { TOPLU_BEKLEYEN = null; this.innerHTML = ''; }
   });
 
   /* ================== ÜRÜN KATEGORİLERİ (koleksiyon filtresi) ================== */
