@@ -2087,7 +2087,6 @@ footer.site{background:#1B1A18}
 /* Manşet: sol metin (zeytinlik) + sağ görsel */
 .fig-manset{display:grid;grid-template-columns:1fr;min-height:550px;background:none;border-bottom:none}
 .fig-manset::before{display:none}
-.fig-manset .fm-icerik{max-width:1140px;margin:0 auto;width:100%}
 .fig-manset .fm-sol,.fig-manset .fm-sag{position:relative;overflow:hidden}
 .fig-manset .fm-sol img.fm-bg,.fig-manset .fm-sag img.fm-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .fig-manset .fm-ort{position:absolute;inset:0;background:rgba(11,24,35,.3)}
