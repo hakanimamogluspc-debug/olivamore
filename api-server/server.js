@@ -757,15 +757,29 @@ function parasutHttp(yontem, yolP, govdeObj, token) {
 async function parasutTokenAl() {
   if (parasutJeton.token && Date.now() < parasutJeton.bitis) return parasutJeton.token;
   const env = oku('env.json', {});
-  const v = await parasutHttp('POST', '/oauth/token', {
+  // OAuth ucu form-encoded gövde bekler (JSON gönderilirse "invalid_client" döner)
+  const govdeStr = new URLSearchParams({
     grant_type: 'password',
     client_id: env.parasutClientId,
     client_secret: env.parasutClientSecret,
     username: env.parasutKullanici,
     password: env.parasutSifre,
     redirect_uri: env.parasutRedirect || 'urn:ietf:wg:oauth:2.0:oob'
+  }).toString();
+  const v = await new Promise((cozul, hataVer) => {
+    const istek = require('https').request({
+      hostname: 'api.parasut.com', path: '/oauth/token', method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'Content-Length': Buffer.byteLength(govdeStr) }
+    }, r => {
+      let p = '';
+      r.on('data', d => { p += d; });
+      r.on('end', () => { try { cozul(JSON.parse(p)); } catch (e) { hataVer(new Error('Paraşüt token yanıtı okunamadı')); } });
+    });
+    istek.on('error', hataVer);
+    istek.setTimeout(20000, () => { istek.destroy(new Error('Paraşüt zaman aşımı')); });
+    istek.end(govdeStr);
   });
-  if (!v.access_token) throw new Error('Paraşüt oturumu açılamadı');
+  if (!v.access_token) throw new Error('Paraşüt oturumu açılamadı: ' + (v.error_description || v.error || 'bilinmeyen'));
   parasutJeton = { token: v.access_token, bitis: Date.now() + ((v.expires_in || 7200) - 120) * 1000 };
   return parasutJeton.token;
 }

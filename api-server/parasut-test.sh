@@ -8,17 +8,17 @@ if (eksik.length) { console.log('EKSİK ALANLAR:', eksik.join(', ')); process.ex
 console.log('kullanici:', env.parasutKullanici.replace(/(.{3}).*(@.*)/, '$1***$2'));
 console.log('clientId uzunluk:', String(env.parasutClientId).length, '| secret uzunluk:', String(env.parasutClientSecret).length, '| firmaId:', env.parasutFirmaId);
 console.log('redirect:', env.parasutRedirect || 'urn:ietf:wg:oauth:2.0:oob');
-const g = JSON.stringify({
+const g = new URLSearchParams({
   grant_type: 'password',
   client_id: env.parasutClientId,
   client_secret: env.parasutClientSecret,
   username: env.parasutKullanici,
   password: env.parasutSifre,
   redirect_uri: env.parasutRedirect || 'urn:ietf:wg:oauth:2.0:oob'
-});
+}).toString();
 const istek = require('https').request({
   hostname: 'api.parasut.com', path: '/oauth/token', method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(g) }
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(g) }
 }, r => {
   let p = '';
   r.on('data', d => p += d);
