@@ -2501,8 +2501,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (!el || !C.kategoriler) return;
     el.querySelectorAll('.kat-item').forEach(function (d) {
       var k = C.kategoriler[+d.dataset.idx]; if (!k) return;
-      var imgSec = d.querySelector('.kat-img');
-      if (imgSec) k.img = imgSec.value;
+      var imgSec = d.querySelector('.kat-img'), imgDat = d.querySelector('.kat-img-data');
+      var yeniImg = (imgDat && imgDat.value) || (imgSec && imgSec.value) || '';
+      if (yeniImg) k.img = yeniImg;
       k.adTR = d.querySelector('.kat-adTR').value.trim();
       k.adEN = d.querySelector('.kat-adEN').value.trim();
       k.link = d.querySelector('.kat-link').value.trim();
@@ -2836,6 +2837,10 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var sel = imTarget.querySelector('select');
       var hid = imTarget.querySelector('input[type="hidden"]');
       var prev = imTarget.querySelector('img');
+      // Seçilen görsel listede yoksa ekle (yoksa değer boş kalır ve kaydedilmez)
+      if (sel && ![].some.call(sel.options, function (o) { return o.value === yol; })) {
+        var opt = document.createElement('option'); opt.value = yol; opt.textContent = yol.replace('assets/img/', ''); sel.appendChild(opt);
+      }
       if (sel) sel.value = yol;
       if (hid) hid.value = imTarget.classList.contains('gal-item') ? yol : '';
       if (prev) prev.src = yol;

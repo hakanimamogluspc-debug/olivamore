@@ -515,7 +515,15 @@
           { baslikTR: 'ÇOK SATAN ÜRÜNLER', baslikEN: 'BEST SELLERS', urunler: ['ces-mand', 'ces-berg', 'zey-siyah', 'zey-yesil'] }
         ];
         const siralar = (Array.isArray(C.anasayfaSiralari) && C.anasayfaSiralari.length) ? C.anasayfaSiralari : VARSAYILAN_SIRALAR;
-        const bul = id => C.products.find(p => p.id === id && p.visible !== false);
+        // Ürün id'si, Green Ops stok kodu veya eski kısa kod (ay750 vb.) ile bulunur — toplu yüklemeden sonra id değişse de sıra boş kalmaz
+        const ESKI_KOD = {'ay250':'152.04.01.01','ay500':'152.04.01.02','ay750':'152.04.01.03','ay2l':'152.04.01.05','ay5l':'152.04.01.06','tr250':'152.04.01.07','tr500':'152.04.01.10','tr750':'152.04.01.11','tr2l':'152.04.01.12','tr5l':'152.04.01.13','og5l':'152.04.01.14','ces-mand':'152.04.01.04','ces-bib':'152.04.02.04','ces-berg':'152.04.02.01','ces-kek':'152.04.02.02','zey-siyah':'152.05.01.05','zey-yesil':'152.05.01.03'};
+        const gor = p => p.visible !== false;
+        const bul = id => {
+          const kod = ESKI_KOD[id] || id;
+          const eski = Object.keys(ESKI_KOD).find(k => ESKI_KOD[k] === id);
+          return C.products.find(p => gor(p) && p.id === id)
+            || C.products.find(p => gor(p) && (p.id === kod || p.stokKodu === kod || p.stokKodu === id || (eski && p.id === eski)));
+        };
         const html = siralar.map(sr => {
           const kartlar = (sr.urunler || []).map(bul).filter(Boolean);
           if (!kartlar.length) return '';
