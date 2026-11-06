@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Girişi | Olivamore</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;font-family:'Poppins',sans-serif;background:#0f100e;color:#fff}
+.sahne{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:100vh}
+.gorsel{position:relative;overflow:hidden;background:#1D1F1C}
+.gorsel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.gorsel .ort{position:absolute;inset:0;background:linear-gradient(135deg,rgba(13,14,12,.55),rgba(13,14,12,.85))}
+.gorsel .soz{position:absolute;left:48px;bottom:56px;right:48px;z-index:2}
+.gorsel .soz .el{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.6rem;line-height:1.45;color:#F5F1E6;max-width:420px}
+.gorsel .soz .alt{margin-top:14px;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:#BFA25D}
+.kutu{display:flex;flex-direction:column;justify-content:center;align-items:center;background:#1D1F1C;padding:48px 24px;position:relative}
+.kutu::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:linear-gradient(rgba(191,162,93,0),rgba(191,162,93,.55),rgba(191,162,93,0))}
+.form{width:100%;max-width:380px}
+.logo{height:26px;width:auto;display:block;margin:0 auto 10px}
+.sistem{text-align:center;font-size:.62rem;letter-spacing:.34em;text-transform:uppercase;color:#BFA25D;margin-bottom:40px}
+h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:2rem;color:#F5F1E6;text-align:center;margin-bottom:6px}
+.aciklama{text-align:center;font-weight:300;font-size:.8rem;color:rgba(245,241,230,.55);margin-bottom:34px}
+label{display:block;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,241,230,.6);margin:0 0 7px}
+input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(191,162,93,.35);color:#fff;padding:13px 15px;font-family:'Poppins',sans-serif;font-size:.92rem;border-radius:2px;outline:none;transition:border-color .2s,background .2s}
+input:focus{border-color:#BFA25D;background:rgba(255,255,255,.07)}
+.alan{margin-bottom:20px}
+.goz{position:relative}
+.goz button{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(245,241,230,.5);cursor:pointer;font-size:.72rem;letter-spacing:.08em;font-family:'Poppins',sans-serif}
+.btn{width:100%;margin-top:6px;background:#BFA25D;border:2px solid #BFA25D;color:#fff;padding:13px;font-family:'Poppins',sans-serif;font-size:.95rem;letter-spacing:.5px;cursor:pointer;transition:background .2s;border-radius:2px}
+.btn:hover{background:#a98e4e;border-color:#a98e4e}
+.btn:disabled{opacity:.6;cursor:wait}
+.hata{display:none;margin-top:16px;padding:11px 14px;border:1px solid rgba(220,80,60,.5);background:rgba(220,80,60,.12);color:#f0b9ad;font-size:.8rem;line-height:1.5;border-radius:2px}
+.hata.on{display:block}
+.dip{margin-top:44px;text-align:center;font-size:.66rem;letter-spacing:.12em;color:rgba(245,241,230,.35)}
+.dip a{color:rgba(191,162,93,.8);text-decoration:none}
+@media(max-width:860px){.sahne{grid-template-columns:1fr}.gorsel{display:none}}
+</style>
+</head>
+<body>
+<div class="sahne">
+  <div class="gorsel">
+    <img src="assets/img/marka/hero-zeytinlik.jpg" alt="" onerror="this.style.display='none'">
+    <div class="ort"></div>
+    <div class="soz">
+      <div class="el">"Her şişe, tek bir hasadın izini taşır."</div>
+      <div class="alt">Ayvalık · Kuzey Ege</div>
+    </div>
+  </div>
+  <div class="kutu">
+    <form class="form" id="form" autocomplete="on">
+      <img class="logo" src="assets/logo-word-light.svg" alt="Olivamore" onerror="this.style.display='none'">
+      <div class="sistem">Website Yönetim Sistemi</div>
+      <h1>Tekrar hoş geldin</h1>
+      <p class="aciklama">Panele erişmek için giriş yap.</p>
+      <div class="alan">
+        <label for="kullanici">Kullanıcı adı</label>
+        <input type="text" id="kullanici" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="alan">
+        <label for="sifre">Şifre</label>
+        <div class="goz">
+          <input type="password" id="sifre" name="password" autocomplete="current-password" required>
+          <button type="button" id="goster">GÖSTER</button>
+        </div>
+      </div>
+      <button class="btn" id="gir" type="submit">Giriş Yap</button>
+      <div class="hata" id="hata"></div>
+      <div class="dip"><a href="index.html">← olivamore.de</a></div>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  // Geçerli oturum varsa doğrudan panele geç
+  var jeton = localStorage.getItem('om-admin-jeton');
+  if (jeton) {
+    fetch('/api/admin/ozet', { headers: { 'Authorization': 'Bearer ' + jeton } })
+      .then(function (r) { if (r.ok) location.href = 'panel.html'; });
+  }
+  document.getElementById('goster').addEventListener('click', function () {
+    var s = document.getElementById('sifre');
+    s.type = s.type === 'password' ? 'text' : 'password';
+    this.textContent = s.type === 'password' ? 'GÖSTER' : 'GİZLE';
+  });
+  document.getElementById('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('gir');
+    var hata = document.getElementById('hata');
+    hata.classList.remove('on');
+    btn.disabled = true; btn.textContent = 'Giriş yapılıyor…';
+    fetch('/api/admin/giris', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kullanici: document.getElementById('kullanici').value.trim(), sifre: document.getElementById('sifre').value })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (c.token) { localStorage.setItem('om-admin-jeton', c.token); location.href = 'panel.html'; return; }
+        hata.textContent = c.hata || 'Giriş başarısız.';
+        hata.classList.add('on');
+        btn.disabled = false; btn.textContent = 'Giriş Yap';
+      })
+      .catch(function () {
+        hata.textContent = 'Sunucuya ulaşılamadı; biraz sonra tekrar dene.';
+        hata.classList.add('on');
+        btn.disabled = false; btn.textContent = 'Giriş Yap';
+      });
+  });
+})();
+</script>
+</body>
+</html>

@@ -161,6 +161,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
       <div class="actions">
         <a class="btn btn-ghost" href="index.html" target="_blank">Siteyi Görüntüle ↗</a>
         <button class="btn btn-danger btn-sm" id="btn-reset">Varsayılanlara Dön</button>
+        <button class="btn btn-ghost btn-sm" id="btn-cikis" type="button" title="Oturumu kapat">Çıkış</button>
       </div>
     </div>
 
@@ -703,6 +704,31 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
   function dirty() { status.textContent = 'Kaydedilmemiş değişiklikler var'; status.classList.remove('ok'); }
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
+  /* ================== OTURUM: /api çağrılarına jeton ekle; 401'de giriş sayfasına ================== */
+  (function () {
+    var esasFetch = window.fetch.bind(window);
+    window.fetch = function (url, sec) {
+      var jeton = localStorage.getItem('om-admin-jeton');
+      if (jeton && typeof url === 'string' && url.indexOf('/api/') === 0) {
+        sec = sec || {};
+        sec.headers = Object.assign({}, sec.headers || {}, { 'Authorization': 'Bearer ' + jeton });
+      }
+      return esasFetch(url, sec).then(function (r) {
+        if (r.status === 401 && typeof url === 'string' && url.indexOf('/api/admin/') === 0) {
+          localStorage.removeItem('om-admin-jeton');
+          location.href = 'panel-giris.html';
+        }
+        return r;
+      });
+    };
+  })();
+  document.getElementById('btn-cikis').addEventListener('click', function () {
+    var jeton = localStorage.getItem('om-admin-jeton');
+    fetch('/api/admin/cikis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: jeton }) })
+      .catch(function () {})
+      .then(function () { localStorage.removeItem('om-admin-jeton'); location.href = 'panel-giris.html'; });
+  });
+
   var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', invoices: 'Fatura', analytics: 'Analiz', marketing: 'Pazarlama', channels: 'Satış Kanalları', members: 'Üyeler', subs: 'Abonelikler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
@@ -1422,7 +1448,7 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
         .then(function (r) { return r.json(); })
         .then(function (c) {
           if (c.hata) { alert(c.hata); renderOrders(); return; }
-          if (c.etiket) window.open('/api/admin/etiket?no=' + encodeURIComponent(no), '_blank');
+          if (c.etiket) window.open('/api/admin/etiket?no=' + encodeURIComponent(no) + (localStorage.getItem('om-admin-jeton') ? '&jeton=' + localStorage.getItem('om-admin-jeton') : ''), '_blank');
           renderOrders();
         })
         .catch(function () { alert('Sunucuya ulaşılamadı.'); renderOrders(); });
