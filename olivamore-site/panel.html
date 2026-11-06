@@ -2420,6 +2420,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
   function urunSecici(secili) {
     var urunler = (C.products || []).filter(function (p) { return p.type === 'product' || !p.type; });
+    // Sırada stok kodu (152.x) kayıtlıysa o koda sahip görünür ürünü seçili göster
+    if (secili && !urunler.some(function (p) { return p.id === secili && p.visible !== false; })) {
+      var es = urunler.find(function (p) { return p.stokKodu === secili && p.visible !== false; });
+      if (es) secili = es.id;
+    }
     return '<select class="sr-urun"><option value="">— boş —</option>' + urunler.map(function (p) {
       var etiket = (p.nameTR || p.id) + (p.unitTR ? ' ' + p.unitTR.replace(/^\/\s*/, '') : '') + ' · ₺' + (p.price || 0) + (p.visible === false ? ' (gizli)' : '');
       return '<option value="' + esc(p.id) + '"' + (p.id === secili ? ' selected' : '') + '>' + esc(etiket) + '</option>';
