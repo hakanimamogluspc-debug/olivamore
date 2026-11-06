@@ -139,48 +139,72 @@ function httpsIstek(secenek, govdeStr) {
   });
 }
 /* Yurtiçi SOAP zarfı */
-function yurticiSoap(metod, icerik) {
+function yurticiSoap(metod, icerik, dilAlani) {
   const env = oku('env.json', {});
+  // queryShipment dil alanını "wsLanguage" adıyla bekler; diğer metotlar "userLanguage" (YK Teknik Döküman V3)
+  const dil = dilAlani || 'userLanguage';
   const xml = '<?xml version="1.0" encoding="UTF-8"?>' +
     '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ship="http://yurticikargo.com.tr/ShippingOrderDispatcherServices">' +
     '<soapenv:Header/><soapenv:Body><ship:' + metod + '>' +
     '<wsUserName>' + xmlKacir(env.yurticiWsUser) + '</wsUserName>' +
     '<wsPassword>' + xmlKacir(env.yurticiWsSifre) + '</wsPassword>' +
-    '<userLanguage>TR</userLanguage>' + icerik +
+    '<' + dil + '>TR</' + dil + '>' + icerik +
     '</ship:' + metod + '></soapenv:Body></soapenv:Envelope>';
   return httpsIstek({
-    hostname: 'webservices.yurticikargo.com', path: '/KOPSWebServices/ShippingOrderDispatcherServices',
+    // env.yurticiTest=true → YK test ortamı (ilk doğrulama testleri orada yapılır)
+    hostname: env.yurticiTest ? 'testwebservices.yurticikargo.com' : 'webservices.yurticikargo.com',
+    path: '/KOPSWebServices/ShippingOrderDispatcherServices',
     method: 'POST',
     headers: { 'Content-Type': 'text/xml; charset=utf-8', 'SOAPAction': '', 'Content-Length': Buffer.byteLength(xml) }
   }, xml);
 }
+// YK kuralı: telefon "alan koduyla 10 rakam" (başındaki 0/90 atılır)
+function ykTelefon(t) {
+  const r = String(t || '').replace(/\D/g, '');
+  if (r.length >= 10) return r.slice(-10);
+  return r;
+}
 async function yurticiGonderiOlustur(s) {
   const m = s.musteri;
+  // YK kuralı: il/ilçe cityName-townName'de gönderiliyorsa adrese tekrar yazılmaz (min 10 karakter)
+  let adres = String(m.adres || '').trim();
+  if (adres.length < 10) adres = (adres + ' ' + (m.ilce || '') + ' ' + (m.il || '')).trim();
   const icerik = '<ShippingOrderVO>' +
     '<cargoKey>' + xmlKacir(s.no) + '</cargoKey>' +
     '<invoiceKey>' + xmlKacir(s.no) + '</invoiceKey>' +
     '<receiverCustName>' + xmlKacir(m.ad) + '</receiverCustName>' +
-    '<receiverAddress>' + xmlKacir(m.adres + (m.ilce ? ' ' + m.ilce : '') + (m.il ? ' / ' + m.il : '')) + '</receiverAddress>' +
-    '<receiverPhone1>' + xmlKacir(m.telefon) + '</receiverPhone1>' +
+    '<receiverAddress>' + xmlKacir(adres) + '</receiverAddress>' +
+    '<receiverPhone1>' + xmlKacir(ykTelefon(m.telefon)) + '</receiverPhone1>' +
     (m.il ? '<cityName>' + xmlKacir(m.il) + '</cityName>' : '') +
     (m.ilce ? '<townName>' + xmlKacir(m.ilce) + '</townName>' : '') +
-    '<emailAddress>' + xmlKacir(m.eposta) + '</emailAddress>' +
+    '<cargoCount>1</cargoCount>' +
+    '<description>Olivamore siparişi ' + xmlKacir(s.no) + '</description>' +
+    (m.eposta ? '<emailAddress>' + xmlKacir(m.eposta) + '</emailAddress>' : '') +
     '</ShippingOrderVO>';
   const y = await yurticiSoap('createShipment', icerik);
   const hataVar = /<outFlag>\s*[^0]/.test(y.govde) || y.kod >= 400;
   if (hataVar) {
-    const msj = (y.govde.match(/<outResult>([^<]*)<\/outResult>/) || [])[1] || 'Yurtiçi servisi hata döndü.';
+    const msj = (y.govde.match(/<outResult>([^<]*)<\/outResult>/) || [])[1] ||
+      (y.govde.match(/<errMessage>([^<]*)<\/errMessage>/) || [])[1] || 'Yurtiçi servisi hata döndü.';
     return { hata: msj };
   }
   // Yurtiçi'nde takip, gönderi anahtarı (sipariş no) ile yapılır
   return { kargoNo: s.no };
 }
 async function yurticiDurumSorgula(s) {
-  // queryShipment: keyType 0 = cargoKey
+  // queryShipment: keyType 0 = cargoKey; dil alanı wsLanguage
   const icerik = '<keys>' + xmlKacir(s.kargoNo || s.no) + '</keys><keyType>0</keyType><addHistoricalData>false</addHistoricalData><onlyTracking>false</onlyTracking>';
-  const y = await yurticiSoap('queryShipment', icerik);
-  if (/TESLIM|DELIVERED|<operationCode>\s*5\s*</i.test(y.govde)) return 'teslim';
+  const y = await yurticiSoap('queryShipment', icerik, 'wsLanguage');
+  // DLV = Kargo Teslim Edilmiştir (YK operationStatus tablosu)
+  if (/<operationStatus>\s*DLV\s*</i.test(y.govde) || /TESLİM ED|TESLIM ED/i.test(y.govde)) return 'teslim';
   return '';
+}
+async function yurticiGonderiIptal(s) {
+  const icerik = '<cargoKeys>' + xmlKacir(s.kargoNo || s.no) + '</cargoKeys>';
+  const y = await yurticiSoap('cancelShipment', icerik);
+  if (/<outFlag>\s*0\s*</.test(y.govde) || /<operationStatus>\s*CNL\s*</i.test(y.govde)) return { tamam: true };
+  const msj = (y.govde.match(/<outResult>([^<]*)<\/outResult>/) || [])[1] || 'İptal edilemedi (gönderi düzenlenmiş olabilir).';
+  return { hata: msj };
 }
 /* DHL MyDHL API */
 function dhlSecenek(pathUri, metod, govdeStr) {
@@ -1573,6 +1597,17 @@ const sunucu = http.createServer(async (req, res) => {
           s.fatura = { durum: 'hata', kaynak: 'parasut', hata: e.message, tarih: new Date().toISOString() };
           s.gecmis = s.gecmis || [];
           s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Paraşüt fatura hatası: ' + e.message });
+        }
+      }
+      // Sipariş iptalinde Yurtiçi'ye bildirilmiş gönderi varsa kargo da iptal edilir
+      if (s.durum === 'iptal' && eskiDurum !== 'iptal' && s.kargoFirma === 'Yurtiçi' && s.kargoNo && kargoAktif().yurtici) {
+        try {
+          const ki = await yurticiGonderiIptal(s);
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: ki.tamam ? 'Yurtiçi gönderisi iptal edildi' : ('Yurtiçi iptal UYARI: ' + ki.hata) });
+        } catch (e) {
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Yurtiçi iptal hatası: ' + e.message });
         }
       }
       // İptal/iade → stok geri eklenir
