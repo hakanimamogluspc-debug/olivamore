@@ -705,6 +705,8 @@ textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 
   /* ================== GÖRÜNÜM GEÇİŞİ ================== */
   /* ================== OTURUM: /api çağrılarına jeton ekle; 401'de giriş sayfasına ================== */
+  // Jeton hiç yoksa panel iskeletini göstermeden doğrudan giriş sayfasına geç
+  if (!localStorage.getItem('om-admin-jeton')) location.replace('panel-giris.html');
   (function () {
     var esasFetch = window.fetch.bind(window);
     window.fetch = function (url, sec) {
