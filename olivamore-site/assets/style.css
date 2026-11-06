@@ -2110,6 +2110,22 @@ footer.site{background:#1B1A18}
 .fig-dogal p{font-family:'Poppins',sans-serif;font-size:clamp(.9rem,1.3vw,1.12rem);line-height:1.7;color:#4D5358;letter-spacing:.05em;max-width:1060px;margin:0 auto 40px}
 .fig-dogal .fd-amblem{height:92px;width:auto}
 
+/* Kategori kartları (poster dili: krem doku + gold kurdele + serif başlık) */
+.fig-kategori{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;max-width:1426px;margin:0 auto;padding:56px 15px}
+.fk-kat{position:relative;display:block;height:470px;overflow:hidden;background:#F5F1EA;text-decoration:none;box-shadow:0 14px 34px rgba(30,28,25,.14);transition:transform .25s ease,box-shadow .25s ease}
+.fk-kat:hover{transform:translateY(-6px);box-shadow:0 22px 48px rgba(30,28,25,.2)}
+.fk-foto,.fk-doku{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.fk-kat:hover .fk-foto{transform:scale(1.05)}
+.fk-cift{position:absolute;left:8%;right:8%;top:14%;bottom:26%;display:flex;align-items:center;justify-content:center;gap:4%}
+.fk-cift img{max-width:48%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 14px 18px rgba(30,28,25,.25))}
+.fk-serit{position:absolute;top:22px;left:-6px;background:#BFA25D;color:#fff;font-family:'Poppins',sans-serif;font-weight:600;font-size:.64rem;letter-spacing:.26em;text-transform:uppercase;padding:8px 20px 8px 24px;clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,0 100%);box-shadow:0 4px 10px rgba(30,28,25,.25)}
+.fk-altyazi{position:absolute;left:0;right:0;bottom:0;padding:84px 24px 24px;background:linear-gradient(transparent,rgba(20,18,14,.74));display:flex;flex-direction:column}
+.fk-altyazi b{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;line-height:1.1;color:#fff}
+.fk-altyazi i{font-style:normal;font-family:'Poppins',sans-serif;font-weight:300;font-size:.76rem;letter-spacing:.18em;text-transform:uppercase;color:#E8D9AE;margin-top:8px;transition:letter-spacing .25s}
+.fk-kat:hover .fk-altyazi i{letter-spacing:.26em}
+@media(max-width:1000px){.fig-kategori{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.fig-kategori{grid-template-columns:1fr}.fk-kat{height:400px}}
+
 /* Kampanya 4'lü görsel şerit */
 .fig-kampanya{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;max-width:1426px;margin:0 auto;padding:56px 15px}
 .fig-kampanya a{display:block}
