@@ -2292,3 +2292,10 @@ body[data-page="home"] section .zsus{position:absolute}
 .fig-magaza .zsus.sag-alt{right:-20px;bottom:120px}
 .fig-magaza .zsus.fm-orta{left:22%;bottom:34px;--zd:62deg}
 @media(max-width:860px){.fig-magaza .zsus.fm-orta{display:none}}
+
+/* Kart sıralarının arkasında, yanlarda yapraklar */
+.fig-magaza .zsus.fm-s1{right:-18px;top:9%;--zd:-32deg}
+.fig-magaza .zsus.fm-s2{left:-34px;top:27%;--zd:28deg}
+.fig-magaza .zsus.fm-s3{right:-10px;top:50%;--zd:70deg}
+.fig-magaza .zsus.fm-s4{left:-16px;top:68%;--zd:-48deg}
+@media(max-width:860px){.fig-magaza .zsus.fm-s3,.fig-magaza .zsus.fm-s4{display:none}}
