@@ -952,6 +952,89 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, { tamam: true });
     }
 
+    /* ---- abonelik başlat: ilk teslimat ödemesiyle anında aktifleşir ---- */
+    if (req.method === 'POST' && yol === '/api/abonelik-baslat') {
+      const g = await govde(req, 1);
+      const cfg = oku('cms.json', {});
+      const ad = temiz(g.ad, 80), eposta = temiz(g.eposta, 120).toLowerCase();
+      const telefon = temiz(g.telefon, 40), adres = temiz(g.adres, 1000), il = temiz(g.il, 60);
+      if (!ad || !epostaMi(eposta) || !telefon || !adres) {
+        return json(res, 400, { hata: 'Ad, e-posta, telefon ve teslimat adresi zorunlu.' });
+      }
+      const istekler = (Array.isArray(g.kalemler) ? g.kalemler.slice(0, 10) : [])
+        .map(k => ({ pid: temiz(k.pid, 40), adet: Math.max(1, Math.min(20, parseInt(k.adet, 10) || 1)) }))
+        .filter(k => k.pid);
+      if (!istekler.length) return json(res, 400, { hata: 'En az bir ürün seç.' });
+      // Fiyatlar sunucudan (cms) çözülür — istemciden fiyat kabul edilmez
+      const kalemler = [];
+      for (const k of istekler) {
+        const p = (cfg.products || []).find(x => x.id === k.pid);
+        if (!p || !(Number(p.price) > 0)) return json(res, 400, { hata: 'Ürün bulunamadı: ' + k.pid });
+        const birim = String(p.unitTR || '').replace(/^\//, '').trim();
+        kalemler.push({ ad: p.nameTR + (birim ? ' · ' + birim : ''), pid: p.id, adet: k.adet, fiyat: Number(p.price), kdv: typeof p.kdv === 'number' ? p.kdv : 1, img: p.img || '' });
+      }
+      const periyotGun = Math.max(7, Math.min(120, parseInt(g.periyotGun, 10) || 30));
+      const ozet = kalemler.map(k => k.adet + ' × ' + k.ad).join(', ');
+      const abonelikler = oku('abonelikler.json', []);
+      const ab = {
+        id: 'AB-' + Date.now().toString(36).toUpperCase(),
+        eposta: eposta, ad: ad,
+        kalemler: kalemler.map(k => ({ urun: k.ad, pid: k.pid, adet: k.adet })),
+        urun: ozet.slice(0, 300), pid: kalemler[0].pid, adet: 1,
+        telefon: telefon, adres: adres, il: il, not: temiz(g.not, 500),
+        periyotGun: periyotGun, sonrakiTarih: '', durum: 'odeme-bekliyor',
+        olusturma: new Date().toISOString()
+      };
+      // iyzico kapalıysa talep akışına düş (site çalışmaya devam etsin)
+      if (!iyzicoAktif()) {
+        ab.durum = 'talep';
+        abonelikler.push(ab);
+        yaz('abonelikler.json', abonelikler.slice(0, 5000));
+        epostaBildir('Yeni abonelik talebi (ödeme kapalı): ' + ozet.slice(0, 80), ad + ' <' + eposta + '>\n' + ozet + ' · her ' + periyotGun + ' günde\nTel: ' + telefon + '\nAdres: ' + adres + ' / ' + il);
+        epostaGonder(eposta, 'Abonelik talebin bize ulaştı · Olivamore',
+          'Merhaba ' + ad + ',\n\n' + ozet + ' için her ' + periyotGun + ' günde bir teslimat talebini aldık. En geç bir iş günü içinde ödeme bilgisiyle birlikte dönüş yapacağız.\n\nAfiyet olsun,\nOlivamore');
+        return json(res, 200, { tamam: true, talep: true });
+      }
+      // Stok düş + ilk sipariş + ödeme sayfası
+      const stokSonuc = stokDus(kalemler);
+      if (stokSonuc.hata) return json(res, 400, { hata: stokSonuc.hata });
+      const toplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0) * 100) / 100;
+      const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * (k.kdv / (100 + k.kdv)), 0) * 100) / 100;
+      const no = 'AB' + Date.now().toString().slice(-8);
+      const siparisler = oku('siparisler.json', []);
+      const siparis = {
+        no: no, tarih: new Date().toISOString(),
+        durum: 'odeme-bekliyor', odeme: 'kart', abonelikId: ab.id, dil: g.dil === 'en' ? 'en' : 'tr',
+        musteri: { ad: ad, eposta: eposta, telefon: telefon, adres: adres, il: il, not: ab.not },
+        kalemler: kalemler.map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, kdv: k.kdv, img: k.img })),
+        araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: kdvToplam, toplam: toplam,
+        gecmis: [{ tarih: new Date().toISOString(), islem: 'abonelik ilk siparişi (' + ab.id + ') — ödeme bekleniyor' }]
+      };
+      try {
+        const parcalar = ad.split(/\s+/);
+        const soyad = parcalar.length > 1 ? parcalar.pop() : '-';
+        const y = await iyziIstek('/payment/iyzipos/checkoutform/initialize/auth/ecom', {
+          locale: siparis.dil, conversationId: no, basketId: no,
+          price: String(toplam), paidPrice: String(toplam), currency: 'TRY', paymentGroup: 'PRODUCT',
+          callbackUrl: 'https://olivamore.de/api/odeme-sonuc',
+          buyer: { id: no, name: parcalar.join(' ') || soyad, surname: soyad, gsmNumber: telefon, email: eposta, identityNumber: '11111111111', registrationAddress: adres, ip: req.headers['x-real-ip'] || '0.0.0.0', city: il || 'Istanbul', country: 'Turkey' },
+          shippingAddress: { contactName: ad, city: il || 'Istanbul', country: 'Turkey', address: adres },
+          billingAddress: { contactName: ad, city: il || 'Istanbul', country: 'Turkey', address: adres },
+          basketItems: [{ id: no, name: 'Olivamore Abonelik ' + no, category1: 'Gıda', itemType: 'PHYSICAL', price: String(toplam) }]
+        });
+        if (y && y.status === 'success' && y.paymentPageUrl) {
+          abonelikler.push(ab);
+          yaz('abonelikler.json', abonelikler.slice(0, 5000));
+          siparisler.unshift(siparis);
+          yaz('siparisler.json', siparisler.slice(0, 5000));
+          return json(res, 200, { tamam: true, odemeUrl: y.paymentPageUrl, toplam: toplam });
+        }
+        console.error('[abonelik-iyzico]', y && y.errorMessage);
+      } catch (e) { console.error('[abonelik-iyzico]', e.message); }
+      stokGeriEkle(siparis);
+      return json(res, 502, { hata: 'Ödeme sayfası açılamadı; lütfen biraz sonra tekrar dene.' });
+    }
+
     /* ---- abonelik talebi (site formu; panelden onaylanınca aktifleşir) ---- */
     if (req.method === 'POST' && yol === '/api/abonelik-talep') {
       const g = await govde(req, 1);
@@ -1325,6 +1408,18 @@ const sunucu = http.createServer(async (req, res) => {
           s.durum = 'yeni'; s.odendi = true; s.odemeId = d.paymentId || '';
           s.gecmis = s.gecmis || [];
           s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'kart ödemesi alındı' + (d.paymentId ? ' (' + d.paymentId + ')' : '') });
+          // Abonelik ilk ödemesi → abonelik aktifleşir, sonraki vade kurulur
+          if (s.abonelikId) {
+            const abListe = oku('abonelikler.json', []);
+            const ab = abListe.find(a => a.id === s.abonelikId);
+            if (ab && ab.durum !== 'aktif') {
+              ab.durum = 'aktif';
+              ab.sonrakiTarih = new Date(Date.now() + (ab.periyotGun || 30) * 86400000).toISOString().slice(0, 10);
+              ab.sonSiparis = s.no;
+              yaz('abonelikler.json', abListe);
+              epostaBildir('Abonelik AKTİFLEŞTİ: ' + ab.id, ab.eposta + ' · ' + ab.urun + '\nSonraki teslim: ' + ab.sonrakiTarih);
+            }
+          }
           yaz('siparisler.json', liste);
           epostaBildir('Yeni sipariş ' + s.no + ' · ₺' + s.toplam.toLocaleString('tr-TR') + ' (KART İLE ÖDENDİ)',
             s.kalemler.map(k => k.adet + ' × ' + k.ad).join('\n') +
@@ -1332,10 +1427,12 @@ const sunucu = http.createServer(async (req, res) => {
           epostaGonder(s.musteri.eposta, 'Siparişin alındı · ' + s.no,
             'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişin ödemesi alındı (₺' + s.toplam.toLocaleString('tr-TR') + '). Hazırlanıp kargoya verildiğinde tekrar haber vereceğiz.\n\nAfiyet olsun,\nOlivamore');
         }
-        return yonlendir(sepetYolu + '#odeme-ok-' + s.no);
+        const okHedef = s.abonelikId ? (s.dil === 'en' ? '/abonelik-en' : '/abonelik') : sepetYolu;
+        return yonlendir(okHedef + '#odeme-ok-' + s.no);
       }
       if (s && s.durum === 'odeme-bekliyor') { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', liste); }
-      return yonlendir(sepetYolu + '#odeme-hata');
+      const hataHedef = s && s.abonelikId ? (s.dil === 'en' ? '/abonelik-en' : '/abonelik') : sepetYolu;
+      return yonlendir(hataHedef + '#odeme-hata');
     }
 
     /* ---- yönetici (nginx basic auth arkasında) ---- */

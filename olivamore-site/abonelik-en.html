@@ -33,6 +33,8 @@
 .ab-gonder{width:100%;margin-top:6px;background:#BFA25D;border:2px solid #BFA25D;color:#fff;padding:13px;font-family:'Poppins',sans-serif;font-size:1rem;letter-spacing:.5px;cursor:pointer;transition:.2s}
 .ab-gonder:hover{background:#a98e4e}
 .ab-gonder:disabled{opacity:.6;cursor:wait}
+.ab-toplam{margin:4px 0 12px;padding:12px 16px;border:1px solid #D8C69C;background:#FBF8F1;font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:#1D1F1C;display:flex;justify-content:space-between;align-items:baseline}
+.ab-toplam small{font-family:'Poppins',sans-serif;font-weight:300;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#8a6f3c}
 .ab-mesaj{display:none;margin-top:16px;padding:13px 16px;font-family:'Poppins',sans-serif;font-size:.85rem;line-height:1.6}
 .ab-mesaj.ok{display:block;border:1px solid #9CBF8E;background:#F2F8EF;color:#2e5d26}
 .ab-mesaj.hata{display:block;border:1px solid #D99;background:#FBF0EF;color:#8f2f24}
@@ -64,7 +66,7 @@
 
   <form class="ab-form" id="ab-form">
     <h2>Start your subscription</h2>
-    <div class="alt">Leave your request; we confirm within one business day and email your first delivery date.</div>
+    <div class="alt">Pick your products and pay for the first delivery — your subscription starts instantly. Shipping is on us for subscription deliveries.</div>
     <div class="ab-grid">
       <div class="ab-alan"><label for="abf-ad">Full name *</label><input id="abf-ad" type="text" required autocomplete="name"></div>
       <div class="ab-alan"><label for="abf-eposta">Email *</label><input id="abf-eposta" type="email" required autocomplete="email"></div>
@@ -107,14 +109,15 @@
           <option value="60">Every 2 months</option>
         </select>
       </div>
-      <div class="ab-alan"><label for="abf-telefon">Phone</label><input id="abf-telefon" type="tel" autocomplete="tel"></div>
+      <div class="ab-alan"><label for="abf-telefon">Phone *</label><input id="abf-telefon" type="tel" autocomplete="tel" required></div>
     </div>
-    <div class="ab-alan"><label for="abf-adres">Delivery address</label><input id="abf-adres" type="text" autocomplete="street-address" placeholder="Street, no, district"></div>
+    <div class="ab-alan"><label for="abf-adres">Delivery address *</label><input id="abf-adres" type="text" autocomplete="street-address" placeholder="Street, no, district" required></div>
     <div class="ab-grid">
-      <div class="ab-alan"><label for="abf-il">City</label><input id="abf-il" type="text" autocomplete="address-level1"></div>
+      <div class="ab-alan"><label for="abf-il">City *</label><input id="abf-il" type="text" autocomplete="address-level1" required></div>
       <div class="ab-alan"><label for="abf-not">Note (optional)</label><input id="abf-not" type="text" maxlength="200"></div>
     </div>
-    <button class="ab-gonder" id="abf-gonder" type="submit">Send Subscription Request</button>
+    <div class="ab-toplam" id="abf-toplam" style="display:none;"></div>
+    <button class="ab-gonder" id="abf-gonder" type="submit">Proceed to Payment</button>
     <div class="ab-mesaj" id="abf-mesaj"></div>
   </form>
 
@@ -146,38 +149,81 @@ document.getElementById('ab-form').addEventListener('submit', function (e) {
     return { urun: sec.value !== '' || sec.selectedIndex > 0 ? o.text : '', pid: o && o.dataset ? (o.dataset.pid || '') : '', adet: sat.querySelector('.abk-adet').value };
   }).filter(function (k) { return k.urun && k.urun.indexOf('...') === -1; });
   if (!kalemler.length) { mesaj.textContent = 'Select at least one product.'; mesaj.className = 'ab-mesaj hata'; return; }
-  btn.disabled = true; btn.textContent = 'Sending…';
-  fetch('/api/abonelik-talep', {
+  btn.disabled = true; btn.textContent = 'Opening payment page…';
+  fetch('/api/abonelik-baslat', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ad: document.getElementById('abf-ad').value.trim(),
       eposta: document.getElementById('abf-eposta').value.trim(),
-      kalemler: kalemler,
-      periyotGun: document.getElementById('abf-periyot').value,
       telefon: document.getElementById('abf-telefon').value.trim(),
       adres: document.getElementById('abf-adres').value.trim(),
       il: document.getElementById('abf-il').value.trim(),
-      not: document.getElementById('abf-not').value.trim()
+      not: document.getElementById('abf-not').value.trim(),
+      periyotGun: document.getElementById('abf-periyot').value,
+      kalemler: kalemler,
+      dil: 'en'
     })
   })
     .then(function (r) { return r.json(); })
     .then(function (c) {
-      btn.disabled = false; btn.textContent = 'Send Subscription Request';
-      if (c.tamam) {
-        mesaj.textContent = 'Request received ✓ Confirmation and your first delivery date will arrive by email.';
+      if (c.odemeUrl) { btn.textContent = 'Opening payment page…'; location.href = c.odemeUrl; return; }
+      btn.disabled = false; btn.textContent = 'Proceed to Payment';
+      if (c.tamam && c.talep) {
+        mesaj.textContent = 'Request received ✓ Online payment is currently unavailable; we will get back to you within one business day.';
         mesaj.className = 'ab-mesaj ok';
         document.getElementById('ab-form').reset();
+        abfKalemler.innerHTML = ''; abfSatirEkle(); toplamYenile();
       } else {
-        mesaj.textContent = c.hata || 'Could not send; please try again.';
+        mesaj.textContent = c.hata || 'Islem tamamlanamadi; lutfen tekrar dene.';
         mesaj.className = 'ab-mesaj hata';
       }
     })
     .catch(function () {
-      btn.disabled = false; btn.textContent = 'Send Subscription Request';
-      mesaj.textContent = 'We could not reach the server; please try again shortly.';
+      btn.disabled = false; btn.textContent = 'Proceed to Payment';
+      mesaj.textContent = 'Sunucuya ulasilamadi; biraz sonra tekrar dene.';
       mesaj.className = 'ab-mesaj hata';
     });
 });
+
+/* Canli toplam (fiyatlar sunucudan) */
+var FIYAT = {};
+fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
+  (cfg.products || []).forEach(function (p) { if (p.id && Number(p.price) > 0) FIYAT[p.id] = Number(p.price); });
+  toplamYenile();
+}).catch(function () {});
+function toplamYenile() {
+  var t = 0, eksik = false;
+  abfKalemler.querySelectorAll('.ab-kalem').forEach(function (sat) {
+    var sec = sat.querySelector('.abk-urun');
+    var o = sec.options[sec.selectedIndex];
+    var pid = o && o.dataset ? o.dataset.pid : '';
+    var adet = parseInt(sat.querySelector('.abk-adet').value, 10) || 1;
+    if (pid && FIYAT[pid]) t += FIYAT[pid] * adet; else if (pid) eksik = true;
+  });
+  var kutu = document.getElementById('abf-toplam');
+  if (t > 0 && !eksik) {
+    kutu.style.display = 'flex';
+    kutu.innerHTML = '<span>First delivery total: \u20BA' + t.toLocaleString('tr-TR') + '</span><small>Free shipping</small>';
+  } else { kutu.style.display = 'none'; }
+}
+abfKalemler.addEventListener('change', toplamYenile);
+abfKalemler.addEventListener('input', toplamYenile);
+abfKalemler.addEventListener('click', function () { setTimeout(toplamYenile, 0); });
+document.getElementById('abf-ekle').addEventListener('click', function () { setTimeout(toplamYenile, 0); });
+
+/* Odeme donusu */
+(function () {
+  var mesaj = document.getElementById('abf-mesaj');
+  if (location.hash.indexOf('#odeme-ok') === 0) {
+    mesaj.textContent = 'Payment received, your subscription is active ✓ Order confirmation and your next delivery date will arrive by email.';
+    mesaj.className = 'ab-mesaj ok';
+    mesaj.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else if (location.hash === '#odeme-hata') {
+    mesaj.textContent = 'Payment could not be completed. If your card was not charged, feel free to try again.';
+    mesaj.className = 'ab-mesaj hata';
+    mesaj.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+})();
 </script>
 </body>
 </html>
