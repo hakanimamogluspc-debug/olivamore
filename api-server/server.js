@@ -774,21 +774,27 @@ async function parasutFaturaKes(s) {
   const firma = env.parasutFirmaId;
   const token = await parasutTokenAl();
   const eposta = (s.musteri && s.musteri.eposta || '').toLowerCase();
-  // 1) Müşteri kartı: e-postayla bul, yoksa oluştur
+  const kurumsal = s.faturaBilgi && s.faturaBilgi.tip === 'kurumsal' && s.faturaBilgi.vkn;
+  // 1) Müşteri kartı: kurumsalda VKN ile, bireyselde e-postayla bul; yoksa oluştur
   let kisiId = null;
-  if (eposta) {
+  if (kurumsal) {
+    const bulunan = await parasutHttp('GET', '/v4/' + firma + '/contacts?filter[tax_number]=' + encodeURIComponent(s.faturaBilgi.vkn), null, token);
+    if (bulunan.data && bulunan.data.length) kisiId = bulunan.data[0].id;
+  } else if (eposta) {
     const bulunan = await parasutHttp('GET', '/v4/' + firma + '/contacts?filter[email]=' + encodeURIComponent(eposta), null, token);
     if (bulunan.data && bulunan.data.length) kisiId = bulunan.data[0].id;
   }
   if (!kisiId) {
     const yeni = await parasutHttp('POST', '/v4/' + firma + '/contacts', {
       data: { type: 'contacts', attributes: {
-        name: (s.musteri && s.musteri.ad) || 'Müşteri',
+        name: kurumsal ? s.faturaBilgi.unvan : ((s.musteri && s.musteri.ad) || 'Müşteri'),
         email: eposta || undefined,
-        contact_type: 'person',
+        contact_type: kurumsal ? 'company' : 'person',
         account_type: 'customer',
-        address: (s.teslimat && s.teslimat.adres) || undefined,
-        city: (s.teslimat && s.teslimat.il) || undefined
+        tax_number: kurumsal ? s.faturaBilgi.vkn : undefined,
+        tax_office: kurumsal ? s.faturaBilgi.vergiDairesi : undefined,
+        address: (s.musteri && s.musteri.adres) || undefined,
+        city: (s.musteri && s.musteri.il) || undefined
       } }
     }, token);
     kisiId = yeni.data && yeni.data.id;
@@ -826,28 +832,51 @@ async function parasutFaturaKes(s) {
   }, token);
   const fatId = fat.data && fat.data.id;
   if (!fatId) throw new Error('Paraşüt faturası oluşturulamadı');
-  // 3) e-Arşiv resmileştirme (asenkron iş kuyruğuna girer)
-  let eArsivIs = '';
+  // TEST MODU: env.parasutTaslak=true → resmileştirme yapılmaz, Paraşüt'te taslak kalır (silinebilir)
+  if (env.parasutTaslak) {
+    s.fatura = { durum: 'kesildi', kaynak: 'parasut', belge: 'taslak (test)', parasutId: fatId, no: 'TASLAK-' + fatId, tarih: new Date().toISOString() };
+    return s.fatura;
+  }
+  // 3) Resmileştirme: kurumsal alıcı e-Fatura mükellefiyse e-Fatura, değilse e-Arşiv
+  let belgeTip = 'e-Arşiv', eIs = '';
   try {
-    const ea = await parasutHttp('POST', '/v4/' + firma + '/e_archives', {
-      data: { type: 'e_archives', attributes: {
-        internet_sale: {
-          url: 'https://olivamore.de',
-          payment_type: s.odeme === 'kart' ? 'KREDIKARTI/BANKAKARTI' : 'EFT/HAVALE',
-          payment_platform: 'olivamore.de',
-          payment_date: new Date().toISOString().slice(0, 10)
-        }
-      }, relationships: { sales_invoice: { data: { id: fatId, type: 'sales_invoices' } } } }
-    }, token);
-    eArsivIs = (ea.data && ea.data.id) || '';
+    let gelenKutusu = null;
+    if (kurumsal) {
+      try {
+        const kutular = await parasutHttp('GET', '/v4/' + firma + '/e_invoice_inboxes?filter[vkn]=' + encodeURIComponent(s.faturaBilgi.vkn), null, token);
+        if (kutular.data && kutular.data.length) gelenKutusu = kutular.data[0];
+      } catch (e2) { /* sorgu başarısızsa e-Arşiv'e düşülür */ }
+    }
+    if (gelenKutusu) {
+      belgeTip = 'e-Fatura';
+      const ef = await parasutHttp('POST', '/v4/' + firma + '/e_invoices', {
+        data: { type: 'e_invoices', attributes: {
+          scenario: 'basic',
+          to: (gelenKutusu.attributes && (gelenKutusu.attributes.e_invoice_address || gelenKutusu.attributes.address)) || undefined
+        }, relationships: { invoice: { data: { id: fatId, type: 'sales_invoices' } } } }
+      }, token);
+      eIs = (ef.data && ef.data.id) || '';
+    } else {
+      const ea = await parasutHttp('POST', '/v4/' + firma + '/e_archives', {
+        data: { type: 'e_archives', attributes: {
+          internet_sale: {
+            url: 'https://olivamore.de',
+            payment_type: s.odeme === 'kart' ? 'KREDIKARTI/BANKAKARTI' : 'EFT/HAVALE',
+            payment_platform: 'olivamore.de',
+            payment_date: new Date().toISOString().slice(0, 10)
+          }
+        }, relationships: { sales_invoice: { data: { id: fatId, type: 'sales_invoices' } } } }
+      }, token);
+      eIs = (ea.data && ea.data.id) || '';
+    }
   } catch (e) {
-    // e-Arşiv gönderimi başarısızsa fatura taslak kalır; panelden tekrar denenebilir
-    s.fatura = { durum: 'hata', kaynak: 'parasut', parasutId: fatId, hata: 'Fatura taslak oluştu, e-Arşiv gönderilemedi: ' + e.message, tarih: new Date().toISOString() };
+    // Resmileştirme başarısızsa fatura taslak kalır; panelden tekrar denenebilir
+    s.fatura = { durum: 'hata', kaynak: 'parasut', parasutId: fatId, hata: 'Fatura taslak oluştu, ' + belgeTip + ' gönderilemedi: ' + e.message, tarih: new Date().toISOString() };
     return s.fatura;
   }
   s.fatura = {
-    durum: 'kesildi', kaynak: 'parasut',
-    parasutId: fatId, eArsivIs: eArsivIs,
+    durum: 'kesildi', kaynak: 'parasut', belge: belgeTip,
+    parasutId: fatId, eArsivIs: eIs,
     no: (fat.data.attributes && (fat.data.attributes.invoice_no || fat.data.attributes.invoice_id)) || ('P-' + fatId),
     tarih: new Date().toISOString()
   };
@@ -1222,6 +1251,9 @@ const sunucu = http.createServer(async (req, res) => {
         durum: odemeYolu === 'kart' ? 'odeme-bekliyor' : 'yeni',
         odeme: odemeYolu, dil: g.dil === 'en' ? 'en' : 'tr',
         musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40), adres: temiz(m.adres, 1000), il: temiz(m.il, 60), ilce: temiz(m.ilce, 60), postaKodu: temiz(m.postaKodu, 10), not: temiz(m.not, 500) },
+        faturaBilgi: (g.fatura && g.fatura.tip === 'kurumsal' && /^[0-9]{10,11}$/.test(String(g.fatura.vkn || '')))
+          ? { tip: 'kurumsal', unvan: temiz(g.fatura.unvan, 200), vkn: temiz(g.fatura.vkn, 11), vergiDairesi: temiz(g.fatura.vergiDairesi, 60) }
+          : null,
         kalemler: kalemler, araToplam: araToplam, kupon: kuponBilgi, indirim: indirim,
         uyeIndirim: uyeIndirimTutar > 0 ? { oran: uyeIndirimOran, tutar: uyeIndirimTutar, eposta: uyeB.u.eposta } : null,
         kdvToplam: kdvToplam, kargo: kargo, toplam: toplam

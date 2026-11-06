@@ -2101,7 +2101,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         return '<div class="item" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;' + (hata ? 'border-left:4px solid #c0392b;' : '') + '">' +
           '<div><b>' + s.no + '</b> · ' + (s.musteri ? (s.musteri.ad || '') : '') + ' · ' + paraTL(s.toplam) +
           '<div style="font-size:.76rem;color:#8a8377;">' + new Date(s.tarih).toLocaleDateString('tr-TR') + ' · ' + s.durum +
-          (kesildi && s.fatura.no ? ' · Fatura: ' + s.fatura.no + (s.fatura.kaynak === 'parasut' ? ' (Paraşüt)' : '') : '') +
+          (kesildi && s.fatura.no ? ' · Fatura: ' + s.fatura.no + (s.fatura.kaynak === 'parasut' ? ' (Paraşüt' + (s.fatura.belge ? ' · ' + s.fatura.belge : '') + ')' : '') : '') +
           (hata ? '<br><span style="color:#c0392b;">Fatura hatası: ' + (s.fatura.hata || '') + '</span>' : '') + '</div></div>' +
           (kesildi
             ? '<button class="btn btn-ghost btn-sm fat-geri" data-no="' + s.no + '" type="button">Geri Al</button>'

@@ -126,6 +126,19 @@
         <label class="checkout-field" for="co-posta">Postal code<input type="text" id="co-posta" name="postal-code" autocomplete="postal-code" inputmode="numeric" required pattern="[0-9]{5}" maxlength="5"></label>
         <label class="checkout-field" for="co-not">Order note <span style="font-weight:300;">(optional)</span><input type="text" id="co-not" name="order-note"></label>
 
+        <div style="margin:22px 0 6px;font-weight:700;font-size:.9rem;">Invoice</div>
+        <div style="display:flex;gap:18px;margin-bottom:10px;font-size:.86rem;">
+          <label style="display:flex;gap:7px;align-items:center;cursor:pointer;"><input type="radio" name="faturatip" value="bireysel" checked>Personal</label>
+          <label style="display:flex;gap:7px;align-items:center;cursor:pointer;"><input type="radio" name="faturatip" value="kurumsal">Corporate (company invoice)</label>
+        </div>
+        <div id="kurumsal-alan" style="display:none;">
+          <label class="checkout-field" for="co-unvan">Company name<input type="text" id="co-unvan" maxlength="200"></label>
+          <div class="checkout-grid">
+            <label class="checkout-field" for="co-vkn">Tax / ID number<input type="text" id="co-vkn" inputmode="numeric" maxlength="11" pattern="[0-9]{10,11}"></label>
+            <label class="checkout-field" for="co-vd">Tax office<input type="text" id="co-vd" maxlength="60"></label>
+          </div>
+        </div>
+
         <div style="margin-bottom:6px;font-weight:700;font-size:.9rem;">Payment</div>
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Bank Transfer</b><small>IBAN details arrive by email after ordering; we ship once payment is confirmed.</small></span></label>
         <label class="pay-opt" id="pay-kart" style="display:none;"><input type="radio" name="odeme" value="kart"><span><b>Credit / Debit Card</b><small>3D Secure payment via iyzico. Your card details are never stored by us.</small></span></label>
@@ -261,6 +274,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 2500);
   }
   document.getElementById('co-eposta').addEventListener('blur', sepetKaydet);
+  document.querySelectorAll('input[name="faturatip"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      document.getElementById('kurumsal-alan').style.display = this.value === 'kurumsal' ? '' : 'none';
+    });
+  });
 
   function kuponDogrula(kod, sessiz) {
     var msj = document.getElementById('kupon-msj');
@@ -375,6 +393,19 @@ document.addEventListener('DOMContentLoaded', function () {
       hata.style.display = 'block';
       return;
     }
+    var faturaTip = (document.querySelector('input[name="faturatip"]:checked') || {}).value || 'bireysel';
+    var faturaBilgi = null;
+    if (faturaTip === 'kurumsal') {
+      var unvan = document.getElementById('co-unvan').value.trim();
+      var vkn = document.getElementById('co-vkn').value.trim();
+      var vd = document.getElementById('co-vd').value.trim();
+      if (!unvan || !/^[0-9]{10,11}$/.test(vkn) || !vd) {
+        hata.textContent = 'Corporate invoice requires company name, a 10-11 digit tax/ID number and tax office.';
+        hata.style.display = 'block';
+        return;
+      }
+      faturaBilgi = { tip: 'kurumsal', unvan: unvan, vkn: vkn, vergiDairesi: vd };
+    }
     btn.disabled = true;
     btn.textContent = 'Sending...';
     var odemeYolu = (document.querySelector('input[name="odeme"]:checked') || {}).value || 'havale';
@@ -382,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch('/api/siparis', {
       method: 'POST',
       headers: uyeToken ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uyeToken } : { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
+      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, fatura: faturaBilgi, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
