@@ -812,19 +812,34 @@ async function parasutFaturaKes(s) {
     kisiId = yeni.data && yeni.data.id;
   }
   if (!kisiId) throw new Error('Paraşüt müşteri kartı oluşturulamadı');
-  // 2) Satış faturası (kalemler KDV dahil tutulur; Paraşüt'e KDV hariç birim fiyat gider)
-  const detaylar = (s.kalemler || []).map(k => {
+  // 2) Paraşüt ürün kartları: adıyla bul, yoksa aç (fatura satırları ürün kartına bağlanmak zorunda)
+  async function parasutUrun(ad, kdvOran) {
+    const adK = String(ad).slice(0, 120);
+    const ara = await parasutHttp('GET', '/v4/' + firma + '/products?filter[name]=' + encodeURIComponent(adK) + '&page[size]=1', null, token);
+    if (ara.data && ara.data.length) return ara.data[0].id;
+    const yeni = await parasutHttp('POST', '/v4/' + firma + '/products', {
+      data: { type: 'products', attributes: { name: adK, vat_rate: kdvOran, unit: 'Adet', currency: 'TRL', inventory_tracking: false } }
+    }, token);
+    if (!(yeni.data && yeni.data.id)) throw new Error('Paraşüt ürün kartı açılamadı: ' + adK);
+    return yeni.data.id;
+  }
+  // 3) Satış faturası (kalemler KDV dahil tutulur; Paraşüt'e KDV hariç birim fiyat gider)
+  const detaylar = [];
+  for (const k of (s.kalemler || [])) {
     const kdvOran = (typeof k.kdv === 'number' ? k.kdv : 1);
     const birimHaric = (Number(k.fiyat) || 0) / (1 + kdvOran / 100);
-    return { type: 'sales_invoice_details', attributes: {
+    const urunAd = (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '');
+    const urunId = await parasutUrun(urunAd, kdvOran);
+    detaylar.push({ type: 'sales_invoice_details', attributes: {
       quantity: k.adet || 1,
       unit_price: Math.round(birimHaric * 10000) / 10000,
       vat_rate: kdvOran,
-      description: (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '')
-    } };
-  });
+      description: urunAd
+    }, relationships: { product: { data: { id: urunId, type: 'products' } } } });
+  }
   if (s.kargo && Number(s.kargo) > 0) {
-    detaylar.push({ type: 'sales_invoice_details', attributes: { quantity: 1, unit_price: Math.round((Number(s.kargo) / 1.20) * 10000) / 10000, vat_rate: 20, description: 'Kargo bedeli' } });
+    const kargoId = await parasutUrun('Kargo Bedeli', 20);
+    detaylar.push({ type: 'sales_invoice_details', attributes: { quantity: 1, unit_price: Math.round((Number(s.kargo) / 1.20) * 10000) / 10000, vat_rate: 20, description: 'Kargo bedeli' }, relationships: { product: { data: { id: kargoId, type: 'products' } } } });
   }
   const fat = await parasutHttp('POST', '/v4/' + firma + '/sales_invoices', {
     data: {
