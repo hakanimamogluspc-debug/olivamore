@@ -203,6 +203,13 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div class="note"><b>Sayfa metinleri:</b> Her sayfanın üst bölümündeki başlık ve tanıtım yazısı. Ana sayfa hero'su <b>Ayarlar</b> sekmesinde.</div>
 
       <div class="panel">
+        <h2>Ana Sayfa Ürün Sıraları</h2>
+        <div class="desc">Ana sayfadaki "Sağlık, Doğallık ve Lezzet" mağaza bölümündeki sıralar. Her sıranın başlığını ve göstereceği ürünleri (en fazla 4) seç; fiyat, ad, görsel ve stok ürün kaydından otomatik gelir. Gizli ürünler görünmez.</div>
+        <div id="sira-list"></div>
+        <button class="btn btn-outline btn-sm" id="btn-add-sira" type="button" style="margin-top:10px;">+ Yeni Sıra</button>
+      </div>
+
+      <div class="panel">
         <h2>Ana Sayfa Kategori Kartları</h2>
         <div class="desc">"Doğal Üretim"in altındaki büyük kategori kartları. Görsel, ad (TR/EN), bağlantı ve sıralama buradan yönetilir; kart ekleyip çıkarabilirsin. Görsel kartı kaplayacak şekilde kırpılır (dikey çekimler idealdir).</div>
         <div id="kat-list"></div>
@@ -1278,6 +1285,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     syncCouponsFromDOM();
     syncKategorilerFromDOM();
     syncUrunKategorilerFromDOM();
+    syncSiralarFromDOM();
     document.querySelectorAll('#pages-list .pagecard').forEach(function (d) {
       var p = C.pages[d.dataset.page];
       p.tTR = d.querySelector('.pg-tTR').value; p.tEN = d.querySelector('.pg-tEN').value;
@@ -2400,6 +2408,64 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   });
   document.getElementById('urunkat-list').addEventListener('input', function () { dirty(); });
 
+  /* ================== ANA SAYFA ÜRÜN SIRALARI ================== */
+  var SIRA_VARSAYILAN = [
+    { baslikTR: 'AVANTAJ PAKETLERİ', baslikEN: 'ADVANTAGE PACKS', urunler: ['152.06.01.21', '152.06.01.08', '152.06.01.06', '152.06.01.13'] },
+    { baslikTR: 'SOĞUK SIKIM ZEYTİNYAĞLARI', baslikEN: 'COLD-PRESSED OLIVE OILS', urunler: ['ay750', 'ay2l', 'tr750', 'tr2l'] },
+    { baslikTR: 'ÇOK SATAN ÜRÜNLER', baslikEN: 'BEST SELLERS', urunler: ['ces-mand', 'ces-berg', 'zey-siyah', 'zey-yesil'] }
+  ];
+  function siralar() {
+    if (!Array.isArray(C.anasayfaSiralari) || !C.anasayfaSiralari.length) C.anasayfaSiralari = JSON.parse(JSON.stringify(SIRA_VARSAYILAN));
+    return C.anasayfaSiralari;
+  }
+  function urunSecici(secili) {
+    var urunler = (C.products || []).filter(function (p) { return p.type === 'product' || !p.type; });
+    return '<select class="sr-urun"><option value="">— boş —</option>' + urunler.map(function (p) {
+      var etiket = (p.nameTR || p.id) + (p.unitTR ? ' ' + p.unitTR.replace(/^\/\s*/, '') : '') + ' · ₺' + (p.price || 0) + (p.visible === false ? ' (gizli)' : '');
+      return '<option value="' + esc(p.id) + '"' + (p.id === secili ? ' selected' : '') + '>' + esc(etiket) + '</option>';
+    }).join('') + '</select>';
+  }
+  function renderSiralar() {
+    var el = document.getElementById('sira-list'); if (!el) return;
+    var liste = siralar();
+    el.innerHTML = liste.map(function (sr, i) {
+      var u = (sr.urunler || []).slice(0, 4); while (u.length < 4) u.push('');
+      return '<div class="item sr-item" data-idx="' + i + '" style="padding:14px 16px;">' +
+        '<div class="grid2" style="align-items:end;">' +
+        '<div class="field" style="margin:0;"><label>Sıra başlığı (TR)</label><input type="text" class="sr-bTR" value="' + esc(sr.baslikTR || '') + '"></div>' +
+        '<div class="field" style="margin:0;"><label>Sıra başlığı (EN)</label><input type="text" class="sr-bEN" value="' + esc(sr.baslikEN || '') + '"></div>' +
+        '</div>' +
+        '<div class="grid2" style="margin-top:10px;">' + u.map(function (id, j) { return '<div class="field" style="margin:0;"><label>Ürün ' + (j + 1) + '</label>' + urunSecici(id) + '</div>'; }).join('') + '</div>' +
+        '<div class="row-actions" style="justify-content:flex-end;">' +
+        (i > 0 ? '<button class="btn btn-ghost btn-sm sr-yukari" type="button">↑</button>' : '') +
+        (i < liste.length - 1 ? '<button class="btn btn-ghost btn-sm sr-asagi" type="button">↓</button>' : '') +
+        '<button class="btn btn-danger btn-sm sr-sil" type="button">Sırayı Sil</button></div></div>';
+    }).join('');
+  }
+  function syncSiralarFromDOM() {
+    var el = document.getElementById('sira-list'); if (!el) return;
+    var liste = siralar();
+    el.querySelectorAll('.sr-item').forEach(function (d) {
+      var sr = liste[+d.dataset.idx]; if (!sr) return;
+      sr.baslikTR = d.querySelector('.sr-bTR').value.trim();
+      sr.baslikEN = d.querySelector('.sr-bEN').value.trim();
+      sr.urunler = [].map.call(d.querySelectorAll('.sr-urun'), function (x) { return x.value; }).filter(Boolean);
+    });
+  }
+  document.getElementById('btn-add-sira').addEventListener('click', function () {
+    syncSiralarFromDOM(); siralar().push({ baslikTR: 'YENİ SIRA', baslikEN: 'NEW ROW', urunler: [] }); renderSiralar(); dirty();
+  });
+  document.getElementById('sira-list').addEventListener('click', function (e) {
+    var d = e.target.closest('.sr-item'); if (!d) return;
+    var i = +d.dataset.idx, liste = siralar();
+    if (e.target.classList.contains('sr-sil')) { if (!confirm('Bu sıra ana sayfadan kaldırılacak. Emin misin?')) return; syncSiralarFromDOM(); liste.splice(i, 1); }
+    else if (e.target.classList.contains('sr-yukari')) { syncSiralarFromDOM(); var t = liste[i - 1]; liste[i - 1] = liste[i]; liste[i] = t; }
+    else if (e.target.classList.contains('sr-asagi')) { syncSiralarFromDOM(); var t2 = liste[i + 1]; liste[i + 1] = liste[i]; liste[i] = t2; }
+    else return;
+    renderSiralar(); dirty();
+  });
+  document.getElementById('sira-list').addEventListener('change', function () { dirty(); });
+
   /* ================== ANA SAYFA KATEGORİ KARTLARI ================== */
   var KAT_VARSAYILAN = [
     { adTR: 'Zeytinyağları', adEN: 'Olive Oils', img: 'assets/img/foto-trilye-seri.jpg', link: 'koleksiyon.html#serin', visible: true },
@@ -2782,7 +2848,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
   /* ================== BAŞLAT ================== */
   function renderAll() {
-    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
   fetch('/api/admin/config', { cache: 'no-store' })

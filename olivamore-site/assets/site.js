@@ -505,6 +505,33 @@
       renderProductGrids(C);
     }
 
+    // ---- 4a) Ana sayfa mağaza sıraları (panel > Sayfalar > Ana Sayfa Ürün Sıraları) ----
+    if (document.body.dataset.page === 'home' && C.products && C.products.length) {
+      const magaza = document.querySelector('.fig-magaza');
+      if (magaza) {
+        const VARSAYILAN_SIRALAR = [
+          { baslikTR: 'AVANTAJ PAKETLERİ', baslikEN: 'ADVANTAGE PACKS', urunler: ['152.06.01.21', '152.06.01.08', '152.06.01.06', '152.06.01.13'] },
+          { baslikTR: 'SOĞUK SIKIM ZEYTİNYAĞLARI', baslikEN: 'COLD-PRESSED OLIVE OILS', urunler: ['ay750', 'ay2l', 'tr750', 'tr2l'] },
+          { baslikTR: 'ÇOK SATAN ÜRÜNLER', baslikEN: 'BEST SELLERS', urunler: ['ces-mand', 'ces-berg', 'zey-siyah', 'zey-yesil'] }
+        ];
+        const siralar = (Array.isArray(C.anasayfaSiralari) && C.anasayfaSiralari.length) ? C.anasayfaSiralari : VARSAYILAN_SIRALAR;
+        const bul = id => C.products.find(p => p.id === id && p.visible !== false);
+        const html = siralar.map(sr => {
+          const kartlar = (sr.urunler || []).map(bul).filter(Boolean);
+          if (!kartlar.length) return '';
+          const baslik = EN ? (sr.baslikEN || sr.baslikTR) : (sr.baslikTR || sr.baslikEN);
+          return `<div class="fig-sira"><div class="fs-baslik">${baslik || ''}</div><div class="fs-kartlar">${kartlar.map(p => productCard(p, C)).join('')}</div></div>`;
+        }).join('');
+        if (html) {
+          magaza.querySelectorAll('.fig-sira').forEach(el => el.remove());
+          const tum = magaza.querySelector('.fig-tum');
+          const kap = document.createElement('div');
+          kap.innerHTML = html;
+          Array.from(kap.children).forEach(el => magaza.insertBefore(el, tum));
+        }
+      }
+    }
+
     // ---- 4b) Ana sayfa kategori kartları (panel > Sayfalar > Kategori Kartları) ----
     if (document.body.dataset.page === 'home' && Array.isArray(C.kategoriler) && C.kategoriler.length) {
       const kutu = document.querySelector('.fig-kategori');
