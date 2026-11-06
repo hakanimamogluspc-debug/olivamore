@@ -2166,6 +2166,17 @@ footer.site{background:#1B1A18}
 @media(max-width:1000px){.fig-sira .fs-kartlar{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.fig-sira .fs-kartlar{grid-template-columns:1fr}.fig-kart .fk-img{height:280px}}
 
+/* Karşılaştırma kartları (Ayvalık / Trilye) — ürün kartı (fig-kart) dili */
+.vs-card{background:#fff;border:1px solid #EDE4CE;border-top:1px solid #EDE4CE;border-radius:2px;padding:20px 26px 26px;box-shadow:none;display:flex;flex-direction:column;transition:border-color .2s,box-shadow .2s,transform .2s}
+.vs-card:hover{border-color:#BFA25D;box-shadow:0 14px 30px rgba(30,28,25,.1);transform:translateY(-3px)}
+.vs-card .vs-img{height:240px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.vs-card .vs-img img{max-height:100%;max-width:70%;object-fit:contain}
+.vs-card h3{font-family:var(--font-sans);font-weight:600;font-size:1.25rem;letter-spacing:-.01em;color:#1D1F1C;text-align:center}
+.vs-card .vs-profil{font-family:var(--font-sans);font-size:.88rem;color:#4D5358;text-align:center;margin:4px 0 14px}
+.vs-card h4{font-family:var(--font-sans);font-weight:500;font-size:.64rem;letter-spacing:.2em;color:#BFA25D;margin:16px 0 8px}
+.vs-card ul{font-family:var(--font-sans);font-size:.86rem;color:#4D5358;gap:6px}
+.vs-card .vs-btn{align-self:center;width:70%;height:42px;padding:0;margin-top:22px;font-size:.95rem;text-decoration:none}
+
 /* Ödül rozetleri: hero ile beyaz alanın birleşim çizgisine ortalı */
 .omx-oduller{background:transparent;padding:0 20px;position:relative;z-index:6;margin-top:-68px;pointer-events:none}
 .odul-serit{display:flex;justify-content:center;align-items:center;gap:96px;max-width:1000px;margin:0 auto}
