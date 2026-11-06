@@ -812,13 +812,17 @@ async function parasutFaturaKes(s) {
     kisiId = yeni.data && yeni.data.id;
   }
   if (!kisiId) throw new Error('Paraşüt müşteri kartı oluşturulamadı');
-  // 2) Paraşüt ürün kartları: adıyla bul, yoksa aç (fatura satırları ürün kartına bağlanmak zorunda)
-  async function parasutUrun(ad, kdvOran) {
+  // 2) Paraşüt ürün kartları: önce STOK KODUYLA bul, sonra adla; yoksa stok koduyla yeni kart aç
+  async function parasutUrun(ad, kdvOran, stokKodu) {
     const adK = String(ad).slice(0, 120);
+    if (stokKodu) {
+      const araKod = await parasutHttp('GET', '/v4/' + firma + '/products?filter[code]=' + encodeURIComponent(stokKodu) + '&page[size]=1', null, token);
+      if (araKod.data && araKod.data.length) return araKod.data[0].id;
+    }
     const ara = await parasutHttp('GET', '/v4/' + firma + '/products?filter[name]=' + encodeURIComponent(adK) + '&page[size]=1', null, token);
     if (ara.data && ara.data.length) return ara.data[0].id;
     const yeni = await parasutHttp('POST', '/v4/' + firma + '/products', {
-      data: { type: 'products', attributes: { name: adK, vat_rate: kdvOran, unit: 'Adet', currency: 'TRL', inventory_tracking: false } }
+      data: { type: 'products', attributes: { name: adK, code: stokKodu || undefined, vat_rate: kdvOran, unit: 'Adet', currency: 'TRL', inventory_tracking: false } }
     }, token);
     if (!(yeni.data && yeni.data.id)) throw new Error('Paraşüt ürün kartı açılamadı: ' + adK);
     return yeni.data.id;
@@ -829,7 +833,7 @@ async function parasutFaturaKes(s) {
     const kdvOran = (typeof k.kdv === 'number' ? k.kdv : 1);
     const birimHaric = (Number(k.fiyat) || 0) / (1 + kdvOran / 100);
     const urunAd = (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '');
-    const urunId = await parasutUrun(urunAd, kdvOran);
+    const urunId = await parasutUrun(urunAd, kdvOran, k.id || k.kod || '');
     detaylar.push({ type: 'sales_invoice_details', attributes: {
       quantity: k.adet || 1,
       unit_price: Math.round(birimHaric * 10000) / 10000,
@@ -838,7 +842,7 @@ async function parasutFaturaKes(s) {
     }, relationships: { product: { data: { id: urunId, type: 'products' } } } });
   }
   if (s.kargo && Number(s.kargo) > 0) {
-    const kargoId = await parasutUrun('Kargo Bedeli', 20);
+    const kargoId = await parasutUrun('Kargo Bedeli', 20, 'KARGO');
     detaylar.push({ type: 'sales_invoice_details', attributes: { quantity: 1, unit_price: Math.round((Number(s.kargo) / 1.20) * 10000) / 10000, vat_rate: 20, description: 'Kargo bedeli' }, relationships: { product: { data: { id: kargoId, type: 'products' } } } });
   }
   const fat = await parasutHttp('POST', '/v4/' + firma + '/sales_invoices', {
@@ -1228,7 +1232,8 @@ const sunucu = http.createServer(async (req, res) => {
       const kalemler = g.kalemler.map(k => ({
         ad: temiz(k.ad, 200), fiyat: Math.max(0, parseInt(k.fiyat, 10) || 0),
         adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1)), img: temiz(k.img, 300),
-        kdv: Math.min(20, Math.max(0, parseFloat(k.kdv) || 1))
+        kdv: Math.min(20, Math.max(0, parseFloat(k.kdv) || 1)),
+        kod: temiz(k.id || k.kod, 40)
       }));
       // Stok kontrolü + düşümü (yetersizse sipariş alınmaz)
       const stokSonuc = stokDus(kalemler);
