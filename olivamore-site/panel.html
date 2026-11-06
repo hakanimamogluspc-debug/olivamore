@@ -2106,7 +2106,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     ['Rozet (TR)', 'badgeTR'], ['Rozet (EN)', 'badgeEN'], ['Stok Adedi', 'stok'],
     ['Görünür', 'visible'], ['Green Ops Stok Kodu', 'stokKodu']
   ];
-  var TOPLU_BEKLEYEN = null;
+  var TOPLU_BEKLEYEN = null, TOPLU_HAM = null, TOPLU_MOD = 'guncelle'; // 'guncelle' | 'degistir'
   function xlsxYukle(cb) {
     if (window.XLSX) return cb();
     var sc = document.createElement('script');
@@ -2144,7 +2144,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           var wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
           var sayfaAdi = wb.SheetNames.indexOf('Urunler') !== -1 ? 'Urunler' : wb.SheetNames.find(function (n) { return n !== 'Nasil Kullanilir' && n !== 'Kategoriler'; }) || wb.SheetNames[0];
           var satirlar = XLSX.utils.sheet_to_json(wb.Sheets[sayfaAdi], { header: 1, defval: '' });
-          topluCoz(satirlar);
+          TOPLU_HAM = satirlar; topluCoz(satirlar);
         } catch (e) { alert('Dosya okunamadı: ' + e.message); }
       };
       okuyucu.readAsArrayBuffer(dosya);
@@ -2168,10 +2168,16 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       if (!dolu) continue;
       var id = String(ham.id || '').trim();
       var eslesmeNotu = '';
+      var devral = '';
       if (id && !mevcut[id] && kodHarita[id]) {
         if (!String(ham.stokKodu || '').trim()) ham.stokKodu = id; // muhasebe kodunu ürüne işle
-        eslesmeNotu = 'Green Ops koduyla "' + kodHarita[id] + '" ürününe eşleşti';
-        id = kodHarita[id];
+        if (TOPLU_MOD === 'guncelle') {
+          eslesmeNotu = 'Green Ops koduyla "' + kodHarita[id] + '" ürününe eşleşti';
+          id = kodHarita[id];
+        } else {
+          devral = kodHarita[id];
+          if (mevcut[devral] && mevcut[devral].img) eslesmeNotu = 'Görseli "' + devral + '" ürününden devralacak';
+        }
       }
       if (/^ornek-/.test(id) || /^↑/.test(id)) continue; // şablondaki örnek satırlar
       var hatalar = [], uyarilar = [];
@@ -2191,9 +2197,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var rol = String(ham.role || '').trim();
       if (eslesmeNotu) uyarilar.push(eslesmeNotu);
       if (rol && katlar.indexOf(rol) === -1) uyarilar.push('"' + rol + '" yeni kategori olarak açılacak');
-      var gorselYok = !(var_ && mevcut[id].img);
+      var gorselYok = !((var_ && mevcut[id].img) || (devral && mevcut[devral] && mevcut[devral].img));
       if (gorselYok) uyarilar.push('Görsel yok');
-      sonuc.push({ id: id, ham: ham, yeni: !var_, hatalar: hatalar, uyarilar: uyarilar, fiyat: fiyat, kdv: kdv, stok: stok, rol: rol });
+      sonuc.push({ id: id, devral: devral, ham: ham, yeni: !var_, hatalar: hatalar, uyarilar: uyarilar, fiyat: fiyat, kdv: kdv, stok: stok, rol: rol });
     }
     TOPLU_BEKLEYEN = sonuc;
     topluOnizle();
@@ -2205,8 +2211,14 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var hataliN = s.filter(function (x) { return x.hatalar.length; }).length;
     var yeniN = s.filter(function (x) { return !x.hatalar.length && x.yeni; }).length;
     var gunN = s.filter(function (x) { return !x.hatalar.length && !x.yeni; }).length;
+    var dosyaKod = {}; s.forEach(function (x) { if (!x.hatalar.length) dosyaKod[x.id] = 1; });
+    var silN = TOPLU_MOD === 'degistir' ? (C.products || []).filter(function (p) { return (p.type === 'product' || !p.type) && !dosyaKod[p.id]; }).length : 0;
     el.innerHTML =
-      '<div class="note"><b>' + yeniN + '</b> yeni ürün · <b>' + gunN + '</b> güncelleme' + (hataliN ? ' · <b style="color:#a33;">' + hataliN + ' hatalı satır atlanacak</b>' : '') + '</div>' +
+      '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;font-size:.84rem;">' +
+      '<label class="chk"><input type="radio" name="toplu-mod" value="guncelle"' + (TOPLU_MOD === 'guncelle' ? ' checked' : '') + '><b>Güncelle / ekle</b> — mevcut ürünler korunur</label>' +
+      '<label class="chk"><input type="radio" name="toplu-mod" value="degistir"' + (TOPLU_MOD === 'degistir' ? ' checked' : '') + '><b>Kataloğu bu dosyayla değiştir</b> — dosyada olmayan ürünler silinir</label>' +
+      '</div>' +
+      '<div class="note"><b>' + yeniN + '</b> yeni ürün · <b>' + gunN + '</b> güncelleme' + (silN ? ' · <b style="color:#a33;">' + silN + ' ürün silinecek</b>' : '') + (hataliN ? ' · <b style="color:#a33;">' + hataliN + ' hatalı satır atlanacak</b>' : '') + '</div>' +
       '<div style="max-height:320px;overflow:auto;border:1px solid var(--line);">' +
       '<table style="width:100%;border-collapse:collapse;font-size:.8rem;table-layout:fixed;">' +
       '<colgroup><col style="width:13%"><col style="width:37%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:18%"></colgroup>' +
@@ -2223,14 +2235,22 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
   function topluUygula() {
     syncProductsFromDOM(); syncUrunKategorilerFromDOM();
-    var islenen = 0, gorselsiz = 0;
+    var islenen = 0, gorselsiz = 0, silinen = 0;
+    var eskiKatalog = {}; (C.products || []).forEach(function (p) { eskiKatalog[p.id] = p; });
+    if (TOPLU_MOD === 'degistir') {
+      var tut = {}; (TOPLU_BEKLEYEN || []).forEach(function (x) { if (!x.hatalar.length) tut[x.id] = 1; });
+      var once = C.products.length;
+      C.products = C.products.filter(function (p) { return !(p.type === 'product' || !p.type) || tut[p.id]; });
+      silinen = once - C.products.length;
+    }
     (TOPLU_BEKLEYEN || []).forEach(function (x) {
       if (x.hatalar.length) return;
       var h = x.ham;
       var dolu = function (v) { return v !== undefined && v !== null && String(v).trim() !== ''; };
       var p = C.products.find(function (q) { return q.id === x.id; });
       if (!p) {
-        p = { id: x.id, type: 'product', role: '', nameTR: '', nameEN: '', noteTR: '', noteEN: '', price: 0, unitTR: '', unitEN: '', badgeTR: '', badgeEN: '', img: '', galeri: [], href: '', featured: 0, visible: true, kdv: 1 };
+        var kaynak = x.devral && eskiKatalog[x.devral];
+        p = { id: x.id, type: 'product', role: kaynak ? (kaynak.role || '') : '', nameTR: '', nameEN: '', noteTR: '', noteEN: '', price: 0, unitTR: '', unitEN: '', badgeTR: '', badgeEN: '', img: kaynak ? (kaynak.img || '') : '', galeri: kaynak ? (kaynak.galeri || []).slice() : [], href: '', featured: kaynak ? (kaynak.featured || 0) : 0, visible: true, kdv: kaynak && typeof kaynak.kdv === 'number' ? kaynak.kdv : 1 };
         C.products.push(p);
       }
       if (dolu(h.nameTR)) p.nameTR = String(h.nameTR).trim();
@@ -2253,8 +2273,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       if (!p.img) gorselsiz++;
       islenen++;
     });
-    TOPLU_BEKLEYEN = null;
-    document.getElementById('toplu-onizleme').innerHTML = '<div class="note" style="border-left-color:#2e7d32;"><b>' + islenen + ' ürün içe aktarıldı.</b>' + (gorselsiz ? ' ' + gorselsiz + ' ürünün görseli eksik — aşağıdaki listeden ekle.' : '') + ' Yayınlamak için en altta <b>Kaydet ve Yayınla</b>.</div>';
+    TOPLU_BEKLEYEN = null; TOPLU_HAM = null;
+    document.getElementById('toplu-onizleme').innerHTML = '<div class="note" style="border-left-color:#2e7d32;"><b>' + islenen + ' ürün içe aktarıldı' + (silinen ? ', ' + silinen + ' ürün silindi' : '') + '.</b>' + (gorselsiz ? ' ' + gorselsiz + ' ürünün görseli eksik — aşağıdaki listeden ekle.' : '') + ' <b>Henüz sitede değil:</b> yayınlamak için aşağıdaki düğmeye bas.</div>' +
+      '<button class="btn btn-gold btn-sm" id="btn-toplu-yayinla" type="button">Şimdi Kaydet ve Yayınla</button>';
     renderProducts(); renderUrunKategorileri(); dirty();
   }
   function topluDisaAktar() {
@@ -2285,8 +2306,15 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   });
   document.getElementById('btn-toplu-disa').addEventListener('click', topluDisaAktar);
   document.getElementById('toplu-onizleme').addEventListener('click', function (e) {
-    if (e.target.id === 'btn-toplu-uygula') topluUygula();
-    if (e.target.id === 'btn-toplu-iptal') { TOPLU_BEKLEYEN = null; this.innerHTML = ''; }
+    if (e.target.id === 'btn-toplu-uygula') {
+      if (TOPLU_MOD === 'degistir' && !confirm('Dosyada olmayan tüm ürünler silinecek. Not: abonelik, pazaryeri eşlemesi gibi eski ürün kodlarına bağlı kayıtları da kontrol etmen gerekebilir. Devam edilsin mi?')) return;
+      topluUygula();
+    }
+    if (e.target.id === 'btn-toplu-iptal') { TOPLU_BEKLEYEN = null; TOPLU_HAM = null; this.innerHTML = ''; }
+    if (e.target.id === 'btn-toplu-yayinla') document.getElementById('btn-save').click();
+  });
+  document.getElementById('toplu-onizleme').addEventListener('change', function (e) {
+    if (e.target.name === 'toplu-mod' && TOPLU_HAM) { TOPLU_MOD = e.target.value; topluCoz(TOPLU_HAM); }
   });
 
   /* ================== ÜRÜN KATEGORİLERİ (koleksiyon filtresi) ================== */
