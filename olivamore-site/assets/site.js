@@ -505,6 +505,25 @@
       renderProductGrids(C);
     }
 
+    // ---- 4b) Ana sayfa kategori kartları (panel > Sayfalar > Kategori Kartları) ----
+    if (document.body.dataset.page === 'home' && Array.isArray(C.kategoriler) && C.kategoriler.length) {
+      const kutu = document.querySelector('.fig-kategori');
+      if (kutu) {
+        const gorunur = C.kategoriler.filter(k => k.visible !== false && (k.adTR || k.adEN));
+        if (gorunur.length) {
+          kutu.innerHTML = gorunur.map(k => {
+            const ad = (EN ? (k.adEN || k.adTR) : (k.adTR || k.adEN)) || '';
+            let href = k.link || 'koleksiyon.html';
+            if (EN && href.indexOf('-en.') === -1) href = href.replace(/\.html/, '-en.html');
+            return `<a class="fk-kat" href="${href}">` +
+              (k.img ? `<img class="fk-foto" src="${k.img}" alt="${ad}" loading="lazy">` : '') +
+              `<span class="fk-serit">Olivamore</span>` +
+              `<span class="fk-altyazi"><b>${ad}</b><i>${EN ? 'Discover' : 'Keşfet'} →</i></span></a>`;
+          }).join('');
+        }
+      }
+    }
+
     // ---- 5) Blog gridleri (Öğren + ana sayfa önizleme) ----
     if (C.blogs && C.blogs.length) {
       renderBlogGrids(C);

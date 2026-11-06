@@ -201,6 +201,14 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     <!-- ============ SAYFALAR ============ -->
     <section class="view" id="view-pages">
       <div class="note"><b>Sayfa metinleri:</b> Her sayfanın üst bölümündeki başlık ve tanıtım yazısı. Ana sayfa hero'su <b>Ayarlar</b> sekmesinde.</div>
+
+      <div class="panel">
+        <h2>Ana Sayfa Kategori Kartları</h2>
+        <div class="desc">"Doğal Üretim"in altındaki büyük kategori kartları. Görsel, ad (TR/EN), bağlantı ve sıralama buradan yönetilir; kart ekleyip çıkarabilirsin. Görsel kartı kaplayacak şekilde kırpılır (dikey çekimler idealdir).</div>
+        <div id="kat-list"></div>
+        <button class="btn btn-outline btn-sm" id="btn-add-kat" type="button" style="margin-top:10px;">+ Yeni Kategori Kartı</button>
+      </div>
+
       <div id="pages-list"></div>
     </section>
 
@@ -841,7 +849,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
 
   /* Görsel seçici olayları (ürün + blog listelerinde ortak) */
-  ['products-list', 'blogs-list'].forEach(function (hostId) {
+  ['products-list', 'blogs-list', 'kat-list'].forEach(function (hostId) {
     var host = document.getElementById(hostId);
     // Bilgisayardan dosya seçildi
     host.addEventListener('change', function (e) {
@@ -1234,6 +1242,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     syncBlogsFromDOM();
     syncBatchesFromDOM();
     syncCouponsFromDOM();
+    syncKategorilerFromDOM();
     document.querySelectorAll('#pages-list .pagecard').forEach(function (d) {
       var p = C.pages[d.dataset.page];
       p.tTR = d.querySelector('.pg-tTR').value; p.tEN = d.querySelector('.pg-tEN').value;
@@ -2054,6 +2063,67 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     dirty();
   });
 
+  /* ================== ANA SAYFA KATEGORİ KARTLARI ================== */
+  var KAT_VARSAYILAN = [
+    { adTR: 'Zeytinyağları', adEN: 'Olive Oils', img: 'assets/img/foto-trilye-seri.jpg', link: 'koleksiyon.html#serin', visible: true },
+    { adTR: 'Zeytinler', adEN: 'Olives', img: 'assets/img/zeytin-siyah.jpg', link: 'koleksiyon.html#zeytin', visible: true },
+    { adTR: 'Sirkeler', adEN: 'Vinegars', img: 'assets/img/foto-sirkeler.jpg', link: 'koleksiyon.html#eksi', visible: true },
+    { adTR: 'Hediye Setleri', adEN: 'Gift Sets', img: 'assets/img/foto-hediye-setleri.jpg', link: 'koleksiyon.html#hediyelik', visible: true }
+  ];
+  function katItem(k, i, toplamN) {
+    return '<div class="item kat-item" data-idx="' + i + '" style="padding:14px 16px;">' +
+      '<div class="grid3" style="align-items:end;">' +
+      '<div class="field" style="margin:0;"><label>Görsel</label>' + imgPicker(k.img || '', 'kat-img') + '</div>' +
+      '<div class="field" style="margin:0;"><label>Ad (TR)</label><input type="text" class="kat-adTR" value="' + esc(k.adTR || '') + '"></div>' +
+      '<div class="field" style="margin:0;"><label>Ad (EN)</label><input type="text" class="kat-adEN" value="' + esc(k.adEN || '') + '"></div>' +
+      '</div>' +
+      '<div class="grid2" style="margin-top:10px;align-items:end;">' +
+      '<div class="field" style="margin:0;"><label>Bağlantı</label><input type="text" class="kat-link" list="kat-linkler" value="' + esc(k.link || '') + '" placeholder="koleksiyon.html#serin"></div>' +
+      '<div class="row-actions" style="margin:0;justify-content:flex-end;">' +
+      '<label class="chk"><input type="checkbox" class="kat-gorunur"' + (k.visible !== false ? ' checked' : '') + '>Görünür</label>' +
+      (i > 0 ? '<button class="btn btn-ghost btn-sm kat-yukari" type="button" title="Yukarı">↑</button>' : '') +
+      (i < toplamN - 1 ? '<button class="btn btn-ghost btn-sm kat-asagi" type="button" title="Aşağı">↓</button>' : '') +
+      '<button class="btn btn-danger btn-sm kat-sil" type="button">Sil</button>' +
+      '</div></div></div>';
+  }
+  function renderKategoriler() {
+    var el = document.getElementById('kat-list');
+    if (!el) return;
+    if (!Array.isArray(C.kategoriler) || !C.kategoriler.length) C.kategoriler = JSON.parse(JSON.stringify(KAT_VARSAYILAN));
+    el.innerHTML = '<datalist id="kat-linkler"><option value="koleksiyon.html#serin"><option value="koleksiyon.html#ocak"><option value="koleksiyon.html#zeytin"><option value="koleksiyon.html#eksi"><option value="koleksiyon.html#hediyelik"><option value="koleksiyon.html"><option value="hediye-olustur.html"><option value="abonelik.html"></datalist>' +
+      C.kategoriler.map(function (k, i) { return katItem(k, i, C.kategoriler.length); }).join('');
+  }
+  function syncKategorilerFromDOM() {
+    var el = document.getElementById('kat-list');
+    if (!el || !C.kategoriler) return;
+    el.querySelectorAll('.kat-item').forEach(function (d) {
+      var k = C.kategoriler[+d.dataset.idx]; if (!k) return;
+      var imgSec = d.querySelector('.kat-img');
+      if (imgSec) k.img = imgSec.value;
+      k.adTR = d.querySelector('.kat-adTR').value.trim();
+      k.adEN = d.querySelector('.kat-adEN').value.trim();
+      k.link = d.querySelector('.kat-link').value.trim();
+      k.visible = d.querySelector('.kat-gorunur').checked;
+    });
+  }
+  document.getElementById('btn-add-kat').addEventListener('click', function () {
+    syncKategorilerFromDOM();
+    C.kategoriler.push({ adTR: 'Yeni Kategori', adEN: 'New Category', img: '', link: 'koleksiyon.html', visible: true });
+    renderKategoriler(); dirty();
+  });
+  document.getElementById('kat-list').addEventListener('click', function (e) {
+    var d = e.target.closest('.kat-item'); if (!d) return;
+    var i = +d.dataset.idx;
+    if (e.target.classList.contains('kat-sil')) {
+      if (!confirm('Bu kategori kartı silinecek. Emin misin?')) return;
+      syncKategorilerFromDOM(); C.kategoriler.splice(i, 1); renderKategoriler(); dirty();
+    } else if (e.target.classList.contains('kat-yukari')) {
+      syncKategorilerFromDOM(); var t = C.kategoriler[i - 1]; C.kategoriler[i - 1] = C.kategoriler[i]; C.kategoriler[i] = t; renderKategoriler(); dirty();
+    } else if (e.target.classList.contains('kat-asagi')) {
+      syncKategorilerFromDOM(); var t2 = C.kategoriler[i + 1]; C.kategoriler[i + 1] = C.kategoriler[i]; C.kategoriler[i] = t2; renderKategoriler(); dirty();
+    }
+  });
+
   /* ================== TOPLU TEK KULLANIMLIK KUPON ================== */
   document.getElementById('btn-toplu-kupon').addEventListener('click', function () {
     syncCouponsFromDOM();
@@ -2375,7 +2445,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
   /* ================== BAŞLAT ================== */
   function renderAll() {
-    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
   fetch('/api/admin/config', { cache: 'no-store' })
