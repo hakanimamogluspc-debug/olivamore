@@ -2103,7 +2103,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     ['Ürün Kodu', 'id'], ['Ürün Adı (TR)', 'nameTR'], ['Ürün Adı (EN)', 'nameEN'],
     ['Kısa Açıklama (TR)', 'noteTR'], ['Kısa Açıklama (EN)', 'noteEN'], ['Fiyat (₺)', 'price'],
     ['Birim (TR)', 'unitTR'], ['Birim (EN)', 'unitEN'], ['KDV Oranı (%)', 'kdv'], ['Kategori Kodu', 'role'],
-    ['Rozet (TR)', 'badgeTR'], ['Rozet (EN)', 'badgeEN'], ['Stok Adedi', 'stok'], ['Vitrin Sırası', 'featured'],
+    ['Rozet (TR)', 'badgeTR'], ['Rozet (EN)', 'badgeEN'], ['Stok Adedi', 'stok'],
     ['Görünür', 'visible'], ['Green Ops Stok Kodu', 'stokKodu']
   ];
   var TOPLU_BEKLEYEN = null;
@@ -2177,13 +2177,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       if (kdv !== null && (isNaN(kdv) || [0, 1, 10, 20].indexOf(kdv) === -1)) hatalar.push('KDV 0, 1, 10 veya 20 olmalı');
       var stok = sayiCoz(ham.stok);
       if (stok !== null && (isNaN(stok) || stok < 0)) hatalar.push('Stok geçersiz');
-      var vit = sayiCoz(ham.featured);
-      if (vit !== null && (isNaN(vit) || vit < 0 || vit > 4)) hatalar.push('Vitrin sırası 0-4 olmalı');
       var rol = String(ham.role || '').trim();
       if (rol && katlar.indexOf(rol) === -1) uyarilar.push('"' + rol + '" yeni kategori olarak açılacak');
       var gorselYok = !(var_ && mevcut[id].img);
       if (gorselYok) uyarilar.push('Görsel yok');
-      sonuc.push({ id: id, ham: ham, yeni: !var_, hatalar: hatalar, uyarilar: uyarilar, fiyat: fiyat, kdv: kdv, stok: stok, vit: vit, rol: rol });
+      sonuc.push({ id: id, ham: ham, yeni: !var_, hatalar: hatalar, uyarilar: uyarilar, fiyat: fiyat, kdv: kdv, stok: stok, rol: rol });
     }
     TOPLU_BEKLEYEN = sonuc;
     topluOnizle();
@@ -2198,13 +2196,15 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     el.innerHTML =
       '<div class="note"><b>' + yeniN + '</b> yeni ürün · <b>' + gunN + '</b> güncelleme' + (hataliN ? ' · <b style="color:#a33;">' + hataliN + ' hatalı satır atlanacak</b>' : '') + '</div>' +
       '<div style="max-height:320px;overflow:auto;border:1px solid var(--line);">' +
-      '<table style="width:100%;border-collapse:collapse;font-size:.8rem;">' +
-      '<tr style="background:#f7f6f3;text-align:left;"><th style="padding:7px 10px;">Kod</th><th>Ad</th><th>Fiyat</th><th>Kategori</th><th>İşlem</th><th>Not</th></tr>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:.8rem;table-layout:fixed;">' +
+      '<colgroup><col style="width:13%"><col style="width:37%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:18%"></colgroup>' +
+      '<tr style="background:#f7f6f3;text-align:left;"><th style="padding:8px 10px;">Kod</th><th style="padding:8px 10px;">Ad</th><th style="padding:8px 10px;">Fiyat</th><th style="padding:8px 10px;">Kategori</th><th style="padding:8px 10px;">İşlem</th><th style="padding:8px 10px;">Not</th></tr>' +
       s.map(function (x) {
         var renk = x.hatalar.length ? '#fbefef' : (x.yeni ? '#f2f8ef' : '#fff');
         var islem = x.hatalar.length ? '<b style="color:#a33;">Atlanacak</b>' : (x.yeni ? 'Yeni' : 'Güncelle');
         var not = x.hatalar.concat(x.uyarilar).join(' · ');
-        return '<tr style="background:' + renk + ';border-top:1px solid var(--line);"><td style="padding:6px 10px;">' + esc(x.id) + '</td><td>' + esc(x.ham.nameTR || (C.products.find(function (p) { return p.id === x.id; }) || {}).nameTR || '') + '</td><td>' + (x.fiyat === null ? '—' : x.fiyat) + '</td><td>' + esc(x.rol || '—') + '</td><td>' + islem + '</td><td style="color:' + (x.hatalar.length ? '#a33' : '#8a6f3c') + ';">' + esc(not) + '</td></tr>';
+        var td = 'padding:7px 10px;vertical-align:top;';
+        return '<tr style="background:' + renk + ';border-top:1px solid var(--line);"><td style="' + td + '">' + esc(x.id) + '</td><td style="' + td + '">' + esc(x.ham.nameTR || (C.products.find(function (p) { return p.id === x.id; }) || {}).nameTR || '') + '</td><td style="' + td + '">' + (x.fiyat === null ? '—' : x.fiyat) + '</td><td style="' + td + '">' + esc(x.rol || '—') + '</td><td style="' + td + '">' + islem + '</td><td style="' + td + 'color:' + (x.hatalar.length ? '#a33' : '#8a6f3c') + ';">' + esc(not) + '</td></tr>';
       }).join('') + '</table></div>' +
       '<div class="row-actions"><button class="btn btn-gold btn-sm" id="btn-toplu-uygula" type="button"' + ((yeniN + gunN) ? '' : ' disabled') + '>İçe Aktar (' + (yeniN + gunN) + ')</button>' +
       '<button class="btn btn-ghost btn-sm" id="btn-toplu-iptal" type="button">Vazgeç</button></div>';
@@ -2236,7 +2236,6 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       if (dolu(h.badgeTR)) p.badgeTR = String(h.badgeTR).trim();
       if (dolu(h.badgeEN)) p.badgeEN = String(h.badgeEN).trim();
       if (x.stok !== null) p.stok = Math.floor(x.stok);
-      if (x.vit !== null) p.featured = Math.floor(x.vit);
       if (dolu(h.visible)) p.visible = !/^(hay[ıi]r|no|0|false)$/i.test(String(h.visible).trim());
       if (dolu(h.stokKodu)) p.stokKodu = String(h.stokKodu).trim();
       if (!p.img) gorselsiz++;
