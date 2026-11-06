@@ -846,32 +846,33 @@ nav.main a.top:hover, nav.main a.top.active,
 }
 .cat-card .thumb img{max-width:86%;max-height:86%;object-fit:contain}
 
-/* Mega menü: Good Phats düzeni — solda taşan şişeli kartlar, sağda promo */
-.mega.mega-cats{display:grid;grid-template-columns:1fr 380px;gap:32px;width:min(1160px,calc(100vw - 60px));padding:26px 32px 30px}
-.mega-sol h5{margin-bottom:6px}
-/* Good Phats düzeni: iri koyu pill, metin ORTADA, küçük ürün kartın içinde solda durur */
-.mega-grid{grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:44px 30px;margin-top:48px}
+/* Mega menü: marka dili — beyaz kartlar, ince gold çizgi, Cormorant/Poppins */
+.mega.mega-cats{display:grid;grid-template-columns:1fr 360px;gap:32px;width:min(1120px,calc(100vw - 60px));padding:28px 32px 30px}
+.mega-sol h5{margin-bottom:6px;font-family:'Poppins',sans-serif;font-weight:300;letter-spacing:.24em;text-transform:uppercase;font-size:.68rem;color:#BFA25D}
+.mega-grid{grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:12px;margin-top:18px}
 .mega-grid .cat-card{
-  position:relative;min-height:80px;font-size:1.02rem;line-height:1.25;
-  padding:12px 14px 12px 102px;border-radius:18px;
-  overflow:visible;justify-content:flex-start;text-align:left;
-  box-shadow:0 14px 28px rgba(30,28,25,.28);
+  background:#fff;color:#1D1F1C;border:1px solid #EDE4CE;border-radius:2px;
+  min-height:76px;padding:10px 14px;gap:14px;
+  font-family:'Poppins',sans-serif;font-weight:500;font-size:.88rem;line-height:1.3;
+  box-shadow:none;transition:border-color .2s,box-shadow .2s,transform .2s;
 }
-.mega-grid .cat-card:hover{box-shadow:0 20px 36px rgba(30,28,25,.4);transform:translateY(-3px)}
+.mega-grid .cat-card:hover{border-color:#BFA25D;box-shadow:0 10px 24px rgba(30,28,25,.1);transform:translateY(-2px);color:#8a6f3c}
 .mega-grid .cat-card .thumb{
-  position:absolute;left:0;bottom:10px;width:102px;height:auto;
-  background:none;border-radius:0;overflow:visible;
-  display:flex;align-items:flex-end;justify-content:center; /* sol bölgede ortalanır */
+  position:static;width:56px;height:56px;flex-shrink:0;background:#FAF7F0;border-radius:2px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
-/* GP kuralı: TÜM görseller sabit 100px yükseklikte (genişlik orantılı) —
-   kartın içinde durur, yalnızca kapak/tepe kısmı üstten hafifçe taşar */
-.mega-grid .cat-card .thumb img{height:100px;width:auto;max-width:none;max-height:none;filter:drop-shadow(0 8px 12px rgba(0,0,0,.45))}
-.mega-promo{display:block;border-radius:16px;overflow:hidden;background:var(--gold-pale);transition:transform .25s}
-.mega-promo:hover{transform:translateY(-3px)}
-.mega-promo img{width:100%;height:auto;display:block;object-fit:contain;background:#fff}
+.mega-grid .cat-card .thumb img{height:auto;width:auto;max-width:84%;max-height:84%;object-fit:contain;filter:none}
+.cc-ad{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.cc-yakinda{font-style:normal;font-weight:500;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:#BFA25D;border:1px solid #D8C69C;padding:2px 7px;border-radius:2px}
+.mega-promo{display:block;border:1px solid #EDE4CE;border-radius:2px;overflow:hidden;background:#fff;transition:border-color .2s,box-shadow .2s,transform .2s}
+.mega-promo:hover{border-color:#BFA25D;box-shadow:0 10px 24px rgba(30,28,25,.1);transform:translateY(-2px)}
+.mega-promo img{width:100%;height:210px;display:block;object-fit:cover;background:#fff}
 .mega-promo .mp-body{padding:18px 20px 22px}
-.mega-promo .mp-body p{font-weight:700;font-size:1.02rem;line-height:1.35;margin-bottom:14px}
-.mega-links{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.mega-promo .mp-body p{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.3;color:#1D1F1C;margin-bottom:14px}
+.mega-links{display:flex;gap:26px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid #EDE4CE}
+.mega-links a{font-family:'Poppins',sans-serif;font-weight:400;font-size:.84rem;color:#4D5358;transition:color .2s}
+.mega-links a:hover{color:#8a6f3c}
+.mega-links a::after{content:' →';color:#BFA25D}
 .mega-links a{font-size:.9rem;color:var(--ink-soft);transition:color .2s}
 .mega-links a:hover{color:var(--gold)}
 
