@@ -135,16 +135,16 @@
 <div id="om-footer"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  var ROLLER = { serin: 'Finishing Olive Oil', ocak: 'Cooking Olive Oil', zeytin: 'Natural Olives', eksi: 'Vinegars & Pomegranate', hediye: 'Sets' };
+  var ROLLER = { serin: 'Early Harvest Olive Oil', ocak: 'Ripe Harvest Olive Oil', zeytin: 'Natural Olives', eksi: 'Vinegars & Pomegranate', hediye: 'Sets' };
   var id = new URLSearchParams(location.search).get('id') || '';
   var FALLBACK = {
-    'og5l': { id:'og5l', role:'ocak', nameEN:'Ripe Harvest 5L Tin', noteEN:'A daily cooking oil for chickpeas, vegetable stews, green beans and roasting; add it at the start.', price:3450, unitEN:'/ 5L', img:'assets/img/ayvalik-5l.jpg', visible:true },
+    'og5l': { id:'og5l', role:'ocak', nameEN:'Ripe Harvest 5L Tin', noteEN:'A daily ripe harvest oil for chickpeas, vegetable stews, green beans and roasting; add it at the start.', price:3450, unitEN:'/ 5L', img:'assets/img/ayvalik-5l.jpg', visible:true },
     'kutu750': { id:'kutu750', role:'hediye', nameEN:'Gift Box 750 ml', noteEN:'In an elegant cylinder box with your handwritten note, ready to gift.', price:1250, unitEN:'/ 750 ml', img:'assets/img/kutulu-750.jpg', visible:true },
     'kutu500': { id:'kutu500', role:'hediye', nameEN:'Gift Box 500 ml', noteEN:'A 500 ml Ayvalık in its cylinder box; ready for your note.', price:850, unitEN:'/ 500 ml', img:'assets/img/kutulu-500.jpg', visible:true },
     'ces-mand': { id:'ces-mand', role:'serin', nameEN:'Bodrum Mandarin Infused', noteEN:'Finish beet-and-cheese salad, cooled citrus cake or seafood. It adds aroma, not the acidity of lemon or vinegar.', price:650, unitEN:'/ 250ml', img:'assets/img/cesnili-mandalina.jpg', visible:true },
     'ces-bib': { id:'ces-bib', role:'serin', nameEN:'Hot Pepper Infused', noteEN:'Finish lentil soup, hummus or pizza. Start with a few drops and do not heat it separately.', price:650, unitEN:'/ 250ml', img:'assets/img/cesnili-acibiber.jpg', visible:true },
-    'ces-berg': { id:'ces-berg', role:'serin', nameEN:'Bergamot Infused', noteEN:'A very low-dose finishing oil for white fish and artichokes. Add drop by drop just before serving.', price:650, unitEN:'/ 250ml', img:'assets/img/cesnili-bergamot.jpg', visible:true },
-    'ces-kek': { id:'ces-kek', role:'serin', nameEN:'Thyme Infused', noteEN:'An herbaceous finishing oil for roast potatoes, warm bread and grilled chicken, added after cooking.', price:650, unitEN:'/ 250ml', img:'assets/img/cesnili-kekik.jpg', visible:true },
+    'ces-berg': { id:'ces-berg', role:'serin', nameEN:'Bergamot Infused', noteEN:'A very low-dose early harvest oil for white fish and artichokes. Add drop by drop just before serving.', price:650, unitEN:'/ 250ml', img:'assets/img/cesnili-bergamot.jpg', visible:true },
+    'ces-kek': { id:'ces-kek', role:'serin', nameEN:'Thyme Infused', noteEN:'An herbaceous early harvest oil for roast potatoes, warm bread and grilled chicken, added after cooking.', price:650, unitEN:'/ 250ml', img:'assets/img/cesnili-kekik.jpg', visible:true },
     'sir-bal': { id:'sir-bal', role:'eksi', nameEN:'Balsamic Vinegar', noteEN:'A low-dose sweet-sour finish for tomato and mozzarella, beet and cheese, or rested grilled beef.', price:0, unitEN:'/ 250ml', img:'assets/img/sirke-balsamik.jpg', visible:true },
     'sir-alic': { id:'sir-alic', role:'eksi', nameEN:'Organic Hawthorn Vinegar', noteEN:'Use as the dressing acid in lentil or potato salad. Start low and adjust because natural acidity can vary.', price:0, unitEN:'/ 500ml', img:'assets/img/sirke-alic.jpg', visible:true },
     'sir-elma': { id:'sir-elma', role:'eksi', nameEN:'Organic Apple Vinegar', noteEN:'A fruity everyday acidity for spinach-and-apple salad, slaw and quick pickles.', price:0, unitEN:'/ 500ml', img:'assets/img/sirke-elma.jpg', visible:true },
@@ -154,23 +154,23 @@ document.addEventListener('DOMContentLoaded', function () {
   var SAFE_COPY = {};
   Object.keys(FALLBACK).forEach(function (key) { SAFE_COPY[key] = { noteEN: FALLBACK[key].noteEN }; });
   var PAIRINGS = {
-    'og5l': { title:'Add it at the start of everyday cooking', role:'Cooking oil · use while softening onions, at the start of a pot, or on a roasting tray.', items:[
+    'og5l': { title:'Add it at the start of everyday cooking', role:'Ripe harvest oil · use while softening onions, at the start of a pot, or on a roasting tray.', items:[
       ['Olive-oil Chickpea Stew','tarif-nohut-yemegi.html','assets/img/tarif-nohut-yemegi.jpg','From the start of cooking'],
       ['Aegean Vegetable Stew','tarif-turlu.html','assets/img/tarif-turlu.jpg','Cook together with the vegetables'],
       ['Green Beans in Olive Oil','tarif-taze-fasulye.html','assets/img/tarif-taze-fasulye.jpg','Cook with it; save a little to finish'] ] },
-    'ces-mand': { title:'Open the citrus aroma on a cool plate', role:'Finishing oil · use after the hob or oven; start with a few drops.', note:'Mandarin oil adds aroma, not the acidity of lemon juice or vinegar.', items:[
+    'ces-mand': { title:'Open the citrus aroma on a cool plate', role:'Early harvest oil · use after the hob or oven; start with a few drops.', note:'Mandarin oil adds aroma, not the acidity of lemon juice or vinegar.', items:[
       ['Beet, White Cheese and Walnut','tarif-pancar-mandalina.html','assets/img/tarif-pancar-mandalina.jpg','In the dressing, just before serving'],
       ['Citrus Olive-oil Cake','tarif-portakalli-kek.html','assets/img/tarif-portakalli-kek.jpg','In the glaze after the cake cools'],
       ['Grilled Salmon or Sea Bass','','assets/img/tarif-bergamotlu-levrek.jpg','After cooking, in a low dose'] ] },
-    'ces-bib': { title:'Control the heat at the table', role:'Finishing oil · do not heat separately; begin with a few drops.', items:[
+    'ces-bib': { title:'Control the heat at the table', role:'Early harvest oil · do not heat separately; begin with a few drops.', items:[
       ['Red Lentil Soup','tarif-mercimek-corbasi.html','assets/img/tarif-mercimek-corbasi.jpg','In the bowl, just before serving'],
       ['Lemony Hummus','tarif-humus.html','assets/img/tarif-humus.jpg','A small amount on top'],
       ['Pizza or Menemen','','assets/img/tarif-firin-patates-kekik.jpg','After the oven or hob'] ] },
-    'ces-berg': { title:'Use bergamot drop by drop', role:'Low-dose finishing oil · keep the powerful citrus perfume from covering the fish or vegetables.', note:'Bergamot oil adds aroma; add lemon juice or vinegar separately when a recipe needs acidity.', items:[
+    'ces-berg': { title:'Use bergamot drop by drop', role:'Low-dose early harvest oil · keep the powerful citrus perfume from covering the fish or vegetables.', note:'Bergamot oil adds aroma; add lemon juice or vinegar separately when a recipe needs acidity.', items:[
       ['Bergamot-finished Sea Bass','tarif-bergamotlu-levrek.html','assets/img/tarif-bergamotlu-levrek.jpg','After baking, in a very low dose'],
       ['Artichokes in Olive Oil','tarif-zeytinyagli-enginar.html','assets/img/tarif-zeytinyagli-enginar.jpg','A few drops after cooling'],
       ['Simple Milk Pudding','','assets/img/tarif-portakalli-kek.jpg','Start with a few drops on the cold dessert'] ] },
-    'ces-kek': { title:'Keep the herb aroma alive on warm food', role:'Finishing oil · use after roasting or grilling rather than holding it at high heat.', items:[
+    'ces-kek': { title:'Keep the herb aroma alive on warm food', role:'Early harvest oil · use after roasting or grilling rather than holding it at high heat.', items:[
       ['Thyme-finished Roast Potatoes','tarif-firin-patates-kekik.html','assets/img/tarif-firin-patates-kekik.jpg','On the hot tray, after roasting'],
       ['Thyme Oil with Warm Bread','tarif-ekmek-bandirma.html','assets/img/tarif-ekmek-bandirma.jpg','At room temperature'],
       ['Grilled Chicken or Meatballs','','assets/img/tarif-firin-patates-kekik.jpg','After leaving the grill'] ] },

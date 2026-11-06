@@ -56,14 +56,14 @@
   const T = EN ? {
     announce: '2025 harvest · Ayvalık and Trilye · Check published batch records in the Harvest Passport',
     shop: 'Shop', club: 'Club', producers: 'Producers', abonelik: 'Subscription', learn: 'Learn', quality: 'Quality', story: 'Our Story',
-    megaCat: 'Category', megaAll: 'All Products', megaBest: 'Bestsellers', megaEvoo: 'Finishing Oils', megaEarly: 'Cooking Oils',
+    megaCat: 'Category', megaAll: 'All Products', megaBest: 'Bestsellers', megaEvoo: 'Early Harvest Oils', megaEarly: 'Ripe Harvest Oils',
     megaPurpose: 'Purpose', megaGift: 'Gift Sets', megaBuild: 'Build Your Own Set', megaJoin: 'Join the Club', megaAcc: 'Accessories',
     megaNew: 'The new harvest is here', megaCta: 'Discover', megaRecipe: 'Recipe Assistant', megaQuiz: 'Palate Quiz',
     search: 'Search', cart: 'Bag', menu: 'Menu',
     faq: 'FAQ', contact: 'Contact',
     tagline: 'Traceable extra virgin olive oil shaped by Olivamore’s Ayvalık grove and carefully selected harvests.',
     fShop: 'Shop', fBrand: 'Brand', fHelp: 'Help',
-    fAll: 'All Products', fEvoo: 'Finishing Oils', fGift: 'Gift Sets',
+    fAll: 'All Products', fEvoo: 'Early Harvest Oils', fGift: 'Gift Sets',
     fStory: 'Our Story', fProducers: 'Producers', fTrace: 'Traceability', fPassport: 'Harvest Passport', fQuality: 'Quality & Lab Reports', fAwards: 'Awards',
     fFaq: 'FAQ', fShipping: 'Shipping & Returns', fContact: 'Contact', fTrack: 'Order Tracking',
     rights: '© 2026 Olivamore. All rights reserved.',
@@ -74,7 +74,7 @@
   } : {
     announce: '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et',
     shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', abonelik: 'Abonelik', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
-    megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Bitirme Zeytinyağları', megaEarly: 'Pişirme Zeytinyağları',
+    megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Erken Hasat Zeytinyağları', megaEarly: 'Olgun Hasat Zeytinyağları',
     megaPurpose: 'Amaç', megaGift: 'Hediyelik Setler', megaBuild: 'Kendi Setini Oluştur', megaJoin: "Club'a Katıl", megaAcc: 'Aksesuarlar',
     megaNew: 'Yeni hasat geldi', megaCta: 'Keşfet', megaRecipe: 'Tarif Asistanı', megaQuiz: 'Damak Testi',
     search: 'Ara', cart: 'Sepet', menu: 'Menü',
@@ -114,8 +114,8 @@
             <div class="mega-sol">
             <h5>${EN ? 'Shop by Category' : 'Kategoriye Göre Alışveriş'}</h5>
             <div class="cat-grid mega-grid">
-              <a class="cat-card" href="${P('koleksiyon.html#serin')}"><span class="thumb"><img src="assets/img/kat-bitirme.png" alt=""></span><span class="cc-ad">${EN ? 'Finishing Olive Oil' : 'Bitirme Zeytinyağı'}</span></a>
-              <a class="cat-card" href="${P('koleksiyon.html#ocak')}"><span class="thumb"><img src="assets/img/kat-pisirme.png" alt=""></span><span class="cc-ad">${EN ? 'Cooking Olive Oil' : 'Pişirme Zeytinyağı'}</span></a>
+              <a class="cat-card" href="${P('koleksiyon.html#serin')}"><span class="thumb"><img src="assets/img/kat-bitirme.png" alt=""></span><span class="cc-ad">${EN ? 'Early Harvest Olive Oil' : 'Erken Hasat Zeytinyağı'}</span></a>
+              <a class="cat-card" href="${P('koleksiyon.html#ocak')}"><span class="thumb"><img src="assets/img/kat-pisirme.png" alt=""></span><span class="cc-ad">${EN ? 'Ripe Harvest Olive Oil' : 'Olgun Hasat Zeytinyağı'}</span></a>
               <a class="cat-card" href="${P('koleksiyon.html#zeytin')}"><span class="thumb"><img src="assets/img/kat-zeytin.png" alt=""></span><span class="cc-ad">${EN ? 'Natural Olives' : 'Doğal Zeytinler'}</span></a>
               <a class="cat-card" href="${P('koleksiyon.html#eksi')}"><span class="thumb"><img src="assets/img/kat-sirke.png" alt=""></span><span class="cc-ad">${EN ? 'Vinegars' : 'Ekşiler'}</span></a>
               <a class="cat-card" href="${P('koleksiyon.html#hediyelik')}"><span class="thumb"><img src="assets/img/kat-set.png" alt=""></span><span class="cc-ad">${EN ? 'Sets' : 'Setler'}</span></a>
@@ -294,8 +294,8 @@
   const PAIRING_COPY_REV = 'role-timing-articles@2026-08-24';
   const PAIRING_NOTES = {
     og5l: {
-      tr: 'Nohut, türlü, taze fasulye ve fırın sebzede baştan eklenen günlük pişirme yağı.',
-      en: 'An everyday cooking oil added from the start for chickpea stew, braised vegetables and the oven.'
+      tr: 'Nohut, türlü, taze fasulye ve fırın sebzede baştan eklenen günlük olgun hasat yağı.',
+      en: 'An everyday ripe harvest oil added from the start for chickpea stew, braised vegetables and the oven.'
     },
     'ces-mand': {
       tr: 'Pancar–peynir salatası, narenciyeli kek ve deniz ürününde serviste. Aroma verir; asitlik için limon veya sirke ayrıca.',
@@ -306,12 +306,12 @@
       en: 'Finish lentil soup, hummus or pizza. Do not heat separately; begin with a few drops.'
     },
     'ces-berg': {
-      tr: 'Beyaz balık ve enginarda çok düşük dozlu bitirme yağı; servisten hemen önce, damla damla.',
-      en: 'A very-low-dose finishing oil for white fish and artichokes; add drop by drop just before serving.'
+      tr: 'Beyaz balık ve enginarda çok düşük dozlu erken hasat yağı; servisten hemen önce, damla damla.',
+      en: 'A very-low-dose early harvest oil for white fish and artichokes; add drop by drop just before serving.'
     },
     'ces-kek': {
-      tr: 'Fırın patates, sıcak ekmek ve ızgara tavukta piştikten sonra eklenen otsu bitirme yağı.',
-      en: 'A herbal finishing oil for roast potatoes, warm bread and grilled chicken, added after cooking.'
+      tr: 'Fırın patates, sıcak ekmek ve ızgara tavukta piştikten sonra eklenen otsu erken hasat yağı.',
+      en: 'A herbal early harvest oil for roast potatoes, warm bread and grilled chicken, added after cooking.'
     },
     'sir-bal': {
       tr: 'Domates–mozzarella, pancar–peynir ve ızgara ette düşük dozlu tatlı-ekşi bitiriş.',
@@ -555,8 +555,8 @@
 
   /* ---- Ürün kartı HTML üret ---- */
   const ROLE_LABELS = {
-    serin: { tr: 'Bitirme Zeytinyağı', en: 'Finishing' },
-    ocak: { tr: 'Pişirme Zeytinyağı', en: 'Cooking' },
+    serin: { tr: 'Erken Hasat Zeytinyağı', en: 'Finishing' },
+    ocak: { tr: 'Olgun Hasat Zeytinyağı', en: 'Cooking' },
     zeytin: { tr: 'Doğal Zeytinler', en: 'Natural Olives' },
     eksi: { tr: 'Ekşiler', en: 'Vinegars & Pomegranate' },
     hediye: { tr: 'Setler', en: 'Sets' }

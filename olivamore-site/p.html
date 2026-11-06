@@ -135,16 +135,16 @@
 <div id="om-footer"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  var ROLLER = { serin: 'Bitirme Zeytinyağı', ocak: 'Pişirme Zeytinyağı', zeytin: 'Doğal Zeytinler', eksi: 'Ekşiler', hediye: 'Setler' };
+  var ROLLER = { serin: 'Erken Hasat Zeytinyağı', ocak: 'Olgun Hasat Zeytinyağı', zeytin: 'Doğal Zeytinler', eksi: 'Ekşiler', hediye: 'Setler' };
   var id = new URLSearchParams(location.search).get('id') || '';
   var FALLBACK = {
-    'og5l': { id:'og5l', role:'ocak', nameTR:'Olgun Hasat 5 lt Teneke', noteTR:'Nohut, türlü, taze fasulye ve fırın sebzede baştan eklenen günlük pişirme yağı.', price:3450, unitTR:'/ 5lt', img:'assets/img/ayvalik-5l.jpg', visible:true },
+    'og5l': { id:'og5l', role:'ocak', nameTR:'Olgun Hasat 5 lt Teneke', noteTR:'Nohut, türlü, taze fasulye ve fırın sebzede baştan eklenen günlük olgun hasat yağı.', price:3450, unitTR:'/ 5lt', img:'assets/img/ayvalik-5l.jpg', visible:true },
     'kutu750': { id:'kutu750', role:'hediye', nameTR:'Hediye Kutulu 750 ml', noteTR:'Şık silindir kutusu ve kişisel notunla sunulmaya hazır.', price:1250, unitTR:'/ 750 ml', img:'assets/img/kutulu-750.jpg', visible:true },
     'kutu500': { id:'kutu500', role:'hediye', nameTR:'Hediye Kutulu 500 ml', noteTR:'Silindir kutusunda 500 ml Ayvalık; nota hazır.', price:850, unitTR:'/ 500 ml', img:'assets/img/kutulu-500.jpg', visible:true },
     'ces-mand': { id:'ces-mand', role:'serin', nameTR:'Bodrum Mandalina Çeşnili', noteTR:'Pancar–peynir salatasında, narenciyeli kekte ve deniz ürününde serviste. Aroma verir; asitlik için limon veya sirkeyi ayrıca ekle.', price:650, unitTR:'/ 250ml', img:'assets/img/cesnili-mandalina.jpg', visible:true },
     'ces-bib': { id:'ces-bib', role:'serin', nameTR:'Acı Biberli Çeşnili', noteTR:'Mercimek çorbası, humus ve pizzada serviste. Ayrıca kızdırmadan, birkaç damladan başlayarak kullan.', price:650, unitTR:'/ 250ml', img:'assets/img/cesnili-acibiber.jpg', visible:true },
-    'ces-berg': { id:'ces-berg', role:'serin', nameTR:'Bergamot Çeşnili', noteTR:'Beyaz balık ve zeytinyağlı enginarda çok düşük dozlu bitirme yağı. Servisten hemen önce ve damla damla kullan.', price:650, unitTR:'/ 250ml', img:'assets/img/cesnili-bergamot.jpg', visible:true },
-    'ces-kek': { id:'ces-kek', role:'serin', nameTR:'Kekik Çeşnili', noteTR:'Fırın patates, sıcak ekmek ve ızgara tavukta piştikten sonra eklenen otsu bitirme yağı.', price:650, unitTR:'/ 250ml', img:'assets/img/cesnili-kekik.jpg', visible:true },
+    'ces-berg': { id:'ces-berg', role:'serin', nameTR:'Bergamot Çeşnili', noteTR:'Beyaz balık ve zeytinyağlı enginarda çok düşük dozlu erken hasat yağı. Servisten hemen önce ve damla damla kullan.', price:650, unitTR:'/ 250ml', img:'assets/img/cesnili-bergamot.jpg', visible:true },
+    'ces-kek': { id:'ces-kek', role:'serin', nameTR:'Kekik Çeşnili', noteTR:'Fırın patates, sıcak ekmek ve ızgara tavukta piştikten sonra eklenen otsu erken hasat yağı.', price:650, unitTR:'/ 250ml', img:'assets/img/cesnili-kekik.jpg', visible:true },
     'sir-bal': { id:'sir-bal', role:'eksi', nameTR:'Balsamik Sirke', noteTR:'Domates–mozzarella, pancar–peynir ve ızgara ette düşük dozlu tatlı-ekşi bitiriş.', price:0, unitTR:'/ 250ml', img:'assets/img/sirke-balsamik.jpg', visible:true },
     'sir-alic': { id:'sir-alic', role:'eksi', nameTR:'Organik Alıç Sirkesi', noteTR:'Mercimek ve patates salatasında sos asidi. Doğal asitlik değişebileceği için düşük dozdan başlayıp tadına göre artır.', price:0, unitTR:'/ 500ml', img:'assets/img/sirke-alic.jpg', visible:true },
     'sir-elma': { id:'sir-elma', role:'eksi', nameTR:'Organik Elma Sirkesi', noteTR:'Ispanak–elma salatasında, lahana salatasında ve hızlı turşuda günlük meyvemsi ekşilik.', price:0, unitTR:'/ 500ml', img:'assets/img/sirke-elma.jpg', visible:true },
@@ -154,23 +154,23 @@ document.addEventListener('DOMContentLoaded', function () {
   var SAFE_COPY = {};
   Object.keys(FALLBACK).forEach(function (key) { SAFE_COPY[key] = { noteTR: FALLBACK[key].noteTR }; });
   var PAIRINGS = {
-    'og5l': { title:'Günlük tencereye baştan ekle', role:'Pişirme yağı · soğanı çevirirken, tencerenin başında veya fırın tepsisinde kullan.', items:[
+    'og5l': { title:'Günlük tencereye baştan ekle', role:'Olgun hasat yağı · soğanı çevirirken, tencerenin başında veya fırın tepsisinde kullan.', items:[
       ['Zeytinyağlı Nohut Yemeği','tarif-nohut-yemegi.html','assets/img/tarif-nohut-yemegi.jpg','Tencerenin başından itibaren'],
       ['Zeytinyağlı Türlü','tarif-turlu.html','assets/img/tarif-turlu.jpg','Sebzelerle birlikte pişir'],
       ['Zeytinyağlı Taze Fasulye','tarif-taze-fasulye.html','assets/img/tarif-taze-fasulye.jpg','Pişir; küçük bir kısmını sonradan ekle'] ] },
-    'ces-mand': { title:'Taze narenciye kokusunu soğuk tabakta aç', role:'Bitirme yağı · ocaktan veya fırından sonra; önce birkaç damla, sonra tadına göre.', note:'Mandalina yağı aroma verir; limon suyu ya da sirke gibi asitlik ve meyve suyu gibi tatlılık sağlamaz.', items:[
+    'ces-mand': { title:'Taze narenciye kokusunu soğuk tabakta aç', role:'Erken hasat yağı · ocaktan veya fırından sonra; önce birkaç damla, sonra tadına göre.', note:'Mandalina yağı aroma verir; limon suyu ya da sirke gibi asitlik ve meyve suyu gibi tatlılık sağlamaz.', items:[
       ['Pancar, Beyaz Peynir ve Ceviz','tarif-pancar-mandalina.html','assets/img/tarif-pancar-mandalina.jpg','Sos içinde, servisten hemen önce'],
       ['Narenciyeli Zeytinyağlı Kek','tarif-portakalli-kek.html','assets/img/tarif-portakalli-kek.jpg','Soğuyan kekin glazesinde'],
       ['Izgara Somon veya Levrek','','assets/img/tarif-bergamotlu-levrek.jpg','Piştikten sonra, düşük dozda'] ] },
-    'ces-bib': { title:'Acıyı tabakta kontrol et', role:'Bitirme yağı · ayrıca kızdırmadan, birkaç damladan başlayarak kullan.', items:[
+    'ces-bib': { title:'Acıyı tabakta kontrol et', role:'Erken hasat yağı · ayrıca kızdırmadan, birkaç damladan başlayarak kullan.', items:[
       ['Mercimek Çorbası','tarif-mercimek-corbasi.html','assets/img/tarif-mercimek-corbasi.jpg','Kâsede, servisten hemen önce'],
       ['Limonlu Humus','tarif-humus.html','assets/img/tarif-humus.jpg','Üstteki yağ havuzuna az miktarda'],
       ['Pizza veya Menemen','','assets/img/tarif-firin-patates-kekik.jpg','Pizza fırından, menemen ocaktan çıktıktan sonra'] ] },
-    'ces-berg': { title:'Bergamotu damla damla kullan', role:'Düşük doz bitirme yağı · güçlü narenciye kokusu nedeniyle balığı veya sebzeyi örtmeden ekle.', note:'Bergamot yağı aroma verir; ekşilik gereken tariflerde limon suyu veya sirke ayrıca kullanılmalıdır.', items:[
+    'ces-berg': { title:'Bergamotu damla damla kullan', role:'Düşük doz erken hasat yağı · güçlü narenciye kokusu nedeniyle balığı veya sebzeyi örtmeden ekle.', note:'Bergamot yağı aroma verir; ekşilik gereken tariflerde limon suyu veya sirke ayrıca kullanılmalıdır.', items:[
       ['Bergamot Bitirişli Levrek','tarif-bergamotlu-levrek.html','assets/img/tarif-bergamotlu-levrek.jpg','Fırından sonra, çok düşük doz'],
       ['Zeytinyağlı Enginar','tarif-zeytinyagli-enginar.html','assets/img/tarif-zeytinyagli-enginar.jpg','Soğuduktan sonra birkaç damla'],
       ['Sade Sütlü Tatlı','','assets/img/tarif-portakalli-kek.jpg','Soğuk tatlıda önce birkaç damla'] ] },
-    'ces-kek': { title:'Sıcak tabakta otsu kokuyu koru', role:'Bitirme yağı · fırın veya ızgaradan sonra kullan; uzun süre yüksek ısıda tutma.', items:[
+    'ces-kek': { title:'Sıcak tabakta otsu kokuyu koru', role:'Erken hasat yağı · fırın veya ızgaradan sonra kullan; uzun süre yüksek ısıda tutma.', items:[
       ['Kekik Bitirişli Fırın Patates','tarif-firin-patates-kekik.html','assets/img/tarif-firin-patates-kekik.jpg','Sıcak tepside, fırından sonra'],
       ['Kekikli Ekmek Bandırması','tarif-ekmek-bandirma.html','assets/img/tarif-ekmek-bandirma.jpg','Oda sıcaklığında'],
       ['Izgara Tavuk veya Köfte','','assets/img/tarif-firin-patates-kekik.jpg','Izgaradan alındıktan sonra'] ] },
