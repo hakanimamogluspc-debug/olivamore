@@ -2284,3 +2284,11 @@ body[data-page="home"] section > .container{position:relative;z-index:1}
 @media(max-width:860px){.zsus{width:70px!important;opacity:.55}.zsus.sol-ust,.zsus.sol-alt{left:-18px}.zsus.sag-ust,.zsus.sag-alt{right:-18px}}
 body[data-page="home"] .omx-split > *:not(.zsus){position:relative;z-index:1}
 body[data-page="home"] section .zsus{position:absolute}
+
+/* Mağaza alanı yaprak süslemeleri */
+.fig-magaza{position:relative;overflow:hidden}
+.fig-magaza > *:not(.zsus){position:relative;z-index:1}
+.fig-magaza .zsus.sol-alt{left:-28px;bottom:70px}
+.fig-magaza .zsus.sag-alt{right:-20px;bottom:120px}
+.fig-magaza .zsus.fm-orta{left:22%;bottom:34px;--zd:62deg}
+@media(max-width:860px){.fig-magaza .zsus.fm-orta{display:none}}
