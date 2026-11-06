@@ -47,8 +47,8 @@
         <button class="chip on" data-role="all">Tümü</button>
         <button class="chip" id="serin" data-role="serin">Erken Hasat Zeytinyağı</button>
         <button class="chip" id="ocak" data-role="ocak">Olgun Hasat Zeytinyağı</button>
-        <button class="chip" id="zeytin" data-role="zeytin">Doğal Zeytinler · Yakında</button>
-        <button class="chip" id="eksi" data-role="eksi">Ekşiler · Yakında</button>
+        <button class="chip" id="zeytin" data-role="zeytin">Doğal Zeytinler</button>
+        <button class="chip" id="eksi" data-role="eksi">Ekşiler</button>
         <button class="chip" id="hediyelik" data-role="hediye">Setler</button>
       </div>
       <div class="sort">
@@ -62,6 +62,7 @@
     </div>
 
     <p class="role-note" id="role-note"></p>
+    <div class="eksi-empty" id="kat-bos" style="display:none;"><b>Bu kategoride şimdilik ürün yok; yakında burada olacak.</b></div>
     <div class="eksi-empty" id="zeytin-empty">
       <b>Doğal fermente zeytinlerimiz yakında burada</b>
       Kırma yeşil ve doğal salamura siyah zeytinlerimiz raflara hazırlanıyor. Haberdar olmak için <a class="link-arrow" href="#nl">bültene katıl</a>.
@@ -157,18 +158,32 @@
         var r = card.dataset.role;
         card.style.display = (role === 'all' || r === role) ? '' : 'none';
       });
-      if (note) note.textContent = NOTES[role] || NOTES.all;
-      if (empty) empty.style.display = role === 'eksi' ? 'block' : 'none';
+      if (note) note.textContent = (window.OM_KAT_NOT && window.OM_KAT_NOT[role]) || NOTES[role] || NOTES.all;
+      SECILI = role;
+      var gorunenSay = 0;
+      document.querySelectorAll('.prod-grid .card').forEach(function (c) { if (c.style.display !== 'none') gorunenSay++; });
+      var bosMu = role !== 'all' && gorunenSay === 0;
+      if (empty) empty.style.display = (bosMu && role === 'eksi') ? 'block' : 'none';
       var ze = document.getElementById('zeytin-empty');
-      if (ze) ze.style.display = role === 'zeytin' ? 'block' : 'none';
+      if (ze) ze.style.display = (bosMu && role === 'zeytin') ? 'block' : 'none';
+      var kb = document.getElementById('kat-bos');
+      if (kb) kb.style.display = (bosMu && role !== 'eksi' && role !== 'zeytin') ? 'block' : 'none';
     }
-    document.querySelectorAll('.filters .chip').forEach(function (c) {
-      c.addEventListener('click', function () { apply(c.dataset.role || 'all'); });
+    var SECILI = 'all';
+    document.querySelector('.filters').addEventListener('click', function (e) {
+      var c = e.target.closest('.chip'); if (!c) return;
+      apply(c.dataset.role || 'all');
     });
+    // CMS kartları/çipleri yüklendikten sonra site.js çağırır: seçili filtreyi (veya #çapa) yeniden uygula
+    window.omKoleksiyonUygula = function () {
+      var hc = document.getElementById(location.hash.slice(1));
+      if (SECILI === 'all' && hc && hc.classList.contains('chip')) { apply(hc.dataset.role || 'all'); return; }
+      apply(SECILI);
+    };
     // Sıralama: öne çıkanlar / çok satanlar / fiyat
     var grid = document.querySelector('.prod-grid.three');
     function kartFiyat(c) {
-      var m = ((c.querySelector('.price') || { textContent: '' }).textContent).match(/\d{1,3}(?:\.\d{3})+|\d+/);
+      var m = ((c.querySelector('.fk-fiyat, .price') || { textContent: '' }).textContent).match(/\d{1,3}(?:\.\d{3})+|\d+/);
       return m ? parseInt(m[0].replace(/\./g, ''), 10) : 0;
     }
     document.querySelector('.sort select').addEventListener('change', function () {
@@ -179,8 +194,8 @@
         if (v === 2) return kartFiyat(a) - kartFiyat(b);
         if (v === 3) return kartFiyat(b) - kartFiyat(a);
         if (v === 1) {
-          var ca = /Çok Satan|Bestseller/.test((a.querySelector('.badge') || { textContent: '' }).textContent) ? 0 : 1;
-          var cb = /Çok Satan|Bestseller/.test((b.querySelector('.badge') || { textContent: '' }).textContent) ? 0 : 1;
+          var ca = /Çok Satan|Bestseller/.test((a.querySelector('.fk-rozet, .badge') || { textContent: '' }).textContent) ? 0 : 1;
+          var cb = /Çok Satan|Bestseller/.test((b.querySelector('.fk-rozet, .badge') || { textContent: '' }).textContent) ? 0 : 1;
           if (ca !== cb) return ca - cb;
         }
         return (+a.dataset.sira) - (+b.dataset.sira);

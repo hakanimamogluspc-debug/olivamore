@@ -661,7 +661,9 @@
     const badge = EN ? p.badgeEN : p.badgeTR;
     const href = urunHref(p);
     const badgeHtml = badge ? `<span class="badge">${badge}</span>` : '';
-    const roleDef = ROLE_LABELS[p.role];
+    const katListe = (C && Array.isArray(C.urunKategorileri) && C.urunKategorileri.length) ? C.urunKategorileri : null;
+    const katBul = katListe ? katListe.find(k => k.id === p.role) : null;
+    const roleDef = katBul ? { tr: katBul.adTR, en: katBul.adEN || katBul.adTR } : ROLE_LABELS[p.role];
     const roleHtml = roleDef ? `<span class="role-tag">${EN ? roleDef.en : roleDef.tr}</span>` : '';
     // Ana sayfa mağaza kartı diliyle (fig-kart): beyaz kart, ortalı görsel, gold buton
     const rozetHtml = badge ? `<span class="fk-rozet">${badge}</span>` : '';
@@ -698,10 +700,22 @@
 
   function renderProductGrids(C) {
     const vis = C.products.filter(p => p.visible !== false);
-    // Koleksiyon: tüm ürünler
+    // Koleksiyon: tüm ürünler + panelden yönetilen kategori çipleri
     if (current.indexOf('koleksiyon') === 0) {
       const grid = document.querySelector('.prod-grid.three');
       if (grid) grid.innerHTML = vis.map(p => productCard(p, C)).join('');
+      const filtreler = document.querySelector('.filters');
+      if (filtreler && Array.isArray(C.urunKategorileri) && C.urunKategorileri.length) {
+        filtreler.innerHTML = `<button class="chip on" data-role="all">${EN ? 'All' : 'Tümü'}</button>` +
+          C.urunKategorileri.map(k => {
+            // eski çapalar (#hediyelik) bozulmasın
+            const capa = k.id === 'hediye' ? 'hediyelik' : k.id;
+            return `<button class="chip" id="${capa}" data-role="${k.id}">${EN ? (k.adEN || k.adTR) : k.adTR}</button>`;
+          }).join('');
+        window.OM_KAT_NOT = {};
+        C.urunKategorileri.forEach(k => { const n = EN ? k.notEN : k.notTR; if (n) window.OM_KAT_NOT[k.id] = n; });
+      }
+      if (window.omKoleksiyonUygula) window.omKoleksiyonUygula();
     }
     // Ana sayfa: vitrin (featured sırasına göre ilk 4)
     if (document.body.dataset.page === 'home') {

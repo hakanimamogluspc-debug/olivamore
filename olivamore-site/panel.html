@@ -217,6 +217,13 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div class="note"><b>Ürünler:</b> Koleksiyon sayfasındaki tüm kartlar ve ana sayfa vitrini buradan yönetilir. <b>Vitrin sırası</b> 1-4 arası olan ürünler ana sayfada gösterilir (0 = vitrinde değil).</div>
       <div id="products-list"></div>
       <button class="btn btn-dark" id="btn-add-product">+ Yeni Ürün Ekle</button>
+
+      <div class="panel" style="margin-top:22px;">
+        <h2>Ürün Kategorileri</h2>
+        <div class="desc">Koleksiyon sayfasındaki filtre düğmeleri ve kartlardaki kategori etiketi bu listeden gelir. Ürünün kategorisini yukarıda her ürünün "Kategori" alanından seçersin; oradan da yeni kategori ekleyebilirsin. Sıra, filtre düğmelerinin sırasıdır.</div>
+        <div id="urunkat-list"></div>
+        <button class="btn btn-outline btn-sm" id="btn-add-urunkat" type="button" style="margin-top:10px;">+ Yeni Kategori</button>
+      </div>
       <button class="btn btn-outline" id="btn-export-products" style="margin-left:10px;">⬇ Excel'e Aktar (CSV)</button>
 
       <div class="panel" style="margin-top:22px;">
@@ -899,6 +906,20 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     }
   });
   document.getElementById('products-list').addEventListener('change', function (e) {
+    // Kategori seçiminde "＋ Yeni kategori ekle…"
+    if (e.target.classList.contains('p-role') && e.target.value === '__yeni__') {
+      var sel = e.target;
+      var ad = (prompt('Yeni kategorinin adı (Türkçe):') || '').trim();
+      if (!ad) { sel.value = ''; return; }
+      var adEN = (prompt('İngilizce adı (boş bırakılabilir):', ad) || '').trim() || ad;
+      var yeni = urunKategoriEkle(ad, adEN);
+      var item = sel.closest('.item');
+      syncProductsFromDOM();
+      var p = C.products[+item.dataset.idx];
+      if (p) p.role = yeni.id;
+      renderProducts(); renderUrunKategorileri(); dirty();
+      return;
+    }
     var gi = e.target.closest('.gal-item');
     if (!gi) return;
     if (e.target.classList.contains('g-sel') && e.target.value) {
@@ -971,10 +992,10 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Rozet (EN)</label><input type="text" class="p-badgeEN" value="' + esc(p.badgeEN) + '"></div>' +
       '<div class="field"><label>Vitrin sırası (0-4)</label><input type="number" class="p-featured" min="0" max="4" value="' + (p.featured || 0) + '"></div>' +
       '</div>' +
-      '<div class="field"><label>Rol (koleksiyon filtresi)</label><select class="p-role">' +
-      [['', 'Yok (yalnız Tümü\'nde görünür)'], ['serin', 'Serin Sofra'], ['ocak', 'Ocak Başı'], ['eksi', 'Ekşi Denge'], ['hediye', 'Hediyelik']].map(function (r) {
-        return '<option value="' + r[0] + '"' + ((p.role || '') === r[0] ? ' selected' : '') + '>' + r[1] + '</option>';
-      }).join('') + '</select></div>' +
+      '<div class="field"><label>Kategori (koleksiyon filtresi)</label><select class="p-role">' +
+      [['', 'Yok (yalnız Tümü\'nde görünür)']].concat(urunKategorileri().map(function (k) { return [k.id, k.adTR]; })).map(function (r) {
+        return '<option value="' + r[0] + '"' + ((p.role || '') === r[0] ? ' selected' : '') + '>' + esc(r[1]) + '</option>';
+      }).join('') + '<option value="__yeni__">＋ Yeni kategori ekle…</option></select></div>' +
       (p.type !== 'club' ? '<div class="field"><label>Ürün Görseli</label>' + imgPicker(p.img, 'p-img') + '</div>' : '') +
       '<div class="field"><label>Ek Görseller — yemek / kanıt / detay (ilki, kartta hover görseli olur)</label>' +
       '<div class="galeri">' + (p.galeri || []).map(galItem).join('') + '</div>' +
@@ -1243,6 +1264,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     syncBatchesFromDOM();
     syncCouponsFromDOM();
     syncKategorilerFromDOM();
+    syncUrunKategorilerFromDOM();
     document.querySelectorAll('#pages-list .pagecard').forEach(function (d) {
       var p = C.pages[d.dataset.page];
       p.tTR = d.querySelector('.pg-tTR').value; p.tEN = d.querySelector('.pg-tEN').value;
@@ -2063,6 +2085,89 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     dirty();
   });
 
+  /* ================== ÜRÜN KATEGORİLERİ (koleksiyon filtresi) ================== */
+  var URUNKAT_VARSAYILAN = [
+    { id: 'serin', adTR: 'Erken Hasat Zeytinyağı', adEN: 'Early Harvest Olive Oil', notTR: 'Erken hasat yağlar: kahvaltı, meze ve salatada; belirgin aromayı korumak için çoğunlukla serviste veya piştikten sonra ekle.', notEN: 'Early harvest oils: for breakfast, mezes and salads; add at serving or after cooking to keep the aroma.' },
+    { id: 'ocak', adTR: 'Olgun Hasat Zeytinyağı', adEN: 'Ripe Harvest Olive Oil', notTR: 'Olgun hasat: sıcak yemeklerin, zeytinyağlıların ve fırının günlük yağı. Dengeli gövde, pratik kullanım.', notEN: 'Ripe harvest: the everyday oil for hot dishes, braises and the oven. Balanced body, practical use.' },
+    { id: 'zeytin', adTR: 'Doğal Zeytinler', adEN: 'Natural Olives', notTR: 'Doğal fermente sofralık zeytinler: pastörizesiz, canlı, çıtır.', notEN: 'Naturally fermented table olives: unpasteurised, lively, crisp.' },
+    { id: 'eksi', adTR: 'Ekşiler', adEN: 'Vinegars', notTR: 'Sirkeler sos ve turşuda asitlik verir; nar ekşisi ise sirke değil, yoğun meyve sosudur.', notEN: 'Vinegars bring acidity to dressings and pickles; pomegranate molasses is a dense fruit sauce, not a vinegar.' },
+    { id: 'hediye', adTR: 'Setler', adEN: 'Sets', notTR: 'Şık kutular, karta yazılmış notlar. Ya da kutuyu kendin tasarla.', notEN: 'Elegant boxes, handwritten notes. Or design the box yourself.' }
+  ];
+  function urunKategorileri() {
+    if (!Array.isArray(C.urunKategorileri) || !C.urunKategorileri.length) C.urunKategorileri = JSON.parse(JSON.stringify(URUNKAT_VARSAYILAN));
+    return C.urunKategorileri;
+  }
+  function katSlug(ad) {
+    var tr = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'İ': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'Ç': 'c', 'Ğ': 'g', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };
+    var s = String(ad).replace(/[çğıİöşüÇĞÖŞÜ]/g, function (h) { return tr[h]; }).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || 'kategori';
+    var liste = urunKategorileri(), aday = s, n = 2;
+    while (liste.some(function (k) { return k.id === aday; }) || aday === 'all') aday = s + '-' + (n++);
+    return aday;
+  }
+  function urunKategoriEkle(adTR, adEN) {
+    var k = { id: katSlug(adTR), adTR: adTR, adEN: adEN || adTR, notTR: '', notEN: '' };
+    urunKategorileri().push(k);
+    return k;
+  }
+  function renderUrunKategorileri() {
+    var el = document.getElementById('urunkat-list');
+    if (!el) return;
+    var liste = urunKategorileri();
+    el.innerHTML = liste.map(function (k, i) {
+      var adet = (C.products || []).filter(function (p) { return p.role === k.id; }).length;
+      return '<div class="item uk-item" data-idx="' + i + '" style="padding:12px 16px;">' +
+        '<div class="grid3" style="align-items:end;">' +
+        '<div class="field" style="margin:0;"><label>Ad (TR)</label><input type="text" class="uk-adTR" value="' + esc(k.adTR || '') + '"></div>' +
+        '<div class="field" style="margin:0;"><label>Ad (EN)</label><input type="text" class="uk-adEN" value="' + esc(k.adEN || '') + '"></div>' +
+        '<div class="row-actions" style="margin:0;justify-content:flex-end;">' +
+        '<span style="font-size:.74rem;color:var(--soft);margin-right:auto;">' + adet + ' ürün · kod: ' + esc(k.id) + '</span>' +
+        (i > 0 ? '<button class="btn btn-ghost btn-sm uk-yukari" type="button">↑</button>' : '') +
+        (i < liste.length - 1 ? '<button class="btn btn-ghost btn-sm uk-asagi" type="button">↓</button>' : '') +
+        '<button class="btn btn-danger btn-sm uk-sil" type="button">Sil</button></div></div>' +
+        '<div class="grid2" style="margin-top:8px;">' +
+        '<div class="field" style="margin:0;"><label>Filtre açıklaması (TR, isteğe bağlı)</label><input type="text" class="uk-notTR" value="' + esc(k.notTR || '') + '"></div>' +
+        '<div class="field" style="margin:0;"><label>Filtre açıklaması (EN)</label><input type="text" class="uk-notEN" value="' + esc(k.notEN || '') + '"></div>' +
+        '</div></div>';
+    }).join('');
+  }
+  function syncUrunKategorilerFromDOM() {
+    var el = document.getElementById('urunkat-list');
+    if (!el) return;
+    var liste = urunKategorileri();
+    el.querySelectorAll('.uk-item').forEach(function (d) {
+      var k = liste[+d.dataset.idx]; if (!k) return;
+      k.adTR = d.querySelector('.uk-adTR').value.trim() || k.adTR;
+      k.adEN = d.querySelector('.uk-adEN').value.trim() || k.adTR;
+      k.notTR = d.querySelector('.uk-notTR').value.trim();
+      k.notEN = d.querySelector('.uk-notEN').value.trim();
+    });
+  }
+  document.getElementById('btn-add-urunkat').addEventListener('click', function () {
+    var ad = (prompt('Yeni kategorinin adı (Türkçe):') || '').trim();
+    if (!ad) return;
+    syncUrunKategorilerFromDOM(); syncProductsFromDOM();
+    urunKategoriEkle(ad, (prompt('İngilizce adı (boş bırakılabilir):', ad) || '').trim());
+    renderUrunKategorileri(); renderProducts(); dirty();
+  });
+  document.getElementById('urunkat-list').addEventListener('click', function (e) {
+    var d = e.target.closest('.uk-item'); if (!d) return;
+    var i = +d.dataset.idx, liste = urunKategorileri();
+    if (e.target.classList.contains('uk-sil')) {
+      var k = liste[i];
+      var adet = (C.products || []).filter(function (p) { return p.role === k.id; }).length;
+      if (!confirm('"' + k.adTR + '" kategorisi silinecek.' + (adet ? ' Bu kategorideki ' + adet + ' ürün kategorisiz kalır (yalnız "Tümü"nde görünür).' : '') + ' Emin misin?')) return;
+      syncUrunKategorilerFromDOM(); syncProductsFromDOM();
+      (C.products || []).forEach(function (p) { if (p.role === k.id) p.role = ''; });
+      liste.splice(i, 1);
+    } else if (e.target.classList.contains('uk-yukari')) {
+      syncUrunKategorilerFromDOM(); var t = liste[i - 1]; liste[i - 1] = liste[i]; liste[i] = t;
+    } else if (e.target.classList.contains('uk-asagi')) {
+      syncUrunKategorilerFromDOM(); var t2 = liste[i + 1]; liste[i + 1] = liste[i]; liste[i] = t2;
+    } else { return; }
+    renderUrunKategorileri(); renderProducts(); dirty();
+  });
+  document.getElementById('urunkat-list').addEventListener('input', function () { dirty(); });
+
   /* ================== ANA SAYFA KATEGORİ KARTLARI ================== */
   var KAT_VARSAYILAN = [
     { adTR: 'Zeytinyağları', adEN: 'Olive Oils', img: 'assets/img/foto-trilye-seri.jpg', link: 'koleksiyon.html#serin', visible: true },
@@ -2445,7 +2550,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
   /* ================== BAŞLAT ================== */
   function renderAll() {
-    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
   fetch('/api/admin/config', { cache: 'no-store' })
