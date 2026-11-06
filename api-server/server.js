@@ -763,7 +763,7 @@ async function parasutTokenAl() {
     client_secret: env.parasutClientSecret,
     username: env.parasutKullanici,
     password: env.parasutSifre,
-    redirect_uri: 'urn:ietf:wg:oauth:2.0:oob'
+    redirect_uri: env.parasutRedirect || 'urn:ietf:wg:oauth:2.0:oob'
   });
   if (!v.access_token) throw new Error('Paraşüt oturumu açılamadı');
   parasutJeton = { token: v.access_token, bitis: Date.now() + ((v.expires_in || 7200) - 120) * 1000 };
