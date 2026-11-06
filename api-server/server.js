@@ -461,18 +461,28 @@ async function abonelikTur() {
   const siparisler = oku('siparisler.json', []);
   const cfg = oku('cms.json', {});
   for (const a of vadeli) {
-    const p = (cfg.products || []).find(x => x.id === a.pid) || (cfg.products || []).find(x => x.nameTR && a.urun && a.urun.indexOf(x.nameTR) === 0);
-    const fiyat = Number(a.fiyat) || (p ? Number(p.price) : 0);
-    if (!fiyat) { a.sonHata = 'Fiyat bulunamadı (ürün eşleşmedi); sipariş oluşturulamadı.'; continue; }
-    const kdv = p && typeof p.kdv === 'number' ? p.kdv : 1;
-    const toplam = Math.round(fiyat * a.adet * 100) / 100;
+    // Kalem listesi: yeni kayıtlar a.kalemler, eskiler tek ürün
+    const istekler = (Array.isArray(a.kalemler) && a.kalemler.length)
+      ? a.kalemler
+      : [{ urun: a.urun, pid: a.pid, adet: a.adet || 1 }];
+    const kalemler = [];
+    let eksik = '';
+    for (const k of istekler) {
+      const p = (cfg.products || []).find(x => x.id === k.pid) || (cfg.products || []).find(x => x.nameTR && k.urun && k.urun.indexOf(x.nameTR) === 0);
+      const fiyat = (istekler.length === 1 && Number(a.fiyat)) || (p ? Number(p.price) : 0);
+      if (!fiyat) { eksik = k.urun; break; }
+      kalemler.push({ ad: k.urun, adet: k.adet || 1, fiyat: fiyat, kdv: p && typeof p.kdv === 'number' ? p.kdv : 1, img: p ? p.img : '' });
+    }
+    if (eksik) { a.sonHata = 'Fiyat bulunamadı (' + eksik + '); sipariş oluşturulamadı.'; continue; }
+    const toplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0) * 100) / 100;
+    const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * (k.kdv / (100 + k.kdv)), 0) * 100) / 100;
     const no = 'AB' + Date.now().toString().slice(-8);
     const siparis = {
       no: no, tarih: new Date().toISOString(),
       durum: 'yeni', odeme: 'abonelik', abonelikId: a.id,
       musteri: { ad: a.ad || a.eposta, eposta: a.eposta, telefon: a.telefon || '', adres: a.adres || '', il: a.il || '', ilce: a.ilce || '' },
-      kalemler: [{ ad: a.urun, adet: a.adet, fiyat: fiyat, kdv: kdv, img: p ? p.img : '' }],
-      araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: Math.round(toplam * (kdv / (100 + kdv)) * 100) / 100, toplam: toplam,
+      kalemler: kalemler,
+      araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: kdvToplam, toplam: toplam,
       gecmis: [{ tarih: new Date().toISOString(), islem: 'abonelikten otomatik oluşturuldu (' + a.id + ')' }]
     };
     let odemeUrl = '';
@@ -494,8 +504,9 @@ async function abonelikTur() {
     }
     siparisler.unshift(siparis);
     // e-posta: ödeme linki varsa linkli, yoksa bilgilendirme
+    const dokum = kalemler.map(k => k.adet + ' × ' + k.ad).join(', ');
     epostaGonder(a.eposta, 'Aboneliğinizin yeni dönemi hazır · ' + no,
-      'Merhaba ' + (a.ad || '') + ',\n\nAboneliğiniz kapsamında ' + a.adet + ' × ' + a.urun + ' için ' + no + ' numaralı siparişiniz oluşturuldu (₺' + toplam.toLocaleString('tr-TR') + ').\n\n' +
+      'Merhaba ' + (a.ad || '') + ',\n\nAboneliğiniz kapsamında ' + dokum + ' için ' + no + ' numaralı siparişiniz oluşturuldu (₺' + toplam.toLocaleString('tr-TR') + ').\n\n' +
       (odemeUrl ? 'Ödemeyi tamamlamak için: ' + odemeUrl : 'Ödeme için size ulaşacağız; dilerseniz bu e-postayı yanıtlayarak havale bilgisi isteyebilirsiniz.') +
       '\n\nAboneliğinizi durdurmak isterseniz bu e-postayı yanıtlamanız yeterli.\n\nAfiyet olsun,\nOlivamore');
     epostaBildir('Abonelik siparişi oluştu: ' + no, a.eposta + ' · ' + a.adet + ' × ' + a.urun + ' · ₺' + toplam + (odemeUrl ? '\nÖdeme linki gönderildi.' : '\nÖdeme linki YOK (adres/iyzico eksik).'));
@@ -944,17 +955,28 @@ const sunucu = http.createServer(async (req, res) => {
     /* ---- abonelik talebi (site formu; panelden onaylanınca aktifleşir) ---- */
     if (req.method === 'POST' && yol === '/api/abonelik-talep') {
       const g = await govde(req, 1);
-      if (!temiz(g.ad, 80) || !epostaMi(g.eposta) || !temiz(g.urun, 120)) {
-        return json(res, 400, { hata: 'Ad, geçerli e-posta ve ürün seçimi zorunlu.' });
-      }
       const liste = oku('abonelikler.json', []);
+      // Çoklu ürün: kalemler [{urun,pid,adet}] (eski tek-ürün alanlarıyla geriye uyumlu)
+      let kalemler = Array.isArray(g.kalemler) ? g.kalemler.slice(0, 10).map(k => ({
+        urun: temiz(k.urun, 120),
+        pid: temiz(k.pid, 40),
+        adet: Math.max(1, Math.min(20, parseInt(k.adet, 10) || 1))
+      })).filter(k => k.urun) : [];
+      if (!kalemler.length && temiz(g.urun, 120)) {
+        kalemler = [{ urun: temiz(g.urun, 120), pid: temiz(g.pid, 40), adet: Math.max(1, Math.min(20, parseInt(g.adet, 10) || 1)) }];
+      }
+      if (!temiz(g.ad, 80) || !epostaMi(g.eposta) || !kalemler.length) {
+        return json(res, 400, { hata: 'Ad, geçerli e-posta ve en az bir ürün zorunlu.' });
+      }
+      const ozet = kalemler.map(k => k.adet + ' × ' + k.urun).join(', ');
       const yeni = {
         id: 'AB-' + Date.now().toString(36).toUpperCase(),
         eposta: temiz(g.eposta, 120).toLowerCase(),
         ad: temiz(g.ad, 80),
-        urun: temiz(g.urun, 120),
-        pid: temiz(g.pid, 40),
-        adet: Math.max(1, Math.min(20, parseInt(g.adet, 10) || 1)),
+        kalemler: kalemler,
+        urun: ozet.slice(0, 300),
+        pid: kalemler[0].pid,
+        adet: 1,
         telefon: temiz(g.telefon, 40),
         adres: temiz(g.adres, 1000),
         il: temiz(g.il, 60),
@@ -967,9 +989,9 @@ const sunucu = http.createServer(async (req, res) => {
       liste.push(yeni);
       yaz('abonelikler.json', liste.slice(0, 5000));
       epostaGonder(yeni.eposta, 'Abonelik talebin bize ulaştı · Olivamore',
-        'Merhaba ' + yeni.ad + ',\n\n' + yeni.adet + ' × ' + yeni.urun + ' için her ' + yeni.periyotGun + ' günde bir teslimat talebini aldık. En geç bir iş günü içinde onaylayıp ilk teslimat tarihini e-postayla bildireceğiz.\n\nDilediğin an bu e-postayı yanıtlayarak değişiklik yapabilir veya vazgeçebilirsin.\n\nAfiyet olsun,\nOlivamore');
-      epostaBildir('Yeni abonelik talebi: ' + yeni.urun,
-        yeni.ad + ' <' + yeni.eposta + '>\n' + yeni.adet + ' × ' + yeni.urun + ' · her ' + yeni.periyotGun + ' günde\nTel: ' + yeni.telefon + '\nAdres: ' + yeni.adres + ' / ' + yeni.il + (yeni.not ? '\nNot: ' + yeni.not : '') + '\n\nPanel → Abonelikler sekmesinden tarih verip aktifleştir.');
+        'Merhaba ' + yeni.ad + ',\n\n' + yeni.urun + ' için her ' + yeni.periyotGun + ' günde bir teslimat talebini aldık. En geç bir iş günü içinde onaylayıp ilk teslimat tarihini e-postayla bildireceğiz.\n\nDilediğin an bu e-postayı yanıtlayarak değişiklik yapabilir veya vazgeçebilirsin.\n\nAfiyet olsun,\nOlivamore');
+      epostaBildir('Yeni abonelik talebi: ' + yeni.urun.slice(0, 80),
+        yeni.ad + ' <' + yeni.eposta + '>\n' + yeni.urun + ' · her ' + yeni.periyotGun + ' günde\nTel: ' + yeni.telefon + '\nAdres: ' + yeni.adres + ' / ' + yeni.il + (yeni.not ? '\nNot: ' + yeni.not : '') + '\n\nPanel → Abonelikler sekmesinden tarih verip aktifleştir.');
       return json(res, 200, { tamam: true, id: yeni.id });
     }
 

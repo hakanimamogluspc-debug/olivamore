@@ -37,6 +37,10 @@
 .ab-mesaj.ok{display:block;border:1px solid #9CBF8E;background:#F2F8EF;color:#2e5d26}
 .ab-mesaj.hata{display:block;border:1px solid #D99;background:#FBF0EF;color:#8f2f24}
 .ab-notlar{max-width:720px;margin:26px auto 0;padding:0 4px;font-family:'Poppins',sans-serif;font-weight:300;font-size:.78rem;color:#4D5358;line-height:1.8}
+.ab-kalem{display:grid;grid-template-columns:1fr 84px 42px;gap:8px;margin-bottom:10px}
+.abk-sil{border:1px solid #D8C69C;background:#fff;color:#8f2f24;cursor:pointer;font-size:.9rem}
+.ab-ekle{width:100%;background:none;border:1px dashed #BFA25D;color:#8a6f3c;padding:10px;font-family:'Poppins',sans-serif;font-size:.84rem;letter-spacing:.06em;cursor:pointer;margin-bottom:16px}
+.ab-ekle:hover{background:rgba(191,162,93,.08)}
 @media(max-width:760px){.ab-adimlar{grid-template-columns:1fr}.ab-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -65,9 +69,13 @@
       <div class="ab-alan"><label for="abf-ad">Full name *</label><input id="abf-ad" type="text" required autocomplete="name"></div>
       <div class="ab-alan"><label for="abf-eposta">Email *</label><input id="abf-eposta" type="email" required autocomplete="email"></div>
     </div>
-    <div class="ab-grid">
-      <div class="ab-alan"><label for="abf-urun">Product *</label>
-        <select id="abf-urun" required>
+    <div class="ab-alan"><label>Products *</label>
+      <div id="abf-kalemler"></div>
+      <button type="button" class="ab-ekle" id="abf-ekle">＋ Add Product</button>
+    </div>
+    <template id="abf-sablon">
+      <div class="ab-kalem">
+        <select class="abk-urun">
           <option value="">Select...</option>
           <optgroup label="Olive Oils">
             <option data-pid="ay500">Ayvalık Early Harvest · 500 ml</option>
@@ -87,9 +95,10 @@
             <option data-pid="ces-berg">Bergamot Infused · 250 ml</option>
           </optgroup>
         </select>
+        <input class="abk-adet" type="number" value="1" min="1" max="20" aria-label="Quantity">
+        <button type="button" class="abk-sil" aria-label="Remove">✕</button>
       </div>
-      <div class="ab-alan"><label for="abf-adet">Quantity</label><input id="abf-adet" type="number" value="1" min="1" max="20"></div>
-    </div>
+    </template>
     <div class="ab-grid">
       <div class="ab-alan"><label for="abf-periyot">Delivery interval</label>
         <select id="abf-periyot">
@@ -114,22 +123,36 @@
 
 <div id="om-footer"></div>
 <script>
+
+var abfKalemler = document.getElementById('abf-kalemler');
+function abfSatirEkle() {
+  if (abfKalemler.querySelectorAll('.ab-kalem').length >= 10) return;
+  abfKalemler.appendChild(document.getElementById('abf-sablon').content.cloneNode(true));
+}
+abfSatirEkle();
+document.getElementById('abf-ekle').addEventListener('click', abfSatirEkle);
+abfKalemler.addEventListener('click', function (e) {
+  if (e.target.classList.contains('abk-sil') && abfKalemler.querySelectorAll('.ab-kalem').length > 1) e.target.closest('.ab-kalem').remove();
+});
+
 document.getElementById('ab-form').addEventListener('submit', function (e) {
   e.preventDefault();
   var btn = document.getElementById('abf-gonder');
   var mesaj = document.getElementById('abf-mesaj');
   mesaj.className = 'ab-mesaj';
-  var urunSec = document.getElementById('abf-urun');
-  var secili = urunSec.options[urunSec.selectedIndex];
+  var kalemler = [].map.call(abfKalemler.querySelectorAll('.ab-kalem'), function (sat) {
+    var sec = sat.querySelector('.abk-urun');
+    var o = sec.options[sec.selectedIndex];
+    return { urun: sec.value !== '' || sec.selectedIndex > 0 ? o.text : '', pid: o && o.dataset ? (o.dataset.pid || '') : '', adet: sat.querySelector('.abk-adet').value };
+  }).filter(function (k) { return k.urun && k.urun.indexOf('...') === -1; });
+  if (!kalemler.length) { mesaj.textContent = 'Select at least one product.'; mesaj.className = 'ab-mesaj hata'; return; }
   btn.disabled = true; btn.textContent = 'Sending…';
   fetch('/api/abonelik-talep', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ad: document.getElementById('abf-ad').value.trim(),
       eposta: document.getElementById('abf-eposta').value.trim(),
-      urun: secili ? secili.text : '',
-      pid: secili ? (secili.dataset.pid || '') : '',
-      adet: document.getElementById('abf-adet').value,
+      kalemler: kalemler,
       periyotGun: document.getElementById('abf-periyot').value,
       telefon: document.getElementById('abf-telefon').value.trim(),
       adres: document.getElementById('abf-adres').value.trim(),
