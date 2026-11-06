@@ -505,6 +505,34 @@
       renderProductGrids(C);
     }
 
+    // ---- 4c) Ana sayfa tanıtım blokları (panel > Sayfalar > Tanıtım Blokları) ----
+    if (document.body.dataset.page === 'home' && C.bloklar && typeof C.bloklar === 'object') {
+      ['hediye', 'damak'].forEach(id => {
+        const b = C.bloklar[id], sec = document.getElementById(id);
+        if (!b || !sec) return;
+        const v = (EN ? b.EN : b.TR) || {};
+        const yaz = (sel, deger) => { const el = sec.querySelector(sel); if (el && deger) el.textContent = deger; };
+        if (b.img) { const im = sec.querySelector('.foto img'); if (im) { im.removeAttribute('onerror'); im.src = b.img; } }
+        yaz('.omx-eyebrow', v.etiket);
+        const h = sec.querySelector('.omx-h');
+        if (h && (v.ust || v.baslik)) {
+          const ust = h.querySelector('.ust');
+          const ustYazi = v.ust || (ust ? ust.textContent : '');
+          const altYazi = v.baslik || Array.from(h.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
+          h.innerHTML = '';
+          const sp = document.createElement('span'); sp.className = 'ust'; sp.textContent = ustYazi;
+          h.appendChild(sp); h.appendChild(document.createTextNode(altYazi));
+        }
+        yaz('.omx-p', v.metin);
+        const adimlar = sec.querySelectorAll('.omx-adimlar span');
+        [v.adim1, v.adim2, v.adim3].forEach((a, i) => {
+          const sp = adimlar[i]; if (!sp || !a) return;
+          const no = sp.querySelector('b'); sp.textContent = a; if (no) sp.prepend(no);
+        });
+        yaz('.omx-btn', v.buton);
+      });
+    }
+
     // ---- 4a) Ana sayfa mağaza sıraları (panel > Sayfalar > Ana Sayfa Ürün Sıraları) ----
     if (document.body.dataset.page === 'home' && C.products && C.products.length) {
       const magaza = document.querySelector('.fig-magaza');

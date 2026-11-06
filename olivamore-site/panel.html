@@ -109,6 +109,29 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .note{background:rgba(191,162,93,.08);border:1px solid rgba(191,162,93,.35);border-left:3px solid var(--gold);border-radius:2px;padding:11px 15px;font-size:.8rem;color:var(--soft);margin-bottom:20px}
 .note b{color:var(--ink)}
+.sg-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px;position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 10px}
+.sg-tab{text-align:left;background:#fff;border:1px solid var(--line);border-radius:3px;padding:14px 16px;cursor:pointer;font:inherit;color:var(--ink);transition:border-color .2s,box-shadow .2s}
+.sg-tab b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:1.12rem;font-weight:600}
+.sg-tab span{display:block;font-size:.72rem;color:var(--soft);margin-top:3px}
+.sg-tab:hover{border-color:var(--gold)}
+.sg-tab.aktif{border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold),0 8px 24px rgba(30,28,25,.06)}
+.sg-tab.aktif b{color:var(--gold)}
+.pg-izgara{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.pg-izgara .pagecard{margin:0;padding:0;box-shadow:none}
+.pg-izgara .pagecard summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pg-izgara .pagecard summary::-webkit-details-marker{display:none}
+.pg-izgara .pagecard summary b{font-size:.9rem}
+.pg-izgara .pagecard summary small{display:block;color:var(--soft);font-size:.74rem;margin-top:2px;font-weight:400}
+.pg-izgara .pagecard summary:after{content:'+';color:var(--gold);font-size:1.2rem}
+.pg-izgara .pagecard[open] summary:after{content:'\2013'}
+.pg-izgara .pagecard[open]{grid-column:1/-1;border-color:var(--gold)}
+.pg-izgara .pg-ic{padding:0 16px 14px}
+.blok-kart{display:grid;grid-template-columns:260px 1fr;gap:22px;border:1px solid var(--line);border-radius:3px;padding:18px;margin-top:14px}
+.blok-kart h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;font-weight:600;margin:0;grid-column:1/-1}
+.blok-kart .imgpick{flex-direction:column;align-items:stretch;flex-wrap:wrap}
+.blok-kart .imgpick img{width:100%;height:300px;object-fit:cover}
+.blok-dil{font-family:'Poppins',sans-serif;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}
+@media(max-width:900px){.sg-bar{grid-template-columns:1fr 1fr}.pg-izgara{grid-template-columns:1fr}.blok-kart{grid-template-columns:1fr}}
 .pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
 textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 </style>
@@ -200,23 +223,42 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ SAYFALAR ============ -->
     <section class="view" id="view-pages">
-      <div class="note"><b>Sayfa metinleri:</b> Her sayfanın üst bölümündeki başlık ve tanıtım yazısı. Ana sayfa hero'su <b>Ayarlar</b> sekmesinde.</div>
-
-      <div class="panel">
-        <h2>Ana Sayfa Ürün Sıraları</h2>
-        <div class="desc">Ana sayfadaki "Sağlık, Doğallık ve Lezzet" mağaza bölümündeki sıralar. Her sıranın başlığını ve göstereceği ürünleri (en fazla 4) seç; fiyat, ad, görsel ve stok ürün kaydından otomatik gelir. Gizli ürünler görünmez.</div>
-        <div id="sira-list"></div>
-        <button class="btn btn-outline btn-sm" id="btn-add-sira" type="button" style="margin-top:10px;">+ Yeni Sıra</button>
+      <div class="sg-bar" role="tablist">
+        <button type="button" class="sg-tab aktif" data-sg="kategori"><b>Kategori Kartları</b><span>Doğal Üretim altındaki büyük kartlar</span></button>
+        <button type="button" class="sg-tab" data-sg="siralar"><b>Ürün Sıraları</b><span>Ana sayfa mağaza vitrini</span></button>
+        <button type="button" class="sg-tab" data-sg="bloklar"><b>Tanıtım Blokları</b><span>Kendi Kutunu Oluştur · Damak Testi</span></button>
+        <button type="button" class="sg-tab" data-sg="basliklar"><b>Sayfa Başlıkları</b><span>Alt sayfaların başlık ve tanıtımı</span></button>
       </div>
-
+      <div class="sg-pane" data-sg="kategori">
       <div class="panel">
         <h2>Ana Sayfa Kategori Kartları</h2>
         <div class="desc">"Doğal Üretim"in altındaki büyük kategori kartları. Görsel, ad (TR/EN), bağlantı ve sıralama buradan yönetilir; kart ekleyip çıkarabilirsin. Görsel kartı kaplayacak şekilde kırpılır (dikey çekimler idealdir).</div>
         <div id="kat-list"></div>
         <button class="btn btn-outline btn-sm" id="btn-add-kat" type="button" style="margin-top:10px;">+ Yeni Kategori Kartı</button>
       </div>
-
-      <div id="pages-list"></div>
+      </div>
+      <div class="sg-pane" data-sg="siralar" hidden>
+      <div class="panel">
+        <h2>Ana Sayfa Ürün Sıraları</h2>
+        <div class="desc">Ana sayfadaki "Sağlık, Doğallık ve Lezzet" mağaza bölümündeki sıralar. Her sıranın başlığını ve göstereceği ürünleri (en fazla 4) seç; fiyat, ad, görsel ve stok ürün kaydından otomatik gelir. Gizli ürünler görünmez.</div>
+        <div id="sira-list"></div>
+        <button class="btn btn-outline btn-sm" id="btn-add-sira" type="button" style="margin-top:10px;">+ Yeni Sıra</button>
+      </div>
+      </div>
+      <div class="sg-pane" data-sg="bloklar" hidden>
+        <div class="panel">
+          <h2>Ana Sayfa Tanıtım Blokları</h2>
+          <div class="desc">Ürün sıralarının altındaki görselli bölümler. Görseli galeriden seç ya da bilgisayardan yükle; metinleri TR/EN düzenle.</div>
+          <div id="blok-list"></div>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="basliklar" hidden>
+        <div class="panel">
+          <h2>Sayfa Başlıkları</h2>
+          <div class="desc">Her alt sayfanın üst bölümündeki başlık ve tanıtım yazısı. Düzenlemek istediğin sayfaya tıkla. Ana sayfa hero'su <b>Ayarlar</b> sekmesinde.</div>
+          <div id="pages-list" class="pg-izgara"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ============ ÜRÜNLER ============ -->
@@ -874,7 +916,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
 
   /* Görsel seçici olayları (ürün + blog listelerinde ortak) */
-  ['products-list', 'blogs-list', 'kat-list'].forEach(function (hostId) {
+  ['products-list', 'blogs-list', 'kat-list', 'blok-list'].forEach(function (hostId) {
     var host = document.getElementById(hostId);
     // Bilgisayardan dosya seçildi
     host.addEventListener('change', function (e) {
@@ -960,15 +1002,15 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var host = document.getElementById('pages-list');
     host.innerHTML = Object.keys(PAGE_NAMES).map(function (k) {
       var p = C.pages[k];
-      return '<div class="panel pagecard" data-page="' + k + '">' +
-        '<h3>' + PAGE_NAMES[k] + '</h3>' +
+      return '<details class="panel pagecard" data-page="' + k + '">' +
+        '<summary><div><b>' + PAGE_NAMES[k] + '</b><small>' + esc(p.tTR || '—') + '</small></div></summary><div class="pg-ic">' +
         '<div class="grid2">' +
         '<div class="field"><label>Başlık (TR)</label><input type="text" class="pg-tTR" value="' + esc(p.tTR) + '"></div>' +
         '<div class="field"><label>Başlık (EN)</label><input type="text" class="pg-tEN" value="' + esc(p.tEN) + '"></div>' +
-        '</div>' +
-        '<div class="field"><label>Tanıtım (TR)</label><textarea class="pg-lTR" rows="2">' + esc(p.lTR) + '</textarea></div>' +
-        '<div class="field"><label>Tanıtım (EN)</label><textarea class="pg-lEN" rows="2">' + esc(p.lEN) + '</textarea></div>' +
-        '</div>';
+        '</div><div class="grid2">' +
+        '<div class="field"><label>Tanıtım (TR)</label><textarea class="pg-lTR" rows="3">' + esc(p.lTR) + '</textarea></div>' +
+        '<div class="field"><label>Tanıtım (EN)</label><textarea class="pg-lEN" rows="3">' + esc(p.lEN) + '</textarea></div>' +
+        '</div></div></details>';
     }).join('');
   }
   function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
@@ -1286,6 +1328,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     syncKategorilerFromDOM();
     syncUrunKategorilerFromDOM();
     syncSiralarFromDOM();
+    syncBloklarFromDOM();
     document.querySelectorAll('#pages-list .pagecard').forEach(function (d) {
       var p = C.pages[d.dataset.page];
       p.tTR = d.querySelector('.pg-tTR').value; p.tEN = d.querySelector('.pg-tEN').value;
@@ -2478,6 +2521,60 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     { adTR: 'Sirkeler', adEN: 'Vinegars', img: 'assets/img/foto-sirkeler.jpg', link: 'koleksiyon.html#eksi', visible: true },
     { adTR: 'Hediye Setleri', adEN: 'Gift Sets', img: 'assets/img/foto-hediye-setleri.jpg', link: 'koleksiyon.html#hediyelik', visible: true }
   ];
+  /* ---- Ana sayfa tanıtım blokları (Kendi Kutunu Oluştur, Damak Testi) ---- */
+  var BLOK_TANIM = {
+    hediye: { ad: 'Kendi Kutunu Oluştur', img: 'assets/img/hediye-seti-5li.jpg',
+      TR: { etiket: 'Kişiye Özel', ust: 'Sofrana ya da Sevdiklerine', baslik: 'Kendi Kutunu Oluştur', metin: 'Kutunu seç, şişelerini kendin belirle, notunu yaz. Üç karakteri küçük şişelerde tanımak için bir keşif kutusu ya da açmaya değer bir hediye — biz şık kutusunda hazırlayıp gönderelim.', adim1: 'Kutunu seç', adim2: 'Şişelerini ekle', adim3: 'Notunu yaz', buton: 'Kutunu Oluştur' },
+      EN: { etiket: 'Personalised', ust: 'For Your Table or Your Loved Ones', baslik: 'Build Your Own Box', metin: "Choose your box, pick your bottles, write your note. A discovery box to meet three characters in small bottles — or a gift worth opening. We'll prepare it in an elegant box and ship it.", adim1: 'Choose your box', adim2: 'Add your bottles', adim3: 'Write your note', buton: 'Build Your Box' } },
+    damak: { ad: 'Damak Testi', img: 'assets/img/marka/marka-yemek.jpg',
+      TR: { etiket: 'Damak Testi', ust: '10 Soruda', baslik: 'Damak Haritanı Çıkar', metin: 'Doğru ya da yanlış cevap yok; sevdiğin tatlardan yola çıkıyoruz. Yaklaşık 90 saniyede damak testini tamamlayıp yedi yağımız içinden sana en yakın olanını ve keşfetmeye değer alternatiflerini söylüyoruz.', adim1: 'Soruları yanıtla', adim2: 'Damak haritanı gör', adim3: 'Yağını keşfet', buton: 'Teste Başla' },
+      EN: { etiket: 'Palate Quiz', ust: 'In 10 Questions', baslik: 'Map Your Palate', metin: 'There are no right or wrong answers; we start from the flavours you love. In about 90 seconds we map your palate and tell you which of our seven oils is closest to you — plus the alternatives worth exploring.', adim1: 'Answer the questions', adim2: 'See your palate map', adim3: 'Discover your oil', buton: 'Start the Quiz' } }
+  };
+  var BLOK_ALAN = [['etiket', 'Üst etiket'], ['ust', 'Başlık 1. satır (altın)'], ['baslik', 'Başlık 2. satır'], ['metin', 'Metin'], ['adim1', 'Adım 01'], ['adim2', 'Adım 02'], ['adim3', 'Adım 03'], ['buton', 'Buton yazısı']];
+  function renderBloklar() {
+    var el = document.getElementById('blok-list'); if (!el) return;
+    C.bloklar = C.bloklar || {};
+    el.innerHTML = Object.keys(BLOK_TANIM).map(function (id) {
+      var t = BLOK_TANIM[id], b = C.bloklar[id] || {};
+      function dil(L) {
+        var v = b[L] || {};
+        return '<div><div class="blok-dil">' + (L === 'TR' ? 'Türkçe' : 'English') + '</div>' + BLOK_ALAN.map(function (a) {
+          var deger = (v[a[0]] != null && v[a[0]] !== '') ? v[a[0]] : t[L][a[0]];
+          return '<div class="field"><label>' + a[1] + '</label>' + (a[0] === 'metin'
+            ? '<textarea class="bl-' + a[0] + L + '" rows="4">' + esc(deger) + '</textarea>'
+            : '<input type="text" class="bl-' + a[0] + L + '" value="' + esc(deger) + '">') + '</div>';
+        }).join('') + '</div>';
+      }
+      return '<div class="blok-kart" data-blok="' + id + '"><h3>' + t.ad + '</h3>' +
+        '<div class="field" style="margin:0;"><label>Görsel</label>' + imgPicker(b.img || t.img, 'bl-img') + '</div>' +
+        '<div class="grid2" style="align-items:start;">' + dil('TR') + dil('EN') + '</div></div>';
+    }).join('');
+  }
+  function syncBloklarFromDOM() {
+    var el = document.getElementById('blok-list'); if (!el) return;
+    C.bloklar = C.bloklar || {};
+    el.querySelectorAll('.blok-kart').forEach(function (d) {
+      var id = d.dataset.blok, b = C.bloklar[id] = C.bloklar[id] || {};
+      var dat = d.querySelector('.bl-img-data'), sec = d.querySelector('.bl-img');
+      var yeni = (dat && dat.value) || (sec && sec.value) || '';
+      if (yeni) b.img = yeni;
+      ['TR', 'EN'].forEach(function (L) {
+        b[L] = b[L] || {};
+        BLOK_ALAN.forEach(function (a) { var inp = d.querySelector('.bl-' + a[0] + L); if (inp) b[L][a[0]] = inp.value.trim(); });
+      });
+    });
+  }
+  document.getElementById('blok-list').addEventListener('input', function () { dirty(); });
+  /* Sayfalar alt sekmeleri */
+  document.querySelectorAll('.sg-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.sg-tab').forEach(function (x) { x.classList.toggle('aktif', x === btn); });
+      document.querySelectorAll('.sg-pane').forEach(function (p) { p.hidden = p.dataset.sg !== btn.dataset.sg; });
+      try { localStorage.setItem('om-sg', btn.dataset.sg); } catch (e) {}
+    });
+  });
+  try { var sgSon = localStorage.getItem('om-sg'); var sgB = sgSon && document.querySelector('.sg-tab[data-sg="' + sgSon + '"]'); if (sgB) sgB.click(); } catch (e) {}
+
   function katItem(k, i, toplamN) {
     return '<div class="item kat-item" data-idx="' + i + '" style="padding:14px 16px;">' +
       '<div class="grid3" style="align-items:end;">' +
@@ -2858,7 +2955,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
   /* ================== BAŞLAT ================== */
   function renderAll() {
-    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderBloklar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
   fetch('/api/admin/config', { cache: 'no-store' })
