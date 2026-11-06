@@ -858,7 +858,7 @@ nav.main a.top:hover, nav.main a.top.active,
 }
 .mega-grid .cat-card:hover{border-color:#BFA25D;box-shadow:0 10px 24px rgba(30,28,25,.1);transform:translateY(-2px);color:#8a6f3c}
 .mega-grid .cat-card .thumb{
-  position:static;width:56px;height:56px;flex-shrink:0;background:#FAF7F0;border-radius:2px;
+  position:static;width:56px;height:56px;flex-shrink:0;background:#fff;border-radius:2px;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
 .mega-grid .cat-card .thumb img{height:auto;width:auto;max-width:84%;max-height:84%;object-fit:contain;filter:none}

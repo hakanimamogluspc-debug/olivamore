@@ -116,8 +116,8 @@
             <div class="cat-grid mega-grid">
               <a class="cat-card" href="${P('koleksiyon.html#serin')}"><span class="thumb"><img src="assets/img/kat-bitirme.png" alt=""></span><span class="cc-ad">${EN ? 'Finishing Olive Oil' : 'Bitirme Zeytinyağı'}</span></a>
               <a class="cat-card" href="${P('koleksiyon.html#ocak')}"><span class="thumb"><img src="assets/img/kat-pisirme.png" alt=""></span><span class="cc-ad">${EN ? 'Cooking Olive Oil' : 'Pişirme Zeytinyağı'}</span></a>
-              <a class="cat-card" href="${P('koleksiyon.html#zeytin')}"><span class="thumb"><img src="assets/img/kat-zeytin.png" alt=""></span><span class="cc-ad">${EN ? 'Natural Olives' : 'Doğal Zeytinler'}<em class="cc-yakinda">${EN ? 'Soon' : 'Yakında'}</em></span></a>
-              <a class="cat-card" href="${P('koleksiyon.html#eksi')}"><span class="thumb"><img src="assets/img/kat-sirke.png" alt=""></span><span class="cc-ad">${EN ? 'Vinegars' : 'Ekşiler'}<em class="cc-yakinda">${EN ? 'Soon' : 'Yakında'}</em></span></a>
+              <a class="cat-card" href="${P('koleksiyon.html#zeytin')}"><span class="thumb"><img src="assets/img/kat-zeytin.png" alt=""></span><span class="cc-ad">${EN ? 'Natural Olives' : 'Doğal Zeytinler'}</span></a>
+              <a class="cat-card" href="${P('koleksiyon.html#eksi')}"><span class="thumb"><img src="assets/img/kat-sirke.png" alt=""></span><span class="cc-ad">${EN ? 'Vinegars' : 'Ekşiler'}</span></a>
               <a class="cat-card" href="${P('koleksiyon.html#hediyelik')}"><span class="thumb"><img src="assets/img/kat-set.png" alt=""></span><span class="cc-ad">${EN ? 'Sets' : 'Setler'}</span></a>
               <a class="cat-card" href="${P('koleksiyon.html')}"><span class="thumb"><img src="assets/img/kat-tum.png" alt=""></span><span class="cc-ad">${EN ? 'All Products' : 'Tüm Ürünler'}</span></a>
             </div>
