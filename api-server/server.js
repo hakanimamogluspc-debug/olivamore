@@ -850,12 +850,19 @@ async function parasutFaturaKes(s) {
     return yeni.data.id;
   }
   // 3) Satış faturası (kalemler KDV dahil tutulur; Paraşüt'e KDV hariç birim fiyat gider)
+  const katalog = oku('cms.json', {});
   const detaylar = [];
   for (const k of (s.kalemler || [])) {
     const kdvOran = (typeof k.kdv === 'number' ? k.kdv : 1);
     const birimHaric = (Number(k.fiyat) || 0) / (1 + kdvOran / 100);
     const urunAd = (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '');
-    const urunId = await parasutUrun(urunAd, kdvOran, greenOpsKodu(k.id || k.kod));
+    // Stok kodu: kalemde varsa o; yoksa (eski siparişler) üründen adıyla bulunur
+    let siteKod = k.kod || k.id || '';
+    if (!siteKod) {
+      const kayit = urunKaydi(katalog, k.ad);
+      if (kayit && kayit.id) siteKod = kayit.id;
+    }
+    const urunId = await parasutUrun(urunAd, kdvOran, greenOpsKodu(siteKod));
     detaylar.push({ type: 'sales_invoice_details', attributes: {
       quantity: k.adet || 1,
       unit_price: Math.round(birimHaric * 10000) / 10000,
