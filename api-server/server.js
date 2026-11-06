@@ -433,6 +433,28 @@ function uyeOran(u) {
   return Math.min(50, Math.max(0, oran));
 }
 
+/* ---------- Site ürün kodu → Green Ops stok kodu (Paraşüt ürün kartı eşleşmesi) ---------- */
+const PARASUT_KODLAR = {
+  'ay250': '152.04.01.01', 'ay500': '152.04.01.02', 'ay750': '152.04.01.03',
+  'ay2l': '152.04.01.05', 'ay5l': '152.04.01.06',
+  'tr250': '152.04.01.07', 'tr500': '152.04.01.10', 'tr750': '152.04.01.11',
+  'tr2l': '152.04.01.12', 'tr5l': '152.04.01.13',
+  'og5l': '152.04.01.14',
+  // Hediye kutulu ürünler: Green Ops'ta set SKU'su yok; yağ fiyatıyla aynı olduğundan yağ koduyla kesilir
+  'kutu500': '152.04.01.02', 'kutu750': '152.04.01.03',
+  // Kendi setini oluştur: 5'li salata seti; 3'lü seçimlerde 152.06.01.01
+  'custom-set-5': '152.06.01.05', 'custom-set-3': '152.06.01.01', 'palate-box-3': '152.06.01.01',
+  'ces-mand': '152.04.01.04', 'ces-bib': '152.04.02.04', 'ces-berg': '152.04.02.01', 'ces-kek': '152.04.02.02',
+  'zey-siyah': '152.05.01.05', 'zey-yesil': '152.05.01.03',
+  'sir-bal': '152.11.01.05', 'sir-alic': '152.11.01.06', 'sir-elma': '152.11.01.07', 'sir-uzum': '152.11.01.08', 'sir-nar': '152.11.01.04'
+};
+function greenOpsKodu(siteKodu) {
+  const k = String(siteKodu || '');
+  if (PARASUT_KODLAR[k]) return PARASUT_KODLAR[k];
+  if (k.indexOf('custom-set') === 0) return PARASUT_KODLAR['custom-set-5'];
+  return k;
+}
+
 /* ---------- Panel admin oturumu (env.json'a adminKullanici/adminTuz/adminHash girilince aktifleşir) ----------
    Şifre atamak için sunucuda: bash /root/olivamore-repo/api-server/admin-sifre-ata.sh */
 function adminAktif() {
@@ -833,7 +855,7 @@ async function parasutFaturaKes(s) {
     const kdvOran = (typeof k.kdv === 'number' ? k.kdv : 1);
     const birimHaric = (Number(k.fiyat) || 0) / (1 + kdvOran / 100);
     const urunAd = (k.ad || 'Ürün') + (k.hacim ? ' ' + k.hacim : '');
-    const urunId = await parasutUrun(urunAd, kdvOran, k.id || k.kod || '');
+    const urunId = await parasutUrun(urunAd, kdvOran, greenOpsKodu(k.id || k.kod));
     detaylar.push({ type: 'sales_invoice_details', attributes: {
       quantity: k.adet || 1,
       unit_price: Math.round(birimHaric * 10000) / 10000,
