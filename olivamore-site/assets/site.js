@@ -644,27 +644,37 @@
     const badgeHtml = badge ? `<span class="badge">${badge}</span>` : '';
     const roleDef = ROLE_LABELS[p.role];
     const roleHtml = roleDef ? `<span class="role-tag">${EN ? roleDef.en : roleDef.tr}</span>` : '';
-    let media, priceHtml;
+    // Ana sayfa mağaza kartı diliyle (fig-kart): beyaz kart, ortalı görsel, gold buton
+    const rozetHtml = badge ? `<span class="fk-rozet">${badge}</span>` : '';
+    let govdeIc, butonHtml, fiyatHtml;
     if (p.type === 'club') {
-      media = `<div class="prod-img art-olive">${badgeHtml}<div style="height:100%;display:flex;align-items:center;justify-content:center;padding-bottom:60px;" data-mark="110"></div><span class="add-bag">${EN ? 'Join the Club' : "Club'a Katıl"} <span>→</span></span></div>`;
-      priceHtml = `₺${fmtTL(p.price)} <small>${unit || ''}</small>`;
+      govdeIc = `<div class="fk-img">${rozetHtml}<div style="height:100%;display:flex;align-items:center;justify-content:center;" data-mark="110"></div></div>`;
+      fiyatHtml = `₺${fmtTL(p.price)} <small>${unit || ''}</small>`;
+      butonHtml = `<a class="fig-btn" href="${href}">${EN ? 'Join the Club' : "Club'a Katıl"}</a>`;
     } else if (p.type === 'builder') {
       const gp = C.gift3 || p.price;
-      media = `<div class="prod-img photo">${badgeHtml}<img src="${p.img}" alt="${name}"><span class="add-bag">${EN ? 'Build Your Set' : 'Setini Oluştur'} <span>→</span></span></div>`;
-      priceHtml = EN ? `from ₺${fmtTL(gp)}` : `₺${fmtTL(gp)}<small>'dan</small>`;
+      govdeIc = `<div class="fk-img">${rozetHtml}<img src="${p.img}" alt="${name}" loading="lazy"></div>`;
+      fiyatHtml = EN ? `from ₺${fmtTL(gp)}` : `₺${fmtTL(gp)}<small>'dan</small>`;
+      butonHtml = `<a class="fig-btn" href="${href}">${EN ? 'Build Your Set' : 'Setini Oluştur'}</a>`;
     } else {
-      const altImg = (p.galeri && p.galeri[0]) ? `<img class="alt-img" src="${p.galeri[0]}" alt="">` : '';
       const tukendi = typeof p.stok === 'number' && p.stok <= 0;
-      const addBtn = (p.price && !tukendi) ? `<button class="add-bag" data-add>${EN ? 'Add to Bag' : 'Sepete Ekle'} <span>→</span></button>` : '';
-      const stokBadge = tukendi ? `<span class="badge" style="background:#6b7280;color:#fff;">${EN ? 'Sold Out' : 'Tükendi'}</span>` : badgeHtml;
-      media = `<div class="prod-img photo"${tukendi ? ' style="opacity:.65;"' : ''}>${stokBadge}<img src="${p.img}" alt="${name}">${altImg}${addBtn}</div>`;
-      let unitProof = EN ? 'VAT included' : 'KDV dahil';
-      const volume = String(unit || '').toLowerCase();
-      const amount = volume.includes('ml') ? Number(volume.replace(/[^0-9]/g, '')) / 1000 : (/\b(?:l|lt|litre)\b/.test(volume) ? Number(volume.replace(/[^0-9]/g, '')) : 0);
-      if (p.price && amount) unitProof = `₺${fmtTL(Math.round(p.price / amount))} / ${EN ? 'litre' : 'litre'} · ${unitProof}`;
-      priceHtml = p.price ? `₺${fmtTL(p.price)} <small>${unit || ''}</small><em class="portion">${unitProof}</em>` : `<span style="color:var(--gold-text);font-size:.85rem;font-weight:600;">${EN ? 'Coming soon' : 'Fiyat yakında'}</span>`;
+      const stokRozet = tukendi ? `<span class="fk-rozet" style="background:#6b7280;border-color:#6b7280;color:#fff;">${EN ? 'Sold Out' : 'Tükendi'}</span>` : rozetHtml;
+      govdeIc = `<div class="fk-img"${tukendi ? ' style="opacity:.55;"' : ''}>${stokRozet}<img src="${p.img}" alt="${name}" loading="lazy"></div>`;
+      fiyatHtml = p.price
+        ? `₺${fmtTL(p.price)} <small>${unit || ''}</small>`
+        : `<span style="font-family:'Poppins',sans-serif;color:var(--gold-text,#8a6f3c);font-size:.8rem;font-weight:500;">${EN ? 'Coming soon' : 'Fiyat yakında'}</span>`;
+      butonHtml = (p.price && !tukendi)
+        ? `<button class="fig-btn" data-add type="button">${EN ? 'Add to Bag' : 'Sepete Ekle'}</button>`
+        : '';
     }
-    return `<article class="card" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}"><a class="card-hit" href="${href}" aria-label="${name}" data-pid="${p.id || ''}"></a>${media}<div class="card-body">${roleHtml}<div class="card-row"><h3>${name}</h3><span class="price">${priceHtml}</span></div>${note ? `<p class="card-note">${note}</p>` : ''}</div></article>`;
+    return `<article class="card fig-kart" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">` +
+      `<a class="fk-hit" href="${href}" aria-label="${name}" data-pid="${p.id || ''}"></a>` +
+      govdeIc +
+      `${roleHtml}<h3>${name}</h3>` +
+      (note ? `<p class="fk-not">${note}</p>` : '') +
+      `<div class="fk-fiyat">${fiyatHtml}</div>` +
+      butonHtml +
+      `</article>`;
   }
 
   function renderProductGrids(C) {
