@@ -511,8 +511,8 @@
       if (magaza) {
         const VARSAYILAN_SIRALAR = [
           { baslikTR: 'AVANTAJ PAKETLERİ', baslikEN: 'ADVANTAGE PACKS', urunler: ['152.06.01.21', '152.06.01.08', '152.06.01.06', '152.06.01.13'] },
-          { baslikTR: 'SOĞUK SIKIM ZEYTİNYAĞLARI', baslikEN: 'COLD-PRESSED OLIVE OILS', urunler: ['ay750', 'ay2l', 'tr750', 'tr2l'] },
-          { baslikTR: 'ÇOK SATAN ÜRÜNLER', baslikEN: 'BEST SELLERS', urunler: ['ces-mand', 'ces-berg', 'zey-siyah', 'zey-yesil'] }
+          { baslikTR: 'SOĞUK SIKIM ZEYTİNYAĞLARI', baslikEN: 'COLD-PRESSED OLIVE OILS', urunler: ['152.04.01.03', '152.04.01.05', '152.04.01.11', '152.04.01.12'] },
+          { baslikTR: 'ÇOK SATAN ÜRÜNLER', baslikEN: 'BEST SELLERS', urunler: ['152.04.01.04', '152.04.02.01', '152.05.01.05', '152.05.01.03'] }
         ];
         const siralar = (Array.isArray(C.anasayfaSiralari) && C.anasayfaSiralari.length) ? C.anasayfaSiralari : VARSAYILAN_SIRALAR;
         // Ürün id'si, Green Ops stok kodu veya eski kısa kod (ay750 vb.) ile bulunur — toplu yüklemeden sonra id değişse de sıra boş kalmaz
@@ -521,8 +521,9 @@
         const bul = id => {
           const kod = ESKI_KOD[id] || id;
           const eski = Object.keys(ESKI_KOD).find(k => ESKI_KOD[k] === id);
-          return C.products.find(p => gor(p) && p.id === id)
-            || C.products.find(p => gor(p) && (p.id === kod || p.stokKodu === kod || p.stokKodu === id || (eski && p.id === eski)));
+          // Önce Green Ops kodlu güncel ürün, yoksa eski kayıt
+          return C.products.find(p => gor(p) && (p.id === kod || p.stokKodu === kod))
+            || C.products.find(p => gor(p) && (p.id === id || p.stokKodu === id || (eski && p.id === eski)));
         };
         const html = siralar.map(sr => {
           const kartlar = (sr.urunler || []).map(bul).filter(Boolean);
