@@ -279,15 +279,10 @@ footer.site{background:var(--ink);color:#B8B2A6;padding:70px 0 34px;font-size:.9
 /* ============ PDP ============ */
 .pdp{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;padding:64px 0}
 @media(max-width:900px){.pdp{grid-template-columns:1fr;gap:36px}}
-/* Parti/analiz + SSS blokları galerinin altında (masaüstü); mobilde satın alma bloğundan sonra */
-.pdp-spec{margin-top:26px}
-@media(max-width:900px){
-  .pdp > div:first-child{display:contents}
-  .pdp > div:first-child > .gallery-main,.pdp > div:first-child > .thumbs{order:1}
-  .pdp > div:first-child > .thumbs{margin-top:-24px}
-  .pdp > .buy{order:2}
-  .pdp-spec{order:3;margin-top:0}
-}
+/* Parti/analiz (sol) + Tadım notları (sağ): ürün bloğunun altında ortak satır, üstleri aynı hizada */
+.pdp-alt{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:start;padding:0 0 64px}
+.pdp-alt .tasting,.pdp-alt .acc{margin:0}
+@media(max-width:900px){.pdp-alt{grid-template-columns:1fr;gap:24px;padding-bottom:44px}.pdp-tadim{order:-1}}
 .gallery-main{border-radius:var(--radius);aspect-ratio:1/1.05;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px}
 .gallery-main svg{height:80%;filter:drop-shadow(0 20px 26px rgba(30,28,25,.22))}
 .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -1125,6 +1120,11 @@ html,body{overflow-x:clip}
 
 /* --- Öğren: tarif ızgarası (CMS blog motoru dokunmasın diye ayrı sınıf) --- */
 .tarif-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:18px}
+/* Ürün sayfası "Öne çıkan eşleşmeler": başlık ve kartlar ortalı */
+.eslesme-ortali .sec-head{text-align:center;margin-left:auto;margin-right:auto;max-width:760px}
+.eslesme-ortali .sec-head .lead{margin-left:auto;margin-right:auto}
+.eslesme-ortali .tarif-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:18px}
+.eslesme-ortali .tarif-grid > *{flex:0 1 300px}
 .tarif-grid .blog-card{height:100%}
 .tarif-grid .blog-tag{white-space:normal;line-height:1.35}
 .recipe-legend{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:-6px 0 24px}
