@@ -2156,16 +2156,27 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (harita.indexOf('id') === -1 || harita.indexOf('nameTR') === -1) { alert('Şablon başlıkları bulunamadı. Lütfen panelden indirdiğin şablonu kullan.'); return; }
     var katlar = urunKategorileri().map(function (k) { return k.id; });
     var mevcut = {}; (C.products || []).forEach(function (p) { mevcut[p.id] = p; });
+    // Green Ops stok kodu -> mevcut ürün (dosyada kod olarak muhasebe kodu yazıldıysa kopya ürün açılmasın)
+    var GO = {'152.04.01.01':'ay250','152.04.01.02':'ay500','152.04.01.03':'ay750','152.04.01.05':'ay2l','152.04.01.06':'ay5l','152.04.01.07':'tr250','152.04.01.10':'tr500','152.04.01.11':'tr750','152.04.01.12':'tr2l','152.04.01.13':'tr5l','152.04.01.14':'og5l','152.04.01.04':'ces-mand','152.04.02.04':'ces-bib','152.04.02.01':'ces-berg','152.04.02.02':'ces-kek','152.05.01.05':'zey-siyah','152.05.01.03':'zey-yesil','152.11.01.05':'sir-bal','152.11.01.06':'sir-alic','152.11.01.07':'sir-elma','152.11.01.08':'sir-uzum','152.11.01.04':'sir-nar'};
+    var kodHarita = {};
+    Object.keys(GO).forEach(function (k) { if (mevcut[GO[k]]) kodHarita[k] = GO[k]; });
+    (C.products || []).forEach(function (p) { if (p.stokKodu) kodHarita[String(p.stokKodu).trim()] = p.id; });
     var sonuc = [], gorulen = {};
     for (var r = 1; r < satirlar.length; r++) {
       var ham = {}; var dolu = false;
       harita.forEach(function (k, i) { if (k) { ham[k] = satirlar[r][i]; if (String(satirlar[r][i]).trim() !== '') dolu = true; } });
       if (!dolu) continue;
       var id = String(ham.id || '').trim();
+      var eslesmeNotu = '';
+      if (id && !mevcut[id] && kodHarita[id]) {
+        if (!String(ham.stokKodu || '').trim()) ham.stokKodu = id; // muhasebe kodunu ürüne işle
+        eslesmeNotu = 'Green Ops koduyla "' + kodHarita[id] + '" ürününe eşleşti';
+        id = kodHarita[id];
+      }
       if (/^ornek-/.test(id) || /^↑/.test(id)) continue; // şablondaki örnek satırlar
       var hatalar = [], uyarilar = [];
       if (!id) hatalar.push('Ürün kodu boş');
-      else if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) hatalar.push('Ürün kodu yalnız küçük harf, rakam ve tire içermeli');
+      else if (/[<>"'`]/.test(id) || id.length > 60) hatalar.push('Ürün kodu < > " \' karakterlerini içeremez (en fazla 60 karakter)');
       if (gorulen[id]) hatalar.push('Bu kod dosyada iki kez var');
       gorulen[id] = true;
       var var_ = !!mevcut[id];
@@ -2178,6 +2189,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var stok = sayiCoz(ham.stok);
       if (stok !== null && (isNaN(stok) || stok < 0)) hatalar.push('Stok geçersiz');
       var rol = String(ham.role || '').trim();
+      if (eslesmeNotu) uyarilar.push(eslesmeNotu);
       if (rol && katlar.indexOf(rol) === -1) uyarilar.push('"' + rol + '" yeni kategori olarak açılacak');
       var gorselYok = !(var_ && mevcut[id].img);
       if (gorselYok) uyarilar.push('Görsel yok');
