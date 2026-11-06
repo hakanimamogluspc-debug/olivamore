@@ -761,6 +761,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (saved.products) c.products = saved.products;
     if (saved.blogs) c.blogs = saved.blogs;
     if (saved.batches) c.batches = saved.batches;
+    // Diğer tüm kayıtlı alanlar (ürün kategorileri, kategori kartları, ana sayfa sıraları, tanıtım blokları, popup vb.)
+    // aynen korunur — aksi halde panel her açılışta bunları düşürüp bir sonraki kayıtta sunucudan siliyordu.
+    Object.keys(saved).forEach(function (k) { if (!(k in c)) c[k] = saved[k]; });
     if (saved.brandCopySource !== DEFAULTS.brandCopySource) {
       c.heroTitleTR = DEFAULTS.heroTitleTR;
       c.heroTitleEN = DEFAULTS.heroTitleEN;
