@@ -94,7 +94,7 @@
 
       <!-- SAĞ: ÖZET + TESLİMAT -->
       <div class="cart-sum" id="cart-sum">
-        <h3>Sipariş Özeti</h3>
+        <div class="co-adimlar" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;"><span id="adim-p1" style="display:flex;align-items:center;gap:6px;color:#8a6f3c;font-weight:600;"><i style="font-style:normal;width:20px;height:20px;border-radius:50%;background:#BFA25D;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;">1</i>Teslimat</span><span style="flex:1;height:1px;background:var(--line);"></span><span id="adim-p2" style="display:flex;align-items:center;gap:6px;color:var(--ink-soft);"><i style="font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--line);color:#555;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;">2</i>Ödeme</span></div><div id="co-adim-1"><h3>Sipariş Özeti</h3>
         <div class="sum-row"><span>Ara toplam</span><span id="sum-ara">₺0</span></div>
         <div class="sum-row" id="row-kupon" style="display:none;color:#2e7d32;"><span>Kupon (<span id="kupon-lbl"></span>)</span><span id="sum-kupon">-₺0</span></div>
         <div class="sum-row" id="row-uye" style="display:none;color:#806A36;"><span>Üyelik indirimi (%<span id="uye-lbl"></span>)</span><span id="sum-uye">-₺0</span></div>
@@ -128,6 +128,12 @@
         </div>
         <label class="checkout-field" for="co-posta">Posta kodu<input type="text" id="co-posta" name="postal-code" autocomplete="postal-code" inputmode="numeric" required pattern="[0-9]{5}" maxlength="5"></label>
         <label class="checkout-field" for="co-not">Sipariş notu <span style="font-weight:300;">(isteğe bağlı)</span><input type="text" id="co-not" name="order-note"></label>
+        <button class="btn btn-gold" id="co-devam" type="button" style="width:100%;margin-top:16px;">Ödemeye Geç →</button>
+        <p id="co-err1" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
+        </div>
+        <div id="co-adim-2" style="display:none;">
+        <button type="button" id="co-geri" style="background:none;border:none;color:var(--ink-soft);font:inherit;font-size:.8rem;cursor:pointer;padding:0;margin-bottom:12px;">← Teslimat bilgilerine dön</button>
+        <div class="sum-row total" style="margin-bottom:10px;"><span>Toplam</span><span id="sum-toplam2">₺0</span></div>
 
         <div style="margin:22px 0 6px;font-weight:700;font-size:.9rem;">Fatura</div>
         <div style="display:flex;gap:18px;margin-bottom:10px;font-size:.86rem;">
@@ -153,6 +159,7 @@
         <button class="btn btn-gold" id="co-btn" type="button" style="width:100%;margin-top:10px;">Siparişi Tamamla</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
         <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">500 TL üzerindeki siparişlerde kargo ücretsizdir. Açılmamış ürünleri 14 gün içinde koşulsuz olarak iade edebilirsin.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -212,6 +219,8 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('sum-uye').textContent = '-' + fmt(uyeInd);
     }
     document.getElementById('sum-kargo').textContent = kargo ? fmt(kargo) : 'Ücretsiz';
+    var t2 = document.getElementById('sum-toplam2');
+    if (t2) t2.textContent = fmt(Math.round((indAra + kargo) * 100) / 100);
     document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo) * 100) / 100);
     // Kargo eşiği dürtmesi
     var kt = document.getElementById('kargo-tesvik');
@@ -564,6 +573,33 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.omCart) { clearInterval(bekle); render(); }
   }, 50);
 });
+
+  /* --- iki adımlı ödeme --- */
+  function adimGoster(n) {
+    document.getElementById('co-adim-1').style.display = n === 1 ? '' : 'none';
+    document.getElementById('co-adim-2').style.display = n === 2 ? '' : 'none';
+    var p1 = document.getElementById('adim-p1'), p2 = document.getElementById('adim-p2');
+    p1.style.color = n === 1 ? '#8a6f3c' : 'var(--ink-soft)';
+    p1.querySelector('i').style.background = n === 1 ? '#BFA25D' : 'var(--line)';
+    p1.querySelector('i').style.color = n === 1 ? '#fff' : '#555';
+    p2.style.color = n === 2 ? '#8a6f3c' : 'var(--ink-soft)';
+    p2.querySelector('i').style.background = n === 2 ? '#BFA25D' : 'var(--line)';
+    p2.querySelector('i').style.color = n === 2 ? '#fff' : '#555';
+    document.getElementById('cart-sum').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.getElementById('co-devam').addEventListener('click', function () {
+    var h1 = document.getElementById('co-err1');
+    h1.style.display = 'none';
+    var gecersiz = alanlariDogrula();
+    if (gecersiz) {
+      h1.textContent = 'Lütfen teslimat alanlarını geçerli ve eksiksiz doldur.';
+      h1.style.display = 'block';
+      gecersiz.focus();
+      return;
+    }
+    adimGoster(2);
+  });
+  document.getElementById('co-geri').addEventListener('click', function () { adimGoster(1); });
 </script>
 </body>
 </html>

@@ -2146,8 +2146,8 @@ footer.site{background:#1B1A18}
 .fig-kart .fk-img{width:100%;height:340px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
 .fig-kart .fk-img img{max-width:92%;max-height:100%;object-fit:contain;display:block}
 .fig-kart h3{font-family:'Poppins',sans-serif;font-weight:600;font-size:1.05rem;color:#1D1F1C;margin:0 0 8px;min-height:2.6em;display:flex;align-items:center;justify-content:center}
-.fig-kart .fk-fiyat{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.45rem;color:#1D1F1C;margin-bottom:14px;display:flex;gap:14px;align-items:baseline;justify-content:center}
-.fig-kart .fk-fiyat s{opacity:.6;font-weight:500}
+.fig-kart .fk-fiyat{font-family:'Poppins',sans-serif;font-weight:600;font-size:1.08rem;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#1D1F1C;margin-bottom:14px;display:flex;gap:12px;align-items:baseline;justify-content:center}
+.fig-kart .fk-fiyat s{opacity:.55;font-weight:400;font-size:.92rem}
 .fig-kart .fig-btn{width:82%;height:42px;padding:0;font-size:1rem;margin-top:auto;position:relative;z-index:2}
 .fig-kart .fk-hit{position:absolute;inset:0;z-index:1}
 .fig-kart{border:1px solid #EDE4CE;transition:border-color .2s,box-shadow .2s,transform .2s}
