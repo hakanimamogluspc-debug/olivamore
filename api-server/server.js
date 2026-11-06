@@ -757,19 +757,17 @@ function parasutHttp(yontem, yolP, govdeObj, token) {
 async function parasutTokenAl() {
   if (parasutJeton.token && Date.now() < parasutJeton.bitis) return parasutJeton.token;
   const env = oku('env.json', {});
-  // OAuth ucu form-encoded gövde bekler (JSON gönderilirse "invalid_client" döner)
+  // OAuth ucu: kimlik HTTP Basic başlığında, gövde form-encoded (client_secret_basic)
   const govdeStr = new URLSearchParams({
     grant_type: 'password',
-    client_id: env.parasutClientId,
-    client_secret: env.parasutClientSecret,
     username: env.parasutKullanici,
-    password: env.parasutSifre,
-    redirect_uri: env.parasutRedirect || 'urn:ietf:wg:oauth:2.0:oob'
+    password: env.parasutSifre
   }).toString();
+  const basicAuth = 'Basic ' + Buffer.from(env.parasutClientId + ':' + env.parasutClientSecret).toString('base64');
   const v = await new Promise((cozul, hataVer) => {
     const istek = require('https').request({
       hostname: 'api.parasut.com', path: '/oauth/token', method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'Content-Length': Buffer.byteLength(govdeStr) }
+      headers: { 'Authorization': basicAuth, 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'Content-Length': Buffer.byteLength(govdeStr) }
     }, r => {
       let p = '';
       r.on('data', d => { p += d; });
