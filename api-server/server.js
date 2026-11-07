@@ -27,6 +27,9 @@ const crypto = require('crypto');
 
 const PORT = 3001;
 let cmsOnbellek = null; // /api/config yanıt önbelleği
+// Sitenin canlı adresi: env.json → "siteAdresi": "https://olivamore.com" (girilmezse olivamore.de)
+function SITE() { const e = oku('env.json', {}); return String(e.siteAdresi || 'https://olivamore.de').replace(/\/+$/, ''); }
+function SITE_AD() { return SITE().replace(/^https?:\/\//, ''); }
 const DATA = process.env.OM_DATA || '/var/www/olivamore-data';
 
 /* ---------- dosya yardımcıları (atomik yazma) ---------- */
@@ -120,7 +123,7 @@ function kampanyaArkaplan(aboneler, konu, metin) {
   (function adim() {
     if (i >= aboneler.length) return;
     const e = aboneler[i++].eposta;
-    const link = 'https://olivamore.de/api/bulten-cik?e=' + encodeURIComponent(e) + '&t=' + bultenImza(e);
+    const link = SITE() + '/api/bulten-cik?e=' + encodeURIComponent(e) + '&t=' + bultenImza(e);
     epostaGonder(e, konu, metin +
       '\n\n—\nBu e-postayı Olivamore bültenine kayıtlı olduğunuz için aldınız.\nListeden çıkmak için: ' + link);
     setTimeout(adim, 150);
@@ -303,6 +306,106 @@ async function kargoTakipTur() {
   if (degisti) yaz('siparisler.json', siparisler);
 }
 
+
+
+/* ---------- Meta Conversions API (sunucu taraflı dönüşüm) ----------
+   env.json: "metaCapiToken": "...", isteğe bağlı "metaTestKodu": "TEST12345" (Events Manager test olayları)
+   Yalnız çerez/ölçüm onayı veren ziyaretçiler için gönderilir. event_id tarayıcı Pixel'iyle aynıdır → Meta çift saymaz. */
+function sha(v) { v = String(v == null ? '' : v).trim().toLowerCase(); return v ? crypto.createHash('sha256').update(v).digest('hex') : undefined; }
+function metaAyar() {
+  const env = oku('env.json', {}), cfg = oku('cms.json', {});
+  if (!env.metaCapiToken || cfg.metaPixelAktif === false) return null;
+  return { token: env.metaCapiToken, pixel: String(cfg.metaPixelId || '1511481262832458').replace(/\D/g, ''), test: env.metaTestKodu || '' };
+}
+function metaGonder(olaylar) {
+  const a = metaAyar(); if (!a || !olaylar.length) return;
+  const govdeStr = JSON.stringify(Object.assign({ data: olaylar }, a.test ? { test_event_code: a.test } : {}));
+  const istek = require('https').request({
+    hostname: 'graph.facebook.com', path: '/v21.0/' + a.pixel + '/events?access_token=' + encodeURIComponent(a.token), method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(govdeStr) }, timeout: 10000
+  }, r => { let p = ''; r.on('data', d => p += d); r.on('end', () => { if (r.statusCode >= 400) console.error('[meta-capi]', r.statusCode, p.slice(0, 300)); }); });
+  istek.on('error', e => console.error('[meta-capi]', e.message));
+  istek.on('timeout', () => istek.destroy());
+  istek.end(govdeStr);
+}
+function metaTelefon(t) { let d = String(t || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '0') d = '9' + d; else if (d.length === 10) d = '90' + d; return d || undefined; }
+function metaSatinAlma(s, req) {
+  try {
+    if (!s || !s.iz || !s.iz.rz || s.metaGonderildi) return;
+    const m = s.musteri || {}, ad = String(m.ad || '').trim().split(/\s+/);
+    metaGonder([{
+      event_name: 'Purchase', event_time: Math.floor(Date.now() / 1000), event_id: s.no, action_source: 'website',
+      event_source_url: SITE() + '/sepet',
+      user_data: {
+        em: [sha(m.eposta)], ph: [sha(metaTelefon(m.telefon))], fn: [sha(ad[0])], ln: [sha(ad.length > 1 ? ad[ad.length - 1] : '')],
+        ct: [sha(String(m.ilce || m.il || '').replace(/\s+/g, ''))], st: [sha(String(m.il || '').replace(/\s+/g, ''))], zp: [sha(m.postaKodu)], country: [sha('tr')],
+        external_id: [sha(m.eposta)], client_ip_address: s.iz.ip || undefined, client_user_agent: s.iz.ua || undefined, fbp: s.iz.fbp || undefined, fbc: s.iz.fbc || undefined
+      },
+      custom_data: {
+        currency: 'TRY', value: Number(s.toplam) || 0, order_id: s.no, content_type: 'product',
+        content_ids: (s.kalemler || []).map(k => k.kod).filter(Boolean),
+        contents: (s.kalemler || []).map(k => ({ id: k.kod || k.ad, quantity: k.adet, item_price: k.fiyat })),
+        num_items: (s.kalemler || []).reduce((t, k) => t + k.adet, 0)
+      }
+    }]);
+    const liste = oku('siparisler.json', []); const x = liste.find(y => y.no === s.no);
+    if (x) { x.metaGonderildi = true; yaz('siparisler.json', liste); }
+  } catch (e) { console.error('[meta-capi]', e.message); }
+}
+const META_OLAY = { urun_gor: 'ViewContent', sepete_ekle: 'AddToCart', odeme_basla: 'InitiateCheckout', odeme_adim2: 'AddPaymentInfo' };
+/* ---------- Havale / EFT ---------- */
+function bankaBilgi() {
+  const b = (oku('cms.json', {}).banka) || {};
+  return { unvan: b.unvan || '', banka: b.banka || '', iban: b.iban || '', not: b.not || '', hatirlatSaat: b.hatirlatSaat != null ? Number(b.hatirlatSaat) : 24, sureGun: Number(b.sureGun) || 3 };
+}
+function tlYaz(n) { return '₺' + Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+function siparisOzetMetni(s) {
+  const satir = (s.kalemler || []).map(k => '· ' + k.adet + ' × ' + k.ad + (k.hacim && k.ad.indexOf(k.hacim) === -1 ? ' (' + k.hacim + ')' : '') + ' — ' + tlYaz(k.fiyat * k.adet)).join('\n');
+  let t = satir + '\n\nAra toplam: ' + tlYaz(s.araToplam);
+  if (s.indirim) t += '\nKupon indirimi' + (s.kupon && s.kupon.kod ? ' (' + s.kupon.kod + ')' : '') + ': -' + tlYaz(s.indirim);
+  if (s.uyeIndirim && s.uyeIndirim.tutar) t += '\nÜyelik indirimi: -' + tlYaz(s.uyeIndirim.tutar);
+  t += '\nKargo: ' + (s.kargo ? tlYaz(s.kargo) : 'Ücretsiz') + '\nTOPLAM: ' + tlYaz(s.toplam) + ' (KDV dahil)';
+  const m = s.musteri || {};
+  t += '\n\nTeslimat adresi:\n' + m.ad + '\n' + m.adres + (m.ilce || m.il ? '\n' + [m.ilce, m.il].filter(Boolean).join(' / ') : '') + '\n' + m.telefon;
+  return t;
+}
+function havaleTalimati(s, b) {
+  return 'Ödeme bilgileri\n' +
+    'Tutar: ' + tlYaz(s.toplam) + '\n' +
+    'Hesap sahibi: ' + (b.unvan || '-') + '\n' +
+    (b.banka ? 'Banka: ' + b.banka + '\n' : '') +
+    'IBAN: ' + (b.iban || '-') + '\n' +
+    'Açıklama: ' + s.no + '\n\n' +
+    (b.not ? b.not + '\n' : 'Lütfen açıklama kısmına sipariş numaranı (' + s.no + ') yaz.\n') +
+    'Ödemeyi ' + b.sureGun + ' gün içinde yapmanı rica ederiz; ödeme hesabımıza geçtiğinde siparişin hazırlanır ve kargoya verilir.';
+}
+function havaleOnayEpostasi(s) {
+  const b = bankaBilgi();
+  epostaGonder(s.musteri.eposta, 'Siparişin alındı · ' + s.no + ' · Ödeme bilgileri',
+    'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişini aldık, teşekkür ederiz.\n\n' +
+    havaleTalimati(s, b) + '\n\nSipariş özeti\n' + siparisOzetMetni(s) +
+    '\n\nSorun ya da değişiklik isteğin olursa bu e-postayı yanıtlaman yeterli.\n\nAfiyet olsun,\nOlivamore');
+}
+// Ödemesi gelmeyen havale siparişine bir kez hatırlatma (panelde "hazırlanıyor"a alınan sipariş ödenmiş sayılır)
+function havaleHatirlatTur() {
+  if (!epostaServisiVar()) return;
+  const b = bankaBilgi();
+  if (!b.hatirlatSaat || !b.iban) return;
+  const liste = oku('siparisler.json', []);
+  const simdi = Date.now(); let degisti = false;
+  liste.forEach(s => {
+    if (s.odeme !== 'havale' || s.durum !== 'yeni' || s.odendi || s.odemeHatirlatma) return;
+    const yas = simdi - Date.parse(s.tarih);
+    if (yas < b.hatirlatSaat * 3600000 || yas > 10 * 86400000) return;
+    epostaGonder(s.musteri.eposta, 'Ödemen bekleniyor · ' + s.no,
+      'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişinin ödemesi henüz hesabımıza ulaşmadı. Ödemeyi yaptıysan bu e-postayı dikkate alma; havaleler bazen birkaç saat içinde görünür.\n\n' +
+      havaleTalimati(s, b) + '\n\nSorun ya da değişiklik isteğin varsa bu e-postayı yanıtlaman yeterli.\n\nOlivamore');
+    s.odemeHatirlatma = new Date().toISOString(); degisti = true;
+  });
+  if (degisti) yaz('siparisler.json', liste);
+}
+setInterval(havaleHatirlatTur, 30 * 60000);
+setTimeout(havaleHatirlatTur, 30000);
 /* ---------- e-posta otomasyonları ---------- */
 function otomasyonAyar() {
   return oku('otomasyon.json', {
@@ -317,7 +420,7 @@ function aboneVeyaUye(eposta) {
   return oku('uyeler.json', []).some(u => u.eposta === e);
 }
 function otomasyonPosta(kime, konu, metin) {
-  const link = 'https://olivamore.de/api/bulten-cik?e=' + encodeURIComponent(kime) + '&t=' + bultenImza(kime);
+  const link = SITE() + '/api/bulten-cik?e=' + encodeURIComponent(kime) + '&t=' + bultenImza(kime);
   epostaGonder(kime, konu, metin + '\n\n—\nBu e-postayı Olivamore ile paylaştığınız adrese gönderdik.\nBenzer e-postaları almamak için: ' + link);
 }
 function otomasyonCalistir() {
@@ -567,7 +670,7 @@ async function abonelikTur() {
         const y = await iyziIstek('/payment/iyzipos/checkoutform/initialize/auth/ecom', {
           locale: 'tr', conversationId: no, basketId: no,
           price: String(toplam), paidPrice: String(toplam), currency: 'TRY', paymentGroup: 'PRODUCT',
-          callbackUrl: 'https://olivamore.de/api/odeme-sonuc',
+          callbackUrl: SITE() + '/api/odeme-sonuc',
           buyer: { id: no, name: parcalar.join(' ') || soyad, surname: soyad, gsmNumber: a.telefon || '', email: a.eposta, identityNumber: '11111111111', registrationAddress: a.adres, ip: '0.0.0.0', city: a.il || 'Istanbul', country: 'Turkey' },
           shippingAddress: { contactName: a.ad || 'Abone', city: a.il || 'Istanbul', country: 'Turkey', address: a.adres },
           billingAddress: { contactName: a.ad || 'Abone', city: a.il || 'Istanbul', country: 'Turkey', address: a.adres },
@@ -955,9 +1058,9 @@ async function parasutFaturaKes(s) {
       const ea = await parasutHttp('POST', '/v4/' + firma + '/e_archives', {
         data: { type: 'e_archives', attributes: {
           internet_sale: {
-            url: 'https://olivamore.de',
+            url: SITE(),
             payment_type: s.odeme === 'kart' ? 'KREDIKARTI/BANKAKARTI' : 'EFT/HAVALE',
-            payment_platform: 'olivamore.de',
+            payment_platform: SITE_AD(),
             payment_date: new Date().toISOString().slice(0, 10)
           }
         }, relationships: { sales_invoice: { data: { id: fatId, type: 'sales_invoices' } } } }
@@ -1075,6 +1178,16 @@ function olayKaydet(req, g) {
   if (!satir.v || !satir.s) return;
   const gun = new Date().toISOString().slice(0, 10);
   try { fs.appendFileSync(path.join(ANALIZ_DIZIN(), gun + '.jsonl'), JSON.stringify(satir) + '\n'); } catch (er) { console.error('[analiz]', er.message); }
+  if (g.rz && META_OLAY[e] && g.eid) {
+    const cd = { currency: 'TRY' };
+    if (satir.u) { cd.content_ids = [satir.u]; cd.content_type = 'product'; }
+    if (satir.d) cd.value = satir.d;
+    if (satir.a) cd.num_items = satir.a;
+    metaGonder([{ event_name: META_OLAY[e], event_time: Math.floor(satir.t / 1000), event_id: kis(g.eid, 60), action_source: 'website',
+      event_source_url: SITE() + satir.p,
+      user_data: { client_ip_address: String(ip).split(',')[0].trim(), client_user_agent: ua, fbp: kis(g.fbp, 120) || undefined, fbc: kis(g.fbc, 200) || undefined, external_id: [sha(satir.v)] },
+      custom_data: cd }]);
+  }
 }
 function analizOku(gunSay) {
   const dz = ANALIZ_DIZIN(), olaylar = [];
@@ -1240,7 +1353,9 @@ function saglikRaporu() {
       parasut: parasutAktif(), parasutTaslak: !!env.parasutTaslak,
       yurtici: !!(env.yurticiWsUser && env.yurticiWsSifre), yurticiTest: !!env.yurticiTest,
       trendyol: !!(env.trendyolSaticiId && env.trendyolApiKey), hepsiburada: !!(env.hbMerchantId && env.hbKullanici),
-      panelSifre: !!(env.adminKullanici && env.adminHash)
+      panelSifre: !!(env.adminKullanici && env.adminHash),
+      metaCapi: !!env.metaCapiToken, metaTest: !!env.metaTestKodu, siteAdresi: SITE(),
+      banka: !!(bankaBilgi().iban)
     },
     siparis: {
       bugun: sip.filter(s => (s.tarih || '').slice(0, 10) === bugun).length,
@@ -1393,7 +1508,7 @@ const sunucu = http.createServer(async (req, res) => {
         const y = await iyziIstek('/payment/iyzipos/checkoutform/initialize/auth/ecom', {
           locale: siparis.dil, conversationId: no, basketId: no,
           price: String(toplam), paidPrice: String(toplam), currency: 'TRY', paymentGroup: 'PRODUCT',
-          callbackUrl: 'https://olivamore.de/api/odeme-sonuc',
+          callbackUrl: SITE() + '/api/odeme-sonuc',
           buyer: { id: no, name: parcalar.join(' ') || soyad, surname: soyad, gsmNumber: telefon, email: eposta, identityNumber: '11111111111', registrationAddress: adres, ip: req.headers['x-real-ip'] || '0.0.0.0', city: il || 'Istanbul', country: 'Turkey' },
           shippingAddress: { contactName: ad, city: il || 'Istanbul', country: 'Turkey', address: adres },
           billingAddress: { contactName: ad, city: il || 'Istanbul', country: 'Turkey', address: adres },
@@ -1491,7 +1606,7 @@ const sunucu = http.createServer(async (req, res) => {
         '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Olivamore Bülten</title></head>' +
         '<body style="font-family:sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1E1C19;">' +
         '<h2 style="letter-spacing:.2em;">OLIVAMORE</h2><p>' + mesaj + '</p>' +
-        '<p><a href="https://olivamore.de/" style="color:#BFA25D;">olivamore.de</a></p></body></html>';
+        '<p><a href="' + SITE() + '/" style="color:#BFA25D;">' + SITE_AD() + '</a></p></body></html>';
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       if (!epostaMi(e) || t !== bultenImza(e)) return res.end(govdeHtml('Bağlantı geçersiz veya süresi dolmuş.'));
       const liste = oku('bulten.json', []);
@@ -1542,6 +1657,7 @@ const sunucu = http.createServer(async (req, res) => {
           const p = ozelSet ? null : urunBulKalem(katalog, k);
           if (p) {
             if (p.visible === false) return json(res, 400, { hata: '"' + (p.nameTR || k.ad) + '" artık satışta değil; lütfen sepetinden çıkar.', kod: 'satista-degil', urun: k.kod });
+            { const birim = String(p.unitTR || '').replace(/^\s*\/\s*/, '').trim(); k.ad = temiz((p.nameTR || k.ad) + (birim && String(p.nameTR || '').indexOf(birim) === -1 ? ' · ' + birim : ''), 200); if (!k.hacim) k.hacim = birim; }
             if (Number(p.price) > 0) k.fiyat = k.paket === 'damak10' ? Math.round(Number(p.price) * 0.9) : Number(p.price);
             if (p.kdv != null) k.kdv = Math.min(20, Math.max(0, parseFloat(p.kdv) || 0));
             if (!k.kod) k.kod = p.id;
@@ -1607,7 +1723,8 @@ const sunucu = http.createServer(async (req, res) => {
           : null,
         kalemler: kalemler, araToplam: araToplam, kupon: kuponBilgi, indirim: indirim,
         uyeIndirim: uyeIndirimTutar > 0 ? { oran: uyeIndirimOran, tutar: uyeIndirimTutar, eposta: uyeB.u.eposta } : null,
-        kdvToplam: kdvToplam, kargo: kargo, toplam: toplam
+        kdvToplam: kdvToplam, kargo: kargo, toplam: toplam,
+        iz: (g.iz && g.iz.rz) ? { rz: 1, fbp: temiz(g.iz.fbp, 120), fbc: temiz(g.iz.fbc, 200), ua: temiz(req.headers['user-agent'], 300), ip: String(req.headers['x-real-ip'] || '').split(',')[0].trim() } : undefined
       });
       yaz('siparisler.json', siparisler.slice(0, 5000));
       // Sipariş tamamlandı → terk edilmiş sepet kaydı silinir
@@ -1624,7 +1741,7 @@ const sunucu = http.createServer(async (req, res) => {
             conversationId: no, basketId: no,
             price: String(toplam), paidPrice: String(toplam), currency: 'TRY',
             paymentGroup: 'PRODUCT',
-            callbackUrl: 'https://olivamore.de/api/odeme-sonuc',
+            callbackUrl: SITE() + '/api/odeme-sonuc',
             buyer: {
               id: no, name: adK, surname: soyad,
               gsmNumber: temiz(m.telefon, 40), email: temiz(m.eposta, 200),
@@ -1652,7 +1769,9 @@ const sunucu = http.createServer(async (req, res) => {
         kalemler.map(k => k.adet + ' × ' + k.ad + ' (₺' + k.fiyat + ')').join('\n') +
         (kuponBilgi ? '\n\nKupon: ' + kuponBilgi.kod + ' (-₺' + indirim + ')' : '') +
         '\n\nMüşteri: ' + m.ad + ' / ' + m.telefon + ' / ' + m.eposta + '\nAdres: ' + m.adres + '\nÖdeme: ' + odemeYolu);
-      return json(res, 200, { tamam: true, no: no, toplam: toplam });
+      { const yeniSip = oku('siparisler.json', []).find(x => x.no === no); if (yeniSip && odemeYolu === 'havale') { havaleOnayEpostasi(yeniSip); metaSatinAlma(yeniSip, req); } }
+      const bk = bankaBilgi();
+      return json(res, 200, { tamam: true, no: no, toplam: toplam, banka: odemeYolu === 'havale' ? { unvan: bk.unvan, banka: bk.banka, iban: bk.iban, not: bk.not, sureGun: bk.sureGun } : undefined });
     }
 
     /* ---- üye uçları ---- */
@@ -1757,7 +1876,7 @@ const sunucu = http.createServer(async (req, res) => {
         });
       }
       yaz('yorumlar.json', yorumlar.slice(0, 5000));
-      epostaBildir('Yeni ürün yorumu bekliyor: ' + urun.nameTR, b.u.ad + ' · ' + yildiz + '★\n\n' + metin + '\n\nPanelden onaylayabilirsin: https://olivamore.de/panel');
+      epostaBildir('Yeni ürün yorumu bekliyor: ' + urun.nameTR, b.u.ad + ' · ' + yildiz + '★\n\n' + metin + '\n\nPanelden onaylayabilirsin: ' + SITE() + '/panel');
       return json(res, 200, { tamam: true, mesaj: 'Yorumun alındı; onaylandığında yayınlanır' + (uyeAyar().yorumPuan ? ' ve ' + uyeAyar().yorumPuan + ' puan kazanırsın' : '') + '.' });
     }
 
@@ -1830,6 +1949,7 @@ const sunucu = http.createServer(async (req, res) => {
             }
           }
           yaz('siparisler.json', liste);
+          metaSatinAlma(s);
           epostaBildir('Yeni sipariş ' + s.no + ' · ₺' + s.toplam.toLocaleString('tr-TR') + ' (KART İLE ÖDENDİ)',
             s.kalemler.map(k => k.adet + ' × ' + k.ad).join('\n') +
             '\n\nMüşteri: ' + s.musteri.ad + ' / ' + s.musteri.telefon + ' / ' + s.musteri.eposta + '\nAdres: ' + s.musteri.adres);
@@ -1892,7 +2012,7 @@ const sunucu = http.createServer(async (req, res) => {
     /* ---- Ürün feed'i: Google Merchant + Meta katalog (herkese açık) ---- */
     if (req.method === 'GET' && yol === '/feed/urunler.xml') {
       const cfg = oku('cms.json', {});
-      const taban = 'https://olivamore.de';
+      const taban = SITE();
       function xml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
       const urunler = (cfg.products || []).filter(p => p.type === 'product' && p.visible !== false && Number(p.price) > 0);
       const kalemler = urunler.map(p => {
@@ -2438,12 +2558,16 @@ function epostaHtmlYap(konu, metin) {
 function epostaGonder(kime, konu, metin) {
   const env = oku('env.json', {});
   if (!epostaMi(kime)) return;
-  const html = epostaHtmlYap(konu, metin);
+  const adres = SITE(), adresAd = SITE_AD();
+  metin = String(metin).replace(/https:\/\/olivamore\.de/g, adres);
+  const html = epostaHtmlYap(konu, metin).replace(/https:\/\/olivamore\.de/g, adres).replace(/>olivamore\.de</g, '>' + adresAd + '<');
+  const gonderen = env.gonderen || ('siparis@' + adresAd.replace(/^www\./, ''));
   let secenek, veri;
   if (env.resendKey) {
     veri = JSON.stringify({
-      from: 'Olivamore <' + (env.gonderen || 'site@olivamore.de') + '>',
-      to: [kime], subject: konu, text: metin, html: html
+      from: 'Olivamore <' + gonderen + '>',
+      to: [kime], subject: konu, text: metin, html: html,
+      reply_to: env.yanitAdresi || undefined
     });
     secenek = {
       hostname: 'api.resend.com', path: '/emails', method: 'POST',
@@ -2451,7 +2575,7 @@ function epostaGonder(kime, konu, metin) {
     };
   } else if (env.brevoKey) {
     veri = JSON.stringify({
-      sender: { name: 'Olivamore', email: env.gonderen || 'site@olivamore.de' },
+      sender: { name: 'Olivamore', email: gonderen },
       to: [{ email: kime }],
       subject: konu, textContent: metin, htmlContent: html
     });

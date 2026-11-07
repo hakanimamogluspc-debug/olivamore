@@ -767,10 +767,12 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ AYARLAR ============ -->
     <section class="view" id="view-settings">
-      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(3,1fr);">
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(5,1fr);">
         <button type="button" class="sg-tab aktif" data-sg="duyuru"><b>Duyuru Şeridi</b><span>Sayfanın en üstündeki şerit</span></button>
         <button type="button" class="sg-tab" data-sg="hero"><b>Ana Sayfa Hero</b><span>Başlık, metin ve hero görseli/videosu</span></button>
         <button type="button" class="sg-tab" data-sg="hediye"><b>Hediye Kutusu</b><span>Kutu oluşturucu fiyatları</span></button>
+        <button type="button" class="sg-tab" data-sg="odeme"><b>Ödeme ve Banka</b><span>Havale/EFT IBAN bilgileri</span></button>
+        <button type="button" class="sg-tab" data-sg="izleme"><b>Reklam İzleme</b><span>Meta Pixel ve dönüşüm ölçümü</span></button>
       </div>
       <div class="sg-pane" data-sg="duyuru">
         <div class="panel">
@@ -804,6 +806,31 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
             <div class="field"><label>3'lü Kutu Fiyatı (₺)</label><input type="number" id="f-gift3"></div>
             <div class="field"><label>5'li Kutu Fiyatı (₺)</label><input type="number" id="f-gift5"></div>
           </div>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="odeme" hidden>
+        <div class="panel">
+          <h2>Havale / EFT bilgileri</h2>
+          <div class="desc">Havale ile sipariş veren müşteri bu bilgileri <b>sipariş onay ekranında</b> ve <b>onay e-postasında</b> görür. IBAN girilmezse havale seçeneği yine görünür ama müşteriye ödeme bilgisi gidemez — mutlaka doldur.</div>
+          <div class="grid2">
+            <div class="field"><label>Hesap sahibi (unvan)</label><input type="text" id="f-bankaUnvan" placeholder="Pektaş Tarım Gıda ve Ticaret Ltd. Şti."></div>
+            <div class="field"><label>Banka</label><input type="text" id="f-bankaAd" placeholder="örn. Ziraat Bankası"></div>
+          </div>
+          <div class="field"><label>IBAN</label><input type="text" id="f-bankaIban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:'Poppins',sans-serif;letter-spacing:.04em;"></div>
+          <div class="field"><label>Müşteriye not</label><input type="text" id="f-bankaNot" placeholder="Açıklamaya sipariş numaranı yazmayı unutma."></div>
+          <div class="grid2">
+            <div class="field"><label>Ödeme hatırlatması (saat sonra)</label><input type="number" id="f-bankaHatirlat" min="0" placeholder="24"><small style="color:var(--soft);">Ödemesi gelmeyen havale siparişine bu kadar saat sonra bir kez hatırlatma gider. 0 = kapalı.</small></div>
+            <div class="field"><label>Ödeme süresi (gün)</label><input type="number" id="f-bankaSure" min="1" placeholder="3"><small style="color:var(--soft);">Müşteriye "X gün içinde ödeme" diye yazılır.</small></div>
+          </div>
+          <div id="iban-uyari" style="font-size:.8rem;margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="izleme" hidden>
+        <div class="panel">
+          <h2>Meta Pixel ve Conversions API</h2>
+          <div class="desc">Ziyaretçi çerez onayı verdiğinde Pixel yüklenir; ürün görüntüleme, sepete ekleme, ödemeye başlama ve satın alma olayları Meta'ya gider. Sunucu tarafı (Conversions API) için erişim anahtarı panelden değil, sunucuda <code>env.json</code> içindeki <code>metaCapiToken</code> alanından girilir.</div>
+          <div class="field"><label>Pixel (Veri Kümesi) ID</label><input type="text" id="f-metaPixel" placeholder="1511481262832458" style="font-family:'Poppins',sans-serif;"></div>
+          <label class="chk"><input type="checkbox" id="f-metaAktif"> Pixel'i sitede çalıştır</label>
         </div>
       </div>
     </section>
@@ -1510,6 +1537,21 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   });
 
   /* ================== AYARLAR ================== */
+  function ibanGecerli(iban) {
+    var t = String(iban || '').replace(/\s+/g, '').toUpperCase();
+    if (!/^TR\d{24}$/.test(t)) return false;
+    var r = t.slice(4) + t.slice(0, 4), say = '';
+    for (var i = 0; i < r.length; i++) { var c = r[i]; say += /[A-Z]/.test(c) ? (c.charCodeAt(0) - 55) : c; }
+    var kalan = 0; for (var j = 0; j < say.length; j++) kalan = (kalan * 10 + +say[j]) % 97;
+    return kalan === 1;
+  }
+  function ibanKontrol() {
+    var v = document.getElementById('f-bankaIban').value, u = document.getElementById('iban-uyari');
+    if (!v.trim()) { u.innerHTML = '<span style="color:#b04a3a;">IBAN boş: havale müşterisi ödeme bilgisi alamaz.</span>'; return; }
+    u.innerHTML = ibanGecerli(v) ? '<span style="color:#2e7d32;">✓ Geçerli TR IBAN</span>' : '<span style="color:#b04a3a;">IBAN geçersiz görünüyor (TR + 24 hane, kontrol basamağı tutmuyor). Lütfen kontrol et.</span>';
+  }
+  document.getElementById('f-bankaIban').addEventListener('input', function () { ibanKontrol(); dirty(); });
+  ['f-bankaUnvan', 'f-bankaAd', 'f-bankaNot', 'f-bankaHatirlat', 'f-bankaSure', 'f-metaPixel', 'f-metaAktif'].forEach(function (id) { document.getElementById(id).addEventListener('input', dirty); document.getElementById(id).addEventListener('change', dirty); });
   function fillSettings() {
     document.getElementById('f-announceTR').value = C.announceTR;
     document.getElementById('f-announceEN').value = C.announceEN;
@@ -1519,6 +1561,16 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     document.getElementById('f-heroLeadEN').value = C.heroLeadEN;
     document.getElementById('f-gift3').value = C.gift3;
     document.getElementById('f-gift5').value = C.gift5;
+    var bk = C.banka || {};
+    document.getElementById('f-bankaUnvan').value = bk.unvan || '';
+    document.getElementById('f-bankaAd').value = bk.banka || '';
+    document.getElementById('f-bankaIban').value = bk.iban || '';
+    document.getElementById('f-bankaNot').value = bk.not || '';
+    document.getElementById('f-bankaHatirlat').value = bk.hatirlatSaat != null ? bk.hatirlatSaat : 24;
+    document.getElementById('f-bankaSure').value = bk.sureGun || 3;
+    ibanKontrol();
+    document.getElementById('f-metaPixel').value = C.metaPixelId || '1511481262832458';
+    document.getElementById('f-metaAktif').checked = C.metaPixelAktif !== false;
     var hm = C.heroMedya || {};
     var vsec = document.getElementById('f-heroVideoSec');
     vsec.innerHTML = '<option value="">— video seçilmedi —</option>' + VIDEOS.map(function (v) {
@@ -1564,6 +1616,16 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     C.heroLeadTR = document.getElementById('f-heroLeadTR').value;
     C.heroLeadEN = document.getElementById('f-heroLeadEN').value;
     C.gift3 = parseInt(document.getElementById('f-gift3').value, 10) || 0;
+    C.banka = {
+      unvan: document.getElementById('f-bankaUnvan').value.trim(),
+      banka: document.getElementById('f-bankaAd').value.trim(),
+      iban: document.getElementById('f-bankaIban').value.replace(/\s+/g, '').toUpperCase().replace(/(.{4})/g, '$1 ').trim(),
+      not: document.getElementById('f-bankaNot').value.trim(),
+      hatirlatSaat: Math.max(0, parseInt(document.getElementById('f-bankaHatirlat').value, 10) || 0),
+      sureGun: Math.max(1, parseInt(document.getElementById('f-bankaSure').value, 10) || 3)
+    };
+    C.metaPixelId = document.getElementById('f-metaPixel').value.replace(/\D/g, '');
+    C.metaPixelAktif = document.getElementById('f-metaAktif').checked;
     C.gift5 = parseInt(document.getElementById('f-gift5').value, 10) || 0;
     C.pdp.ay750 = parseInt(document.getElementById('f-pdp750').value, 10) || 0;
     C.heroMedya = {
@@ -2140,6 +2202,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           else ekle('uyari', 'Otomatik yedek', 'Yedek bulunamadı (ya da servis yedek klasörünü okuyamıyor).', 'Sunucuda: bash /root/olivamore-repo/api-server/yedek-kur.sh');
           ekle(en.kartOdeme ? (en.iyzicoCanli ? 'iyi' : 'uyari') : 'sorun', 'Kartla ödeme (iyzico)', en.kartOdeme ? (en.iyzicoCanli ? 'Canlı ortamda, gerçek ödeme alınıyor' : 'TEST ortamında — gerçek ödeme alınmaz') : 'Kapalı: müşteriler yalnız Havale/EFT ile ödeyebilir', en.kartOdeme ? (en.iyzicoCanli ? '' : 'Testler bitince env.json\'a "iyzicoCanli": true ekle.') : 'iyzico anahtarlarını env.json\'a gir.');
           ekle(en.eposta ? 'iyi' : 'sorun', 'E-posta bildirimleri', en.eposta ? 'Sipariş / kargo e-postaları gidiyor' + (en.bildirimEposta ? '' : ' (sana gelen bildirim adresi tanımlı değil)') : 'Kapalı: müşteriye ve sana sipariş e-postası gitmiyor', en.eposta ? '' : 'env.json\'a e-posta servis anahtarı (resendKey) gir.');
+          ekle(en.banka ? 'iyi' : 'sorun', 'Havale / IBAN bilgisi', en.banka ? 'Havale müşterisine IBAN gösteriliyor ve e-postayla gidiyor' : 'IBAN girilmemiş: havale müşterisi ödeme bilgisi alamaz', en.banka ? '' : 'Ayarlar → Ödeme ve Banka sekmesinden gir.');
+          ekle(en.metaCapi ? (en.metaTest ? 'uyari' : 'iyi') : 'uyari', 'Meta dönüşüm ölçümü', en.metaCapi ? (en.metaTest ? 'Sunucu ölçümü TEST kodu ile çalışıyor' : 'Pixel + sunucu ölçümü (Conversions API) açık') : 'Yalnız tarayıcı Pixel\'i çalışıyor; sunucu ölçümü kapalı', en.metaCapi ? (en.metaTest ? 'Test bitince env.json\'dan "metaTestKodu" satırını kaldır.' : '') : 'env.json\'a "metaCapiToken" gir.');
+          ekle('iyi', 'Site adresi', 'E-posta ve ödeme bağlantıları: ' + esc(en.siteAdresi || ''));
           ekle(en.panelSifre ? 'iyi' : 'sorun', 'Panel güvenliği', en.panelSifre ? 'Panel şifreyle korunuyor' : 'Panel şifresi tanımlı değil!');
           ekle(en.parasut ? (en.parasutTaslak ? 'uyari' : 'iyi') : 'uyari', 'Paraşüt fatura', en.parasut ? (en.parasutTaslak ? 'Bağlı — TASLAK modunda (fatura resmileşmez)' : 'Bağlı, faturalar resmi kesiliyor') : 'Bağlı değil', en.parasutTaslak ? 'Kontroller bitince env.json\'dan "parasutTaslak" satırını kaldır.' : '');
           ekle(en.yurtici ? (en.yurticiTest ? 'uyari' : 'iyi') : 'uyari', 'Yurtiçi Kargo', en.yurtici ? (en.yurticiTest ? 'Bağlı — TEST ortamında' : 'Bağlı, canlı') : 'Bağlı değil');

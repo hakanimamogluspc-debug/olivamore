@@ -1,13 +1,43 @@
 /* ---------- Web analizi (birinci taraf; çerez yok, IP saklanmaz) ----------
    Ziyaretçi: tarayıcıda rastgele anonim kimlik. Oturum: 30 dk hareketsizlikte yenilenir.
    Olaylar: sayfa, urun_gor, sepete_ekle, odeme_basla, odeme_adim2, satin_al → /api/olay */
+/* Çerez / ölçüm onayı: 'tum' = ölçüm + reklam (Meta Pixel), 'gerekli' = yalnız zorunlu */
+window.omRiza = function () { try { return localStorage.getItem('om-cookie-ok') === 'tum'; } catch (e) { return false; } };
+window.omCerez = function (ad) { var m = document.cookie.match(new RegExp('(?:^|; )' + ad + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+/* Meta Pixel: yalnız onay verilince yüklenir. Kimlik panelden (Ayarlar → Reklam İzleme) gelir. */
+window.omPixelKur = function (cfg) {
+  try {
+    if (window.__omPixel || !window.omRiza() || /panel/.test(location.pathname)) return;
+    cfg = cfg || {};
+    if (cfg.metaPixelAktif === false) return;
+    var id = String(cfg.metaPixelId || '1511481262832458').replace(/\D/g, '');
+    if (!id) return;
+    window.__omPixel = id;
+    !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', id);
+    window.fbq('track', 'PageView');
+  } catch (e) { }
+};
+/* Satın alma (tarayıcı tarafı; sunucu da aynı event_id ile gönderir → Meta tek sayar) */
+window.omMetaSatin = function (no, toplam, kalemler) {
+  try {
+    if (!window.fbq || !window.omRiza() || !no) return;
+    var d = { currency: 'TRY', content_type: 'product' };
+    if (toplam) d.value = Number(toplam);
+    if (kalemler && kalemler.length) { d.content_ids = kalemler.map(function (k) { return k.kod || k.id; }).filter(Boolean); d.num_items = kalemler.reduce(function (t, k) { return t + (k.adet || 1); }, 0); }
+    window.fbq('track', 'Purchase', d, { eventID: no });
+  } catch (e) { }
+};
 (function () {
   if (/panel/.test(location.pathname)) return;
   var ls = window.localStorage, ss = window.sessionStorage;
   function rnd() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
   var v, s, kaynak = {};
+  var META = { urun_gor: 'ViewContent', sepete_ekle: 'AddToCart', odeme_basla: 'InitiateCheckout', odeme_adim2: 'AddPaymentInfo' };
   try {
-    v = ls.getItem('om-z') || rnd(); ls.setItem('om-z', v);
+    // Onay yoksa kalıcı kimlik tutulmaz: kimlik yalnız bu sekme oturumu boyunca yaşar
+    if (window.omRiza()) { v = ls.getItem('om-z') || rnd(); ls.setItem('om-z', v); }
+    else { v = ss.getItem('om-z-o') || rnd(); ss.setItem('om-z-o', v); }
     var son = parseInt(ss.getItem('om-ot-son') || ls.getItem('om-ot-son') || '0', 10);
     s = ls.getItem('om-ot');
     var q = new URLSearchParams(location.search);
@@ -30,6 +60,18 @@
       var g = { e: e, v: v, s: s, p: location.pathname + location.search, ti: document.title.split('|')[0].trim(), dl: document.body.dataset.lang === 'en' ? 'en' : 'tr' };
       if (ilk) { for (var k in kaynak) g[k] = kaynak[k]; ilk = false; } else { g.r = kaynak.r; g.us = kaynak.us; g.um = kaynak.um; g.uc = kaynak.uc; g.gc = kaynak.gc; g.fc = kaynak.fc; }
       if (veri) for (var k2 in veri) g[k2] = veri[k2];
+      // Meta: onaylıysa tarayıcı Pixel'i + sunucu (CAPI) aynı event_id ile
+      if (window.omRiza() && META[e]) {
+        g.rz = 1; g.eid = e + '-' + rnd(); g.fbp = window.omCerez('_fbp'); g.fbc = window.omCerez('_fbc');
+        if (window.fbq) {
+          var md = { currency: 'TRY' };
+          if (g.u) { md.content_ids = [g.u]; md.content_type = 'product'; }
+          if (g.ad) md.content_name = g.ad;
+          if (g.d) md.value = Number(g.d);
+          if (g.a) md.num_items = Number(g.a);
+          window.fbq('track', META[e], md, { eventID: g.eid });
+        }
+      }
       try { ls.setItem('om-ot-son', String(Date.now())); } catch (er) { }
       var govde = JSON.stringify(g);
       if (navigator.sendBeacon) navigator.sendBeacon('/api/olay', new Blob([govde], { type: 'text/plain' }));
@@ -121,8 +163,8 @@
     rights: '© 2026 Olivamore. All rights reserved.',
     privacy: 'Privacy', terms: 'Terms of Use', kvkk: 'KVKK',
     toast: 'Added to bag ✓',
-    cookieText: 'We use only the cookies necessary for this site to work. When analytics cookies are added later, we will ask for your consent first.',
-    cookieOk: 'OK', cookieMore: 'Privacy'
+    cookieText: 'We use necessary cookies to run the site. With your consent we also use measurement and advertising cookies (Meta Pixel) to improve the site and show you relevant ads.',
+    cookieOk: 'Accept all', cookieMore: 'Privacy'
   } : {
     announce: '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et',
     shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', abonelik: 'Abonelik', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
@@ -140,8 +182,8 @@
     rights: '© 2026 Olivamore. Tüm hakları saklıdır.',
     privacy: 'Gizlilik', terms: 'Kullanım Şartları', kvkk: 'KVKK',
     toast: 'Sepete eklendi ✓',
-    cookieText: 'Bu sitede yalnızca sitenin çalışması için gerekli çerezler kullanılır. İleride analitik çerezler kullanmaya başlarsak önce onayını isteyeceğiz.',
-    cookieOk: 'Tamam', cookieMore: 'Gizlilik'
+    cookieText: 'Sitenin çalışması için gerekli çerezleri kullanıyoruz. Onay verirsen siteyi geliştirmek ve sana uygun reklamlar gösterebilmek için ölçüm ve reklam çerezlerini (Meta Pixel) de kullanırız.',
+    cookieOk: 'Kabul et', cookieMore: 'Gizlilik'
   };
 
   /* ---------- Logo işareti — gerçek marka dosyasından (Logo-main.pdf) ---------- */
@@ -917,6 +959,7 @@
         if (cfg && Object.keys(cfg).length) { AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(cfg)))); MODS = mkMods(); }
         try { applyAdminOverrides(); } catch (e) { console.error('[olivamore] içerik uygulanamadı', e); }
         statikAc();
+        window.omPixelKur(AC || cfg || {});
         markSweep();
         if (window.omBoySenkron) window.omBoySenkron();
         urunOdakla();
@@ -1416,14 +1459,21 @@
       });
     })();
 
-    // çerez bandı (KVKK) — bir kez gösterilir
-    if (!localStorage.getItem('om-cookie-ok')) {
+    // çerez / ölçüm onayı (KVKK) — seçim yapılana kadar gösterilir
+    const cerezSecim = localStorage.getItem('om-cookie-ok');
+    if (cerezSecim !== 'tum' && cerezSecim !== 'gerekli') {
       const cb = document.createElement('div');
       cb.className = 'cookie-bar show';
-      cb.innerHTML = `<p>${T.cookieText} <a href="cerez-politikasi.html" style="text-decoration:underline;">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a></p><button class="btn btn-dark" id="cookie-ok">${T.cookieOk}</button>`;
+      cb.innerHTML = `<p>${T.cookieText} <a href="${P('cerez-politikasi.html')}" style="text-decoration:underline;">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a></p>` +
+        `<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-outline" id="cookie-gerekli" type="button">${EN ? 'Necessary only' : 'Yalnızca gerekli'}</button><button class="btn btn-dark" id="cookie-ok" type="button">${T.cookieOk}</button></div>`;
       document.body.appendChild(cb);
       document.getElementById('cookie-ok').addEventListener('click', () => {
-        localStorage.setItem('om-cookie-ok', '1');
+        localStorage.setItem('om-cookie-ok', 'tum');
+        cb.remove();
+        window.omPixelKur(AC || {});
+      });
+      document.getElementById('cookie-gerekli').addEventListener('click', () => {
+        localStorage.setItem('om-cookie-ok', 'gerekli');
         cb.remove();
       });
     }

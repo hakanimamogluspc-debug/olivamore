@@ -76,6 +76,7 @@
       <div class="kicker">Thank You</div>
       <h2>Your order is in: <span id="co-no" style="color:var(--gold);"></span></h2>
       <p class="lead" style="margin:0 auto 10px;">We've emailed you the bank transfer details and your order summary. We ship as soon as the payment is confirmed.</p>
+      <div id="co-iban" style="display:none;max-width:560px;margin:6px auto 22px;text-align:left;background:#FBF7EC;border:1px solid #E8DBB5;padding:20px 22px;"></div>
       <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:26px;">Any issue? <a class="link-arrow" href="iletisim-en.html">Write to us</a> with your order number.</p>
       <a class="btn btn-dark" href="koleksiyon-en.html">Continue Shopping</a>
     </div>
@@ -472,7 +473,7 @@ omSepetHazir(function () {
     fetch('/api/siparis', {
       method: 'POST',
       headers: uyeToken ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uyeToken } : { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, fatura: faturaBilgi, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
+      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, fatura: faturaBilgi, iz: (window.omRiza && window.omRiza()) ? { rz: 1, fbp: window.omCerez('_fbp'), fbc: window.omCerez('_fbc') } : null, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
@@ -486,6 +487,8 @@ omSepetHazir(function () {
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = s.j.no;
+        try { omIbanGoster(s.j); } catch (e) { }
+        if (window.omMetaSatin) window.omMetaSatin(s.j.no, s.j.toplam, c);
         if (window.omIz) window.omIz('satin_al', { no: s.j.no, d: s.j.toplam || 0 });
         document.getElementById('cart-wrap').style.display = 'none';
         document.getElementById('co-ok').style.display = 'block';
@@ -582,6 +585,7 @@ omSepetHazir(function () {
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = mOk[1];
+        if (window.omMetaSatin) window.omMetaSatin(mOk[1]);
         if (window.omIz) window.omIz('satin_al', { no: mOk[1] });
         document.getElementById('cart-wrap').style.display = 'none';
         document.getElementById('co-ok').style.display = 'block';
@@ -607,6 +611,32 @@ omSepetHazir(function () {
   // Geri/ileri ile önbellekten dönülünce ya da başka sekmede sepet değişince yeniden çiz
   window.addEventListener('pageshow', function (e) { if (e.persisted && window.omCart) render(); });
   window.addEventListener('storage', function (e) { if (e.key === 'om-cart' && window.omCart) { window.omCart.refresh(); render(); } });
+
+  // Havale siparişi: IBAN kutusu (onay ekranı)
+  function omIbanGoster(j) {
+    var kutu = document.getElementById('co-iban'); if (!kutu) return;
+    var b = j && j.banka; if (!b) { kutu.style.display = 'none'; return; }
+    if (!b.iban) { kutu.innerHTML = '<p style="margin:0;font-size:.9rem;">Payment details will be sent to your email shortly.</p>'; kutu.style.display = 'block'; return; }
+    function satir(et, deger, kopya) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #EADFC2;">' +
+        '<span style="font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:#8a6f3c;">' + et + '</span>' +
+        '<span style="display:flex;align-items:center;gap:10px;text-align:right;"><b style="font-family:Poppins,sans-serif;font-variant-numeric:tabular-nums;">' + deger + '</b>' +
+        (kopya ? '<button type="button" data-kopya="' + String(kopya).replace(/"/g, '') + '" style="border:1px solid #BFA25D;background:#fff;color:#8a6f3c;font-size:.72rem;padding:4px 10px;cursor:pointer;">Copy</button>' : '') + '</span></div>';
+    }
+    kutu.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">Payment details</div>' +
+      satir('Amount', '₺' + Number(j.toplam).toLocaleString('tr-TR'), '') +
+      satir('Account holder', b.unvan || '-', b.unvan) +
+      (b.banka ? satir('Bank', b.banka, '') : '') +
+      satir('IBAN', b.iban, b.iban.replace(/\s+/g, '')) +
+      satir('Reference', j.no, j.no) +
+      '<p style="font-size:.84rem;margin:12px 0 0;color:var(--ink-soft);line-height:1.6;">' + (b.not || 'Please write your order number in the transfer reference.') + '<br>' + 'We kindly ask you to pay within {g} days; your order ships once the payment reaches us.'.replace('{g}', b.sureGun || 3) + '</p>';
+    kutu.style.display = 'block';
+    kutu.onclick = function (e) {
+      var k = e.target.closest('[data-kopya]'); if (!k) return;
+      var metin = k.getAttribute('data-kopya');
+      (navigator.clipboard ? navigator.clipboard.writeText(metin) : Promise.reject()).then(function () { k.textContent = 'Copied ✓'; setTimeout(function () { k.textContent = 'Copy'; }, 1800); }).catch(function () { });
+    };
+  }
   /* --- iki adımlı ödeme --- */
   function adimGoster(n) {
     document.getElementById('co-adim-1').style.display = n === 1 ? '' : 'none';
