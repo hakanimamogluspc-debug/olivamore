@@ -24,6 +24,12 @@ fi
 echo "==> Site dosyalari /var/www/olivamore icine kopyalaniyor..."
 rsync -a "$REPO/olivamore-site/" /var/www/olivamore/
 
+# Onbellek kirma: her deploy'da site.js / style.css adreslerine surum ekle (?v=<commit>).
+# Tarayicilar bu dosyalari 7 gun onbellekte tutuyor; surum degisince yenisini indirmek zorunda.
+SURUM=$(git -C "$REPO" rev-parse --short HEAD)
+find /var/www/olivamore -maxdepth 1 -name '*.html' -exec sed -i -E "s#assets/(site\.js|style\.css)(\?v=[A-Za-z0-9]*)?#assets/\1?v=$SURUM#g" {} +
+echo "==> Surum damgasi: $SURUM"
+
 # Panelden gorsel/video yuklenebilmesi icin klasor www-data'ya ait olmali
 chown -R www-data:www-data /var/www/olivamore/assets/img
 

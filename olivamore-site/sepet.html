@@ -570,8 +570,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // site.js sepeti kurana kadar bekle
   var bekle = setInterval(function () {
-    if (window.omCart) { clearInterval(bekle); render(); }
+    if (window.omCart) { clearInterval(bekle); try { render(); } catch (e) { console.error('Sepet çizilemedi', e); } }
   }, 50);
+  // Geri/ileri ile önbellekten dönülünce ya da başka sekmede sepet değişince yeniden çiz
+  window.addEventListener('pageshow', function (e) { if (e.persisted && window.omCart) render(); });
+  window.addEventListener('storage', function (e) { if (e.key === 'om-cart' && window.omCart) { window.omCart.refresh(); render(); } });
 });
 
   /* --- iki adımlı ödeme --- */
