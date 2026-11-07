@@ -81,6 +81,7 @@ if ! nginx -t; then
   nginx -t && exit 1
 fi
 systemctl reload nginx
+sleep 3  # reload arka planda tamamlanir; testler yeni ayari gorsun
 
 echo "==> Yerel test (DNS'e dokunmadan, sunucunun icinden)..."
 t() { curl -sk -o /dev/null -w "%{http_code} %{redirect_url}" --resolve "$1:443:127.0.0.1" "https://$1$2"; echo "   ← $1$2"; }
