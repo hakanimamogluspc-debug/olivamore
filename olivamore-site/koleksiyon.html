@@ -44,12 +44,12 @@
   <div class="container">
     <div class="toolbar">
       <div class="filters">
-        <button class="chip on" data-role="all">Tümü</button>
-        <button class="chip" id="serin" data-role="serin">Erken Hasat Zeytinyağı</button>
+        <button class="chip on" id="serin" data-role="serin">Erken Hasat Zeytinyağı</button>
         <button class="chip" id="ocak" data-role="ocak">Olgun Hasat Zeytinyağı</button>
         <button class="chip" id="zeytin" data-role="zeytin">Doğal Zeytinler</button>
         <button class="chip" id="eksi" data-role="eksi">Ekşiler</button>
         <button class="chip" id="hediyelik" data-role="hediye">Setler</button>
+        <button class="chip" data-role="all">Tümü</button>
       </div>
       <div class="sort">
         <select aria-label="Sırala">
@@ -169,16 +169,18 @@
       var kb = document.getElementById('kat-bos');
       if (kb) kb.style.display = (bosMu && role !== 'eksi' && role !== 'zeytin') ? 'block' : 'none';
     }
-    var SECILI = 'all';
+    var SECILI = null; // kullanıcı seçene kadar ilk kategori (Erken Hasat)
+    function ilkRol() { var c = document.querySelector('.filters .chip:not([data-role="all"])'); return c ? c.dataset.role : 'all'; }
     document.querySelector('.filters').addEventListener('click', function (e) {
       var c = e.target.closest('.chip'); if (!c) return;
       apply(c.dataset.role || 'all');
     });
     // CMS kartları/çipleri yüklendikten sonra site.js çağırır: seçili filtreyi (veya #çapa) yeniden uygula
     window.omKoleksiyonUygula = function () {
+      if (SECILI) { apply(SECILI); return; }
       var hc = document.getElementById(location.hash.slice(1));
-      if (SECILI === 'all' && hc && hc.classList.contains('chip')) { apply(hc.dataset.role || 'all'); return; }
-      apply(SECILI);
+      apply(hc && hc.classList.contains('chip') ? (hc.dataset.role || 'all') : ilkRol());
+      SECILI = null;
     };
     // Sıralama: öne çıkanlar / çok satanlar / fiyat
     var grid = document.querySelector('.prod-grid.three');
@@ -203,7 +205,7 @@
       kartlar.forEach(function (c) { grid.appendChild(c); });
     });
 
-    apply('all');
+    window.omKoleksiyonUygula();
     // #hediyelik gibi çapalarla gelindiyse ilgili filtreyi seç
     var h = location.hash.slice(1);
     var target = document.getElementById(h);

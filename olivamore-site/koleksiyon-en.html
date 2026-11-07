@@ -44,12 +44,12 @@
   <div class="container">
     <div class="toolbar">
       <div class="filters">
-        <button class="chip on" data-role="all">All</button>
-        <button class="chip" id="serin" data-role="serin">Early Harvest Oils</button>
+        <button class="chip on" id="serin" data-role="serin">Early Harvest Oils</button>
         <button class="chip" id="ocak" data-role="ocak">Ripe Harvest Oils</button>
         <button class="chip" id="zeytin" data-role="zeytin">Natural Olives</button>
         <button class="chip" id="eksi" data-role="eksi">Vinegars</button>
         <button class="chip" id="hediyelik" data-role="hediye">Sets</button>
+        <button class="chip" data-role="all">All</button>
       </div>
       <div class="sort">
         <select aria-label="Sort">
@@ -169,16 +169,18 @@
       var kb = document.getElementById('kat-bos');
       if (kb) kb.style.display = (bosMu && role !== 'eksi' && role !== 'zeytin') ? 'block' : 'none';
     }
-    var SECILI = 'all';
+    var SECILI = null; // kullanıcı seçene kadar ilk kategori (Erken Hasat)
+    function ilkRol() { var c = document.querySelector('.filters .chip:not([data-role="all"])'); return c ? c.dataset.role : 'all'; }
     document.querySelector('.filters').addEventListener('click', function (e) {
       var c = e.target.closest('.chip'); if (!c) return;
       apply(c.dataset.role || 'all');
     });
     // CMS kartları/çipleri yüklendikten sonra site.js çağırır: seçili filtreyi (veya #çapa) yeniden uygula
     window.omKoleksiyonUygula = function () {
+      if (SECILI) { apply(SECILI); return; }
       var hc = document.getElementById(location.hash.slice(1));
-      if (SECILI === 'all' && hc && hc.classList.contains('chip')) { apply(hc.dataset.role || 'all'); return; }
-      apply(SECILI);
+      apply(hc && hc.classList.contains('chip') ? (hc.dataset.role || 'all') : ilkRol());
+      SECILI = null;
     };
     // Sorting: featured / bestsellers / price
     var grid = document.querySelector('.prod-grid.three');
@@ -203,7 +205,7 @@
       kartlar.forEach(function (c) { grid.appendChild(c); });
     });
 
-    apply('all');
+    window.omKoleksiyonUygula();
     var h = location.hash.slice(1);
     var target = document.getElementById(h);
     if (target && target.classList.contains('chip')) target.click();

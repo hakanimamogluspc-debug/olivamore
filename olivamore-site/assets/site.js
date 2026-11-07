@@ -770,12 +770,12 @@
       if (grid) grid.innerHTML = vis.map(p => productCard(p, C)).join('');
       const filtreler = document.querySelector('.filters');
       if (filtreler && Array.isArray(C.urunKategorileri) && C.urunKategorileri.length) {
-        filtreler.innerHTML = `<button class="chip on" data-role="all">${EN ? 'All' : 'Tümü'}</button>` +
-          C.urunKategorileri.map(k => {
+        // Kategoriler önce (ilki varsayılan seçili), "Tümü" her zaman en sonda
+        filtreler.innerHTML = C.urunKategorileri.map(k => {
             // eski çapalar (#hediyelik) bozulmasın
             const capa = k.id === 'hediye' ? 'hediyelik' : k.id;
             return `<button class="chip" id="${capa}" data-role="${k.id}">${EN ? (k.adEN || k.adTR) : k.adTR}</button>`;
-          }).join('');
+          }).join('') + `<button class="chip" data-role="all">${EN ? 'All' : 'Tümü'}</button>`;
         window.OM_KAT_NOT = {};
         C.urunKategorileri.forEach(k => { const n = EN ? k.notEN : k.notTR; if (n) window.OM_KAT_NOT[k.id] = n; });
       }
