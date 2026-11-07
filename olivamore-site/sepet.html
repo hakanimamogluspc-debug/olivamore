@@ -171,7 +171,21 @@
   var GREEN_KODLAR = {'ay250':'152.04.01.01','ay500':'152.04.01.02','ay750':'152.04.01.03','ay2l':'152.04.01.05','ay5l':'152.04.01.06','tr250':'152.04.01.07','tr500':'152.04.01.10','tr750':'152.04.01.11','tr2l':'152.04.01.12','tr5l':'152.04.01.13','og5l':'152.04.01.14','kutu500':'152.04.01.02','kutu750':'152.04.01.03','custom-set-5':'152.06.01.05','custom-set-3':'152.06.01.01','palate-box-3':'152.06.01.01','ces-mand':'152.04.01.04','ces-bib':'152.04.02.04','ces-berg':'152.04.02.01','ces-kek':'152.04.02.02','zey-siyah':'152.05.01.05','zey-yesil':'152.05.01.03','sir-bal':'152.11.01.05','sir-alic':'152.11.01.06','sir-elma':'152.11.01.07','sir-uzum':'152.11.01.08','sir-nar':'152.11.01.04'};
   function greenKod(k){ if(!k) return ''; if(GREEN_KODLAR[k]) return GREEN_KODLAR[k]; if(String(k).indexOf('custom-set')===0) return GREEN_KODLAR['custom-set-5']; return k; }
 
-document.addEventListener('DOMContentLoaded', function () {
+// Sepet kodu, site.js sepeti (window.omCart) kurduktan SONRA başlar.
+// (site.js 'defer' yüklendiği için bu sayfanın DOMContentLoaded'ı ondan önce çalışıyordu; kayıtlı kupon varken
+//  kupon doğrulaması omCart yokken çağrılıp tüm sepet kodunu durduruyordu → boş sepet, çalışmayan +/- butonları.)
+function omSepetHazir(fn) {
+  var basla = function () {
+    if (window.omCart) return fn();
+    var n = 0, t = setInterval(function () {
+      if (window.omCart) { clearInterval(t); fn(); }
+      else if (++n > 200) { clearInterval(t); console.error('Sepet altyapısı yüklenemedi'); var h = document.getElementById('cart-items'); if (h) h.innerHTML = '<p style="color:#a33;">Sepet yüklenemedi. Lütfen sayfayı yenile.</p>'; }
+    }, 25);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(basla, 0); });
+  else setTimeout(basla, 0);
+}
+omSepetHazir(function () {
   var KARGO = 80, KARGO_ESIK = 500; // [KARGO AYARI]
   function fmt(n) { return '₺' + Number(n).toLocaleString('tr-TR'); }
 
