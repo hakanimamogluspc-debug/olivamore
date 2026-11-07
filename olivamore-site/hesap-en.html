@@ -152,6 +152,21 @@ details[open] .sp-ok{transform:rotate(180deg)}
             <button class="btn btn-gold" type="submit" id="hs-btn" style="width:100%;margin-top:8px;">Sign In</button>
             <p class="hs-hata" id="hs-hataMsj"></p>
           </form>
+          <p style="text-align:center;margin:14px 0 0;"><a href="#" id="hs-unuttum" style="font-size:.85rem;color:var(--ink-soft);text-decoration:underline;">Forgot your password?</a></p>
+          <form id="hs-unut-form" style="display:none;">
+            <p class="alt" style="margin-bottom:14px;">Enter your email and we will send you a link to set your password.</p>
+            <div class="hs-alan"><label for="hs-unut-eposta">Email</label><input type="email" id="hs-unut-eposta" autocomplete="email" required></div>
+            <button class="btn btn-gold" type="submit" style="width:100%;margin-top:8px;">Send link</button>
+            <p class="hs-hata" id="hs-unut-msj" style="color:#2e7d32;"></p>
+            <p style="text-align:center;margin:12px 0 0;"><a href="#" class="hs-girise-don" style="font-size:.85rem;color:var(--ink-soft);text-decoration:underline;">Back to sign in</a></p>
+          </form>
+          <form id="hs-yeni-form" style="display:none;">
+            <p class="alt" style="margin-bottom:14px;">Choose a password with at least 6 characters.</p>
+            <div class="hs-alan"><label for="hs-yeni1">New password</label><input type="password" id="hs-yeni1" autocomplete="new-password" required minlength="6"></div>
+            <div class="hs-alan"><label for="hs-yeni2">New password (again)</label><input type="password" id="hs-yeni2" autocomplete="new-password" required minlength="6"></div>
+            <button class="btn btn-gold" type="submit" style="width:100%;margin-top:8px;">Save password</button>
+            <p class="hs-hata" id="hs-yeni-msj"></p>
+          </form>
         </div>
       </div>
     </div>
@@ -442,11 +457,59 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
         btn.disabled = false;
+        if (!s.ok && s.j.kod === 'sifre-belirle') { hata.innerHTML = s.j.hata + ' <a href="#" onclick="document.getElementById(\'hs-unuttum\').click();return false;" style="text-decoration:underline;">→</a>'; hata.style.display = 'block'; btn.disabled = false; return; }
         if (!s.ok) { hata.textContent = s.j.hata || 'Something went wrong.'; hata.style.display = 'block'; return; }
         localStorage.setItem(KEY, s.j.token);
         beniGetir();
       })
       .catch(function () { btn.disabled = false; hata.textContent = 'Connection error; please try again.'; hata.style.display = 'block'; });
+  });
+
+  /* ---- Şifremi unuttum / yeni şifre ---- */
+  function formGoster(hangi) {
+    document.getElementById('hs-form').style.display = hangi === 'giris' ? '' : 'none';
+    document.querySelector('.hs-sekme').style.display = hangi === 'giris' ? '' : 'none';
+    document.getElementById('hs-unuttum').parentNode.style.display = hangi === 'giris' ? '' : 'none';
+    document.getElementById('hs-unut-form').style.display = hangi === 'unut' ? '' : 'none';
+    document.getElementById('hs-yeni-form').style.display = hangi === 'yeni' ? '' : 'none';
+    var h1 = document.querySelector('.gr-form h1');
+    if (h1 && !h1.dataset.ilk) h1.dataset.ilk = h1.textContent;
+    if (h1) h1.textContent = hangi === 'giris' ? h1.dataset.ilk : 'Set a new password';
+  }
+  document.getElementById('hs-unuttum').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('hs-unut-eposta').value = document.getElementById('hs-eposta').value;
+    formGoster('unut');
+  });
+  document.querySelector('.hs-girise-don').addEventListener('click', function (e) { e.preventDefault(); formGoster('giris'); });
+  document.getElementById('hs-unut-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msj = document.getElementById('hs-unut-msj'), btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    fetch('/api/uye/sifre-unuttum', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: document.getElementById('hs-unut-eposta').value.trim(), dil: 'en' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { btn.disabled = false; msj.style.color = j.hata ? '#a33' : '#2e7d32'; msj.textContent = j.hata || 'If this email is registered, a link is on its way. Check your inbox (and spam folder).'; msj.style.display = 'block'; })
+      .catch(function () { btn.disabled = false; msj.style.color = '#a33'; msj.textContent = 'Connection error; please try again.'; msj.style.display = 'block'; });
+  });
+  var SIFIRLA = new URLSearchParams(location.search);
+  if (SIFIRLA.get('sifirla') && SIFIRLA.get('e')) {
+    goster('giris'); formGoster('yeni');
+  }
+  document.getElementById('hs-yeni-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msj = document.getElementById('hs-yeni-msj'), s1 = document.getElementById('hs-yeni1').value, s2 = document.getElementById('hs-yeni2').value;
+    msj.style.display = 'none';
+    if (s1 !== s2) { msj.textContent = 'Passwords do not match.'; msj.style.display = 'block'; return; }
+    fetch('/api/uye/sifre-yenile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eposta: SIFIRLA.get('e'), anahtar: SIFIRLA.get('sifirla'), sifre: s1 }) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.ok) { msj.textContent = x.j.hata || 'Connection error; please try again.'; msj.style.display = 'block'; return; }
+        localStorage.setItem(KEY, x.j.token);
+        history.replaceState(null, '', location.pathname);
+        formGoster('giris');
+        beniGetir();
+      })
+      .catch(function () { msj.textContent = 'Connection error; please try again.'; msj.style.display = 'block'; });
   });
   /* ---- product review ---- */
   var YR_YILDIZ = 5;

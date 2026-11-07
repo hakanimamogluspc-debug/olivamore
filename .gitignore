@@ -17,3 +17,8 @@ Thumbs.db
 .DS_Store
 desktop.ini
 ziXeuh1P
+
+# Eski WordPress yedeği (müşteri kişisel verisi — asla commit edilmez)
+wp-yedek/
+*.sql
+*.sql.gz

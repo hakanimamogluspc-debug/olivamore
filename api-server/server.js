@@ -289,7 +289,7 @@ async function kargoTakipTur() {
   const siparisler = oku('siparisler.json', []);
   let degisti = false;
   for (const s of siparisler) {
-    if (s.durum !== 'kargolandı' || !s.kargoNo) continue;
+    if (s.durum !== 'kargolandı' || !s.kargoNo || s.kaynak === 'wordpress') continue;
     if (Date.now() - Date.parse(s.tarih) > 60 * 86400000) continue; // eski siparişleri sorgulamayı bırak
     try {
       let sonuc = '';
@@ -1789,13 +1789,57 @@ const sunucu = http.createServer(async (req, res) => {
       if (!ad || !epostaMi(eposta)) return json(res, 400, { hata: 'Ad ve geçerli e-posta zorunlu.' });
       if (sifre.length < 6) return json(res, 400, { hata: 'Şifre en az 6 karakter olmalı.' });
       const liste = oku('uyeler.json', []);
-      if (liste.find(u => u.eposta === eposta)) return json(res, 400, { hata: 'Bu e-posta zaten kayıtlı; giriş yapmayı dene.' });
+      const varolan = liste.find(u => u.eposta === eposta);
+      if (varolan && varolan.sifreYok) return json(res, 400, { hata: 'Bu e-postayla eski sitemizden bir hesabın var; geçmiş siparişlerin de içinde. "Şifremi unuttum" ile şifreni belirleyebilirsin.', kod: 'sifre-belirle' });
+      if (varolan) return json(res, 400, { hata: 'Bu e-posta zaten kayıtlı; giriş yapmayı dene.' });
       const tuz = crypto.randomBytes(16).toString('hex');
       const u = { id: 'U-' + Date.now(), ad: ad, eposta: eposta, tuz: tuz, hash: sifreHashle(sifre, tuz), tarih: new Date().toISOString(), oturumlar: [] };
       const token = oturumAc(u);
       liste.push(u);
       yaz('uyeler.json', liste.slice(-50000));
       return json(res, 200, { tamam: true, token: token, ad: ad });
+    }
+    /* ---- Şifremi unuttum: e-postaya tek kullanımlık bağlantı (1 saat geçerli) ---- */
+    if (req.method === 'POST' && yol === '/api/uye/sifre-unuttum') {
+      const g = await govde(req, 1);
+      const eposta = temiz(g.eposta, 200).toLowerCase();
+      if (!epostaMi(eposta)) return json(res, 400, { hata: 'Geçerli bir e-posta gir.' });
+      const liste = oku('uyeler.json', []);
+      const u = liste.find(x => x.eposta === eposta);
+      if (u) {
+        const son = u.sifirla && u.sifirla.gonderim ? Date.parse(u.sifirla.gonderim) : 0;
+        if (Date.now() - son > 60000) { // dakikada en fazla bir e-posta
+          const anahtar = crypto.randomBytes(24).toString('hex');
+          u.sifirla = { ozet: crypto.createHash('sha256').update(anahtar).digest('hex'), bitis: Date.now() + 3600000, gonderim: new Date().toISOString() };
+          yaz('uyeler.json', liste);
+          const en = g.dil === 'en';
+          const link = SITE() + (en ? '/hesap-en' : '/hesap') + '?sifirla=' + anahtar + '&e=' + encodeURIComponent(eposta);
+          epostaGonder(eposta, en ? 'Set your Olivamore password' : 'Olivamore şifreni belirle',
+            (en ? 'Hello ' + u.ad + ',\n\nUse the link below to set a new password. It is valid for 1 hour:\n' + link + '\n\nIf you did not request this, you can ignore this email; your account stays unchanged.\n\nOlivamore'
+                : 'Merhaba ' + u.ad + ',\n\nYeni şifreni belirlemek için aşağıdaki bağlantıya tıkla. Bağlantı 1 saat geçerlidir:\n' + link + '\n\nBu isteği sen yapmadıysan e-postayı yok sayabilirsin; hesabında bir değişiklik olmaz.\n\nOlivamore'));
+        }
+      }
+      // Kayıtlı olsun olmasın aynı yanıt (e-posta adresleri dışarıdan sorgulanamasın)
+      return json(res, 200, { tamam: true });
+    }
+    if (req.method === 'POST' && yol === '/api/uye/sifre-yenile') {
+      const g = await govde(req, 1);
+      const eposta = temiz(g.eposta, 200).toLowerCase(), anahtar = String(g.anahtar || ''), sifre = String(g.sifre || '');
+      if (sifre.length < 6) return json(res, 400, { hata: 'Şifre en az 6 karakter olmalı.' });
+      const liste = oku('uyeler.json', []);
+      const u = liste.find(x => x.eposta === eposta);
+      const ozet = crypto.createHash('sha256').update(anahtar).digest('hex');
+      if (!u || !u.sifirla || u.sifirla.bitis < Date.now() || u.sifirla.ozet.length !== ozet.length ||
+          !crypto.timingSafeEqual(Buffer.from(u.sifirla.ozet), Buffer.from(ozet))) {
+        return json(res, 400, { hata: 'Bağlantının süresi dolmuş ya da geçersiz. "Şifremi unuttum" ile yenisini iste.' });
+      }
+      u.tuz = crypto.randomBytes(16).toString('hex');
+      u.hash = sifreHashle(sifre, u.tuz);
+      delete u.sifirla; delete u.sifreYok;
+      u.oturumlar = []; // eski oturumlar kapanır
+      const token = oturumAc(u);
+      yaz('uyeler.json', liste);
+      return json(res, 200, { tamam: true, token: token, ad: u.ad });
     }
     if (req.method === 'POST' && yol === '/api/uye/giris') {
       const g = await govde(req, 1);
@@ -1804,6 +1848,7 @@ const sunucu = http.createServer(async (req, res) => {
       const u = liste.find(x => x.eposta === eposta);
       const hatali = () => json(res, 401, { hata: 'E-posta veya şifre hatalı.' });
       if (!u) return hatali();
+      if (u.sifreYok || !u.hash) return json(res, 403, { hata: 'Hesabın eski sitemizden aktarıldı. Güvenliğin için yeni bir şifre belirlemen gerekiyor: "Şifremi unuttum"a tıkla, e-postana bağlantı gelsin.', kod: 'sifre-belirle' });
       const deneme = Buffer.from(sifreHashle(String(g.sifre || ''), u.tuz), 'hex');
       const dogru = Buffer.from(u.hash, 'hex');
       if (deneme.length !== dogru.length || !crypto.timingSafeEqual(deneme, dogru)) return hatali();
@@ -2423,7 +2468,7 @@ const sunucu = http.createServer(async (req, res) => {
         okunmamisMesaj: oku('mesajlar.json', []).filter(m => !m.okundu).length,
         dusukStok: ((cfg.products) || []).filter(p => p.visible !== false && typeof p.stok === 'number' && p.stok <= 5).length,
         bekleyenYorum: oku('yorumlar.json', []).filter(y => y.durum === 'bekliyor').length,
-        faturasiz: siparisler.filter(s => faturalanacak.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi')).length,
+        faturasiz: siparisler.filter(s => s.kaynak !== 'wordpress' && faturalanacak.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi')).length,
         aktifAbonelik: oku('abonelikler.json', []).filter(a => a.durum === 'aktif').length,
         parasut: parasutAktif(),
         kartIade: iyzicoAktif(),

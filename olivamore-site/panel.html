@@ -1899,7 +1899,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     });
     if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Bu filtreye uyan sipariş yok.</p>'; return; }
     host.innerHTML = liste.map(function (s) {
-      return '<details class="item"' + (ORD_ACIK === s.no ? ' open' : '') + '><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
+      return '<details class="item"' + (ORD_ACIK === s.no ? ' open' : '') + '><summary><div class="t" style="margin-left:4px;"><b>' + (s.kaynak === 'wordpress' ? '<span title="Eski siteden (WordPress) aktarıldı" style="font-size:.62rem;letter-spacing:.08em;background:#eef0f4;color:#5b6577;padding:2px 6px;margin-right:6px;vertical-align:2px;">ESKİ SİTE</span>' : '') + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
         '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + (s.kargoNo ? ' · ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) : '') + '</span></div>' + ordPill(s) + '</summary>' +
         '<div class="body">' + ordDetay(s) +
         '<div class="od-baslik">İşlemler</div>' +
@@ -3235,7 +3235,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     fetch('/api/admin/siparisler').then(function (r) { return r.json(); }).then(function (liste) {
       liste = Array.isArray(liste) ? liste : [];
       var kapsam = ['hazırlanıyor', 'kargolandı', 'teslim', 'tamamlandı'];
-      var bekleyen = liste.filter(function (s) { return kapsam.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi'); });
+      // Eski siteden (WordPress) aktarılan siparişlerin faturası eski sistemde kesildi: listeye girmez
+      var bekleyen = liste.filter(function (s) { return s.kaynak !== 'wordpress' && kapsam.indexOf(s.durum) !== -1 && !(s.fatura && s.fatura.durum === 'kesildi'); });
       var kesilen = liste.filter(function (s) { return s.fatura && s.fatura.durum === 'kesildi'; });
       var tutar = bekleyen.reduce(function (t, s) { return t + (Number(s.toplam) || 0); }, 0);
       var parasut = !!(window.OZET && window.OZET.parasut);
