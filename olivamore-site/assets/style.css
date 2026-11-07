@@ -2343,3 +2343,10 @@ body[data-page="home"] section .zsus{position:absolute}
 .om-buyut button{position:absolute;top:18px;right:20px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:1.4rem;cursor:pointer}
 .om-buyut .ok{top:50%;transform:translateY(-50%);font-size:1.6rem}
 .om-buyut .ok.sol{left:20px;right:auto}.om-buyut .ok.sag{right:20px}
+
+/* İndirim: kartta yüzde rozeti + üstü çizili eski fiyat */
+.fig-kart .fk-img{position:relative}
+.fk-indirim{position:absolute;right:14px;top:14px;z-index:2;background:#9a3b2c;color:#fff;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.04em;padding:5px 9px;border-radius:2px}
+.fig-kart .fk-fiyat s{color:#8a8377}
+.chip.chip-indirim{border-color:#d9b3aa;color:#9a3b2c}
+.chip.chip-indirim.on{background:#9a3b2c;border-color:#9a3b2c;color:#fff}

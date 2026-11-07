@@ -2026,7 +2026,9 @@ const sunucu = http.createServer(async (req, res) => {
           '<g:link>' + xml(taban + '/' + href) + '</g:link>' +
           '<g:image_link>' + xml(taban + '/' + (p.img || '')) + '</g:image_link>' +
           '<g:availability>' + (stokYok ? 'out_of_stock' : 'in_stock') + '</g:availability>' +
-          '<g:price>' + Number(p.price).toFixed(2) + ' TRY</g:price>' +
+          (Number(p.eskiFiyat) > Number(p.price)
+            ? '<g:price>' + Number(p.eskiFiyat).toFixed(2) + ' TRY</g:price><g:sale_price>' + Number(p.price).toFixed(2) + ' TRY</g:sale_price>'
+            : '<g:price>' + Number(p.price).toFixed(2) + ' TRY</g:price>') +
           '<g:brand>Olivamore</g:brand>' +
           '<g:condition>new</g:condition>' +
           '<g:product_type>' + xml(p.role === 'zeytin' ? 'Zeytin' : (p.role === 'sirke' ? 'Sirke' : 'Zeytinyağı')) + '</g:product_type>' +

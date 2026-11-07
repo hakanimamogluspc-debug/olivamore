@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
         yk.style.display = 'inline-block';
       } else if (p.price > 0) {
         var f = p.price.toLocaleString('tr-TR');
-        document.getElementById('fiyat-tek').textContent = '₺' + f;
+        document.getElementById('fiyat-tek').innerHTML = (Number(p.eskiFiyat) > p.price ? '<s style="opacity:.5;font-weight:400;font-size:.8em;margin-right:8px;">₺' + Number(p.eskiFiyat).toLocaleString('tr-TR') + '</s>' : '') + '₺' + f;
         btn.textContent = 'Sepete Ekle · ₺' + f;
       } else {
         document.getElementById('fiyat-tek').textContent = '';

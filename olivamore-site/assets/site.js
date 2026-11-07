@@ -839,14 +839,17 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       const tukendi = typeof p.stok === 'number' && p.stok <= 0;
       const stokRozet = tukendi ? `<span class="fk-rozet" style="background:#6b7280;border-color:#6b7280;color:#fff;">${EN ? 'Sold Out' : 'Tükendi'}</span>` : rozetHtml;
       govdeIc = `<div class="fk-img"${tukendi ? ' style="opacity:.55;"' : ''}>${stokRozet}<img src="${p.img}" alt="${name}" loading="lazy"></div>`;
+      const indirimde = Number(p.eskiFiyat) > Number(p.price) && p.price > 0;
       fiyatHtml = p.price
-        ? `₺${fmtTL(p.price)} <small>${unit || ''}</small>`
+        ? (indirimde ? `<s>₺${fmtTL(p.eskiFiyat)}</s> ` : '') + `₺${fmtTL(p.price)} <small>${unit || ''}</small>`
         : `<span style="font-family:'Poppins',sans-serif;color:var(--gold-text,#8a6f3c);font-size:.8rem;font-weight:500;">${EN ? 'Coming soon' : 'Fiyat yakında'}</span>`;
       butonHtml = (p.price && !tukendi)
         ? `<button class="fig-btn" data-add type="button">${EN ? 'Add to Bag' : 'Sepete Ekle'}</button>`
         : '';
     }
-    return `<article class="card fig-kart" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">` +
+    const indOran = (Number(p.eskiFiyat) > Number(p.price) && p.price > 0) ? Math.round((1 - p.price / p.eskiFiyat) * 100) : 0;
+    if (indOran && govdeIc && govdeIc.indexOf('fk-indirim') === -1) govdeIc = govdeIc.replace('<div class="fk-img">', `<div class="fk-img"><span class="fk-indirim">%${indOran}</span>`);
+    return `<article class="card fig-kart" data-indirim="${indOran ? 1 : 0}" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">` +
       `<a class="fk-hit" href="${href}" aria-label="${name}" data-pid="${p.id || ''}"></a>` +
       govdeIc +
       `${roleHtml}<h3>${name}</h3>` +
@@ -869,7 +872,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
             // eski çapalar (#hediyelik) bozulmasın
             const capa = k.id === 'hediye' ? 'hediyelik' : k.id;
             return `<button class="chip" id="${capa}" data-role="${k.id}">${EN ? (k.adEN || k.adTR) : k.adTR}</button>`;
-          }).join('') + `<button class="chip" data-role="all">${EN ? 'All' : 'Tümü'}</button>`;
+          }).join('') + (C.products.some(p => p.visible !== false && Number(p.eskiFiyat) > Number(p.price) && p.price > 0) ? `<button class="chip chip-indirim" id="indirim" data-role="indirim">${EN ? 'On Sale' : 'İndirimdekiler'}</button>` : '') + `<button class="chip" data-role="all">${EN ? 'All' : 'Tümü'}</button>`;
         window.OM_KAT_NOT = {};
         C.urunKategorileri.forEach(k => { const n = EN ? k.notEN : k.notTR; if (n) window.OM_KAT_NOT[k.id] = n; });
       }
@@ -1249,6 +1252,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
           b.disabled = false;
           b.removeAttribute('title');
           b.dataset.price = p.price.toLocaleString('tr-TR');
+          if (Number(p.eskiFiyat) > p.price) b.dataset.eski = Number(p.eskiFiyat).toLocaleString('tr-TR'); else delete b.dataset.eski;
           b.dataset.sub = Math.round(p.price * 0.85).toLocaleString('tr-TR');
           if (b.dataset.l) b.textContent = b.dataset.l;
         } else {
@@ -1283,7 +1287,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       const price = document.getElementById('fiyat-tek');
       const addButton = document.getElementById('sepet-btn');
       const gallery = document.getElementById('gallery-img');
-      if (price && button.dataset.price) price.textContent = '₺' + button.dataset.price;
+      if (price && button.dataset.price) price.innerHTML = (button.dataset.eski ? '<s style="opacity:.5;font-weight:400;font-size:.8em;margin-right:8px;">₺' + button.dataset.eski + '</s>' : '') + '₺' + button.dataset.price;
       if (addButton) {
         addButton.dataset.pid = button.dataset.pid || '';
         addButton.dataset.volume = button.dataset.l || '';

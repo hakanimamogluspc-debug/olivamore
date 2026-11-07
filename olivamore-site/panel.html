@@ -1255,6 +1255,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   /* ================== ÜRÜNLER ================== */
   function productItem(p, i) {
     var badge = p.visible === false ? '<span class="pill hid">Gizli</span>' : (p.featured > 0 ? '<span class="pill">Vitrin #' + p.featured + '</span>' : '');
+    if (p.eskiFiyat > p.price) badge = '<span class="pill" style="background:#b04a3a1a;color:#b04a3a;">%' + Math.round((1 - p.price / p.eskiFiyat) * 100) + ' indirim</span>' + badge;
     if (typeof p.stok === 'number') {
       badge = (p.stok <= 0 ? '<span class="pill" style="background:#dc26261a;color:#dc2626;">Tükendi</span>'
         : p.stok <= 5 ? '<span class="pill" style="background:#d977061a;color:#d97706;">Stok: ' + p.stok + '</span>'
@@ -1273,7 +1274,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Açıklama (EN)</label><textarea class="p-noteEN" rows="2">' + esc(p.noteEN) + '</textarea></div>' +
       '</div>' +
       '<div class="grid3">' +
-      '<div class="field"><label>Satış Fiyatı — KDV Dahil (₺)</label><input type="number" step="0.01" class="p-price" value="' + p.price + '"></div>' +
+      '<div class="field"><label>Normal Fiyat — KDV Dahil (₺)</label><input type="number" step="0.01" class="p-price" value="' + (p.eskiFiyat > p.price ? p.eskiFiyat : p.price) + '"></div>' +
+      '<div class="field"><label>İndirimli Fiyat (₺) <span style="color:var(--soft);font-weight:400;">— boş = indirim yok</span></label><input type="number" step="0.01" class="p-indirimli" value="' + (p.eskiFiyat > p.price ? p.price : '') + '" placeholder="örn. ' + Math.round((p.eskiFiyat || p.price || 0) * 0.9) + '"><small class="p-ind-bilgi" style="display:block;margin-top:4px;color:#2e7d32;">' + (p.eskiFiyat > p.price ? '%' + Math.round((1 - p.price / p.eskiFiyat) * 100) + ' indirim · sitede üstü çizili gösterilir' : '') + '</small></div>' +
       '<div class="field"><label>KDV Oranı (fiyatın içinde)</label><select class="p-kdv">' +
       [0, 1, 10, 20].map(function (k) { var cur = (p.kdv == null ? 1 : p.kdv); return '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + (k === 0 ? '%0 (KDV yok)' : '%' + k) + '</option>'; }).join('') +
       '</select></div>' +
@@ -1317,8 +1319,15 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   document.getElementById('products-list').addEventListener('input', function (e) {
     var d = e.target.closest('.item');
     if (!d) return;
-    if (e.target.classList.contains('p-price') || e.target.classList.contains('p-kdv')) {
-      var net = parseFloat(d.querySelector('.p-price').value) || 0;
+    if (e.target.classList.contains('p-price') || e.target.classList.contains('p-kdv') || e.target.classList.contains('p-indirimli')) {
+      var normal = parseFloat(d.querySelector('.p-price').value) || 0, ind = parseFloat(d.querySelector('.p-indirimli').value) || 0;
+      var net = (ind > 0 && ind < normal) ? ind : normal;
+      var bilgi = d.querySelector('.p-ind-bilgi');
+      if (bilgi) {
+        if (ind > 0 && ind < normal) { bilgi.style.color = '#2e7d32'; bilgi.textContent = '%' + Math.round((1 - ind / normal) * 100) + ' indirim · sitede ₺' + normal.toLocaleString('tr-TR') + ' üstü çizili gösterilir'; }
+        else if (ind > 0) { bilgi.style.color = '#b04a3a'; bilgi.textContent = 'İndirimli fiyat normal fiyattan düşük olmalı; şu an indirim uygulanmaz.'; }
+        else bilgi.textContent = '';
+      }
       var k = parseInt(d.querySelector('.p-kdv').value, 10); if (isNaN(k)) k = 1;
       d.querySelector('.p-gross').textContent = '₺' + (net / (1 + k / 100)).toLocaleString('tr-TR', { maximumFractionDigits: 2 });
     }
@@ -1384,7 +1393,10 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var g = function (c) { var el = d.querySelector('.' + c); return el ? el.value : undefined; };
       p.nameTR = g('p-nameTR'); p.nameEN = g('p-nameEN');
       p.noteTR = g('p-noteTR'); p.noteEN = g('p-noteEN');
-      p.price = parseFloat(g('p-price')) || 0; // KDV dahil satış fiyatı — sitede ve sepette bu görünür
+      // Normal + indirimli fiyat → p.price (güncel satış) ve p.eskiFiyat (üstü çizili, yalnız indirimde)
+      var normalF = parseFloat(g('p-price')) || 0, indF = parseFloat(g('p-indirimli')) || 0;
+      if (indF > 0 && indF < normalF) { p.price = indF; p.eskiFiyat = normalF; }
+      else { p.price = normalF; delete p.eskiFiyat; }
       var kdvSec = parseInt(g('p-kdv'), 10); p.kdv = isNaN(kdvSec) ? 1 : kdvSec; // 0 = KDV dahil
       p.unitTR = g('p-unitTR'); p.unitEN = g('p-unitEN');
       var stok = g('p-stok');

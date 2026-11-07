@@ -156,7 +156,7 @@
       });
       document.querySelectorAll('.prod-grid .card').forEach(function (card) {
         var r = card.dataset.role;
-        card.style.display = (role === 'all' || r === role) ? '' : 'none';
+        card.style.display = (role === 'all' || r === role || (role === 'indirim' && card.dataset.indirim === '1')) ? '' : 'none';
       });
       if (note) note.textContent = (window.OM_KAT_NOT && window.OM_KAT_NOT[role]) || NOTES[role] || NOTES.all;
       SECILI = role;
