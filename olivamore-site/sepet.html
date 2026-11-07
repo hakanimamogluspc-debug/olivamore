@@ -205,7 +205,7 @@ omSepetHazir(function () {
     c.forEach(function (k, i) {
       var d = document.createElement('div');
       d.className = 'cart-item';
-      var meta = [k.hacim || '', (greenKod(k.kod || k.id)) ? ('Ürün kodu: ' + greenKod(k.kod || k.id)) : ''].filter(Boolean).join(' · ');
+      var meta = [k.paket === 'damak10' ? '<span style="color:#8a6f3c;font-weight:600;">Damak Kutusu · %10 indirim</span>' : '', k.hacim || '', (greenKod(k.kod || k.id)) ? ('Ürün kodu: ' + greenKod(k.kod || k.id)) : ''].filter(Boolean).join(' · ');
       d.innerHTML = '<img src="' + (k.img || 'assets/img/ayvalik-500.jpg') + '" alt="">' +
         '<div class="t"><b>' + k.ad + '</b>' + (meta ? '<small class="cart-meta">' + meta + '</small>' : '') + '<span>' + fmt(k.fiyat) + '</span><br>' +
         '<button class="cart-del" data-i="' + i + '">Kaldır</button></div>' +
@@ -268,7 +268,8 @@ omSepetHazir(function () {
         var p = urunler.find(function (x) { return x.id === kod; }) || urunler.find(function (x) { return x.stokKodu && x.stokKodu === kod && x.visible !== false; });
         if (!p) return true; // sunucu son kontrolü yapar
         if (p.visible === false) { var ad = k.ad || p.nameTR; notlar.push('"' + ad + '" artık satışta değil, sepetinden çıkarıldı.'); degisti = true; return false; }
-        if (Number(p.price) > 0 && Number(k.fiyat) !== Number(p.price)) { k.fiyat = Number(p.price); degisti = true; if (notlar.indexOf('Sepetindeki fiyatlar güncel fiyatlarla yenilendi.') === -1) notlar.push('Sepetindeki fiyatlar güncel fiyatlarla yenilendi.'); }
+        var beklenen = k.paket === 'damak10' ? Math.round(Number(p.price) * 0.9) : Number(p.price);
+        if (Number(p.price) > 0 && Number(k.fiyat) !== beklenen) { k.fiyat = beklenen; degisti = true; if (notlar.indexOf('Sepetindeki fiyatlar güncel fiyatlarla yenilendi.') === -1) notlar.push('Sepetindeki fiyatlar güncel fiyatlarla yenilendi.'); }
         if (k.kod !== p.id) { k.kod = p.id; k.id = p.id; degisti = true; }
         return true;
       });

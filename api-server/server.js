@@ -1526,8 +1526,14 @@ const sunucu = http.createServer(async (req, res) => {
         ad: temiz(k.ad, 200), fiyat: Math.max(0, parseInt(k.fiyat, 10) || 0),
         adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1)), img: temiz(k.img, 300),
         kdv: Math.min(20, Math.max(0, parseFloat(k.kdv) || 1)),
-        kod: temiz(k.id || k.kod, 40), hacim: temiz(k.hacim, 40)
+        kod: temiz(k.id || k.kod, 40), hacim: temiz(k.hacim, 40),
+        paket: k.paket === 'damak10' ? 'damak10' : undefined
       }));
+      // Damak Kutusu (%10): en fazla 3 farklı ürün; fazlası/tekrarı indirimsiz sayılır
+      {
+        const gorulen = new Set();
+        kalemler.forEach(k => { if (!k.paket) return; if (gorulen.size >= 3 || gorulen.has(k.kod)) delete k.paket; else gorulen.add(k.kod); });
+      }
       // Fiyat SUNUCUDA belirlenir: tarayıcıdan gelen fiyat (eski önbellek / değiştirilmiş istek) kullanılmaz.
       {
         const katalog = oku('cms.json', {});
@@ -1536,7 +1542,7 @@ const sunucu = http.createServer(async (req, res) => {
           const p = ozelSet ? null : urunBulKalem(katalog, k);
           if (p) {
             if (p.visible === false) return json(res, 400, { hata: '"' + (p.nameTR || k.ad) + '" artık satışta değil; lütfen sepetinden çıkar.', kod: 'satista-degil', urun: k.kod });
-            if (Number(p.price) > 0) k.fiyat = Number(p.price);
+            if (Number(p.price) > 0) k.fiyat = k.paket === 'damak10' ? Math.round(Number(p.price) * 0.9) : Number(p.price);
             if (p.kdv != null) k.kdv = Math.min(20, Math.max(0, parseFloat(p.kdv) || 0));
             if (!k.kod) k.kod = p.id;
           } else if (ozelSet) {

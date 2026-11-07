@@ -1074,7 +1074,7 @@
         const u = urunTopla(add);
         if (u && u.fiyat > 0) {
           const c = cartGet();
-          const ayni = c.find(k => u.id ? k.id === u.id : (k.ad === u.ad && k.hacim === u.hacim && k.fiyat === u.fiyat));
+          const ayni = c.find(k => !k.paket && (u.id ? k.id === u.id : (k.ad === u.ad && k.hacim === u.hacim && k.fiyat === u.fiyat)));
           if (ayni) ayni.adet = Math.min(99, ayni.adet + 1);
           else c.push({ id: u.id || '', kod: u.kod || u.id || '', ad: u.ad, hacim: u.hacim || '', fiyat: u.fiyat, adet: 1, img: u.img, kdv: kdvBul(u.ad) });
           cartSave(c);

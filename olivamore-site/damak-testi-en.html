@@ -72,7 +72,7 @@
         </div>
         <div class="dm-box-offer">
           <div class="dm-box-copy">
-            <span class="dm-box-kicker">Chosen by your compass · 15% advantage</span>
+            <span class="dm-box-kicker">Your palate result · 10% off automatically</span>
             <h3>Let's prepare your Palate Box</h3>
             <p>We brought your three strongest matches together as 100 ml bottles. Your choices will be ready in the box builder.</p>
             <div class="dm-box-products" id="dm-box-products"></div>
@@ -97,6 +97,89 @@
 </section>
 
 <div id="om-footer"></div>
+<script>
+/* ===== Damak Testi · gerçek katalog bağlantısı =====
+   Profil → katalogdaki gerçek ürün. Ad, görsel, fiyat ve satış durumu /api/config'ten gelir.
+   Damak Kutusu: önerilen 3 ürün tek tıkla sepete, otomatik %10 indirimli (sunucu da doğrular). */
+var OM_DAMAK = {
+  EN: document.body.dataset.lang === 'en',
+  ORAN: 10,
+  MAP: { AYV: 'ay500', TRI: 'tr500', OLG: 'og5l', MAN: 'ces-mand', BER: 'ces-berg', KEK: 'ces-kek', ACI: 'ces-bib' },
+  katalog: null
+};
+fetch('/api/config', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
+  .then(function (c) { OM_DAMAK.katalog = (c && c.products) || null; }).catch(function () { });
+function omDamakUrun(k) {
+  var id = OM_DAMAK.MAP[k], l = OM_DAMAK.katalog;
+  if (!l) return null;
+  return l.find(function (p) { return p.id === id; }) || null;
+}
+// Satışta değilse (gizli / stok yok / fiyatsız) öneriye girmez. Katalog gelmediyse engelleme.
+function omDamakSatista(k) {
+  if (!OM_DAMAK.katalog) return true;
+  var p = omDamakUrun(k);
+  return !!(p && p.visible !== false && Number(p.price) > 0 && !(typeof p.stok === 'number' && p.stok <= 0));
+}
+function omDamakTL(n) { return '₺' + Math.round(n).toLocaleString('tr-TR'); }
+function omDamakKalem(prof, indirimli) {
+  var p = omDamakUrun(prof.k), EN = OM_DAMAK.EN;
+  var birim = p ? String((EN ? p.unitEN : p.unitTR) || p.unitTR || '').replace(/^\s*\/\s*/, '').trim() : '';
+  var ad = p ? ((EN ? (p.nameEN || p.nameTR) : p.nameTR) || prof.ad) : prof.ad;
+  var fiyat = p ? Number(p.price) : 0;
+  return {
+    id: OM_DAMAK.MAP[prof.k], kod: OM_DAMAK.MAP[prof.k],
+    ad: ad + (birim ? ' · ' + birim : ''), hacim: birim,
+    fiyat: indirimli ? Math.round(fiyat * (100 - OM_DAMAK.ORAN) / 100) : fiyat,
+    kisa: prof.ad + (birim ? ' · ' + birim : ''),
+    liste: fiyat, img: (p && p.img) || prof.img, kdv: p && p.kdv != null ? p.kdv : 1, adet: 1,
+    paket: indirimli ? 'damak10' : undefined
+  };
+}
+// Sonuç ekranını gerçek ürünlerle doldurur
+function omDamakKur(bas, kutu) {
+  var EN = OM_DAMAK.EN;
+  var kalemler = kutu.map(function (pr) { return omDamakKalem(pr, true); });
+  var liste = kalemler.reduce(function (t, k) { return t + k.liste; }, 0);
+  var indirimli = kalemler.reduce(function (t, k) { return t + k.fiyat; }, 0);
+  var ana = omDamakKalem(bas, false);
+  var img = document.getElementById('dm-img'); if (img && ana.img) img.src = ana.img;
+  var anaAd = document.getElementById('dm-ad'); if (anaAd) anaAd.textContent = ana.ad;
+  document.getElementById('dm-box-products').innerHTML = kalemler.map(function (k, i) {
+    return '<span><img src="' + k.img + '" alt=""><b>' + (i + 1) + '</b><em>' + k.kisa + '<br><s style="color:#9a8f7a;">' + omDamakTL(k.liste) + '</s> ' + omDamakTL(k.fiyat) + '</em></span>';
+  }).join('');
+  var kutuEl = document.querySelector('.dm-box-offer');
+  kutuEl.querySelector('.dm-box-kicker').textContent = EN ? 'Your palate result · ' + OM_DAMAK.ORAN + '% off automatically' : 'Test sonucuna özel · otomatik %' + OM_DAMAK.ORAN + ' indirim';
+  kutuEl.querySelector('.dm-box-copy h3').textContent = EN ? 'Your Palate Box' : 'Damak kutun hazır';
+  kutuEl.querySelector('.dm-box-copy > p').textContent = EN
+    ? 'Your three strongest matches from our range, in one basket. Tap once and all three go to your bag with ' + OM_DAMAK.ORAN + '% off.'
+    : 'Ürünlerimiz içinden en güçlü üç eşleşmen tek sepette. Tek tıkla üçü de %' + OM_DAMAK.ORAN + ' indirimle sepetine eklenir.';
+  kutuEl.querySelector('.dm-old-price').textContent = omDamakTL(liste);
+  kutuEl.querySelector('.dm-box-action strong').textContent = omDamakTL(indirimli);
+  kutuEl.querySelector('.dm-box-action small').textContent = (EN ? 'You save ' : 'Kazancın ') + omDamakTL(liste - indirimli);
+  var btn = document.getElementById('dm-box-link');
+  btn.textContent = EN ? 'Add My Palate Box to Bag' : 'Damak Kutumu Hazırla';
+  btn.href = EN ? 'sepet-en.html' : 'sepet.html';
+  btn.onclick = function (e) {
+    e.preventDefault();
+    if (!window.omCart) return;
+    var c = window.omCart.get().filter(function (x) { return x.paket !== 'damak10'; }); // eski damak kutusu yerine yenisi
+    kalemler.forEach(function (k) { var y = {}; for (var a in k) if (k[a] !== undefined && a !== 'liste' && a !== 'kisa') y[a] = k[a]; c.push(y); });
+    window.omCart.save(c);
+    if (window.omIz) window.omIz('sepete_ekle', { u: 'damak-kutusu', ad: 'Damak Kutusu (' + kalemler.length + ' ürün)', d: indirimli, a: kalemler.length });
+    location.href = btn.href;
+  };
+  // Tek ürün "Sepete Ekle": gerçek fiyatla
+  document.getElementById('dm-add').onclick = function () {
+    if (!window.omCart) return;
+    var c = window.omCart.get();
+    var ayni = c.find(function (x) { return x.id === ana.id && !x.paket; });
+    if (ayni) ayni.adet = Math.min(99, ayni.adet + 1); else { var y = {}; for (var a in ana) if (ana[a] !== undefined && a !== 'liste' && a !== 'kisa') y[a] = ana[a]; c.push(y); }
+    window.omCart.save(c);
+    if (window.omIz) window.omIz('sepete_ekle', { u: ana.id, ad: ana.ad, d: ana.fiyat, a: 1 });
+    this.textContent = EN ? 'Added ✓' : 'Sepete eklendi ✓';
+  };
+}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var P = [
@@ -179,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     var sira = puan.map(function (v, i) { return { i: i, p: v }; })
       .sort(function (a, b) { return b.p - a.p || a.i - b.i; });
+    sira = sira.filter(function (x) { return omDamakSatista(P[x.i].k); }).concat(sira.filter(function (x) { return !omDamakSatista(P[x.i].k); }));
     var bas = sira[0], ikinci = sira[1], ucuncu = sira[2];
 
     document.getElementById('qz-card').style.display = 'none';
@@ -210,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('dm-box-products').innerHTML = box.map(function (p, i) {
       return '<span><img src="' + p.img + '" alt=""><b>' + (i + 1) + '</b><em>' + p.ad + '</em></span>';
     }).join('');
-    document.getElementById('dm-box-link').href = 'hediye-olustur-en.html?palate=' + box.map(function (p) { return p.k; }).join(',') + '&discount=15';
+    omDamakKur(P[bas.i], box);
     r.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
