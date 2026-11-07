@@ -2090,6 +2090,33 @@ const sunucu = http.createServer(async (req, res) => {
     if (req.method === 'GET' && yol === '/api/admin/siparisler') {
       return json(res, 200, oku('siparisler.json', []));
     }
+    if (req.method === 'POST' && yol === '/api/admin/siparis-bilgi') {
+      const g = await govde(req, 1);
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === g.no);
+      if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+      const m = s.musteri = s.musteri || {};
+      const degisen = [];
+      const ata = (alan, deger, n) => { if (deger === undefined) return; const v = temiz(deger, n); if (v !== (m[alan] || '')) { m[alan] = v; degisen.push(alan); } };
+      if (g.musteri) {
+        if (g.musteri.eposta !== undefined && !epostaMi(g.musteri.eposta)) return json(res, 400, { hata: 'E-posta adresi geçersiz.' });
+        ata('ad', g.musteri.ad, 120); ata('telefon', g.musteri.telefon, 40); ata('adres', g.musteri.adres, 1000);
+        ata('ilce', g.musteri.ilce, 60); ata('il', g.musteri.il, 60); ata('postaKodu', g.musteri.postaKodu, 10); ata('eposta', g.musteri.eposta, 200);
+      }
+      if (g.fatura) {
+        if (g.fatura.tip === 'kurumsal') {
+          if (!/^[0-9]{10,11}$/.test(String(g.fatura.vkn || '')) || !temiz(g.fatura.unvan, 200) || !temiz(g.fatura.vergiDairesi, 60)) return json(res, 400, { hata: 'Kurumsal fatura bilgileri eksik ya da hatalı.' });
+          s.faturaBilgi = { tip: 'kurumsal', unvan: temiz(g.fatura.unvan, 200), vkn: temiz(g.fatura.vkn, 11), vergiDairesi: temiz(g.fatura.vergiDairesi, 60) };
+        } else s.faturaBilgi = null;
+        degisen.push('fatura');
+      }
+      if (degisen.length) {
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'bilgiler düzenlendi (' + degisen.join(', ') + ')' + (s.fatura && degisen.indexOf('fatura') !== -1 ? ' — fatura zaten kesilmiş, gerekirse iptal edip yeniden kes' : '') });
+        yaz('siparisler.json', liste);
+      }
+      return json(res, 200, { tamam: true, degisen: degisen });
+    }
     if (req.method === 'POST' && yol === '/api/admin/siparis-durum') {
       const g = await govde(req, 1);
       const liste = oku('siparisler.json', []);

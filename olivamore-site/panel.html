@@ -175,6 +175,44 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .sg-kart span{display:block;font-size:.8rem;color:var(--soft);line-height:1.45}
 .sg-kart em{font-style:normal;display:block;font-size:.74rem;color:#8a6f3c;margin-top:6px}
 @media(max-width:1000px){.wa-stats{grid-template-columns:repeat(2,1fr)}.sg-izgara{grid-template-columns:1fr 1fr}.wa-yol summary{grid-template-columns:1fr}}
+.od-baslik{font-family:'Poppins',sans-serif;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:18px 0 8px;font-weight:500}
+.od-baslik:first-child{margin-top:4px}
+.od-urun{width:100%;border-collapse:collapse;font-size:.86rem}
+.od-urun th{text-align:left;font-size:.68rem;font-weight:500;color:var(--soft);padding:6px 8px;border-bottom:1px solid var(--line)}
+.od-urun td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.od-urun td:first-child{display:flex;gap:12px;align-items:center}
+.od-urun img{width:42px;height:52px;object-fit:contain;background:#fff;border:1px solid var(--line);flex-shrink:0}
+.od-urun small{display:block;color:var(--soft);font-size:.74rem;margin-top:2px}
+.od-urun .s{text-align:right;white-space:nowrap;font-family:'Poppins',sans-serif;font-variant-numeric:tabular-nums}
+.od-alt{display:grid;grid-template-columns:1fr 300px;gap:24px;margin-top:12px;align-items:start}
+.od-ozet{font-size:.86rem}
+.od-ozet>div{display:flex;justify-content:space-between;padding:5px 0;font-family:'Poppins',sans-serif;font-variant-numeric:tabular-nums}
+.od-ozet>div span{font-family:inherit;color:var(--soft)}
+.od-ozet .ind{color:#2e7d32}.od-ozet .ind span{color:#2e7d32}
+.od-ozet .kdv{font-size:.78rem}
+.od-ozet .top{border-top:1px solid var(--ink);margin-top:6px;padding-top:9px;font-weight:700;font-size:1rem}
+.od-ozet .top span{color:var(--ink)}
+.od-kartlar{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.od-kart{background:#fff;border:1px solid var(--line);padding:16px 18px}
+.od-kart-bas{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.od-kart-bas b{font-size:.98rem}
+.od-duzenle{border:0;background:none;cursor:pointer;font-size:1.05rem;color:var(--soft);padding:2px 6px}
+.od-duzenle:hover{color:var(--gold)}
+.od-adres{font-size:.88rem;line-height:1.6;color:#55514a;margin:0 0 10px;text-transform:none}
+.od-alan{font-size:.86rem;margin-bottom:9px}
+.od-alan>span:first-child{display:block;font-weight:600;font-size:.78rem;color:var(--ink);margin-bottom:1px}
+.od-alan a{color:#2b5fb8}
+.od-rozet{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.od-rozet.yesil{background:#e6f2e8;color:#2e6b3b}.od-rozet.sari{background:#fbf1d9;color:#8a6510}.od-rozet.kirmizi{background:#f7e7e4;color:#9a3b2c}
+.od-form label{display:block;font-size:.76rem;font-weight:600;margin-bottom:8px}
+.od-form input,.od-form select,.od-form textarea{display:block;width:100%;margin-top:3px;font-weight:400}
+.od-iki{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.od-form-btn{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.od-uyari{font-size:.76rem;color:#8a6510;background:#fbf1d9;padding:8px 10px;margin:4px 0 8px}
+.od-gecmis{border-left:1px solid var(--line);padding-left:14px;font-size:.8rem}
+.od-gecmis div{padding:4px 0}
+.od-gecmis small{display:inline-block;min-width:150px;color:var(--soft);font-family:'Poppins',sans-serif;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.od-alt,.od-kartlar{grid-template-columns:1fr}}
 .pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
 textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 </style>
@@ -1770,6 +1808,85 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     }
     return '<div style="border-top:1px dashed var(--line);margin-top:12px;padding-top:12px;font-size:.85rem;">' + bilgi + '</div>';
   }
+
+  /* ---- Sipariş detayı: ürünler + tutar özeti + Faturalama / Gönderim kartları (düzenlenebilir) ---- */
+  function odSatir(et, deger) { return deger ? '<div class="od-alan"><span>' + et + '</span>' + deger + '</div>' : ''; }
+  function ordDetay(s) {
+    var m = s.musteri || {}, fb = s.faturaBilgi || null;
+    var odemeAd = { havale: 'Havale / EFT', kart: 'Kredi / Banka Kartı' }[s.odeme] || s.odeme || '-';
+    var odemeDurum = s.odendi ? '<span class="od-rozet yesil">Ödendi</span>' :
+      (s.odeme === 'havale' && s.durum === 'yeni' ? '<span class="od-rozet sari">Ödeme bekleniyor</span>' :
+      (s.durum === 'odeme-basarisiz' ? '<span class="od-rozet kirmizi">Ödeme başarısız</span>' : ''));
+    var urunler = '<table class="od-urun"><thead><tr><th>Ürün</th><th class="s">Adet</th><th class="s">Birim</th><th class="s">Tutar</th></tr></thead><tbody>' +
+      s.kalemler.map(function (k) {
+        return '<tr><td>' + (k.img ? '<img src="' + esc(k.img) + '" alt="">' : '') + '<div><b>' + esc(k.ad) + '</b>' +
+          '<small>' + [k.kod ? 'Kod: ' + esc(k.kod) : '', typeof k.kdv === 'number' ? 'KDV %' + k.kdv + ' dahil' : '', k.paket === 'damak10' ? 'Damak Kutusu %10' : ''].filter(Boolean).join(' · ') + '</small></div></td>' +
+          '<td class="s">' + k.adet + '</td><td class="s">' + tl(k.fiyat) + '</td><td class="s"><b>' + tl(k.fiyat * k.adet) + '</b></td></tr>';
+      }).join('') + '</tbody></table>';
+    var ozet = '<div class="od-ozet">' +
+      '<div><span>Ara toplam</span>' + tl(s.araToplam) + '</div>' +
+      (s.indirim ? '<div class="ind"><span>Kupon' + (s.kupon && s.kupon.kod ? ' (' + esc(s.kupon.kod) + ')' : '') + '</span>-' + tl(s.indirim) + '</div>' : '') +
+      (s.uyeIndirim && s.uyeIndirim.tutar ? '<div class="ind"><span>Üyelik indirimi (%' + s.uyeIndirim.oran + ')</span>-' + tl(s.uyeIndirim.tutar) + '</div>' : '') +
+      '<div><span>Kargo</span>' + (s.kargo ? tl(s.kargo) : 'Ücretsiz') + '</div>' +
+      (s.kdvToplam !== undefined ? '<div class="kdv"><span>İçindeki KDV</span>' + tl(s.kdvToplam) + '</div>' : '') +
+      '<div class="top"><span>Toplam</span>' + tl(s.toplam) + '</div></div>';
+    var odeme = '<div class="od-odeme"><div class="od-alan"><span>Ödeme yöntemi</span>' + esc(odemeAd) + ' ' + odemeDurum + '</div>' +
+      (s.odemeId ? odSatir('Ödeme işlem no', esc(s.odemeId)) : '') +
+      (s.fatura && (s.fatura.no || s.fatura.id) ? odSatir('Fatura', esc((s.fatura.belge || '') + ' ' + (s.fatura.no || s.fatura.id))) : '') +
+      (s.kargoNo ? odSatir('Kargo', esc((s.kargoFirma || '') + ' · ' + s.kargoNo)) : '') + '</div>';
+    var ilIlce = [m.postaKodu, [m.ilce, m.il].filter(Boolean).join(' / ')].filter(Boolean).join(' ');
+    var fatura = '<div class="od-kart" data-blok="fatura"><div class="od-kart-bas"><b>Faturalama</b><button type="button" class="od-duzenle" data-no="' + s.no + '" data-blok="fatura" title="Düzenle">✎</button></div>' +
+      '<div class="od-goster">' +
+      '<p class="od-adres">' + (fb && fb.unvan ? '<b>' + esc(fb.unvan) + '</b><br>' : '') + esc(m.ad) + '<br>' + esc(m.adres).replace(/\n/g, '<br>') + (ilIlce ? '<br>' + esc(ilIlce) : '') + '</p>' +
+      odSatir('E-posta', '<a href="mailto:' + esc(m.eposta) + '">' + esc(m.eposta) + '</a>') +
+      odSatir('Telefon', '<a href="tel:' + esc(m.telefon) + '">' + esc(m.telefon) + '</a>') +
+      odSatir('Fatura türü', fb ? 'Kurumsal' : 'Bireysel') +
+      (fb ? odSatir('Vergi no / TCKN', esc(fb.vkn)) + odSatir('Vergi dairesi', esc(fb.vergiDairesi)) : '') +
+      '</div><div class="od-form" hidden>' +
+      '<label>Fatura türü<select class="odf-tip"><option value="bireysel"' + (fb ? '' : ' selected') + '>Bireysel</option><option value="kurumsal"' + (fb ? ' selected' : '') + '>Kurumsal</option></select></label>' +
+      '<label>Şirket unvanı<input class="odf-unvan" value="' + esc(fb && fb.unvan || '') + '"></label>' +
+      '<div class="od-iki"><label>Vergi no / TCKN<input class="odf-vkn" value="' + esc(fb && fb.vkn || '') + '"></label><label>Vergi dairesi<input class="odf-vd" value="' + esc(fb && fb.vergiDairesi || '') + '"></label></div>' +
+      '<label>E-posta<input class="odf-eposta" type="email" value="' + esc(m.eposta) + '"></label>' +
+      '<div class="od-form-btn"><button type="button" class="btn btn-ghost btn-sm od-vazgec">Vazgeç</button><button type="button" class="btn btn-dark btn-sm od-kaydet" data-no="' + s.no + '" data-blok="fatura">Kaydet</button></div></div></div>';
+    var gonderim = '<div class="od-kart" data-blok="gonderim"><div class="od-kart-bas"><b>Gönderim</b><button type="button" class="od-duzenle" data-no="' + s.no + '" data-blok="gonderim" title="Düzenle">✎</button></div>' +
+      '<div class="od-goster">' +
+      '<p class="od-adres">' + esc(m.ad) + '<br>' + esc(m.adres).replace(/\n/g, '<br>') + (ilIlce ? '<br>' + esc(ilIlce) : '') + '</p>' +
+      odSatir('Telefon', '<a href="tel:' + esc(m.telefon) + '">' + esc(m.telefon) + '</a>') +
+      (m.not ? odSatir('Müşteri notu', '<span style="color:#8a6f3c;">' + esc(m.not) + '</span>') : '') +
+      '</div><div class="od-form" hidden>' +
+      '<label>Ad soyad<input class="odf-ad" value="' + esc(m.ad) + '"></label>' +
+      '<label>Telefon<input class="odf-tel" value="' + esc(m.telefon) + '"></label>' +
+      '<label>Adres<textarea class="odf-adres" rows="3">' + esc(m.adres) + '</textarea></label>' +
+      '<div class="od-iki"><label>İlçe<input class="odf-ilce" value="' + esc(m.ilce || '') + '"></label><label>İl<input class="odf-il" value="' + esc(m.il || '') + '"></label></div>' +
+      '<label>Posta kodu<input class="odf-posta" value="' + esc(m.postaKodu || '') + '"></label>' +
+      (s.kargoNo ? '<p class="od-uyari">Kargo gönderisi oluşturulmuş (' + esc(s.kargoNo) + '). Adres değişikliğini kargo firmasına ayrıca bildirmen gerekir.</p>' : '') +
+      '<div class="od-form-btn"><button type="button" class="btn btn-ghost btn-sm od-vazgec">Vazgeç</button><button type="button" class="btn btn-dark btn-sm od-kaydet" data-no="' + s.no + '" data-blok="gonderim">Kaydet</button></div></div></div>';
+    return '<div class="od-baslik">Ürünler</div>' + urunler + '<div class="od-alt">' + odeme + ozet + '</div>' +
+      '<div class="od-kartlar">' + fatura + gonderim + '</div>';
+  }
+  // Düzenle / Vazgeç / Kaydet
+  document.getElementById('orders-list').addEventListener('click', function (e) {
+    var kart = e.target.closest('.od-kart'); if (!kart) return;
+    if (e.target.closest('.od-duzenle')) { kart.querySelector('.od-goster').hidden = true; kart.querySelector('.od-form').hidden = false; return; }
+    if (e.target.closest('.od-vazgec')) { kart.querySelector('.od-goster').hidden = false; kart.querySelector('.od-form').hidden = true; return; }
+    var kb = e.target.closest('.od-kaydet'); if (!kb) return;
+    var q = function (c) { var el = kart.querySelector('.' + c); return el ? el.value.trim() : ''; };
+    var veri = { no: kb.dataset.no };
+    if (kb.dataset.blok === 'gonderim') {
+      veri.musteri = { ad: q('odf-ad'), telefon: q('odf-tel'), adres: q('odf-adres'), ilce: q('odf-ilce'), il: q('odf-il'), postaKodu: q('odf-posta') };
+      if (!veri.musteri.ad || !veri.musteri.adres || !veri.musteri.telefon) { alert('Ad, telefon ve adres boş olamaz.'); return; }
+    } else {
+      veri.musteri = { eposta: q('odf-eposta') };
+      veri.fatura = q('odf-tip') === 'kurumsal' ? { tip: 'kurumsal', unvan: q('odf-unvan'), vkn: q('odf-vkn'), vergiDairesi: q('odf-vd') } : { tip: 'bireysel' };
+      if (veri.fatura.tip === 'kurumsal' && (!veri.fatura.unvan || !/^[0-9]{10,11}$/.test(veri.fatura.vkn) || !veri.fatura.vergiDairesi)) { alert('Kurumsal fatura için unvan, 10-11 haneli vergi no/TCKN ve vergi dairesi gerekli.'); return; }
+    }
+    kb.disabled = true; kb.textContent = 'Kaydediliyor…';
+    fetch('/api/admin/siparis-bilgi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(veri) })
+      .then(function (r) { return r.json(); })
+      .then(function (c) { if (c.hata) { alert(c.hata); kb.disabled = false; kb.textContent = 'Kaydet'; return; } ORD_ACIK = veri.no; renderOrders(); })
+      .catch(function () { alert('Sunucuya ulaşılamadı.'); kb.disabled = false; kb.textContent = 'Kaydet'; });
+  });
+  var ORD_ACIK = null;
   function ordListe() {
     var host = document.getElementById('orders-list');
     var f = document.getElementById('ord-filtre').value;
@@ -1782,13 +1899,10 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     });
     if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Bu filtreye uyan sipariş yok.</p>'; return; }
     host.innerHTML = liste.map(function (s) {
-      return '<details class="item"><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
+      return '<details class="item"' + (ORD_ACIK === s.no ? ' open' : '') + '><summary><div class="t" style="margin-left:4px;"><b>' + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
         '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + (s.kargoNo ? ' · ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) : '') + '</span></div>' + ordPill(s) + '</summary>' +
-        '<div class="body"><p style="font-size:.85rem;margin-bottom:8px;">' +
-        s.kalemler.map(function (k) { return k.adet + ' × ' + esc(k.ad) + ' (₺' + k.fiyat + (typeof k.kdv === 'number' ? ' · KDV %' + k.kdv + ' dahil' : '') + ')'; }).join('<br>') +
-        (s.kdvToplam !== undefined ? '<br><b>Ara: ' + tl(s.araToplam) + (s.indirim ? ' · Kupon ' + esc(s.kupon && s.kupon.kod || '') + ': -' + tl(s.indirim) : '') + ' · KDV: ' + tl(s.kdvToplam) + ' · Kargo: ' + (s.kargo ? tl(s.kargo) : 'Ücretsiz') + ' · Toplam: ' + tl(s.toplam) + '</b>' : '') + '</p>' +
-        '<p style="font-size:.82rem;color:var(--soft);margin-bottom:12px;">' + esc(s.musteri.telefon) + ' · ' + esc(s.musteri.eposta) + '<br>' + esc(s.musteri.adres) +
-        (s.musteri.not ? '<br>Müşteri notu: ' + esc(s.musteri.not) : '') + '</p>' +
+        '<div class="body">' + ordDetay(s) +
+        '<div class="od-baslik">İşlemler</div>' +
         '<div class="row-actions" style="flex-wrap:wrap;"><select class="ord-durum" data-no="' + s.no + '">' +
         DURUMLAR.map(function (d) { return '<option' + (d === s.durum ? ' selected' : '') + '>' + d + '</option>'; }).join('') +
         '</select><select class="ord-firma" data-no="' + s.no + '" style="max-width:120px;">' +
@@ -1806,8 +1920,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         '</div>' +
         '<datalist id="parti-listesi">' + (C.batches || []).map(function (b) { return '<option value="' + esc(b.kod) + '">' + esc(b.urun) + '</option>'; }).join('') + '</datalist>' +
         ordIadeBlok(s) +
-        (s.gecmis && s.gecmis.length ? '<div style="margin-top:12px;font-size:.75rem;color:var(--soft);">' +
-          s.gecmis.slice(0, 8).map(function (g) { return fmtTarih(g.tarih) + ' — ' + esc(g.islem); }).join('<br>') + '</div>' : '') +
+        (s.gecmis && s.gecmis.length ? '<div class="od-baslik">Sipariş geçmişi</div><div class="od-gecmis">' +
+          s.gecmis.slice(0, 12).map(function (g) { return '<div><small>' + fmtTarih(g.tarih) + '</small>' + esc(g.islem) + '</div>'; }).join('') + '</div>' : '') +
         '</div></details>';
     }).join('');
   }
