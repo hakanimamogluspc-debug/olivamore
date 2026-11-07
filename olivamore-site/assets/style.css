@@ -2311,7 +2311,7 @@ body[data-page="home"] section .zsus{position:absolute}
 .quality-standard-reverse .quality-document,.quality-standard-reverse .quality-copy{order:initial}
 .quality-document{padding:12px;border:1px solid #E6DECB;border-radius:4px;cursor:zoom-in;transition:box-shadow .25s,transform .25s}
 .quality-document:hover{box-shadow:0 16px 36px rgba(33,29,23,.12);transform:translateY(-3px)}
-.quality-document img{aspect-ratio:690/992}
+.quality-document img,.quality-proof-image img{width:100%;height:auto;aspect-ratio:690/992;object-fit:cover;object-position:top}
 .quality-document:hover img{transform:none}
 .quality-document>span{margin-top:10px;font-size:.66rem}
 .quality-copy h3{font-size:clamp(1.7rem,2.6vw,2.5rem);margin-bottom:16px}
