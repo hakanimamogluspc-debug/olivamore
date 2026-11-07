@@ -1071,6 +1071,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="row-actions">' +
       '<label class="chk"><input type="checkbox" class="p-visible"' + (p.visible !== false ? ' checked' : '') + '> Sitede göster</label>' +
       '<button class="btn btn-danger btn-sm p-del" type="button">Ürünü Sil</button>' +
+      '<button class="btn btn-gold btn-sm oge-kaydet" type="button" style="margin-left:auto;">✓ Kaydet ve Yayınla</button>' +
       '</div></div></details>';
   }
   function renderProducts() {
@@ -1093,6 +1094,17 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var d = e.target.closest('.item');
       if (confirm('Bu ürün silinecek. Emin misin?')) { C.products.splice(+d.dataset.idx, 1); syncProductsFromDOM(); renderProducts(); dirty(); }
     }
+  });
+
+  /* Ürün / yazı kartı içindeki "Kaydet ve Yayınla": genel kaydı tetikler, kart açık kalır */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.oge-kaydet'); if (!b) return;
+    e.preventDefault();
+    var eski = b.textContent;
+    b.disabled = true; b.textContent = 'Kaydediliyor…';
+    document.getElementById('btn-save').click();
+    setTimeout(function () { b.textContent = '✓ Kaydedildi'; }, 600);
+    setTimeout(function () { b.disabled = false; b.textContent = eski; }, 2200);
   });
   // Ürünleri kategorileriyle birlikte Excel-uyumlu CSV olarak dışa aktar
   document.getElementById('btn-export-products').addEventListener('click', function () {
@@ -1181,6 +1193,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="row-actions">' +
       '<label class="chk"><input type="checkbox" class="b-visible"' + (b.visible !== false ? ' checked' : '') + '> Sitede göster</label>' +
       '<button class="btn btn-danger btn-sm b-del" type="button">Yazıyı Sil</button>' +
+      '<button class="btn btn-gold btn-sm oge-kaydet" type="button" style="margin-left:auto;">✓ Kaydet ve Yayınla</button>' +
       '</div></div></details>';
   }
   function renderBlogs() {
