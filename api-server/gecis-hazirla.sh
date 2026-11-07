@@ -12,12 +12,15 @@ INI=/root/.secrets/cloudflare.ini
 [ -f "$INI" ] || { echo "HATA: $INI yok. Cloudflare API anahtarini once oraya kaydet."; exit 1; }
 chmod 600 "$INI"
 
-echo "==> Certbot Cloudflare eklentisi..."
-dpkg -s python3-certbot-dns-cloudflare >/dev/null 2>&1 || apt-get install -y -qq python3-certbot-dns-cloudflare
+# Not: Ubuntu'daki certbot-dns-cloudflare eklentisi yeni (53 karakterlik) Cloudflare anahtarlarini tanimiyor;
+# bu yuzden dogrulama, Cloudflare API'sini dogrudan kullanan kendi kancamizla yapilir (yenilemede de calisir).
+HOOK=/usr/local/bin/olivamore-cf-dns-hook
+cp "$REPO/api-server/cf-dns-hook.sh" "$HOOK"; chmod 700 "$HOOK"
 
 echo "==> olivamore.com sertifikasi (DNS dogrulamasi)..."
 if [ ! -f /etc/letsencrypt/live/olivamore.com/fullchain.pem ]; then
-  certbot certonly --dns-cloudflare --dns-cloudflare-credentials "$INI" --dns-cloudflare-propagation-seconds 30 \
+  certbot certonly --manual --preferred-challenges dns \
+    --manual-auth-hook "$HOOK ekle" --manual-cleanup-hook "$HOOK sil" \
     -d olivamore.com -d www.olivamore.com --non-interactive --agree-tos -m info@olivamore.com
 else
   echo "sertifika zaten var"
