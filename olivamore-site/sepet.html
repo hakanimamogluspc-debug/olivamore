@@ -623,8 +623,6 @@ omSepetHazir(function () {
   // Geri/ileri ile önbellekten dönülünce ya da başka sekmede sepet değişince yeniden çiz
   window.addEventListener('pageshow', function (e) { if (e.persisted && window.omCart) render(); });
   window.addEventListener('storage', function (e) { if (e.key === 'om-cart' && window.omCart) { window.omCart.refresh(); render(); } });
-});
-
   /* --- iki adımlı ödeme --- */
   function adimGoster(n) {
     document.getElementById('co-adim-1').style.display = n === 1 ? '' : 'none';
@@ -652,6 +650,7 @@ omSepetHazir(function () {
     if (window.omIz) { var cc = window.omCart ? window.omCart.get() : []; window.omIz('odeme_adim2', { d: cc.reduce(function (t, k) { return t + k.fiyat * k.adet; }, 0), a: cc.length }); }
   });
   document.getElementById('co-geri').addEventListener('click', function () { adimGoster(1); });
+});
 </script>
 </body>
 </html>
