@@ -589,8 +589,14 @@ function greenOpsKodu(siteKodu) {
 /* ---------- Panel admin oturumu (env.json'a adminKullanici/adminTuz/adminHash girilince aktifleşir) ----------
    Şifre atamak için sunucuda: bash /root/olivamore-repo/api-server/admin-sifre-ata.sh */
 function adminAktif() {
+  // env.json VAR ama okunamıyorsa (yazım hatası) panel ŞİFRESİZ açılmaz: giriş zorunlu kalır (güvenli taraf)
+  if (envBozuk()) return true;
   const env = oku('env.json', {});
   return !!(env.adminKullanici && env.adminTuz && env.adminHash);
+}
+function envBozuk() {
+  try { if (!fs.existsSync(dosya('env.json'))) return false; JSON.parse(fs.readFileSync(dosya('env.json'), 'utf8')); return false; }
+  catch (e) { return e.message || 'okunamadı'; }
 }
 function adminYetkili(req) {
   if (!adminAktif()) return true; // şifre atanana kadar eski düzen (nginx basic auth) geçerli
@@ -1334,6 +1340,7 @@ function saglikRaporu() {
   try { const st = fs.statfsSync(DATA); disk = { bos: st.bavail * st.bsize, toplam: st.blocks * st.bsize }; } catch (e) { }
   let yedek = null;
   try { const d = '/root/yedekler'; const l = fs.readdirSync(d).filter(x => /^olivamore-veri/.test(x)).map(x => ({ ad: x, t: fs.statSync(path.join(d, x)).mtimeMs })).sort((a, b) => b.t - a.t); if (l[0]) yedek = { ad: l[0].ad, t: new Date(l[0].t).toISOString(), adet: l.length }; } catch (e) { }
+  if (!yedek) { const yd = oku('yedek-durum.json', null); if (yd && yd.t) yedek = { ad: yd.ad, t: yd.t, adet: yd.adet || 1 }; }
   const sip = oku('siparisler.json', []);
   const bugun = new Date().toISOString().slice(0, 10);
   const bekleyenOdeme = sip.filter(s => s.durum === 'odeme-bekliyor' && Date.now() - Date.parse(s.tarih) > 30 * 60000).length;
@@ -1364,6 +1371,7 @@ function saglikRaporu() {
       yeniBekleyen: sip.filter(s => s.durum === 'yeni').length
     },
     katalog: { gorunurUrun: urunler.length, gorselsiz: gorselsiz, tukenen: tukenen, azalan: azalan },
+    envHata: envBozuk() ? String(envBozuk()).slice(0, 160) : '',
     hatalar: SON_HATALAR.slice(0, 20)
   };
 }
@@ -2604,4 +2612,5 @@ process.on('uncaughtException', e => console.error('[YAKALANMAYAN]', e && e.stac
 process.on('unhandledRejection', e => console.error('[YAKALANMAYAN-PROMISE]', e && e.stack || e));
 sunucu.requestTimeout = 120000; sunucu.headersTimeout = 30000; sunucu.keepAliveTimeout = 5000;
 if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
+if (envBozuk()) console.error('[env.json] OKUNAMIYOR (yazım hatası): ' + envBozuk() + ' — entegrasyonlar kapalı, panel girişi kilitli.');
 sunucu.listen(PORT, '127.0.0.1', () => console.log('Olivamore API 127.0.0.1:' + PORT + ' · veri: ' + DATA));

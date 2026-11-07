@@ -2206,6 +2206,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         .then(function (d) {
           var k = [], en = d.entegrasyon, sorun = 0, uyari = 0;
           function ekle(durum) { if (durum === 'sorun') sorun++; if (durum === 'uyari') uyari++; k.push(kart.apply(null, arguments)); }
+          if (d.envHata) ekle('sorun', 'Ayar dosyası (env.json) okunamıyor', 'Dosyada yazım hatası var: ' + esc(d.envHata) + '. Bu yüzden e-posta, Paraşüt, kargo ve Meta bağlantıları kapalı görünüyor.', 'Sunucuda: python3 -m json.tool /var/www/olivamore-data/env.json — hatalı satırı gösterir.');
           var sa = Math.floor(d.servis.calismaSn / 3600);
           ekle('iyi', 'Sunucu servisi çalışıyor', (sa > 48 ? Math.floor(sa / 24) + ' gündür' : sa + ' saattir') + ' kesintisiz · ' + d.servis.bellekMB + ' MB bellek');
           ekle(d.cmsOk ? 'iyi' : 'sorun', 'Site içeriği (katalog)', d.cmsOk ? 'Okunabiliyor · ' + kb(d.dosyalar.cms) + ' · ' + d.katalog.gorunurUrun + ' ürün satışta' : 'İçerik dosyası okunamıyor!', d.cmsOk ? (d.dosyalar.cms > 3145728 ? 'İçerik büyük; panelden bir kez Kaydet de, gömülü görseller dosyaya çevrilsin.' : '') : 'Hemen yedekten geri dön.');
