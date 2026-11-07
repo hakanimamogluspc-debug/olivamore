@@ -26,6 +26,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PORT = 3001;
+let cmsOnbellek = null; // /api/config yanıt önbelleği
 const DATA = process.env.OM_DATA || '/var/www/olivamore-data';
 
 /* ---------- dosya yardımcıları (atomik yazma) ---------- */
@@ -40,6 +41,19 @@ function yaz(ad, veri) {
   fs.renameSync(tmp, dosya(ad));
 }
 
+
+// data:image/...;base64 → assets/img/yukleme-<özet>.<uzantı> (aynı görsel tekrar yazılmaz)
+function gorselDosyala(v, dizin) {
+  if (v.length < 4000 || v.indexOf('data:image/') !== 0) return v;
+  const m = v.match(/^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) return v;
+  try {
+    const ad = 'yukleme-' + crypto.createHash('sha1').update(m[2]).digest('hex').slice(0, 16) + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]);
+    const tam = path.join(dizin, ad);
+    if (!fs.existsSync(tam)) fs.writeFileSync(tam, Buffer.from(m[2], 'base64'));
+    return 'assets/img/' + ad;
+  } catch (e) { console.error('[gorsel]', e.message); return v; }
+}
 /* ---------- yanıt yardımcıları ---------- */
 function json(res, kod, veri) {
   const g = JSON.stringify(veri);
@@ -349,6 +363,17 @@ setInterval(() => { kargoTakipTur().catch(e => console.error('[kargo]', e.messag
 setTimeout(() => { kargoTakipTur().catch(e => console.error('[kargo]', e.message)); }, 40000);
 
 /* ---------- stok takibi (cms.json içindeki ürünlerde "stok" alanı) ---------- */
+// Sepet kalemini katalog ürününe eşler: önce ürün kodu (id), sonra Green Ops stok kodu, en son ad.
+// (Aynı adı taşıyan farklı boyutlar olduğu için ad eşlemesi tek başına güvenilir değildir.)
+function urunBulKalem(cfg, k) {
+  const urunler = (cfg && cfg.products) || [];
+  const kod = String((k && (k.kod || k.id)) || '').trim();
+  if (kod) {
+    const p = urunler.find(x => x.id === kod) || urunler.find(x => x.stokKodu && x.stokKodu === kod && x.visible !== false) || urunler.find(x => x.stokKodu && x.stokKodu === kod);
+    if (p) return p;
+  }
+  return k && k.ad ? urunKaydi(cfg, k.ad) : null;
+}
 function urunKaydi(cfg, ad) {
   const urunler = (cfg && cfg.products) || [];
   return urunler.find(p => (p.nameTR && ad.indexOf(p.nameTR) === 0) || (p.nameEN && ad.indexOf(p.nameEN) === 0));
@@ -356,14 +381,17 @@ function urunKaydi(cfg, ad) {
 // Yeterliyse stoğu düşer; yetersizse {hata} döner. Stok alanı olmayan ürün sınırsız sayılır.
 function stokDus(kalemler) {
   const cfg = oku('cms.json', {});
+  // Aynı ürün sepette birden çok satırdaysa toplam adet kontrol edilir
+  const toplamAdet = new Map();
+  kalemler.forEach(k => { const p = urunBulKalem(cfg, k); if (p) toplamAdet.set(p, (toplamAdet.get(p) || 0) + k.adet); });
   for (const k of kalemler) {
-    const p = urunKaydi(cfg, k.ad);
-    if (p && typeof p.stok === 'number' && p.stok < k.adet) {
+    const p = urunBulKalem(cfg, k);
+    if (p && typeof p.stok === 'number' && p.stok < (toplamAdet.get(p) || k.adet)) {
       return { hata: '"' + k.ad + '" için stok yetersiz' + (p.stok > 0 ? ' (kalan: ' + p.stok + ' adet).' : ' (tükendi).') };
     }
   }
   kalemler.forEach(k => {
-    const p = urunKaydi(cfg, k.ad);
+    const p = urunBulKalem(cfg, k);
     if (p && typeof p.stok === 'number') p.stok = Math.max(0, p.stok - k.adet);
   });
   yaz('cms.json', cfg);
@@ -374,7 +402,7 @@ function stokGeriEkle(s) {
   if (!s || s.stokIade) return;
   const cfg = oku('cms.json', {});
   (s.kalemler || []).forEach(k => {
-    const p = urunKaydi(cfg, k.ad);
+    const p = urunBulKalem(cfg, k);
     if (p && typeof p.stok === 'number') p.stok += k.adet;
   });
   yaz('cms.json', cfg);
@@ -1013,7 +1041,7 @@ function hizAsimi(req) {
   const ip = req.headers['x-real-ip'] || req.socket.remoteAddress || '?';
   const n = (sayac.get(ip) || 0) + 1;
   sayac.set(ip, n);
-  return n > 30;
+  return n > 60; // mobil operatörlerde çok kullanıcı aynı IP'yi paylaşır
 }
 
 /* ---------- sunucu ---------- */
@@ -1023,10 +1051,25 @@ const sunucu = http.createServer(async (req, res) => {
   try {
     /* ---- halka açık ---- */
     if (req.method === 'GET' && yol === '/api/config') {
-      return json(res, 200, oku('cms.json', {}));
+      // Disk dosyası değişmedikçe aynı yanıt bellekten verilir (yoğun trafikte hızlı)
+      try {
+        const st = fs.statSync(dosya('cms.json'));
+        if (!cmsOnbellek || cmsOnbellek.mtime !== st.mtimeMs || cmsOnbellek.boyut !== st.size) {
+          cmsOnbellek = { mtime: st.mtimeMs, boyut: st.size, govde: JSON.stringify(oku('cms.json', {})) };
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        return res.end(cmsOnbellek.govde);
+      } catch (e) { return json(res, 200, {}); }
     }
 
-    if (req.method === 'POST' && hizAsimi(req)) {
+    // Sağlık kontrolü (izleme servisleri için): veri dosyaları okunabiliyor mu?
+    if (req.method === 'GET' && yol === '/api/saglik') {
+      let ok = true; try { JSON.parse(fs.readFileSync(dosya('cms.json'), 'utf8')); fs.accessSync(DATA, fs.constants.W_OK); } catch (e) { ok = false; }
+      return json(res, ok ? 200 : 500, { durum: ok ? 'iyi' : 'sorun', zaman: new Date().toISOString(), calismaSn: Math.round(process.uptime()) });
+    }
+
+    // Hız sınırı: yönetici istekleri ve iyzico geri dönüşü hariç (iyzico tüm müşteriler için aynı IP'den gelir)
+    if (req.method === 'POST' && yol !== '/api/odeme-sonuc' && !(yol.indexOf('/api/admin/') === 0 && adminYetkili(req)) && hizAsimi(req)) {
       return json(res, 429, { hata: 'Çok fazla istek; bir dakika sonra tekrar dene.' });
     }
 
@@ -1269,8 +1312,28 @@ const sunucu = http.createServer(async (req, res) => {
         ad: temiz(k.ad, 200), fiyat: Math.max(0, parseInt(k.fiyat, 10) || 0),
         adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1)), img: temiz(k.img, 300),
         kdv: Math.min(20, Math.max(0, parseFloat(k.kdv) || 1)),
-        kod: temiz(k.id || k.kod, 40)
+        kod: temiz(k.id || k.kod, 40), hacim: temiz(k.hacim, 40)
       }));
+      // Fiyat SUNUCUDA belirlenir: tarayıcıdan gelen fiyat (eski önbellek / değiştirilmiş istek) kullanılmaz.
+      {
+        const katalog = oku('cms.json', {});
+        for (const k of kalemler) {
+          const ozelSet = /^(custom-set|palate-box)/.test(k.kod || '');
+          const p = ozelSet ? null : urunBulKalem(katalog, k);
+          if (p) {
+            if (p.visible === false) return json(res, 400, { hata: '"' + (p.nameTR || k.ad) + '" artık satışta değil; lütfen sepetinden çıkar.', kod: 'satista-degil', urun: k.kod });
+            if (Number(p.price) > 0) k.fiyat = Number(p.price);
+            if (p.kdv != null) k.kdv = Math.min(20, Math.max(0, parseFloat(p.kdv) || 0));
+            if (!k.kod) k.kod = p.id;
+          } else if (ozelSet) {
+            // Kendi setin / damak kutusu: fiyatı oluşturucu hesaplar; makul alt sınır uygulanır
+            const taban = Math.round(Math.min(Number(katalog.gift3) || 1600, Number(katalog.gift5) || 1500) * 0.5);
+            if (k.fiyat < taban) return json(res, 400, { hata: 'Hediye seti fiyatı doğrulanamadı; lütfen seti yeniden oluştur.' });
+          } else {
+            return json(res, 400, { hata: '"' + k.ad + '" ürününü bulamadık; lütfen sepetinden çıkarıp yeniden ekle.', kod: 'urun-yok', urun: k.kod });
+          }
+        }
+      }
       // Stok kontrolü + düşümü (yetersizse sipariş alınmaz)
       const stokSonuc = stokDus(kalemler);
       if (stokSonuc.hata) return json(res, 400, { hata: stokSonuc.hata });
@@ -1359,8 +1422,10 @@ const sunucu = http.createServer(async (req, res) => {
           }
           console.error('[iyzico]', y && y.errorMessage);
         } catch (e) { console.error('[iyzico]', e.message); }
-        const s = siparisler.find(x => x.no === no);
-        if (s) { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', siparisler); }
+        // await sırasında başka siparişler yazılmış olabilir: listeyi TAZE oku (eski kopyayı yazmak siparişleri silerdi)
+        const tazeListe = oku('siparisler.json', []);
+        const s = tazeListe.find(x => x.no === no);
+        if (s) { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', tazeListe); }
         return json(res, 502, { hata: 'Ödeme sayfası açılamadı; lütfen tekrar dene veya Havale/EFT seç.' });
       }
       epostaBildir('Yeni sipariş ' + no + ' · ₺' + toplam.toLocaleString('tr-TR'),
@@ -1630,7 +1695,38 @@ const sunucu = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && yol === '/api/admin/config') {
       const g = await govde(req, 8); // panel görsel yüklemeleri için geniş limit
+      if (!g || typeof g !== 'object' || !Array.isArray(g.products) || g.products.length < 1) {
+        return json(res, 400, { hata: 'Kayıt reddedildi: ürün listesi boş geldi (panel tam yüklenmemiş olabilir). Paneli yenileyip tekrar dene.' });
+      }
+      const eski = oku('cms.json', {});
+      // 1) Stok: panel açıkken gelen siparişlerin düşümü ezilmesin → panelde yapılan DEĞİŞİKLİK (fark) uygulanır
+      const yuklenen = (g._stokYuklenen && typeof g._stokYuklenen === 'object') ? g._stokYuklenen : null;
+      delete g._stokYuklenen;
+      (g.products || []).forEach(p => {
+        const sp = (eski.products || []).find(x => x.id === p.id);
+        if (!sp || typeof p.stok !== 'number' || typeof sp.stok !== 'number') return;
+        if (yuklenen && typeof yuklenen[p.id] === 'number') p.stok = Math.max(0, sp.stok + (p.stok - yuklenen[p.id]));
+      });
+      // 2) Kupon kullanım sayacı sunucuda artar; panel eski sayıyla ezmesin
+      (g.coupons || []).forEach(c => {
+        const sc = (eski.coupons || []).find(x => (x.kod || '').toUpperCase() === (c.kod || '').toUpperCase());
+        if (sc && (sc.kullanildi || 0) > (c.kullanildi || 0)) c.kullanildi = sc.kullanildi;
+      });
+      // 3) Panelden yüklenen base64 görseller dosyaya yazılır → /api/config küçük ve hızlı kalır
+      const IMG_DIZIN = process.env.OM_WEB_IMG || '/var/www/olivamore/assets/img';
+      const gez = (o) => {
+        if (Array.isArray(o)) { o.forEach((v, i) => { if (typeof v === 'string') o[i] = gorselDosyala(v, IMG_DIZIN); else if (v && typeof v === 'object') gez(v); }); return; }
+        Object.keys(o).forEach(k => { const v = o[k]; if (typeof v === 'string') o[k] = gorselDosyala(v, IMG_DIZIN); else if (v && typeof v === 'object') gez(v); });
+      };
+      gez(g);
+      // Eski sürümü yedekle (son 20 kayıt), sonra yaz
+      try {
+        const yd = dosya('cms-gecmis'); if (!fs.existsSync(yd)) fs.mkdirSync(yd);
+        fs.writeFileSync(path.join(yd, 'cms-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json'), JSON.stringify(eski));
+        fs.readdirSync(yd).sort().slice(0, -20).forEach(f => { try { fs.unlinkSync(path.join(yd, f)); } catch (e) { } });
+      } catch (e) { console.error('[cms-yedek]', e.message); }
       yaz('cms.json', g);
+      cmsOnbellek = null;
       return json(res, 200, { tamam: true });
     }
     if (req.method === 'GET' && yol === '/api/admin/siparisler') {
@@ -2149,5 +2245,9 @@ function epostaServisiVar() {
   return !!(env.resendKey || env.brevoKey);
 }
 
+// Beklenmeyen bir hata tek bir isteği bozar, tüm servisi düşürmez (systemd yine de yeniden başlatır)
+process.on('uncaughtException', e => console.error('[YAKALANMAYAN]', e && e.stack || e));
+process.on('unhandledRejection', e => console.error('[YAKALANMAYAN-PROMISE]', e && e.stack || e));
+sunucu.requestTimeout = 120000; sunucu.headersTimeout = 30000; sunucu.keepAliveTimeout = 5000;
 if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
 sunucu.listen(PORT, '127.0.0.1', () => console.log('Olivamore API 127.0.0.1:' + PORT + ' · veri: ' + DATA));

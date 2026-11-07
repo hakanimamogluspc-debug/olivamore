@@ -228,7 +228,38 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var ONERI_CFG = null;
-  fetch('/api/config').then(function (r) { return r.ok ? r.json() : null; }).then(function (cfg) { ONERI_CFG = cfg; oneriCiz(); }).catch(function () {});
+  fetch('/api/config', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (cfg) { ONERI_CFG = cfg; sepetSenkron(); oneriCiz(); }).catch(function () {});
+  // Sepeti güncel katalogla eşitle: fiyat değiştiyse güncelle, satıştan kalkan ürünü çıkar (ödeme sırasında sürpriz olmasın)
+  function sepetSenkron() {
+    if (!ONERI_CFG || !Array.isArray(ONERI_CFG.products)) return;
+    var bekleS = setInterval(function () {
+      if (!window.omCart) return;
+      clearInterval(bekleS);
+      var c = window.omCart.get(), degisti = false, notlar = [];
+      var urunler = ONERI_CFG.products;
+      c = c.filter(function (k) {
+        var kod = String(k.kod || k.id || '');
+        if (/^(custom-set|palate-box)/.test(kod)) return true;
+        var p = urunler.find(function (x) { return x.id === kod; }) || urunler.find(function (x) { return x.stokKodu && x.stokKodu === kod && x.visible !== false; });
+        if (!p) return true; // sunucu son kontrolü yapar
+        if (p.visible === false) { var ad = k.ad || p.nameTR; notlar.push('"' + ad + '" is no longer available and was removed from your bag.'); degisti = true; return false; }
+        if (Number(p.price) > 0 && Number(k.fiyat) !== Number(p.price)) { k.fiyat = Number(p.price); degisti = true; if (notlar.indexOf('Prices in your bag have been updated to current prices.') === -1) notlar.push('Prices in your bag have been updated to current prices.'); }
+        if (k.kod !== p.id) { k.kod = p.id; k.id = p.id; degisti = true; }
+        return true;
+      });
+      if (degisti) {
+        window.omCart.save(c);
+        render();
+        var u = document.getElementById('sepet-uyari');
+        if (!u) {
+          u = document.createElement('div'); u.id = 'sepet-uyari';
+          u.style.cssText = 'background:#FBF7EC;border:1px solid #E8DBB5;color:#6b5521;padding:12px 16px;font-size:.86rem;margin-bottom:14px;line-height:1.5;';
+          var host = document.getElementById('cart-items'); host.parentNode.insertBefore(u, host);
+        }
+        u.innerHTML = notlar.join('<br>');
+      }
+    }, 50);
+  }
   function oneriCiz() {
     var kutu = document.getElementById('sepet-oneri');
     if (!ONERI_CFG || !window.omCart) { kutu.style.display = 'none'; return; }

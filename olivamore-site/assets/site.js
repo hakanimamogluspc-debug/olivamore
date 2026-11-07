@@ -856,17 +856,21 @@
 
     // Sunucu CMS config'i (panel kayıtları tüm ziyaretçilere buradan ulaşır);
     // API yoksa (yerel önizleme) localStorage yedeğiyle devam edilir.
+    // Yedek kartları göster (katalog gelmezse ya da hata olursa sayfa boş kalmasın)
+    function statikAc() { document.querySelectorAll('.om-statik').forEach(el => el.classList.remove('om-statik')); }
+    setTimeout(statikAc, 5000);
     fetch('/api/config', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(cfg => {
         if (cfg && Object.keys(cfg).length) { AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(cfg)))); MODS = mkMods(); }
-        applyAdminOverrides();
+        try { applyAdminOverrides(); } catch (e) { console.error('[olivamore] içerik uygulanamadı', e); }
+        statikAc();
         markSweep();
         if (window.omBoySenkron) window.omBoySenkron();
         urunOdakla();
         omPopupKur();
       })
-      .catch(() => { applyAdminOverrides(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); omPopupKur(); });
+      .catch(() => { try { applyAdminOverrides(); } catch (e) { console.error('[olivamore]', e); } statikAc(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); omPopupKur(); });
 
     // Derin bağlantı: koleksiyon.html#p=<urunId> → o ürünün kartına kaydır ve vurgula
     function urunOdakla() {

@@ -1374,8 +1374,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (MODE === 'api') {
       // Sunucuya kaydet → TÜM ziyaretçilere ve cihazlara yansır
       fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(C) })
-        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); })
+        .then(function (r) { if (!r.ok) return r.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.hata || ('HTTP ' + r.status)); }); })
         .then(function () {
+          stokTabanKur(); // bir sonraki kayıtta yalnız yeni stok düzenlemeleri fark olarak gider
           status.textContent = 'Sunucuya kaydedildi, tüm ziyaretçilerde yayında ✓';
           status.classList.add('ok');
           var t = document.getElementById('toast');
@@ -2969,6 +2970,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (galBtn) openImgModal(galBtn.closest('.imgpick') || galBtn.closest('.gal-item'));
   });
 
+  function stokTabanKur() {
+    var t = {};
+    (C.products || []).forEach(function (p) { if (typeof p.stok === 'number') t[p.id] = p.stok; });
+    C._stokYuklenen = t;
+  }
   /* ================== BAŞLAT ================== */
   function renderAll() {
     renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderBloklar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
@@ -2979,12 +2985,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     .then(function (cfg) {
       MODE = 'api';
       C = load(cfg && Object.keys(cfg).length ? cfg : undefined);
-      // Varsayılanlarda olup kayıtlı config'te olmayan yeni ürünleri birleştir (id ile)
-      DEFAULTS.products.forEach(function (d) {
-        if (!(C.products || []).some(function (p) { return p.id === d.id; })) {
-          C.products.push(JSON.parse(JSON.stringify(d)));
-        }
-      });
+      // (Eski davranış kaldırıldı: varsayılan ürünleri geri eklemek, silinen ürünleri eski fiyatla siteye geri getiriyordu.)
+      // Stok farkı hesabı için: panelin yüklediği stoklar (sunucu, bu andan sonraki sipariş düşümlerini korur)
+      stokTabanKur();
       document.querySelector('.side .foot').innerHTML = 'Sunucu CMS aktif ✓<br>Kayıtlar tüm ziyaretçilere yansır.';
       libYenile(renderAll); // kütüphaneyi sunucudan çek, sonra her şeyi çiz
     })

@@ -2299,3 +2299,6 @@ body[data-page="home"] section .zsus{position:absolute}
 .fig-magaza .zsus.fm-s3{right:-10px;top:50%;--zd:70deg}
 .fig-magaza .zsus.fm-s4{left:-16px;top:68%;--zd:-48deg}
 @media(max-width:860px){.fig-magaza .zsus.fm-s3,.fig-magaza .zsus.fm-s4{display:none}}
+
+/* Sayfaya gömülü yedek ürün kartları: güncel katalog gelene kadar gizli (eski fiyat görünmesin) */
+.om-statik{visibility:hidden}
