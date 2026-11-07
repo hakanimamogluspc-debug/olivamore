@@ -954,6 +954,52 @@
       document.getElementById('mobile-nav').classList.toggle('open');
     });
 
+    // ---- Belge / ödül görsellerini sayfa içinde büyüt (kalite sayfası ve data-buyut olan bağlantılar) ----
+    (function () {
+      const secici = 'body[data-page="kalite"] main a[href], a[data-buyut]';
+      const resimMi = a => /\.(webp|png|jpe?g)(\?.*)?$/i.test(a.getAttribute('href') || '');
+      const liste = () => Array.from(document.querySelectorAll(secici)).filter(resimMi)
+        .filter((a, i, arr) => arr.findIndex(b => b.getAttribute('href') === a.getAttribute('href')) === i);
+      let pencere = null, sira = 0, aktifListe = [];
+      function kur() {
+        pencere = document.createElement('figure');
+        pencere.className = 'om-buyut';
+        pencere.innerHTML = '<img alt=""><figcaption></figcaption><button type="button" class="kapat" aria-label="' + (EN ? 'Close' : 'Kapat') + '">×</button>' +
+          '<button type="button" class="ok sol" aria-label="' + (EN ? 'Previous' : 'Önceki') + '">‹</button><button type="button" class="ok sag" aria-label="' + (EN ? 'Next' : 'Sonraki') + '">›</button>';
+        document.body.appendChild(pencere);
+        pencere.addEventListener('click', e => {
+          if (e.target.classList.contains('sol')) return goster(sira - 1);
+          if (e.target.classList.contains('sag')) return goster(sira + 1);
+          if (e.target.tagName !== 'IMG') kapat();
+        });
+      }
+      function goster(i) {
+        if (!aktifListe.length) return;
+        sira = (i + aktifListe.length) % aktifListe.length;
+        const a = aktifListe[sira], im = a.querySelector('img');
+        pencere.querySelector('img').src = a.getAttribute('href');
+        pencere.querySelector('img').alt = im ? im.alt : '';
+        pencere.querySelector('figcaption').textContent = im ? im.alt : '';
+        pencere.querySelectorAll('.ok').forEach(b => { b.style.display = aktifListe.length > 1 ? '' : 'none'; });
+      }
+      function kapat() { pencere.classList.remove('acik'); document.body.style.overflow = ''; }
+      document.addEventListener('click', e => {
+        const a = e.target.closest(secici);
+        if (!a || !resimMi(a) || e.ctrlKey || e.metaKey || e.shiftKey) return;
+        e.preventDefault();
+        if (!pencere) kur();
+        aktifListe = liste();
+        goster(Math.max(0, aktifListe.findIndex(x => x.getAttribute('href') === a.getAttribute('href'))));
+        pencere.classList.add('acik'); document.body.style.overflow = 'hidden';
+      });
+      document.addEventListener('keydown', e => {
+        if (!pencere || !pencere.classList.contains('acik')) return;
+        if (e.key === 'Escape') kapat();
+        if (e.key === 'ArrowLeft') goster(sira - 1);
+        if (e.key === 'ArrowRight') goster(sira + 1);
+      });
+    })();
+
     // ---- GERÇEK SEPET (localStorage 'om-cart') ----
     const toast = document.getElementById('toast');
     function showToast(msg, type) {
