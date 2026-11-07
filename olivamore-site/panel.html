@@ -109,7 +109,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .note{background:rgba(191,162,93,.08);border:1px solid rgba(191,162,93,.35);border-left:3px solid var(--gold);border-radius:2px;padding:11px 15px;font-size:.8rem;color:var(--soft);margin-bottom:20px}
 .note b{color:var(--ink)}
-.sg-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px;position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 10px}
+.sg-bar{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-columns:1fr;gap:10px;margin-bottom:22px;position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 10px}
 .sg-tab{text-align:left;background:#fff;border:1px solid var(--line);border-radius:3px;padding:14px 16px;cursor:pointer;font:inherit;color:var(--ink);transition:border-color .2s,box-shadow .2s}
 .sg-tab b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:1.12rem;font-weight:600}
 .sg-tab span{display:block;font-size:.72rem;color:var(--soft);margin-top:3px}
@@ -131,7 +131,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .blok-kart .imgpick{flex-direction:column;align-items:stretch;flex-wrap:wrap}
 .blok-kart .imgpick img{width:100%;height:300px;object-fit:cover}
 .blok-dil{font-family:'Poppins',sans-serif;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}
-@media(max-width:900px){.sg-bar{grid-template-columns:1fr 1fr}.pg-izgara{grid-template-columns:1fr}.blok-kart{grid-template-columns:1fr}}
+@media(max-width:900px){.sg-bar{grid-template-columns:1fr 1fr!important}.pg-izgara{grid-template-columns:1fr}.blok-kart{grid-template-columns:1fr}}
 .wa-ust{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
 .wa-donem,.wa-filtre{display:inline-flex;border:1px solid var(--line);background:#fff;border-radius:3px;overflow:hidden}
 .wa-donem button,.wa-filtre button{border:0;background:none;padding:9px 16px;font:inherit;font-size:.8rem;cursor:pointer;color:var(--soft);border-right:1px solid var(--line)}
@@ -308,33 +308,47 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ ÜRÜNLER ============ -->
     <section class="view" id="view-products">
-      <div class="note"><b>Ürünler:</b> Koleksiyon sayfasındaki tüm kartlar ve ana sayfa vitrini buradan yönetilir. <b>Vitrin sırası</b> 1-4 arası olan ürünler ana sayfada gösterilir (0 = vitrinde değil).</div>
-      <div id="products-list"></div>
-      <button class="btn btn-dark" id="btn-add-product">+ Yeni Ürün Ekle</button>
-
-      <div class="panel" style="margin-top:22px;">
-        <h2>Toplu Ürün Yükleme</h2>
-        <div class="desc">Şablonu indir, ürünleri doldur, buradan yükle. Ürün kodu sistemde varsa ürün <b>güncellenir</b> (boş hücreler mevcut değeri değiştirmez), yoksa <b>yeni ürün</b> eklenir. Fotoğrafları yükleme sonrası her ürünün "Ürün Görseli" alanından eklersin.</div>
-        <div class="row-actions" style="margin-top:0;">
-          <a class="btn btn-ghost btn-sm" href="assets/sablon/olivamore-urun-sablonu.xlsx" download>⬇ Boş Şablonu İndir</a>
-          <button class="btn btn-ghost btn-sm" id="btn-toplu-disa" type="button">⬇ Mevcut Ürünleri Excel'e Aktar</button>
-          <label class="btn btn-dark btn-sm" style="cursor:pointer;margin:0;">⬆ Dolu Şablonu Yükle<input type="file" id="toplu-dosya" accept=".xlsx,.xls,.csv" style="display:none;"></label>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(4,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="liste"><b>Ürün Listesi</b><span>Tüm ürünleri düzenle, ekle, sil</span></button>
+        <button type="button" class="sg-tab" data-sg="toplu"><b>Toplu Yükleme</b><span>Excel şablonuyla ürün yükle</span></button>
+        <button type="button" class="sg-tab" data-sg="kategori"><b>Ürün Kategorileri</b><span>Koleksiyon filtreleri ve etiketler</span></button>
+        <button type="button" class="sg-tab" data-sg="ek"><b>Ek Ayarlar</b><span>Ürün sayfası ek boyut fiyatı</span></button>
+      </div>
+      <div class="sg-pane" data-sg="liste">
+        <div class="note"><b>Ürünler:</b> Koleksiyon sayfasındaki tüm kartlar ve ana sayfa vitrini buradan yönetilir. <b>Vitrin sırası</b> 1-4 arası olan ürünler ana sayfada gösterilir (0 = vitrinde değil).</div>
+        <div id="products-list"></div>
+        <button class="btn btn-dark" id="btn-add-product">+ Yeni Ürün Ekle</button>
+  
+        <button class="btn btn-outline" id="btn-export-products" style="margin-left:10px;">⬇ Excel'e Aktar (CSV)</button>
+  
+      </div>
+      <div class="sg-pane" data-sg="toplu" hidden>
+        <div class="panel" style="margin-top:22px;">
+          <h2>Toplu Ürün Yükleme</h2>
+          <div class="desc">Şablonu indir, ürünleri doldur, buradan yükle. Ürün kodu sistemde varsa ürün <b>güncellenir</b> (boş hücreler mevcut değeri değiştirmez), yoksa <b>yeni ürün</b> eklenir. Fotoğrafları yükleme sonrası her ürünün "Ürün Görseli" alanından eklersin.</div>
+          <div class="row-actions" style="margin-top:0;">
+            <a class="btn btn-ghost btn-sm" href="assets/sablon/olivamore-urun-sablonu.xlsx" download>⬇ Boş Şablonu İndir</a>
+            <button class="btn btn-ghost btn-sm" id="btn-toplu-disa" type="button">⬇ Mevcut Ürünleri Excel'e Aktar</button>
+            <label class="btn btn-dark btn-sm" style="cursor:pointer;margin:0;">⬆ Dolu Şablonu Yükle<input type="file" id="toplu-dosya" accept=".xlsx,.xls,.csv" style="display:none;"></label>
+          </div>
+          <div id="toplu-onizleme" style="margin-top:14px;"></div>
         </div>
-        <div id="toplu-onizleme" style="margin-top:14px;"></div>
+  
       </div>
-
-      <div class="panel" style="margin-top:22px;">
-        <h2>Ürün Kategorileri</h2>
-        <div class="desc">Koleksiyon sayfasındaki filtre düğmeleri ve kartlardaki kategori etiketi bu listeden gelir. Ürünün kategorisini yukarıda her ürünün "Kategori" alanından seçersin; oradan da yeni kategori ekleyebilirsin. Sıra, filtre düğmelerinin sırasıdır.</div>
-        <div id="urunkat-list"></div>
-        <button class="btn btn-outline btn-sm" id="btn-add-urunkat" type="button" style="margin-top:10px;">+ Yeni Kategori</button>
+      <div class="sg-pane" data-sg="kategori" hidden>
+        <div class="panel" style="margin-top:22px;">
+          <h2>Ürün Kategorileri</h2>
+          <div class="desc">Koleksiyon sayfasındaki filtre düğmeleri ve kartlardaki kategori etiketi bu listeden gelir. Ürünün kategorisini yukarıda her ürünün "Kategori" alanından seçersin; oradan da yeni kategori ekleyebilirsin. Sıra, filtre düğmelerinin sırasıdır.</div>
+          <div id="urunkat-list"></div>
+          <button class="btn btn-outline btn-sm" id="btn-add-urunkat" type="button" style="margin-top:10px;">+ Yeni Kategori</button>
+        </div>
       </div>
-      <button class="btn btn-outline" id="btn-export-products" style="margin-left:10px;">⬇ Excel'e Aktar (CSV)</button>
-
-      <div class="panel" style="margin-top:22px;">
-        <h2>Ürün sayfası (PDP) ek boyut fiyatı</h2>
-        <div class="desc">Ayvalık ürün sayfasındaki 750 ml seçeneği (kartı olmayan boyut).</div>
-        <div class="grid3"><div class="field"><label>Ayvalık 750 ml (₺)</label><input type="number" id="f-pdp750"></div></div>
+      <div class="sg-pane" data-sg="ek" hidden>
+        <div class="panel" style="margin-top:22px;">
+          <h2>Ürün sayfası (PDP) ek boyut fiyatı</h2>
+          <div class="desc">Ayvalık ürün sayfasındaki 750 ml seçeneği (kartı olmayan boyut).</div>
+          <div class="grid3"><div class="field"><label>Ayvalık 750 ml (₺)</label><input type="number" id="f-pdp750"></div></div>
+        </div>
       </div>
     </section>
 
@@ -390,13 +404,21 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         </select>
         <button class="btn btn-ghost btn-sm" id="an-yenile" type="button">↻ Yenile</button>
       </div>
-      <div class="stats" id="an-stats"></div>
-      <div class="panel"><h2>Ciro grafiği</h2><div id="an-grafik" style="margin-top:10px;"></div></div>
-      <div class="grid2" style="margin-top:14px;">
-        <div class="panel"><h2>En çok satan ürünler</h2><div id="an-urunler" style="margin-top:10px;"></div></div>
-        <div class="panel"><h2>Sipariş durumları</h2><div id="an-durum" style="margin-top:10px;"></div></div>
-        <div class="panel"><h2>Kupon performansı</h2><div id="an-kupon" style="margin-top:10px;"></div></div>
-        <div class="panel"><h2>Ödeme yöntemleri</h2><div id="an-odeme" style="margin-top:10px;"></div></div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(2,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="genel"><b>Genel Bakış</b><span>Ciro, sipariş, ortalama sepet</span></button>
+        <button type="button" class="sg-tab" data-sg="detay"><b>Ürün · Kupon · Ödeme</b><span>En çok satanlar ve dağılımlar</span></button>
+      </div>
+      <div class="sg-pane" data-sg="genel">
+        <div class="stats" id="an-stats"></div>
+        <div class="panel"><h2>Ciro grafiği</h2><div id="an-grafik" style="margin-top:10px;"></div></div>
+      </div>
+      <div class="sg-pane" data-sg="detay" hidden>
+        <div class="grid2" style="margin-top:14px;">
+          <div class="panel"><h2>En çok satan ürünler</h2><div id="an-urunler" style="margin-top:10px;"></div></div>
+          <div class="panel"><h2>Sipariş durumları</h2><div id="an-durum" style="margin-top:10px;"></div></div>
+          <div class="panel"><h2>Kupon performansı</h2><div id="an-kupon" style="margin-top:10px;"></div></div>
+          <div class="panel"><h2>Ödeme yöntemleri</h2><div id="an-odeme" style="margin-top:10px;"></div></div>
+        </div>
       </div>
     </section>
 
@@ -409,29 +431,43 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <div class="wa-canli" id="wa-canli-rozet"><i></i><span>Şu an sitede: <b>0</b></span></div>
         <button class="btn btn-ghost btn-sm" id="wa-yenile" type="button">↻ Yenile</button>
       </div>
-      <div class="stats wa-stats" id="wa-stats"></div>
-      <div class="panel"><h2>Günlük ziyaretçi ve satın alma</h2><div id="wa-grafik" style="margin-top:12px;"></div></div>
-      <div class="grid2" style="align-items:start;">
-        <div class="panel"><h2>Satış hunisi</h2><div class="desc">Oturumların hangi adımda kaybolduğunu gösterir.</div><div id="wa-huni"></div></div>
-        <div class="panel"><h2>Şu an sitede olanlar</h2><div class="desc">Son 5 dakikada hareket eden ziyaretçiler.</div><div id="wa-canli"></div></div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(4,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="genel"><b>Genel Bakış</b><span>Ziyaret, dönüşüm, huni, şu an sitede</span></button>
+        <button type="button" class="sg-tab" data-sg="kaynak"><b>Trafik Kaynakları</b><span>Nereden geliyorlar · kampanyalar</span></button>
+        <button type="button" class="sg-tab" data-sg="icerik"><b>Sayfalar ve Ürünler</b><span>En çok gezilenler · ürün ilgisi · cihaz</span></button>
+        <button type="button" class="sg-tab" data-sg="yolculuk"><b>Ziyaretçi Yolculukları</b><span>Kim, nereden geldi, ne yaptı</span></button>
       </div>
-      <div class="panel"><h2>Ziyaretçiler nereden geliyor?</h2><div class="desc">Oturumun geldiği kaynak; sepete ekleme, satın alma ve ciro kaynağa göre.</div><div id="wa-kanal"></div></div>
-      <div class="panel" id="wa-kampanya-kutu"><h2>Kampanyalar (UTM)</h2><div class="desc">Reklam ve e-posta bağlantılarına <code>?utm_source=instagram&amp;utm_medium=cpc&amp;utm_campaign=yilbasi</code> ekleyince burada ayrı izlenir.</div><div id="wa-kampanya"></div></div>
-      <div class="grid2" style="align-items:start;">
-        <div class="panel"><h2>En çok gezilen sayfalar</h2><div id="wa-sayfa"></div></div>
-        <div class="panel"><h2>Ürün ilgisi</h2><div class="desc">İnceleme → sepete ekleme → satış.</div><div id="wa-urun"></div></div>
-      </div>
-      <div class="panel">
-        <h2>Ziyaretçi yolculukları</h2>
-        <div class="desc">Her satır bir ziyaret: nereden geldi, hangi sayfaları gezdi, sepete ne ekledi, satın aldı mı. Satırı açınca adım adım görürsün.</div>
-        <div class="wa-filtre" id="wa-filtre">
-          <button type="button" data-f="hepsi" class="on">Tümü</button><button type="button" data-f="satin">Satın alanlar</button><button type="button" data-f="terk">Sepeti terk edenler</button><button type="button" data-f="sepet">Sepete ekleyenler</button>
+      <div class="sg-pane" data-sg="genel">
+        <div class="stats wa-stats" id="wa-stats"></div>
+        <div class="panel"><h2>Günlük ziyaretçi ve satın alma</h2><div id="wa-grafik" style="margin-top:12px;"></div></div>
+        <div class="grid2" style="align-items:start;">
+          <div class="panel"><h2>Satış hunisi</h2><div class="desc">Oturumların hangi adımda kaybolduğunu gösterir.</div><div id="wa-huni"></div></div>
+          <div class="panel"><h2>Şu an sitede olanlar</h2><div class="desc">Son 5 dakikada hareket eden ziyaretçiler.</div><div id="wa-canli"></div></div>
         </div>
-        <div id="wa-yolculuk"></div>
       </div>
-      <div class="grid2" style="align-items:start;">
-        <div class="panel"><h2>Cihaz</h2><div id="wa-cihaz"></div></div>
-        <div class="panel"><h2>Nasıl çalışır?</h2><div class="desc" style="margin:0;">Ölçüm sitenin kendi sunucusunda yapılır; Google'a veri gönderilmez, çerez kullanılmaz, IP adresi saklanmaz. Ziyaretçiye tarayıcısında anonim bir kimlik verilir; satın alma olduğunda sipariş kaydıyla eşleşir ve müşteri adı görünür. Botlar sayılmaz. Veriler yayına alındığı andan itibaren birikir.</div></div>
+      <div class="sg-pane" data-sg="kaynak" hidden>
+        <div class="panel"><h2>Ziyaretçiler nereden geliyor?</h2><div class="desc">Oturumun geldiği kaynak; sepete ekleme, satın alma ve ciro kaynağa göre.</div><div id="wa-kanal"></div></div>
+        <div class="panel" id="wa-kampanya-kutu"><h2>Kampanyalar (UTM)</h2><div class="desc">Reklam ve e-posta bağlantılarına <code>?utm_source=instagram&amp;utm_medium=cpc&amp;utm_campaign=yilbasi</code> ekleyince burada ayrı izlenir.</div><div id="wa-kampanya"></div></div>
+      </div>
+      <div class="sg-pane" data-sg="icerik" hidden>
+        <div class="grid2" style="align-items:start;">
+          <div class="panel"><h2>En çok gezilen sayfalar</h2><div id="wa-sayfa"></div></div>
+          <div class="panel"><h2>Ürün ilgisi</h2><div class="desc">İnceleme → sepete ekleme → satış.</div><div id="wa-urun"></div></div>
+        </div>
+        <div class="grid2" style="align-items:start;">
+          <div class="panel"><h2>Cihaz</h2><div id="wa-cihaz"></div></div>
+          <div class="panel"><h2>Nasıl çalışır?</h2><div class="desc" style="margin:0;">Ölçüm sitenin kendi sunucusunda yapılır; Google'a veri gönderilmez, çerez kullanılmaz, IP adresi saklanmaz. Ziyaretçiye tarayıcısında anonim bir kimlik verilir; satın alma olduğunda sipariş kaydıyla eşleşir ve müşteri adı görünür. Botlar sayılmaz. Veriler yayına alındığı andan itibaren birikir.</div></div>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="yolculuk" hidden>
+        <div class="panel">
+          <h2>Ziyaretçi yolculukları</h2>
+          <div class="desc">Her satır bir ziyaret: nereden geldi, hangi sayfaları gezdi, sepete ne ekledi, satın aldı mı. Satırı açınca adım adım görürsün.</div>
+          <div class="wa-filtre" id="wa-filtre">
+            <button type="button" data-f="hepsi" class="on">Tümü</button><button type="button" data-f="satin">Satın alanlar</button><button type="button" data-f="terk">Sepeti terk edenler</button><button type="button" data-f="sepet">Sepete ekleyenler</button>
+          </div>
+          <div id="wa-yolculuk"></div>
+        </div>
       </div>
     </section>
 
@@ -454,68 +490,82 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div id="mk-brevo-uyari"></div>
       <div class="stats" id="mk-stats"></div>
 
-      <div class="panel">
-        <h2>Hoş geldin popup'ı (lead toplama)</h2>
-        <div class="desc">Sitede yeni ziyaretçiye e-posta karşılığı kupon teklif eden küçük pencere. Ziyaretçiye 7 günde bir kez gösterilir. Bu ayarlar <b>Kaydet ve Yayınla</b> ile siteye yansır.</div>
-        <div class="grid3">
-          <div class="field"><label>Durum</label><select id="pp-aktif"><option value="0">Kapalı</option><option value="1">Açık</option></select></div>
-          <div class="field"><label>Gecikme (saniye)</label><input type="number" id="pp-gecikme" min="3" max="120"></div>
-          <div class="field"><label>Hediye kupon kodu (Kuponlar sekmesinden oluştur)</label><input type="text" id="pp-kupon" placeholder="Örn: HOSGELDIN10"></div>
-        </div>
-        <div class="grid2">
-          <div class="field"><label>Başlık (TR)</label><input type="text" id="pp-baslikTR"></div>
-          <div class="field"><label>Başlık (EN)</label><input type="text" id="pp-baslikEN"></div>
-          <div class="field"><label>Metin (TR)</label><textarea id="pp-metinTR" rows="2"></textarea></div>
-          <div class="field"><label>Metin (EN)</label><textarea id="pp-metinEN" rows="2"></textarea></div>
-        </div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(4,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="kampanya"><b>Kampanya Gönder</b><span>Segmente e-posta kampanyası</span></button>
+        <button type="button" class="sg-tab" data-sg="otomasyon"><b>Otomasyonlar</b><span>Sepet hatırlatma, teşekkür, yorum isteği</span></button>
+        <button type="button" class="sg-tab" data-sg="popup"><b>Hoş Geldin Pop-up'ı</b><span>E-posta toplama ve hoş geldin kuponu</span></button>
+        <button type="button" class="sg-tab" data-sg="abone"><b>Aboneler ve Geçmiş</b><span>Bülten listesi · gönderilen kampanyalar</span></button>
       </div>
-
-      <div class="panel" style="margin-top:14px;">
-        <h2>Kampanya oluştur</h2>
-        <div class="field"><label>Hedef kitle (segment)</label>
-          <select id="mk-segment">
-            <option value="aboneler">Bülten aboneleri</option>
-            <option value="uyeler">Tüm üyeler</option>
-            <option value="musteriler">Sipariş vermiş herkes</option>
-            <option value="coklu">Sadık müşteriler (3+ sipariş)</option>
-            <option value="tek">Tek siparişliler (ikinciye teşvik)</option>
-            <option value="sessiz90">90+ gündür sessizler</option>
-            <option value="vip">VIP (₺5.000+ harcama)</option>
-          </select>
-        </div>
-        <div class="field"><label>Konu</label><input type="text" id="mk-konu" placeholder="Örn: Yeni hasat geldi — Club üyelerine %10"></div>
-        <div class="field"><label>Metin</label><textarea id="mk-metin" rows="8" placeholder="Merhaba,&#10;&#10;Yeni hasat zeytinyağlarımız..."></textarea></div>
-        <div class="row-actions">
-          <button class="btn btn-ghost btn-sm" id="mk-test" type="button">Önce Bana Test Gönder</button>
-          <button class="btn btn-dark btn-sm" id="mk-gonder" type="button">Tüm Abonelere Gönder</button>
-          <span id="mk-durum" style="font-size:.85rem;color:var(--soft);"></span>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px;">
-        <h2>E-posta otomasyonları</h2>
-        <div class="desc">Otomatik mailler yalnız <b>bülten abonesi veya üye</b> olan e-postalara gider; her mailin altında çıkış linki bulunur. <span id="ot-bekleyen" style="color:#d97706;"></span></div>
-        <div id="ot-alanlar"></div>
-        <div class="row-actions">
-          <button class="btn btn-dark btn-sm" id="ot-kaydet" type="button">Otomasyonları Kaydet</button>
-          <span id="ot-durum" style="font-size:.82rem;color:var(--soft);"></span>
-        </div>
-      </div>
-
-      <div class="grid2" style="margin-top:14px;">
-        <div class="panel">
-          <h2>Aboneler</h2>
-          <div class="row-actions" style="margin-bottom:10px;flex-wrap:wrap;">
-            <input type="text" id="mk-ara" placeholder="E-posta ara..." style="max-width:200px;">
-            <input type="email" id="mk-yeni" placeholder="Elle abone ekle" style="max-width:200px;">
-            <button class="btn btn-ghost btn-sm" id="mk-ekle" type="button">+ Ekle</button>
-            <button class="btn btn-outline btn-sm" id="mk-csv" type="button">⬇ CSV</button>
+      <div class="sg-pane" data-sg="kampanya">
+        <div class="panel" style="margin-top:14px;">
+          <h2>Kampanya oluştur</h2>
+          <div class="field"><label>Hedef kitle (segment)</label>
+            <select id="mk-segment">
+              <option value="aboneler">Bülten aboneleri</option>
+              <option value="uyeler">Tüm üyeler</option>
+              <option value="musteriler">Sipariş vermiş herkes</option>
+              <option value="coklu">Sadık müşteriler (3+ sipariş)</option>
+              <option value="tek">Tek siparişliler (ikinciye teşvik)</option>
+              <option value="sessiz90">90+ gündür sessizler</option>
+              <option value="vip">VIP (₺5.000+ harcama)</option>
+            </select>
           </div>
-          <div id="mk-aboneler" style="max-height:420px;overflow:auto;font-size:.85rem;"></div>
+          <div class="field"><label>Konu</label><input type="text" id="mk-konu" placeholder="Örn: Yeni hasat geldi — Club üyelerine %10"></div>
+          <div class="field"><label>Metin</label><textarea id="mk-metin" rows="8" placeholder="Merhaba,&#10;&#10;Yeni hasat zeytinyağlarımız..."></textarea></div>
+          <div class="row-actions">
+            <button class="btn btn-ghost btn-sm" id="mk-test" type="button">Önce Bana Test Gönder</button>
+            <button class="btn btn-dark btn-sm" id="mk-gonder" type="button">Tüm Abonelere Gönder</button>
+            <span id="mk-durum" style="font-size:.85rem;color:var(--soft);"></span>
+          </div>
         </div>
+  
+      </div>
+      <div class="sg-pane" data-sg="otomasyon" hidden>
+        <div class="panel" style="margin-top:14px;">
+          <h2>E-posta otomasyonları</h2>
+          <div class="desc">Otomatik mailler yalnız <b>bülten abonesi veya üye</b> olan e-postalara gider; her mailin altında çıkış linki bulunur. <span id="ot-bekleyen" style="color:#d97706;"></span></div>
+          <div id="ot-alanlar"></div>
+          <div class="row-actions">
+            <button class="btn btn-dark btn-sm" id="ot-kaydet" type="button">Otomasyonları Kaydet</button>
+            <span id="ot-durum" style="font-size:.82rem;color:var(--soft);"></span>
+          </div>
+        </div>
+  
+      </div>
+      <div class="sg-pane" data-sg="popup" hidden>
         <div class="panel">
-          <h2>Gönderim geçmişi</h2>
-          <div id="mk-gecmis" style="font-size:.85rem;"></div>
+          <h2>Hoş geldin popup'ı (lead toplama)</h2>
+          <div class="desc">Sitede yeni ziyaretçiye e-posta karşılığı kupon teklif eden küçük pencere. Ziyaretçiye 7 günde bir kez gösterilir. Bu ayarlar <b>Kaydet ve Yayınla</b> ile siteye yansır.</div>
+          <div class="grid3">
+            <div class="field"><label>Durum</label><select id="pp-aktif"><option value="0">Kapalı</option><option value="1">Açık</option></select></div>
+            <div class="field"><label>Gecikme (saniye)</label><input type="number" id="pp-gecikme" min="3" max="120"></div>
+            <div class="field"><label>Hediye kupon kodu (Kuponlar sekmesinden oluştur)</label><input type="text" id="pp-kupon" placeholder="Örn: HOSGELDIN10"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Başlık (TR)</label><input type="text" id="pp-baslikTR"></div>
+            <div class="field"><label>Başlık (EN)</label><input type="text" id="pp-baslikEN"></div>
+            <div class="field"><label>Metin (TR)</label><textarea id="pp-metinTR" rows="2"></textarea></div>
+            <div class="field"><label>Metin (EN)</label><textarea id="pp-metinEN" rows="2"></textarea></div>
+          </div>
+        </div>
+  
+      </div>
+      <div class="sg-pane" data-sg="abone" hidden>
+        <div class="grid2" style="margin-top:14px;">
+          <div class="panel">
+            <h2>Aboneler</h2>
+            <div class="row-actions" style="margin-bottom:10px;flex-wrap:wrap;">
+              <input type="text" id="mk-ara" placeholder="E-posta ara..." style="max-width:200px;">
+              <input type="email" id="mk-yeni" placeholder="Elle abone ekle" style="max-width:200px;">
+              <button class="btn btn-ghost btn-sm" id="mk-ekle" type="button">+ Ekle</button>
+              <button class="btn btn-outline btn-sm" id="mk-csv" type="button">⬇ CSV</button>
+            </div>
+            <div id="mk-aboneler" style="max-height:420px;overflow:auto;font-size:.85rem;"></div>
+          </div>
+          <div class="panel">
+            <h2>Gönderim geçmişi</h2>
+            <div id="mk-gecmis" style="font-size:.85rem;"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -525,28 +575,36 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div class="note"><b>Üyeler:</b> Hesap sayfasından kayıt olan müşteriler. Sadakat seviyesi ve özel indirim, üye giriş yapıp sipariş verdiğinde sepette otomatik uygulanır. Şifre atadığında üyenin tüm oturumları kapanır; yeni şifreyi üyeye sen iletirsin.</div>
       <div class="stats" id="uy-stats"></div>
 
-      <div class="panel">
-        <h2>Sadakat seviyeleri</h2>
-        <div class="desc">Üye, puanı eşiğe ulaştığında o seviyenin indirim oranını kazanır (puan: her ₺50 harcama = 1 puan). Oranlar sepetteki ürün tutarına uygulanır.</div>
-        <div id="uy-seviyeler"></div>
-        <div class="row-actions" style="margin-top:12px;flex-wrap:wrap;align-items:center;">
-          <label style="text-transform:none;letter-spacing:0;font-size:.85rem;margin:0;display:flex;align-items:center;gap:8px;">Onaylanan yorum başına bonus puan:
-          <input type="number" id="uy-yorum-puan" min="0" max="500" style="max-width:90px;"></label>
-        </div>
-        <div class="row-actions" style="margin-top:10px;">
-          <button class="btn btn-ghost btn-sm" id="uy-sev-ekle" type="button">+ Seviye Ekle</button>
-          <button class="btn btn-dark btn-sm" id="uy-sev-kaydet" type="button">Seviyeleri Kaydet</button>
-          <span id="uy-sev-durum" style="font-size:.82rem;color:var(--soft);"></span>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(2,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="liste"><b>Üye Listesi</b><span>Üyeler, siparişleri ve harcamaları</span></button>
+        <button type="button" class="sg-tab" data-sg="sadakat"><b>Sadakat Seviyeleri</b><span>Seviye eşikleri ve indirim oranları</span></button>
+      </div>
+      <div class="sg-pane" data-sg="liste">
+        <div class="panel">
+          <h2>Üye listesi</h2>
+          <div class="row-actions" style="margin-bottom:12px;">
+            <input type="text" id="uy-ara" placeholder="Ad veya e-posta ara..." style="max-width:260px;">
+            <button class="btn btn-ghost btn-sm" id="uy-yenile" type="button">↻ Yenile</button>
+          </div>
+          <div id="uy-liste"></div>
         </div>
       </div>
-
-      <div class="panel">
-        <h2>Üye listesi</h2>
-        <div class="row-actions" style="margin-bottom:12px;">
-          <input type="text" id="uy-ara" placeholder="Ad veya e-posta ara..." style="max-width:260px;">
-          <button class="btn btn-ghost btn-sm" id="uy-yenile" type="button">↻ Yenile</button>
+      <div class="sg-pane" data-sg="sadakat" hidden>
+        <div class="panel">
+          <h2>Sadakat seviyeleri</h2>
+          <div class="desc">Üye, puanı eşiğe ulaştığında o seviyenin indirim oranını kazanır (puan: her ₺50 harcama = 1 puan). Oranlar sepetteki ürün tutarına uygulanır.</div>
+          <div id="uy-seviyeler"></div>
+          <div class="row-actions" style="margin-top:12px;flex-wrap:wrap;align-items:center;">
+            <label style="text-transform:none;letter-spacing:0;font-size:.85rem;margin:0;display:flex;align-items:center;gap:8px;">Onaylanan yorum başına bonus puan:
+            <input type="number" id="uy-yorum-puan" min="0" max="500" style="max-width:90px;"></label>
+          </div>
+          <div class="row-actions" style="margin-top:10px;">
+            <button class="btn btn-ghost btn-sm" id="uy-sev-ekle" type="button">+ Seviye Ekle</button>
+            <button class="btn btn-dark btn-sm" id="uy-sev-kaydet" type="button">Seviyeleri Kaydet</button>
+            <span id="uy-sev-durum" style="font-size:.82rem;color:var(--soft);"></span>
+          </div>
         </div>
-        <div id="uy-liste"></div>
+  
       </div>
     </section>
 
@@ -560,8 +618,16 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     <!-- ============ MESAJLAR ============ -->
     <section class="view" id="view-msgs">
       <div class="note"><b>Mesajlar:</b> İletişim formundan gelenler. Bülten kayıtları da altta.</div>
-      <div id="msgs-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
-      <div class="panel" style="margin-top:20px;"><h2>Bülten Kayıtları</h2><div id="bulten-list" style="font-size:.85rem;color:var(--soft);">Yükleniyor...</div></div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(2,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="mesaj"><b>Mesajlar</b><span>İletişim formundan gelenler</span></button>
+        <button type="button" class="sg-tab" data-sg="bulten"><b>Bülten Kayıtları</b><span>E-posta bırakanlar</span></button>
+      </div>
+      <div class="sg-pane" data-sg="mesaj">
+        <div id="msgs-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
+      </div>
+      <div class="sg-pane" data-sg="bulten" hidden>
+        <div class="panel" style="margin-top:20px;"><h2>Bülten Kayıtları</h2><div id="bulten-list" style="font-size:.85rem;color:var(--soft);">Yükleniyor...</div></div>
+      </div>
     </section>
 
     <!-- ============ MODÜLLER ============ -->
@@ -578,23 +644,31 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     <!-- ============ KUPONLAR ============ -->
     <section class="view" id="view-coupons">
       <div class="note"><b>Kuponlar:</b> Kod sepette girilir; indirim yalnız kapsamdaki ürünlerin tutarına uygulanır. Tarih boş bırakılırsa süresizdir. Doğrulama sunucuda yapılır.</div>
-      <div id="coupons-list"></div>
-      <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
-
-      <div class="panel" style="margin-top:22px;">
-        <h2>Toplu tek kullanımlık kod üret</h2>
-        <div class="desc">Kampanyalar için benzersiz, tek kullanımlık kuponlar (örn. OM-X7K2P9). Üretilen kodlar aşağıdaki listeye eklenir; "Kaydet ve Yayınla" ile yayınlanır ve kutudan kopyalanıp dağıtılır.</div>
-        <div class="grid3">
-          <div class="field"><label>Adet</label><input type="number" id="tk-adet" value="10" min="1" max="200"></div>
-          <div class="field"><label>Ön ek</label><input type="text" id="tk-onek" value="OM" maxlength="8"></div>
-          <div class="field"><label>İndirim</label><div style="display:flex;gap:8px;"><select id="tk-tip" style="max-width:90px;"><option value="yuzde">%</option><option value="tutar">₺</option></select><input type="number" id="tk-deger" value="10"></div></div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(2,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="kuponlar"><b>Kuponlar</b><span>Kupon kodlarını düzenle</span></button>
+        <button type="button" class="sg-tab" data-sg="toplu"><b>Toplu Kod Üret</b><span>Tek kullanımlık kodlar</span></button>
+      </div>
+      <div class="sg-pane" data-sg="kuponlar">
+        <div id="coupons-list"></div>
+        <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
+  
+      </div>
+      <div class="sg-pane" data-sg="toplu" hidden>
+        <div class="panel" style="margin-top:22px;">
+          <h2>Toplu tek kullanımlık kod üret</h2>
+          <div class="desc">Kampanyalar için benzersiz, tek kullanımlık kuponlar (örn. OM-X7K2P9). Üretilen kodlar aşağıdaki listeye eklenir; "Kaydet ve Yayınla" ile yayınlanır ve kutudan kopyalanıp dağıtılır.</div>
+          <div class="grid3">
+            <div class="field"><label>Adet</label><input type="number" id="tk-adet" value="10" min="1" max="200"></div>
+            <div class="field"><label>Ön ek</label><input type="text" id="tk-onek" value="OM" maxlength="8"></div>
+            <div class="field"><label>İndirim</label><div style="display:flex;gap:8px;"><select id="tk-tip" style="max-width:90px;"><option value="yuzde">%</option><option value="tutar">₺</option></select><input type="number" id="tk-deger" value="10"></div></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Min. sepet (₺, 0=yok)</label><input type="number" id="tk-min" value="0"></div>
+            <div class="field"><label>Son kullanım (boş=süresiz)</label><input type="date" id="tk-bitis"></div>
+            <div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-dark" id="btn-toplu-kupon" type="button">Kodları Üret</button></div>
+          </div>
+          <textarea class="json" id="tk-cikti" placeholder="Üretilen kodlar burada listelenir (kopyala-dağıt)..." style="min-height:70px;"></textarea>
         </div>
-        <div class="grid3">
-          <div class="field"><label>Min. sepet (₺, 0=yok)</label><input type="number" id="tk-min" value="0"></div>
-          <div class="field"><label>Son kullanım (boş=süresiz)</label><input type="date" id="tk-bitis"></div>
-          <div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-dark" id="btn-toplu-kupon" type="button">Kodları Üret</button></div>
-        </div>
-        <textarea class="json" id="tk-cikti" placeholder="Üretilen kodlar burada listelenir (kopyala-dağıt)..." style="min-height:70px;"></textarea>
       </div>
     </section>
 
@@ -602,61 +676,88 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     <section class="view" id="view-invoices">
       <div class="note"><b>Fatura:</b> Hazırlanan/kargolanan siparişlerden henüz faturalanmamış olanlar burada listelenir. Şimdilik kesim manuel (Mikro Jump); Paraşüt bağlanınca "hazırlanıyor" durumuna geçen sipariş için e-Arşiv fatura otomatik kesilecek.</div>
       <div class="stats" id="fat-stats"></div>
-      <div class="panel"><h2>Faturalanacak siparişler</h2><div id="fat-bekleyen"></div></div>
-      <div class="panel"><h2>Kesilen faturalar</h2><div id="fat-kesilen"></div></div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(2,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="bekleyen"><b>Faturalanacaklar</b><span>Fatura kesilmeyi bekleyen siparişler</span></button>
+        <button type="button" class="sg-tab" data-sg="kesilen"><b>Kesilen Faturalar</b><span>E-Fatura ve e-Arşiv kayıtları</span></button>
+      </div>
+      <div class="sg-pane" data-sg="bekleyen">
+        <div class="panel"><h2>Faturalanacak siparişler</h2><div id="fat-bekleyen"></div></div>
+      </div>
+      <div class="sg-pane" data-sg="kesilen" hidden>
+        <div class="panel"><h2>Kesilen faturalar</h2><div id="fat-kesilen"></div></div>
+      </div>
     </section>
 
     <!-- ============ SATIŞ KANALLARI ============ -->
     <section class="view" id="view-channels">
       <div class="note"><b>Satış Kanalları:</b> Ürünlerin site dışındaki vitrinleri ve pazaryerleri tek yerden. Stok havuzu ortaktır: panelde stok düşünce bağlı kanallarda da güncellenir (pazaryeri senkronu Faz C'de aktifleşir).</div>
-      <div class="panel">
-        <h2>Google Alışveriş + Instagram/Facebook kataloğu <span style="font-size:.7rem;color:#2e7d32;font-weight:600;letter-spacing:.06em;">● HAZIR</span></h2>
-        <div class="desc">Ürün feed'i yayında ve yarım saatte bir tazelenir. Google Merchant Center'da "Feed ekle → Zamanlanmış getirme", Meta Commerce Manager'da "Veri feed'i → URL ile" seçeneğine aşağıdaki adresi yapıştır.</div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <code id="feed-url" style="background:#f6f3ec;border:1px solid #e8e2d5;border-radius:8px;padding:9px 14px;font-size:.82rem;">https://olivamore.de/feed/urunler.xml</code>
-          <button class="btn btn-outline btn-sm" id="feed-kopyala" type="button">Kopyala</button>
-          <a class="btn btn-ghost btn-sm" href="/feed/urunler.xml" target="_blank">Feed'i Gör ↗</a>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(3,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="katalog"><b>Google · Meta Kataloğu</b><span>Ürün feed adresi ve durumu</span></button>
+        <button type="button" class="sg-tab" data-sg="pazaryeri"><b>Pazaryerleri</b><span>Trendyol · Hepsiburada · Amazon</span></button>
+        <button type="button" class="sg-tab" data-sg="esleme"><b>Ürün Eşleme</b><span>Site ürünleri ↔ pazaryeri ürünleri</span></button>
+      </div>
+      <div class="sg-pane" data-sg="katalog">
+        <div class="panel">
+          <h2>Google Alışveriş + Instagram/Facebook kataloğu <span style="font-size:.7rem;color:#2e7d32;font-weight:600;letter-spacing:.06em;">● HAZIR</span></h2>
+          <div class="desc">Ürün feed'i yayında ve yarım saatte bir tazelenir. Google Merchant Center'da "Feed ekle → Zamanlanmış getirme", Meta Commerce Manager'da "Veri feed'i → URL ile" seçeneğine aşağıdaki adresi yapıştır.</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <code id="feed-url" style="background:#f6f3ec;border:1px solid #e8e2d5;border-radius:8px;padding:9px 14px;font-size:.82rem;">https://olivamore.de/feed/urunler.xml</code>
+            <button class="btn btn-outline btn-sm" id="feed-kopyala" type="button">Kopyala</button>
+            <a class="btn btn-ghost btn-sm" href="/feed/urunler.xml" target="_blank">Feed'i Gör ↗</a>
+          </div>
         </div>
       </div>
-      <div class="grid3" style="margin-top:4px;">
-        <div class="panel"><h2>Trendyol <span id="kn-ty-durum" style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc" id="kn-ty-desc">env.json'a trendyolSaticiId, trendyolApiKey, trendyolApiSecret girilince sipariş çekme + stok senkronu aktifleşir.</div></div>
-        <div class="panel"><h2>Hepsiburada <span id="kn-hb-durum" style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc" id="kn-hb-desc">env.json'a hbMerchantId, hbKullanici, hbSifre girilince aktifleşir.</div></div>
-        <div class="panel"><h2>Amazon TR <span style="font-size:.7rem;color:#8a8377;font-weight:600;letter-spacing:.06em;">● BAŞVURU AŞAMASI</span></h2><div class="desc">Seller Central'dan SP-API geliştirici başvurusu yapılmalı; onay haftalar sürebilir. Onay gelince entegre edilecek (Faz E).</div></div>
+      <div class="sg-pane" data-sg="pazaryeri" hidden>
+        <div class="grid3" style="margin-top:4px;">
+          <div class="panel"><h2>Trendyol <span id="kn-ty-durum" style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc" id="kn-ty-desc">env.json'a trendyolSaticiId, trendyolApiKey, trendyolApiSecret girilince sipariş çekme + stok senkronu aktifleşir.</div></div>
+          <div class="panel"><h2>Hepsiburada <span id="kn-hb-durum" style="font-size:.7rem;color:#b26a00;font-weight:600;letter-spacing:.06em;">● ANAHTAR BEKLENİYOR</span></h2><div class="desc" id="kn-hb-desc">env.json'a hbMerchantId, hbKullanici, hbSifre girilince aktifleşir.</div></div>
+          <div class="panel"><h2>Amazon TR <span style="font-size:.7rem;color:#8a8377;font-weight:600;letter-spacing:.06em;">● BAŞVURU AŞAMASI</span></h2><div class="desc">Seller Central'dan SP-API geliştirici başvurusu yapılmalı; onay haftalar sürebilir. Onay gelince entegre edilecek (Faz E).</div></div>
+        </div>
       </div>
-      <div class="panel" style="margin-top:4px;">
-        <h2>Ürün eşleme <button class="btn btn-outline btn-sm" id="kn-senkron" type="button" style="float:right;">⟳ Şimdi Senkronla</button></h2>
-        <div class="desc">Pazaryerindeki ürünle paneldeki ürünü eşleştirir: Trendyol <b>barkod</b>, Hepsiburada <b>satıcı SKU</b>. Eşleşen ürünlerin stoğu 10 dakikada bir pazaryerlerine gönderilir; pazaryeri siparişi gelince buradaki stok düşer.</div>
-        <div id="kn-esleme"></div>
-        <button class="btn btn-dark btn-sm" id="kn-esleme-kaydet" type="button" style="margin-top:12px;">Eşlemeyi Kaydet</button>
-        <span id="kn-esleme-not" style="font-size:.78rem;color:#8a8377;margin-left:10px;"></span>
+      <div class="sg-pane" data-sg="esleme" hidden>
+        <div class="panel" style="margin-top:4px;">
+          <h2>Ürün eşleme <button class="btn btn-outline btn-sm" id="kn-senkron" type="button" style="float:right;">⟳ Şimdi Senkronla</button></h2>
+          <div class="desc">Pazaryerindeki ürünle paneldeki ürünü eşleştirir: Trendyol <b>barkod</b>, Hepsiburada <b>satıcı SKU</b>. Eşleşen ürünlerin stoğu 10 dakikada bir pazaryerlerine gönderilir; pazaryeri siparişi gelince buradaki stok düşer.</div>
+          <div id="kn-esleme"></div>
+          <button class="btn btn-dark btn-sm" id="kn-esleme-kaydet" type="button" style="margin-top:12px;">Eşlemeyi Kaydet</button>
+          <span id="kn-esleme-not" style="font-size:.78rem;color:#8a8377;margin-left:10px;"></span>
+        </div>
       </div>
     </section>
 
     <!-- ============ ABONELİKLER ============ -->
     <section class="view" id="view-subs">
       <div class="note"><b>Abonelikler:</b> Düzenli teslimat kayıtları. Şimdilik kayıtlar buradan elle açılır; vade günü gelen abonelikler aşağıda vurgulanır ve siparişi tek tuşla oluşturursun. Otomatik sipariş + ödeme linki Faz D'de devreye girecek.</div>
-      <div class="panel">
-        <h2>Yeni abonelik</h2>
-        <div class="grid3">
-          <div class="field"><label>Müşteri e-posta</label><input type="email" id="ab-eposta"></div>
-          <div class="field"><label>Ad Soyad</label><input type="text" id="ab-ad"></div>
-          <div class="field"><label>Ürün</label><input type="text" id="ab-urun" placeholder="örn. Ayvalık 2 L Teneke"></div>
-        </div>
-        <div class="grid3">
-          <div class="field"><label>Adet</label><input type="number" id="ab-adet" value="1" min="1"></div>
-          <div class="field"><label>Periyot (gün)</label><input type="number" id="ab-periyot" value="30" min="7"></div>
-          <div class="field"><label>İlk teslim tarihi</label><input type="date" id="ab-tarih"></div>
-        </div>
-        <div class="grid3">
-          <div class="field"><label>Birim fiyat (₺, boş=ürün fiyatı)</label><input type="number" id="ab-fiyat" step="0.01"></div>
-          <div class="field"><label>Telefon</label><input type="text" id="ab-telefon"></div>
-          <div class="field"><label>İl</label><input type="text" id="ab-il"></div>
-        </div>
-        <div class="field"><label>Teslimat adresi (ödeme linki için gerekli)</label><input type="text" id="ab-adres" placeholder="Mahalle, sokak, no, ilçe/il"></div>
-        <button class="btn btn-dark" id="btn-ab-ekle" type="button">Abonelik Aç</button>
-        <div class="desc" style="margin-top:10px;">Vadesi gelen abonelikten sistem otomatik sipariş oluşturur; iyzico bağlı ve adres doluysa müşteriye <b>ödeme linki</b>, değilse bilgilendirme e-postası gider. Kontrol günde 4 kez yapılır.</div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(2,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="kayitli"><b>Kayıtlı Abonelikler</b><span>Aktif, duraklatılmış, iptal</span></button>
+        <button type="button" class="sg-tab" data-sg="yeni"><b>Yeni Abonelik</b><span>Elle abonelik oluştur</span></button>
       </div>
-      <div class="panel"><h2>Kayıtlı abonelikler</h2><div id="ab-liste"></div></div>
+      <div class="sg-pane" data-sg="kayitli">
+        <div class="panel"><h2>Kayıtlı abonelikler</h2><div id="ab-liste"></div></div>
+      </div>
+      <div class="sg-pane" data-sg="yeni" hidden>
+        <div class="panel">
+          <h2>Yeni abonelik</h2>
+          <div class="grid3">
+            <div class="field"><label>Müşteri e-posta</label><input type="email" id="ab-eposta"></div>
+            <div class="field"><label>Ad Soyad</label><input type="text" id="ab-ad"></div>
+            <div class="field"><label>Ürün</label><input type="text" id="ab-urun" placeholder="örn. Ayvalık 2 L Teneke"></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Adet</label><input type="number" id="ab-adet" value="1" min="1"></div>
+            <div class="field"><label>Periyot (gün)</label><input type="number" id="ab-periyot" value="30" min="7"></div>
+            <div class="field"><label>İlk teslim tarihi</label><input type="date" id="ab-tarih"></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Birim fiyat (₺, boş=ürün fiyatı)</label><input type="number" id="ab-fiyat" step="0.01"></div>
+            <div class="field"><label>Telefon</label><input type="text" id="ab-telefon"></div>
+            <div class="field"><label>İl</label><input type="text" id="ab-il"></div>
+          </div>
+          <div class="field"><label>Teslimat adresi (ödeme linki için gerekli)</label><input type="text" id="ab-adres" placeholder="Mahalle, sokak, no, ilçe/il"></div>
+          <button class="btn btn-dark" id="btn-ab-ekle" type="button">Abonelik Aç</button>
+          <div class="desc" style="margin-top:10px;">Vadesi gelen abonelikten sistem otomatik sipariş oluşturur; iyzico bağlı ve adres doluysa müşteriye <b>ödeme linki</b>, değilse bilgilendirme e-postası gider. Kontrol günde 4 kez yapılır.</div>
+        </div>
+      </div>
     </section>
 
     <section class="view" id="view-mods">
@@ -666,32 +767,43 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ AYARLAR ============ -->
     <section class="view" id="view-settings">
-      <div class="panel">
-        <h2>Duyuru Şeridi</h2>
-        <div class="desc">Tüm sayfaların en üstündeki bant. &lt;b&gt; etiketi kullanılabilir.</div>
-        <div class="field"><label>Türkçe</label><input type="text" id="f-announceTR"></div>
-        <div class="field"><label>İngilizce</label><input type="text" id="f-announceEN"></div>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(3,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="duyuru"><b>Duyuru Şeridi</b><span>Sayfanın en üstündeki şerit</span></button>
+        <button type="button" class="sg-tab" data-sg="hero"><b>Ana Sayfa Hero</b><span>Başlık, metin ve hero görseli/videosu</span></button>
+        <button type="button" class="sg-tab" data-sg="hediye"><b>Hediye Kutusu</b><span>Kutu oluşturucu fiyatları</span></button>
       </div>
-      <div class="panel">
-        <h2>Ana Sayfa Hero</h2>
-        <div class="grid2">
-          <div class="field"><label>Başlık (TR)</label><input type="text" id="f-heroTitleTR"></div>
-          <div class="field"><label>Başlık (EN)</label><input type="text" id="f-heroTitleEN"></div>
+      <div class="sg-pane" data-sg="duyuru">
+        <div class="panel">
+          <h2>Duyuru Şeridi</h2>
+          <div class="desc">Tüm sayfaların en üstündeki bant. &lt;b&gt; etiketi kullanılabilir.</div>
+          <div class="field"><label>Türkçe</label><input type="text" id="f-announceTR"></div>
+          <div class="field"><label>İngilizce</label><input type="text" id="f-announceEN"></div>
         </div>
-        <div class="field"><label>Tanıtım Metni (TR)</label><textarea id="f-heroLeadTR" rows="3"></textarea></div>
-        <div class="field"><label>Tanıtım Metni (EN)</label><textarea id="f-heroLeadEN" rows="3"></textarea></div>
       </div>
-      <div class="panel">
-        <h2>Ana Sayfa Hero Medyası</h2>
-        <div class="desc">Ana sayfa hero'su <b>tek parça, tüm genişlikte dönen bir videodur</b>. Videoyu önce <b>Görseller</b> sekmesinden yükle (mp4/webm, en fazla 60 MB), sonra buradan seç. Video seçilmezse zeytinlik fotoğrafı görünür.</div>
-        <div class="field"><label>Video (kütüphaneden seç)</label><select id="f-heroVideoSec"><option value="">— video seçilmedi —</option></select></div>
-        <div class="field"><label>veya harici video adresi (isteğe bağlı, .mp4)</label><input type="text" id="f-heroVideo" placeholder="https://..."></div>
+      <div class="sg-pane" data-sg="hero" hidden>
+        <div class="panel">
+          <h2>Ana Sayfa Hero</h2>
+          <div class="grid2">
+            <div class="field"><label>Başlık (TR)</label><input type="text" id="f-heroTitleTR"></div>
+            <div class="field"><label>Başlık (EN)</label><input type="text" id="f-heroTitleEN"></div>
+          </div>
+          <div class="field"><label>Tanıtım Metni (TR)</label><textarea id="f-heroLeadTR" rows="3"></textarea></div>
+          <div class="field"><label>Tanıtım Metni (EN)</label><textarea id="f-heroLeadEN" rows="3"></textarea></div>
+        </div>
+        <div class="panel">
+          <h2>Ana Sayfa Hero Medyası</h2>
+          <div class="desc">Ana sayfa hero'su <b>tek parça, tüm genişlikte dönen bir videodur</b>. Videoyu önce <b>Görseller</b> sekmesinden yükle (mp4/webm, en fazla 60 MB), sonra buradan seç. Video seçilmezse zeytinlik fotoğrafı görünür.</div>
+          <div class="field"><label>Video (kütüphaneden seç)</label><select id="f-heroVideoSec"><option value="">— video seçilmedi —</option></select></div>
+          <div class="field"><label>veya harici video adresi (isteğe bağlı, .mp4)</label><input type="text" id="f-heroVideo" placeholder="https://..."></div>
+        </div>
       </div>
-      <div class="panel">
-        <h2>Hediye Kutusu Oluşturucu</h2>
-        <div class="grid2">
-          <div class="field"><label>3'lü Kutu Fiyatı (₺)</label><input type="number" id="f-gift3"></div>
-          <div class="field"><label>5'li Kutu Fiyatı (₺)</label><input type="number" id="f-gift5"></div>
+      <div class="sg-pane" data-sg="hediye" hidden>
+        <div class="panel">
+          <h2>Hediye Kutusu Oluşturucu</h2>
+          <div class="grid2">
+            <div class="field"><label>3'lü Kutu Fiyatı (₺)</label><input type="number" id="f-gift3"></div>
+            <div class="field"><label>5'li Kutu Fiyatı (₺)</label><input type="number" id="f-gift5"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -2830,14 +2942,18 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
   document.getElementById('blok-list').addEventListener('input', function () { dirty(); });
   /* Sayfalar alt sekmeleri */
-  document.querySelectorAll('.sg-tab').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('.sg-tab').forEach(function (x) { x.classList.toggle('aktif', x === btn); });
-      document.querySelectorAll('.sg-pane').forEach(function (p) { p.hidden = p.dataset.sg !== btn.dataset.sg; });
-      try { localStorage.setItem('om-sg', btn.dataset.sg); } catch (e) {}
+  /* Alt sekmeler (tüm modüllerde): yalnız kendi görünümü içinde çalışır, son seçim görünüm başına hatırlanır */
+  document.querySelectorAll('.view').forEach(function (vw) {
+    var anahtar = 'om-sg-' + vw.id;
+    vw.querySelectorAll('.sg-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        vw.querySelectorAll('.sg-tab').forEach(function (x) { x.classList.toggle('aktif', x === btn); });
+        vw.querySelectorAll('.sg-pane').forEach(function (p) { p.hidden = p.dataset.sg !== btn.dataset.sg; });
+        try { localStorage.setItem(anahtar, btn.dataset.sg); } catch (e) {}
+      });
     });
+    try { var son = localStorage.getItem(anahtar) || (vw.id === 'view-pages' ? localStorage.getItem('om-sg') : ''); var b = son && vw.querySelector('.sg-tab[data-sg="' + son + '"]'); if (b) b.click(); } catch (e) {}
   });
-  try { var sgSon = localStorage.getItem('om-sg'); var sgB = sgSon && document.querySelector('.sg-tab[data-sg="' + sgSon + '"]'); if (sgB) sgB.click(); } catch (e) {}
 
   function katItem(k, i, toplamN) {
     return '<div class="item kat-item" data-idx="' + i + '" style="padding:14px 16px;">' +
