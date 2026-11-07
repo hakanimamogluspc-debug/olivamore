@@ -471,6 +471,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = s.j.no;
+        if (window.omIz) window.omIz('satin_al', { no: s.j.no, d: s.j.toplam || 0 });
         document.getElementById('cart-wrap').style.display = 'none';
         document.getElementById('co-ok').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -566,6 +567,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = mOk[1];
+        if (window.omIz) window.omIz('satin_al', { no: mOk[1] });
         document.getElementById('cart-wrap').style.display = 'none';
         document.getElementById('co-ok').style.display = 'block';
       };
@@ -584,7 +586,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   var bekle = setInterval(function () {
-    if (window.omCart) { clearInterval(bekle); try { render(); } catch (e) { console.error('Sepet çizilemedi', e); } }
+    if (window.omCart) { clearInterval(bekle); try { render(); } catch (e) { console.error('Sepet çizilemedi', e); }
+      try { var cs = window.omCart.get(); if (cs.length && window.omIz && !sessionStorage.getItem('om-ob')) { sessionStorage.setItem('om-ob', '1'); window.omIz('odeme_basla', { d: cs.reduce(function (t, k) { return t + k.fiyat * k.adet; }, 0), a: cs.length }); } } catch (e) { } }
   }, 50);
   // Geri/ileri ile önbellekten dönülünce ya da başka sekmede sepet değişince yeniden çiz
   window.addEventListener('pageshow', function (e) { if (e.persisted && window.omCart) render(); });
@@ -615,6 +618,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
     adimGoster(2);
+    if (window.omIz) { var cc = window.omCart ? window.omCart.get() : []; window.omIz('odeme_adim2', { d: cc.reduce(function (t, k) { return t + k.fiyat * k.adet; }, 0), a: cc.length }); }
   });
   document.getElementById('co-geri').addEventListener('click', function () { adimGoster(1); });
 </script>

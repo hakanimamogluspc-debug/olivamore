@@ -1,3 +1,55 @@
+/* ---------- Web analizi (birinci taraf; çerez yok, IP saklanmaz) ----------
+   Ziyaretçi: tarayıcıda rastgele anonim kimlik. Oturum: 30 dk hareketsizlikte yenilenir.
+   Olaylar: sayfa, urun_gor, sepete_ekle, odeme_basla, odeme_adim2, satin_al → /api/olay */
+(function () {
+  if (/panel/.test(location.pathname)) return;
+  var ls = window.localStorage, ss = window.sessionStorage;
+  function rnd() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+  var v, s, kaynak = {};
+  try {
+    v = ls.getItem('om-z') || rnd(); ls.setItem('om-z', v);
+    var son = parseInt(ss.getItem('om-ot-son') || ls.getItem('om-ot-son') || '0', 10);
+    s = ls.getItem('om-ot');
+    var q = new URLSearchParams(location.search);
+    var dis = document.referrer && document.referrer.indexOf(location.host) === -1;
+    var yeniKaynak = q.get('utm_source') || q.get('gclid') || q.get('fbclid') || dis;
+    if (!s || Date.now() - son > 30 * 60000 || yeniKaynak) {
+      s = rnd();
+      kaynak = {
+        r: dis ? (function () { try { return new URL(document.referrer).hostname; } catch (e) { return ''; } })() : '',
+        us: q.get('utm_source') || '', um: q.get('utm_medium') || '', uc: q.get('utm_campaign') || '',
+        gc: q.get('gclid') ? 1 : 0, fc: q.get('fbclid') ? 1 : 0
+      };
+      ls.setItem('om-ot', s); ls.setItem('om-ot-k', JSON.stringify(kaynak));
+    } else { kaynak = JSON.parse(ls.getItem('om-ot-k') || '{}'); }
+    ls.setItem('om-ot-son', String(Date.now()));
+  } catch (e) { v = v || rnd(); s = s || rnd(); }
+  var ilk = true;
+  window.omIz = function (e, veri) {
+    try {
+      var g = { e: e, v: v, s: s, p: location.pathname + location.search, ti: document.title.split('|')[0].trim(), dl: document.body.dataset.lang === 'en' ? 'en' : 'tr' };
+      if (ilk) { for (var k in kaynak) g[k] = kaynak[k]; ilk = false; } else { g.r = kaynak.r; g.us = kaynak.us; g.um = kaynak.um; g.uc = kaynak.uc; g.gc = kaynak.gc; g.fc = kaynak.fc; }
+      if (veri) for (var k2 in veri) g[k2] = veri[k2];
+      try { ls.setItem('om-ot-son', String(Date.now())); } catch (er) { }
+      var govde = JSON.stringify(g);
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/olay', new Blob([govde], { type: 'text/plain' }));
+      else fetch('/api/olay', { method: 'POST', body: govde, keepalive: true }).catch(function () { });
+    } catch (er) { }
+  };
+  window.omIz('sayfa');
+  // Ürün sayfası görüntüleme
+  var urunSayfasi = /\/(p|p-en|urun|urun-en|urun-trilye|urun-trilye-en)(\.html)?$/.test(location.pathname);
+  if (urunSayfasi) {
+    setTimeout(function () {
+      var q2 = new URLSearchParams(location.search);
+      var aktif = document.querySelector('.sizes .size.on');
+      var id = q2.get('id') || (aktif && aktif.dataset.pid) || q2.get('variant') || location.pathname.replace(/^\/|\.html$/g, '');
+      var h1 = document.querySelector('.buy h1, h1');
+      window.omIz('urun_gor', { u: id, ad: h1 ? h1.textContent.trim() : '' });
+    }, 1500);
+  }
+})();
+
 /* ============================================================
    OLIVAMORE — ortak bileşenler (logo, header, footer, etkileşim)
    Marka: Logo-main.pdf · Pantone 4007 C (#BFA25D)
@@ -1027,6 +1079,7 @@
           else c.push({ id: u.id || '', kod: u.kod || u.id || '', ad: u.ad, hacim: u.hacim || '', fiyat: u.fiyat, adet: 1, img: u.img, kdv: kdvBul(u.ad) });
           cartSave(c);
           showToast(T.toast);
+          if (window.omIz) window.omIz('sepete_ekle', { u: u.id || u.kod || '', ad: [u.ad, u.hacim].filter(Boolean).join(' · '), d: u.fiyat, a: 1 });
         } else {
           showToast(EN ? 'This product is not available yet.' : 'Bu ürün henüz satışta değil.', 'error');
         }

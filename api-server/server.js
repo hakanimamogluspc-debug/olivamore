@@ -1044,6 +1044,214 @@ function hizAsimi(req) {
   return n > 60; // mobil operatörlerde çok kullanıcı aynı IP'yi paylaşır
 }
 
+
+/* ---------- Web analizi (birinci taraf, çerezsiz: tarayıcıda anonim kimlik) ----------
+   Olaylar /var/www/olivamore-data/analiz/GG-AA-YYYY değil YYYY-AA-GG.jsonl dosyalarına satır satır eklenir.
+   IP adresi SAKLANMAZ. Botlar elenir. */
+const ANALIZ_DIZIN = () => { const d = dosya('analiz'); if (!fs.existsSync(d)) fs.mkdirSync(d); return d; };
+const OLAY_TURLERI = ['sayfa', 'urun_gor', 'sepete_ekle', 'sepetten_cikar', 'odeme_basla', 'odeme_adim2', 'satin_al'];
+const olaySayac = new Map();
+setInterval(() => olaySayac.clear(), 60000);
+function olayKaydet(req, g) {
+  const ua = String(req.headers['user-agent'] || '');
+  if (!ua || /bot|crawl|spider|slurp|headless|lighthouse|preview|facebookexternalhit|whatsapp|python|curl|wget/i.test(ua)) return;
+  const ip = req.headers['x-real-ip'] || req.socket.remoteAddress || '?';
+  const n = (olaySayac.get(ip) || 0) + 1; olaySayac.set(ip, n);
+  if (n > 400) return; // kötüye kullanım koruması (normal kullanıcı dakikada birkaç olay üretir)
+  const e = String(g.e || '');
+  if (OLAY_TURLERI.indexOf(e) === -1) return;
+  const kis = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, '').slice(0, n);
+  const cihaz = /iPad|Tablet/i.test(ua) ? 'tablet' : (/Mobi|Android|iPhone/i.test(ua) ? 'mobil' : 'masaustu');
+  const satir = {
+    t: Date.now(), e: e,
+    v: kis(g.v, 40), s: kis(g.s, 40),
+    p: kis(g.p, 200), ti: kis(g.ti, 120),
+    r: kis(g.r, 120), us: kis(g.us, 60), um: kis(g.um, 60), uc: kis(g.uc, 80),
+    gc: g.gc ? 1 : 0, fc: g.fc ? 1 : 0,
+    c: cihaz, dl: g.dl === 'en' ? 'en' : 'tr',
+    u: kis(g.u, 60), ua2: kis(g.ad, 120), d: Math.max(0, Math.min(1e7, Number(g.d) || 0)), a: Math.max(0, Math.min(99, parseInt(g.a, 10) || 0)),
+    no: kis(g.no, 20), y: g.y ? 1 : 0
+  };
+  if (!satir.v || !satir.s) return;
+  const gun = new Date().toISOString().slice(0, 10);
+  try { fs.appendFileSync(path.join(ANALIZ_DIZIN(), gun + '.jsonl'), JSON.stringify(satir) + '\n'); } catch (er) { console.error('[analiz]', er.message); }
+}
+function analizOku(gunSay) {
+  const dz = ANALIZ_DIZIN(), olaylar = [];
+  for (let i = gunSay - 1; i >= 0; i--) {
+    const gun = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    const yolF = path.join(dz, gun + '.jsonl');
+    if (!fs.existsSync(yolF)) continue;
+    fs.readFileSync(yolF, 'utf8').split('\n').forEach(l => { if (l) { try { olaylar.push(JSON.parse(l)); } catch (e) { } } });
+  }
+  return olaylar;
+}
+// Trafik kanalı: oturumun ilk olayındaki referans + UTM + reklam tıklama kimliğinden
+function kanalBul(o) {
+  const us = (o.us || '').toLowerCase(), um = (o.um || '').toLowerCase(), r = (o.r || '').toLowerCase();
+  if (o.gc || (us.indexOf('google') !== -1 && /cpc|ppc|paid|ads/.test(um))) return 'Google Reklam';
+  if (/cpc|ppc|paid|ads|reklam/.test(um) && /(facebook|instagram|meta|fb|ig)/.test(us)) return 'Meta Reklam';
+  if (o.fc && !us) return 'Meta Reklam';
+  if (/mail|newsletter|bulten|e-posta|eposta/.test(um + us)) return 'E-posta';
+  if (us) return 'Kampanya: ' + o.us;
+  if (!r) return 'Doğrudan';
+  if (/google\./.test(r)) return 'Google (organik)';
+  if (/bing\.|yandex\.|duckduckgo|yahoo\./.test(r)) return 'Diğer arama motoru';
+  if (/instagram\./.test(r)) return 'Instagram';
+  if (/facebook\.|fb\.com|fb\.me|m\.me/.test(r)) return 'Facebook';
+  if (/t\.co|twitter\.|x\.com/.test(r)) return 'X (Twitter)';
+  if (/tiktok\./.test(r)) return 'TikTok';
+  if (/youtube\.|youtu\.be/.test(r)) return 'YouTube';
+  if (/whatsapp|wa\.me/.test(r)) return 'WhatsApp';
+  if (/trendyol|hepsiburada|amazon/.test(r)) return 'Pazaryeri';
+  if (/olivamore\./.test(r)) return 'Doğrudan';
+  return 'Diğer site: ' + r;
+}
+function webAnaliz(gunSay) {
+  const olaylar = analizOku(gunSay);
+  const siparisler = oku('siparisler.json', []);
+  const sipBul = no => siparisler.find(x => x.no === no);
+  const oturumlar = new Map();
+  olaylar.forEach(o => {
+    let ot = oturumlar.get(o.s);
+    if (!ot) { ot = { s: o.s, v: o.v, bas: o.t, son: o.t, kanal: kanalBul(o), r: o.r, us: o.us, um: o.um, uc: o.uc, c: o.c, dl: o.dl, adimlar: [], sayfa: 0, urun: 0, sepet: 0, odeme: 0, satin: [] }; oturumlar.set(o.s, ot); }
+    ot.son = Math.max(ot.son, o.t);
+    if (o.e === 'sayfa') ot.sayfa++;
+    if (o.e === 'urun_gor') ot.urun++;
+    if (o.e === 'sepete_ekle') ot.sepet++;
+    if (o.e === 'odeme_basla' || o.e === 'odeme_adim2') ot.odeme++;
+    if (o.e === 'satin_al' && o.no && ot.satin.indexOf(o.no) === -1) ot.satin.push(o.no);
+    if (ot.adimlar.length < 60) ot.adimlar.push({ t: o.t, e: o.e, p: o.p, ti: o.ti, u: o.u, ad: o.ua2, d: o.d, a: o.a, no: o.no });
+  });
+  const ot = Array.from(oturumlar.values());
+  const ziyaretci = new Set(ot.map(x => x.v)).size;
+  const sayfaGos = olaylar.filter(o => o.e === 'sayfa').length;
+  const satinOturum = ot.filter(x => x.satin.length);
+  // Ciro: siparis kaydından (iptal/iade/ödenmemiş hariç)
+  const gecerli = s => s && ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1;
+  const otCiro = x => x.satin.reduce((t, no) => { const s = sipBul(no); return t + (gecerli(s) ? (Number(s.toplam) || 0) : 0); }, 0);
+  // Kanallar
+  const kanal = {};
+  ot.forEach(x => {
+    const k = kanal[x.kanal] = kanal[x.kanal] || { kanal: x.kanal, oturum: 0, ziyaretci: new Set(), sepet: 0, satin: 0, ciro: 0 };
+    k.oturum++; k.ziyaretci.add(x.v); if (x.sepet) k.sepet++; if (x.satin.length) k.satin++; k.ciro += otCiro(x);
+  });
+  // Kampanyalar (UTM)
+  const kampanya = {};
+  ot.filter(x => x.us || x.uc).forEach(x => {
+    const ad = [x.us, x.um, x.uc].filter(Boolean).join(' / ');
+    const k = kampanya[ad] = kampanya[ad] || { ad: ad, oturum: 0, sepet: 0, satin: 0, ciro: 0 };
+    k.oturum++; if (x.sepet) k.sepet++; if (x.satin.length) k.satin++; k.ciro += otCiro(x);
+  });
+  // Sayfalar
+  const sayfa = {};
+  olaylar.filter(o => o.e === 'sayfa').forEach(o => {
+    const p = (o.p || '/').replace(/\.html$/, '').replace(/[?#].*$/, '') || '/';
+    const k = sayfa[p] = sayfa[p] || { p: p, ti: o.ti, gos: 0, kisi: new Set(), giris: 0 };
+    k.gos++; k.kisi.add(o.v); if (!k.ti && o.ti) k.ti = o.ti;
+  });
+  ot.forEach(x => { const ilk = x.adimlar.find(a => a.e === 'sayfa'); if (ilk) { const p = (ilk.p || '/').replace(/\.html$/, '').replace(/[?#].*$/, '') || '/'; if (sayfa[p]) sayfa[p].giris++; } });
+  // Ürünler
+  const urun = {};
+  olaylar.forEach(o => {
+    if (!o.u || (o.e !== 'urun_gor' && o.e !== 'sepete_ekle')) return;
+    const k = urun[o.u] = urun[o.u] || { u: o.u, ad: o.ua2 || o.u, gor: 0, sepet: 0, satis: 0 };
+    if (o.ua2) k.ad = o.ua2;
+    if (o.e === 'urun_gor') k.gor++; else k.sepet += (o.a || 1);
+  });
+  satinOturum.forEach(x => x.satin.forEach(no => { const s = sipBul(no); if (!gecerli(s)) return; (s.kalemler || []).forEach(kl => { const id = kl.kod || kl.ad; const k = urun[id] = urun[id] || { u: id, ad: kl.ad, gor: 0, sepet: 0, satis: 0 }; k.satis += kl.adet || 1; }); }));
+  // Günlük seri
+  const gunluk = {};
+  for (let i = gunSay - 1; i >= 0; i--) gunluk[new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)] = { ziyaretci: new Set(), oturum: 0, satin: 0 };
+  ot.forEach(x => { const g = new Date(x.bas).toISOString().slice(0, 10); if (gunluk[g]) { gunluk[g].ziyaretci.add(x.v); gunluk[g].oturum++; if (x.satin.length) gunluk[g].satin++; } });
+  // Cihaz
+  const cihaz = {}; ot.forEach(x => { cihaz[x.c] = (cihaz[x.c] || 0) + 1; });
+  // Canlı (son 5 dk)
+  const simdi = Date.now();
+  const canli = ot.filter(x => simdi - x.son < 5 * 60000).map(x => { const s = x.adimlar[x.adimlar.length - 1]; return { kanal: x.kanal, c: x.c, p: s && s.p, ti: s && s.ti, sepet: x.sepet }; });
+  // Ziyaretçi yolculukları (son 150 oturum)
+  const yolculuk = ot.sort((a, b) => b.bas - a.bas).slice(0, 150).map(x => {
+    const ilkSip = x.satin.map(sipBul).find(Boolean);
+    return {
+      bas: x.bas, sure: Math.round((x.son - x.bas) / 1000), kanal: x.kanal, r: x.r, uc: x.uc, c: x.c, dl: x.dl,
+      sayfa: x.sayfa, sepet: x.sepet, odeme: x.odeme, satin: x.satin, ciro: otCiro(x),
+      musteri: ilkSip ? (ilkSip.musteri && ilkSip.musteri.ad) + ' · ' + (ilkSip.musteri && ilkSip.musteri.il || '') : '',
+      ziyaretSayisi: ot.filter(y => y.v === x.v).length,
+      adimlar: x.adimlar.map(a => ({ t: a.t, e: a.e, p: (a.p || '').replace(/\.html/, ''), ti: a.ti, ad: a.ad, d: a.d, no: a.no }))
+    };
+  });
+  const sureler = ot.filter(x => x.sayfa > 1).map(x => (x.son - x.bas) / 1000);
+  return {
+    gun: gunSay,
+    ozet: {
+      ziyaretci: ziyaretci, oturum: ot.length, sayfaGos: sayfaGos,
+      sayfaOturum: ot.length ? Math.round(sayfaGos / ot.length * 10) / 10 : 0,
+      hemenCikma: ot.length ? Math.round(ot.filter(x => x.sayfa <= 1 && !x.sepet).length / ot.length * 100) : 0,
+      ortSure: sureler.length ? Math.round(sureler.reduce((a, b) => a + b, 0) / sureler.length) : 0,
+      sepetOturum: ot.filter(x => x.sepet).length, odemeOturum: ot.filter(x => x.odeme).length,
+      satinOturum: satinOturum.length, ciro: satinOturum.reduce((t, x) => t + otCiro(x), 0),
+      donusum: ot.length ? Math.round(satinOturum.length / ot.length * 1000) / 10 : 0
+    },
+    huni: [
+      { ad: 'Siteye gelen oturum', n: ot.length },
+      { ad: 'Ürün inceleyen', n: ot.filter(x => x.urun).length },
+      { ad: 'Sepete ekleyen', n: ot.filter(x => x.sepet).length },
+      { ad: 'Ödemeye geçen', n: ot.filter(x => x.odeme).length },
+      { ad: 'Satın alan', n: satinOturum.length }
+    ],
+    kanallar: Object.values(kanal).map(k => ({ kanal: k.kanal, oturum: k.oturum, ziyaretci: k.ziyaretci.size, sepet: k.sepet, satin: k.satin, ciro: k.ciro })).sort((a, b) => b.oturum - a.oturum),
+    kampanyalar: Object.values(kampanya).sort((a, b) => b.oturum - a.oturum).slice(0, 30),
+    sayfalar: Object.values(sayfa).map(k => ({ p: k.p, ti: k.ti, gos: k.gos, kisi: k.kisi.size, giris: k.giris })).sort((a, b) => b.gos - a.gos).slice(0, 40),
+    urunler: Object.values(urun).sort((a, b) => (b.gor + b.sepet * 3) - (a.gor + a.sepet * 3)).slice(0, 30),
+    gunluk: Object.keys(gunluk).map(g => ({ g: g, ziyaretci: gunluk[g].ziyaretci.size, oturum: gunluk[g].oturum, satin: gunluk[g].satin })),
+    cihaz: cihaz, canli: canli, yolculuk: yolculuk
+  };
+}
+// Son hatalar (Sağlık ekranı için bellekte tutulur)
+const SON_HATALAR = [];
+const _konsolHata = console.error.bind(console);
+console.error = function () {
+  try { SON_HATALAR.unshift({ t: new Date().toISOString(), m: Array.from(arguments).map(a => a && a.stack ? a.stack.split('\n')[0] : String(a)).join(' ').slice(0, 300) }); if (SON_HATALAR.length > 50) SON_HATALAR.pop(); } catch (e) { }
+  _konsolHata.apply(null, arguments);
+};
+function saglikRaporu() {
+  const env = oku('env.json', {});
+  const boyut = ad => { try { return fs.statSync(dosya(ad)).size; } catch (e) { return 0; } };
+  let disk = null;
+  try { const st = fs.statfsSync(DATA); disk = { bos: st.bavail * st.bsize, toplam: st.blocks * st.bsize }; } catch (e) { }
+  let yedek = null;
+  try { const d = '/root/yedekler'; const l = fs.readdirSync(d).filter(x => /^olivamore-veri/.test(x)).map(x => ({ ad: x, t: fs.statSync(path.join(d, x)).mtimeMs })).sort((a, b) => b.t - a.t); if (l[0]) yedek = { ad: l[0].ad, t: new Date(l[0].t).toISOString(), adet: l.length }; } catch (e) { }
+  const sip = oku('siparisler.json', []);
+  const bugun = new Date().toISOString().slice(0, 10);
+  const bekleyenOdeme = sip.filter(s => s.durum === 'odeme-bekliyor' && Date.now() - Date.parse(s.tarih) > 30 * 60000).length;
+  let cmsOk = true; try { JSON.parse(fs.readFileSync(dosya('cms.json'), 'utf8')); } catch (e) { cmsOk = false; }
+  const urunler = (oku('cms.json', {}).products || []).filter(p => (p.type === 'product' || !p.type) && p.visible !== false);
+  const gorselsiz = urunler.filter(p => !p.img).length;
+  const tukenen = urunler.filter(p => typeof p.stok === 'number' && p.stok <= 0).map(p => p.nameTR + ' ' + (p.unitTR || ''));
+  const azalan = urunler.filter(p => typeof p.stok === 'number' && p.stok > 0 && p.stok <= 5).map(p => p.nameTR + ' ' + (p.unitTR || '') + ' (' + p.stok + ')');
+  return {
+    zaman: new Date().toISOString(),
+    servis: { calismaSn: Math.round(process.uptime()), bellekMB: Math.round(process.memoryUsage().rss / 1048576), node: process.version },
+    disk: disk, yedek: yedek, cmsOk: cmsOk,
+    dosyalar: { cms: boyut('cms.json'), siparisler: boyut('siparisler.json'), uyeler: boyut('uyeler.json') },
+    entegrasyon: {
+      kartOdeme: !!(env.iyzicoApiKey && env.iyzicoSecret), iyzicoCanli: !!env.iyzicoCanli,
+      eposta: !!(env.resendKey || env.brevoKey), bildirimEposta: !!env.bildirimEposta,
+      parasut: parasutAktif(), parasutTaslak: !!env.parasutTaslak,
+      yurtici: !!(env.yurticiWsUser && env.yurticiWsSifre), yurticiTest: !!env.yurticiTest,
+      trendyol: !!(env.trendyolSaticiId && env.trendyolApiKey), hepsiburada: !!(env.hbMerchantId && env.hbKullanici),
+      panelSifre: !!(env.adminKullanici && env.adminHash)
+    },
+    siparis: {
+      bugun: sip.filter(s => (s.tarih || '').slice(0, 10) === bugun).length,
+      son: sip[0] ? sip[0].tarih : null,
+      bekleyenOdeme: bekleyenOdeme,
+      yeniBekleyen: sip.filter(s => s.durum === 'yeni').length
+    },
+    katalog: { gorunurUrun: urunler.length, gorselsiz: gorselsiz, tukenen: tukenen, azalan: azalan },
+    hatalar: SON_HATALAR.slice(0, 20)
+  };
+}
 /* ---------- sunucu ---------- */
 const sunucu = http.createServer(async (req, res) => {
   const yol = (req.url || '').split('?')[0];
@@ -1066,6 +1274,12 @@ const sunucu = http.createServer(async (req, res) => {
     if (req.method === 'GET' && yol === '/api/saglik') {
       let ok = true; try { JSON.parse(fs.readFileSync(dosya('cms.json'), 'utf8')); fs.accessSync(DATA, fs.constants.W_OK); } catch (e) { ok = false; }
       return json(res, ok ? 200 : 500, { durum: ok ? 'iyi' : 'sorun', zaman: new Date().toISOString(), calismaSn: Math.round(process.uptime()) });
+    }
+
+    // Web analizi olayı (navigator.sendBeacon → text/plain JSON). Her zaman 204 döner; site hiç beklemez.
+    if (req.method === 'POST' && yol === '/api/olay') {
+      try { const g = await govde(req, 0.02); olayKaydet(req, g); } catch (e) { }
+      res.writeHead(204); return res.end();
     }
 
     // Hız sınırı: yönetici istekleri ve iyzico geri dönüşü hariç (iyzico tüm müşteriler için aynı IP'den gelir)
@@ -1658,6 +1872,14 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, { tamam: true });
     }
 
+    if (req.method === 'GET' && yol === '/api/admin/web-analiz') {
+      const q = new URLSearchParams((req.url || '').split('?')[1] || '');
+      const gun = Math.min(90, Math.max(1, parseInt(q.get('gun'), 10) || 7));
+      return json(res, 200, webAnaliz(gun));
+    }
+    if (req.method === 'GET' && yol === '/api/admin/saglik') {
+      return json(res, 200, saglikRaporu());
+    }
     if (req.method === 'GET' && yol === '/api/admin/config') {
       return json(res, 200, oku('cms.json', {}));
     }

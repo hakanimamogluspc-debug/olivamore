@@ -132,6 +132,49 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .blok-kart .imgpick img{width:100%;height:300px;object-fit:cover}
 .blok-dil{font-family:'Poppins',sans-serif;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}
 @media(max-width:900px){.sg-bar{grid-template-columns:1fr 1fr}.pg-izgara{grid-template-columns:1fr}.blok-kart{grid-template-columns:1fr}}
+.wa-ust{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.wa-donem,.wa-filtre{display:inline-flex;border:1px solid var(--line);background:#fff;border-radius:3px;overflow:hidden}
+.wa-donem button,.wa-filtre button{border:0;background:none;padding:9px 16px;font:inherit;font-size:.8rem;cursor:pointer;color:var(--soft);border-right:1px solid var(--line)}
+.wa-donem button:last-child,.wa-filtre button:last-child{border-right:0}
+.wa-donem button.on,.wa-filtre button.on{background:var(--ink);color:#fff}
+.wa-filtre{margin:6px 0 14px}
+.wa-canli{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;color:var(--soft);margin-left:auto}
+.wa-canli i{width:9px;height:9px;border-radius:50%;background:#3d9a52;box-shadow:0 0 0 0 rgba(61,154,82,.5);animation:waNabiz 1.8s infinite}
+@keyframes waNabiz{0%{box-shadow:0 0 0 0 rgba(61,154,82,.5)}70%{box-shadow:0 0 0 9px rgba(61,154,82,0)}100%{box-shadow:0 0 0 0 rgba(61,154,82,0)}}
+.wa-stats{grid-template-columns:repeat(4,1fr)}
+.wa-stats .stat small{display:block;font-size:.72rem;color:var(--soft);margin-top:4px}
+.wa-tbl{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:8px}
+.wa-tbl th{text-align:left;font-family:'Poppins',sans-serif;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line)}
+.wa-tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.wa-tbl td.s,.wa-tbl th.s{text-align:right;font-family:'Poppins',sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wa-tbl tr:last-child td{border-bottom:0}
+.wa-cubuk{height:6px;background:var(--line);border-radius:99px;margin-top:5px}.wa-cubuk i{display:block;height:6px;background:var(--gold);border-radius:99px}
+.wa-huni-adim{margin-bottom:12px}
+.wa-huni-adim .ust{display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:4px}
+.wa-huni-adim .bar{height:26px;background:linear-gradient(90deg,#BFA25D,#d8c48f);border-radius:2px;display:flex;align-items:center;padding-left:10px;color:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;min-width:34px}
+.wa-kayip{font-size:.72rem;color:#b04a3a;margin:-6px 0 10px 2px}
+.wa-yol{border:1px solid var(--line);border-radius:3px;margin-bottom:8px;background:#fff}
+.wa-yol summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:120px 1fr auto;gap:14px;align-items:center;padding:11px 14px;font-size:.84rem}
+.wa-yol summary::-webkit-details-marker{display:none}
+.wa-yol[open]{border-color:var(--gold)}
+.wa-yol .zaman{color:var(--soft);font-size:.76rem;line-height:1.35}
+.wa-etiket{display:inline-block;font-size:.68rem;padding:2px 8px;border-radius:99px;background:#f1ede3;color:#6b5521;margin:2px 4px 2px 0;white-space:nowrap}
+.wa-etiket.yesil{background:#e6f2e8;color:#2e6b3b}.wa-etiket.kirmizi{background:#f7e7e4;color:#9a3b2c}.wa-etiket.gri{background:#f0f0f0;color:#666}
+.wa-adimlar{padding:4px 14px 14px 26px;border-top:1px solid var(--line)}
+.wa-adim{position:relative;padding:7px 0 7px 18px;font-size:.82rem;border-left:1px solid var(--line)}
+.wa-adim:before{content:'';position:absolute;left:-5px;top:12px;width:9px;height:9px;border-radius:50%;background:#d9d4c7}
+.wa-adim.sepete_ekle:before{background:var(--gold)}.wa-adim.satin_al:before{background:#3d9a52}.wa-adim.odeme_basla:before,.wa-adim.odeme_adim2:before{background:#c98b2e}
+.wa-adim small{color:var(--soft);margin-right:8px;font-family:'Poppins',sans-serif;font-variant-numeric:tabular-nums}
+.wa-bos{color:var(--soft);font-size:.85rem;padding:8px 0}
+.sg-genel{display:flex;align-items:center;gap:12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:1.35rem}
+.sg-genel i{width:14px;height:14px;border-radius:50%}
+.sg-izgara{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.sg-kart{background:#fff;border:1px solid var(--line);border-left:4px solid #ccc;border-radius:3px;padding:16px 18px;box-shadow:0 8px 24px rgba(30,28,25,.05)}
+.sg-kart.iyi{border-left-color:#3d9a52}.sg-kart.uyari{border-left-color:#d4a12a}.sg-kart.sorun{border-left-color:#c2452f}
+.sg-kart b{display:block;font-size:.92rem;margin-bottom:4px}
+.sg-kart span{display:block;font-size:.8rem;color:var(--soft);line-height:1.45}
+.sg-kart em{font-style:normal;display:block;font-size:.74rem;color:#8a6f3c;margin-top:6px}
+@media(max-width:1000px){.wa-stats{grid-template-columns:repeat(2,1fr)}.sg-izgara{grid-template-columns:1fr 1fr}.wa-yol summary{grid-template-columns:1fr}}
 .pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
 textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 </style>
@@ -167,7 +210,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <a data-view="batches">Partiler</a>
       <a data-view="orders">Siparişler</a>
       <a data-view="invoices">Fatura</a>
-      <a data-view="analytics">Analiz</a>
+      <a data-view="analytics">Satış Analizi</a>
+      <a data-view="web">Web Analiz</a>
+      <a data-view="health">Sağlık</a>
       <a data-view="marketing">Pazarlama</a>
       <a data-view="channels">Kanallar</a>
       <a data-view="members">Üyeler</a>
@@ -352,6 +397,54 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <div class="panel"><h2>Sipariş durumları</h2><div id="an-durum" style="margin-top:10px;"></div></div>
         <div class="panel"><h2>Kupon performansı</h2><div id="an-kupon" style="margin-top:10px;"></div></div>
         <div class="panel"><h2>Ödeme yöntemleri</h2><div id="an-odeme" style="margin-top:10px;"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ WEB ANALİZ ============ -->
+    <section class="view" id="view-web">
+      <div class="wa-ust">
+        <div class="wa-donem" id="wa-donem">
+          <button type="button" data-g="1">Bugün</button><button type="button" data-g="7" class="on">7 gün</button><button type="button" data-g="30">30 gün</button><button type="button" data-g="90">90 gün</button>
+        </div>
+        <div class="wa-canli" id="wa-canli-rozet"><i></i><span>Şu an sitede: <b>0</b></span></div>
+        <button class="btn btn-ghost btn-sm" id="wa-yenile" type="button">↻ Yenile</button>
+      </div>
+      <div class="stats wa-stats" id="wa-stats"></div>
+      <div class="panel"><h2>Günlük ziyaretçi ve satın alma</h2><div id="wa-grafik" style="margin-top:12px;"></div></div>
+      <div class="grid2" style="align-items:start;">
+        <div class="panel"><h2>Satış hunisi</h2><div class="desc">Oturumların hangi adımda kaybolduğunu gösterir.</div><div id="wa-huni"></div></div>
+        <div class="panel"><h2>Şu an sitede olanlar</h2><div class="desc">Son 5 dakikada hareket eden ziyaretçiler.</div><div id="wa-canli"></div></div>
+      </div>
+      <div class="panel"><h2>Ziyaretçiler nereden geliyor?</h2><div class="desc">Oturumun geldiği kaynak; sepete ekleme, satın alma ve ciro kaynağa göre.</div><div id="wa-kanal"></div></div>
+      <div class="panel" id="wa-kampanya-kutu"><h2>Kampanyalar (UTM)</h2><div class="desc">Reklam ve e-posta bağlantılarına <code>?utm_source=instagram&amp;utm_medium=cpc&amp;utm_campaign=yilbasi</code> ekleyince burada ayrı izlenir.</div><div id="wa-kampanya"></div></div>
+      <div class="grid2" style="align-items:start;">
+        <div class="panel"><h2>En çok gezilen sayfalar</h2><div id="wa-sayfa"></div></div>
+        <div class="panel"><h2>Ürün ilgisi</h2><div class="desc">İnceleme → sepete ekleme → satış.</div><div id="wa-urun"></div></div>
+      </div>
+      <div class="panel">
+        <h2>Ziyaretçi yolculukları</h2>
+        <div class="desc">Her satır bir ziyaret: nereden geldi, hangi sayfaları gezdi, sepete ne ekledi, satın aldı mı. Satırı açınca adım adım görürsün.</div>
+        <div class="wa-filtre" id="wa-filtre">
+          <button type="button" data-f="hepsi" class="on">Tümü</button><button type="button" data-f="satin">Satın alanlar</button><button type="button" data-f="terk">Sepeti terk edenler</button><button type="button" data-f="sepet">Sepete ekleyenler</button>
+        </div>
+        <div id="wa-yolculuk"></div>
+      </div>
+      <div class="grid2" style="align-items:start;">
+        <div class="panel"><h2>Cihaz</h2><div id="wa-cihaz"></div></div>
+        <div class="panel"><h2>Nasıl çalışır?</h2><div class="desc" style="margin:0;">Ölçüm sitenin kendi sunucusunda yapılır; Google'a veri gönderilmez, çerez kullanılmaz, IP adresi saklanmaz. Ziyaretçiye tarayıcısında anonim bir kimlik verilir; satın alma olduğunda sipariş kaydıyla eşleşir ve müşteri adı görünür. Botlar sayılmaz. Veriler yayına alındığı andan itibaren birikir.</div></div>
+      </div>
+    </section>
+
+    <!-- ============ SAĞLIK ============ -->
+    <section class="view" id="view-health">
+      <div class="wa-ust">
+        <div id="sg-genel" class="sg-genel"></div>
+        <button class="btn btn-ghost btn-sm" id="sg-yenile" type="button">↻ Yeniden kontrol et</button>
+      </div>
+      <div class="sg-izgara" id="sg-kartlar"></div>
+      <div class="grid2" style="align-items:start;">
+        <div class="panel"><h2>Stok uyarıları</h2><div id="sg-stok"></div></div>
+        <div class="panel"><h2>Son sunucu hataları</h2><div class="desc">Servis yeniden başlayınca liste sıfırlanır.</div><div id="sg-hata"></div></div>
       </div>
     </section>
 
@@ -812,7 +905,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       .then(function () { localStorage.removeItem('om-admin-jeton'); location.href = 'panel-giris.html'; });
   });
 
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', invoices: 'Fatura', analytics: 'Analiz', marketing: 'Pazarlama', channels: 'Satış Kanalları', members: 'Üyeler', subs: 'Abonelikler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', invoices: 'Fatura', analytics: 'Satış Analizi', web: 'Web Analiz', health: 'Site Sağlığı', marketing: 'Pazarlama', channels: 'Satış Kanalları', members: 'Üyeler', subs: 'Abonelikler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -829,6 +922,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     show = function (v) {
       eskiShow(v);
       if (v === 'invoices' && window.fatYukle) fatYukle();
+      if (v === 'web' && window.waYukle) waYukle();
+      if (v === 'health' && window.sgYukle) sgYukle();
       if (v === 'subs' && window.abYukle) abYukle();
       if (v === 'channels' && window.knYukle) knYukle();
       if (v === 'marketing' && window.segmentYukle) segmentYukle();
@@ -1804,6 +1899,158 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       });
   }
   document.querySelector('[data-view="analytics"]').addEventListener('click', renderAnalytics);
+  /* ================== WEB ANALİZ ================== */
+  (function () {
+    var GUN = 7, FILTRE = 'hepsi', VERI = null;
+    var OLAY_AD = { sayfa: 'Sayfa', urun_gor: 'Ürünü inceledi', sepete_ekle: 'Sepete ekledi', odeme_basla: 'Sepete/ödemeye geçti', odeme_adim2: 'Ödeme adımına geçti', satin_al: 'SATIN ALDI' };
+    function sure(sn) { sn = sn || 0; if (sn < 60) return sn + ' sn'; var d = Math.floor(sn / 60); return d < 60 ? d + ' dk ' + (sn % 60) + ' sn' : Math.floor(d / 60) + ' sa ' + (d % 60) + ' dk'; }
+    function saat(t) { var d = new Date(t); return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+    function yuzde(a, b) { return b ? Math.round(a / b * 1000) / 10 : 0; }
+    function sayfaAd(p, ti) { p = (p || '/').split('?')[0]; return ti && ti.length < 70 ? ti : (p === '/' ? 'Ana sayfa' : p); }
+    function cihazAd(c) { return { mobil: '📱 Mobil', masaustu: '🖥 Masaüstü', tablet: 'Tablet' }[c] || c || '-'; }
+    function tablo(baslik, satirlar) {
+      if (!satirlar.length) return '<div class="wa-bos">Bu dönemde veri yok.</div>';
+      return '<table class="wa-tbl"><thead><tr>' + baslik.map(function (b) { return '<th' + (b.s ? ' class="s"' : '') + '>' + b.ad + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        satirlar.join('') + '</tbody></table>';
+    }
+    window.waYukle = function () {
+      document.getElementById('wa-stats').innerHTML = '<div class="wa-bos">Yükleniyor…</div>';
+      fetch('/api/admin/web-analiz?gun=' + GUN, { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (d) { VERI = d; ciz(d); })
+        .catch(function () { document.getElementById('wa-stats').innerHTML = '<div class="wa-bos">Web analizi yalnız canlı sunucuda (olivamore.de/panel) görünür.</div>'; });
+    };
+    function ciz(d) {
+      var o = d.ozet;
+      document.querySelector('#wa-canli-rozet b').textContent = d.canli.length;
+      document.getElementById('wa-stats').innerHTML =
+        '<div class="stat"><div class="num">' + o.ziyaretci.toLocaleString('tr-TR') + '</div><div class="lbl">Tekil ziyaretçi</div><small>' + o.oturum.toLocaleString('tr-TR') + ' ziyaret (oturum)</small></div>' +
+        '<div class="stat"><div class="num">' + o.sayfaGos.toLocaleString('tr-TR') + '</div><div class="lbl">Sayfa görüntüleme</div><small>Ziyaret başına ' + String(o.sayfaOturum).replace('.', ',') + ' sayfa</small></div>' +
+        '<div class="stat"><div class="num">' + o.sepetOturum + '</div><div class="lbl">Sepete ekleyen ziyaret</div><small>Ziyaretlerin %' + String(yuzde(o.sepetOturum, o.oturum)).replace('.', ',') + '\'i</small></div>' +
+        '<div class="stat"><div class="num">' + o.satinOturum + '</div><div class="lbl">Satın alan ziyaret</div><small>Dönüşüm %' + String(o.donusum).replace('.', ',') + '</small></div>' +
+        '<div class="stat"><div class="num">' + tl(o.ciro) + '</div><div class="lbl">Siteden gelen ciro</div><small>İptal/iade hariç</small></div>' +
+        '<div class="stat"><div class="num">%' + o.hemenCikma + '</div><div class="lbl">Hemen çıkma</div><small>Tek sayfa görüp ayrılan</small></div>' +
+        '<div class="stat"><div class="num">' + sure(o.ortSure) + '</div><div class="lbl">Ortalama ziyaret süresi</div><small>Birden çok sayfa gezenlerde</small></div>' +
+        '<div class="stat"><div class="num">' + (o.sepetOturum - o.satinOturum > 0 ? o.sepetOturum - o.satinOturum : 0) + '</div><div class="lbl">Sepeti terk eden</div><small>Ekleyip satın almayan</small></div>';
+      // Günlük grafik
+      var g = d.gunluk, max = Math.max.apply(null, g.map(function (x) { return x.ziyaretci; }).concat([1]));
+      document.getElementById('wa-grafik').innerHTML = '<div style="display:flex;align-items:flex-end;gap:3px;height:150px;">' + g.map(function (x) {
+        return '<div title="' + x.g.slice(8) + '.' + x.g.slice(5, 7) + ' · ' + x.ziyaretci + ' ziyaretçi · ' + x.satin + ' satın alma" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative;">' +
+          (x.satin ? '<div style="font-size:.66rem;color:#2e6b3b;text-align:center;margin-bottom:2px;">●' + (x.satin > 1 ? x.satin : '') + '</div>' : '') +
+          '<div style="height:' + Math.max(x.ziyaretci ? 3 : 1, Math.round(x.ziyaretci / max * 125)) + 'px;background:' + (x.ziyaretci ? 'var(--gold)' : 'var(--line)') + ';border-radius:2px 2px 0 0;"></div></div>';
+      }).join('') + '</div><div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--soft);margin-top:6px;"><span>' + (g[0] ? fmtGun(g[0].g) : '') + '</span><span>Sütun: ziyaretçi · <span style="color:#2e6b3b">●</span> satın alma</span><span>' + (g.length ? fmtGun(g[g.length - 1].g) : '') + '</span></div>';
+      // Huni
+      var h = d.huni, h0 = h[0].n || 1;
+      document.getElementById('wa-huni').innerHTML = h.map(function (a, i) {
+        var kayip = i > 0 && h[i - 1].n ? Math.round((1 - a.n / h[i - 1].n) * 100) : 0;
+        return (i > 0 && h[i - 1].n ? '<div class="wa-kayip">↓ %' + kayip + ' bu adımda ayrıldı</div>' : '') +
+          '<div class="wa-huni-adim"><div class="ust"><span>' + a.ad + '</span><b>' + a.n + ' · %' + String(yuzde(a.n, h0)).replace('.', ',') + '</b></div><div class="bar" style="width:' + Math.max(4, a.n / h0 * 100) + '%">' + a.n + '</div></div>';
+      }).join('');
+      // Canlı
+      document.getElementById('wa-canli').innerHTML = d.canli.length ? d.canli.map(function (c) {
+        return '<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.84rem;"><span>' + esc(sayfaAd(c.p, c.ti)) + '</span><span style="white-space:nowrap;"><span class="wa-etiket gri">' + esc(c.kanal) + '</span><span class="wa-etiket gri">' + cihazAd(c.c) + '</span>' + (c.sepet ? '<span class="wa-etiket">sepette ürün var</span>' : '') + '</span></div>';
+      }).join('') : '<div class="wa-bos">Şu an sitede kimse yok.</div>';
+      // Kanallar
+      var topOt = d.kanallar.reduce(function (t, k) { return t + k.oturum; }, 0) || 1;
+      document.getElementById('wa-kanal').innerHTML = tablo(
+        [{ ad: 'Kaynak' }, { ad: 'Ziyaret', s: 1 }, { ad: 'Sepete ekleyen', s: 1 }, { ad: 'Satın alan', s: 1 }, { ad: 'Dönüşüm', s: 1 }, { ad: 'Ciro', s: 1 }],
+        d.kanallar.map(function (k) {
+          return '<tr><td><b>' + esc(k.kanal) + '</b><div class="wa-cubuk"><i style="width:' + Math.max(2, k.oturum / topOt * 100) + '%"></i></div></td><td class="s">' + k.oturum + '</td><td class="s">' + k.sepet + '</td><td class="s">' + k.satin + '</td><td class="s">%' + String(yuzde(k.satin, k.oturum)).replace('.', ',') + '</td><td class="s">' + tl(k.ciro) + '</td></tr>';
+        }));
+      document.getElementById('wa-kampanya').innerHTML = tablo(
+        [{ ad: 'Kaynak / Ortam / Kampanya' }, { ad: 'Ziyaret', s: 1 }, { ad: 'Sepete ekleyen', s: 1 }, { ad: 'Satın alan', s: 1 }, { ad: 'Ciro', s: 1 }],
+        d.kampanyalar.map(function (k) { return '<tr><td>' + esc(k.ad) + '</td><td class="s">' + k.oturum + '</td><td class="s">' + k.sepet + '</td><td class="s">' + k.satin + '</td><td class="s">' + tl(k.ciro) + '</td></tr>'; }));
+      document.getElementById('wa-sayfa').innerHTML = tablo(
+        [{ ad: 'Sayfa' }, { ad: 'Görüntüleme', s: 1 }, { ad: 'Kişi', s: 1 }, { ad: 'Giriş', s: 1 }],
+        d.sayfalar.slice(0, 20).map(function (p) { return '<tr><td title="' + esc(p.p) + '">' + esc(sayfaAd(p.p, p.ti)) + '<div style="font-size:.72rem;color:var(--soft);">' + esc(p.p) + '</div></td><td class="s">' + p.gos + '</td><td class="s">' + p.kisi + '</td><td class="s">' + p.giris + '</td></tr>'; }));
+      document.getElementById('wa-urun').innerHTML = tablo(
+        [{ ad: 'Ürün' }, { ad: 'İnceleme', s: 1 }, { ad: 'Sepete', s: 1 }, { ad: 'Satış', s: 1 }],
+        d.urunler.slice(0, 20).map(function (u) { return '<tr><td>' + esc(u.ad || u.u) + '</td><td class="s">' + u.gor + '</td><td class="s">' + u.sepet + '</td><td class="s">' + u.satis + '</td></tr>'; }));
+      var cTop = Object.keys(d.cihaz).reduce(function (t, k) { return t + d.cihaz[k]; }, 0) || 1;
+      document.getElementById('wa-cihaz').innerHTML = anBar(Object.keys(d.cihaz).map(function (k) { return { ad: cihazAd(k), deger: d.cihaz[k], etiket: d.cihaz[k] + ' ziyaret · %' + Math.round(d.cihaz[k] / cTop * 100) }; }).sort(function (a, b) { return b.deger - a.deger; }));
+      yolculukCiz();
+    }
+    function yolculukCiz() {
+      if (!VERI) return;
+      var l = VERI.yolculuk.filter(function (y) {
+        if (FILTRE === 'satin') return y.satin.length;
+        if (FILTRE === 'terk') return y.sepet && !y.satin.length;
+        if (FILTRE === 'sepet') return y.sepet;
+        return true;
+      });
+      document.getElementById('wa-yolculuk').innerHTML = l.length ? l.slice(0, 80).map(function (y) {
+        var etiketler = '<span class="wa-etiket gri">' + esc(y.kanal) + '</span><span class="wa-etiket gri">' + cihazAd(y.c) + '</span>' +
+          (y.ziyaretSayisi > 1 ? '<span class="wa-etiket gri">' + y.ziyaretSayisi + '. ziyaret</span>' : '') +
+          (y.uc ? '<span class="wa-etiket">kampanya: ' + esc(y.uc) + '</span>' : '') +
+          (y.sepet ? '<span class="wa-etiket">sepete ' + y.sepet + ' ürün</span>' : '') +
+          (y.satin.length ? '<span class="wa-etiket yesil">✓ satın aldı ' + (y.ciro ? tl(y.ciro) : '') + '</span>' : (y.sepet ? '<span class="wa-etiket kirmizi">sepeti terk etti</span>' : ''));
+        var adimlar = y.adimlar.map(function (a) {
+          var metin = a.e === 'sayfa' ? esc(sayfaAd(a.p, a.ti)) : '<b>' + OLAY_AD[a.e] + '</b>' + (a.ad ? ': ' + esc(a.ad) : '') + (a.d ? ' · ' + tl(a.d) : '') + (a.no ? ' · ' + esc(a.no) : '');
+          return '<div class="wa-adim ' + a.e + '"><small>' + new Date(a.t).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</small>' + metin + '</div>';
+        }).join('');
+        return '<details class="wa-yol"><summary><div class="zaman">' + saat(y.bas) + '<br>' + sure(y.sure) + ' · ' + y.sayfa + ' sayfa</div><div>' +
+          (y.musteri ? '<b>' + esc(y.musteri) + '</b> ' : '') + etiketler + '</div><div class="zaman">' + (y.satin.length ? esc(y.satin.join(', ')) : (y.r ? esc(y.r) : '')) + '</div></summary>' +
+          '<div class="wa-adimlar">' + adimlar + '</div></details>';
+      }).join('') : '<div class="wa-bos">Bu filtrede ziyaret yok.</div>';
+    }
+    document.getElementById('wa-donem').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      GUN = +b.dataset.g; waYukle();
+    });
+    document.getElementById('wa-filtre').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      FILTRE = b.dataset.f; yolculukCiz();
+    });
+    document.getElementById('wa-yenile').addEventListener('click', function () { waYukle(); });
+    // Web Analiz açıkken "şu an sitede" sayısı dakikada bir tazelenir
+    setInterval(function () { if (document.getElementById('view-web').classList.contains('on')) waYukle(); }, 60000);
+  })();
+
+  /* ================== SAĞLIK ================== */
+  (function () {
+    function kart(durum, baslik, metin, ipucu) { return '<div class="sg-kart ' + durum + '"><b>' + baslik + '</b><span>' + metin + '</span>' + (ipucu ? '<em>' + ipucu + '</em>' : '') + '</div>'; }
+    function gb(b) { return (b / 1073741824).toFixed(1).replace('.', ',') + ' GB'; }
+    function kb(b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(b / 1024) + ' KB'; }
+    window.sgYukle = function () {
+      document.getElementById('sg-kartlar').innerHTML = '<div class="wa-bos">Kontrol ediliyor…</div>';
+      fetch('/api/admin/saglik', { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (d) {
+          var k = [], en = d.entegrasyon, sorun = 0, uyari = 0;
+          function ekle(durum) { if (durum === 'sorun') sorun++; if (durum === 'uyari') uyari++; k.push(kart.apply(null, arguments)); }
+          var sa = Math.floor(d.servis.calismaSn / 3600);
+          ekle('iyi', 'Sunucu servisi çalışıyor', (sa > 48 ? Math.floor(sa / 24) + ' gündür' : sa + ' saattir') + ' kesintisiz · ' + d.servis.bellekMB + ' MB bellek');
+          ekle(d.cmsOk ? 'iyi' : 'sorun', 'Site içeriği (katalog)', d.cmsOk ? 'Okunabiliyor · ' + kb(d.dosyalar.cms) + ' · ' + d.katalog.gorunurUrun + ' ürün satışta' : 'İçerik dosyası okunamıyor!', d.cmsOk ? (d.dosyalar.cms > 3145728 ? 'İçerik büyük; panelden bir kez Kaydet de, gömülü görseller dosyaya çevrilsin.' : '') : 'Hemen yedekten geri dön.');
+          if (d.disk) { var oran = d.disk.bos / d.disk.toplam; ekle(oran > 0.15 ? 'iyi' : (oran > 0.05 ? 'uyari' : 'sorun'), 'Disk alanı', gb(d.disk.bos) + ' boş / ' + gb(d.disk.toplam)); }
+          if (d.yedek) { var saatOnce = (Date.now() - Date.parse(d.yedek.t)) / 3600000; ekle(saatOnce < 30 ? 'iyi' : 'uyari', 'Otomatik yedek', 'Son yedek: ' + new Date(d.yedek.t).toLocaleString('tr-TR') + ' · ' + d.yedek.adet + ' yedek saklanıyor', saatOnce < 30 ? '' : 'Yedek 1 günden eski; yedek-kur.sh çalıştı mı?'); }
+          else ekle('uyari', 'Otomatik yedek', 'Yedek bulunamadı (ya da servis yedek klasörünü okuyamıyor).', 'Sunucuda: bash /root/olivamore-repo/api-server/yedek-kur.sh');
+          ekle(en.kartOdeme ? (en.iyzicoCanli ? 'iyi' : 'uyari') : 'sorun', 'Kartla ödeme (iyzico)', en.kartOdeme ? (en.iyzicoCanli ? 'Canlı ortamda, gerçek ödeme alınıyor' : 'TEST ortamında — gerçek ödeme alınmaz') : 'Kapalı: müşteriler yalnız Havale/EFT ile ödeyebilir', en.kartOdeme ? (en.iyzicoCanli ? '' : 'Testler bitince env.json\'a "iyzicoCanli": true ekle.') : 'iyzico anahtarlarını env.json\'a gir.');
+          ekle(en.eposta ? 'iyi' : 'sorun', 'E-posta bildirimleri', en.eposta ? 'Sipariş / kargo e-postaları gidiyor' + (en.bildirimEposta ? '' : ' (sana gelen bildirim adresi tanımlı değil)') : 'Kapalı: müşteriye ve sana sipariş e-postası gitmiyor', en.eposta ? '' : 'env.json\'a e-posta servis anahtarı (resendKey) gir.');
+          ekle(en.panelSifre ? 'iyi' : 'sorun', 'Panel güvenliği', en.panelSifre ? 'Panel şifreyle korunuyor' : 'Panel şifresi tanımlı değil!');
+          ekle(en.parasut ? (en.parasutTaslak ? 'uyari' : 'iyi') : 'uyari', 'Paraşüt fatura', en.parasut ? (en.parasutTaslak ? 'Bağlı — TASLAK modunda (fatura resmileşmez)' : 'Bağlı, faturalar resmi kesiliyor') : 'Bağlı değil', en.parasutTaslak ? 'Kontroller bitince env.json\'dan "parasutTaslak" satırını kaldır.' : '');
+          ekle(en.yurtici ? (en.yurticiTest ? 'uyari' : 'iyi') : 'uyari', 'Yurtiçi Kargo', en.yurtici ? (en.yurticiTest ? 'Bağlı — TEST ortamında' : 'Bağlı, canlı') : 'Bağlı değil');
+          ekle(d.siparis.bekleyenOdeme ? 'uyari' : 'iyi', 'Askıda kalan kart ödemeleri', d.siparis.bekleyenOdeme ? d.siparis.bekleyenOdeme + ' sipariş 30 dakikadan uzun süredir "ödeme bekliyor"' : 'Yok', d.siparis.bekleyenOdeme ? 'Siparişler ekranından kontrol et.' : '');
+          ekle(d.siparis.yeniBekleyen > 10 ? 'uyari' : 'iyi', 'Hazırlanmayı bekleyen sipariş', d.siparis.yeniBekleyen + ' "yeni" sipariş · bugün ' + d.siparis.bugun + ' sipariş' + (d.siparis.son ? ' · son: ' + new Date(d.siparis.son).toLocaleString('tr-TR') : ''));
+          ekle(d.katalog.gorselsiz ? 'uyari' : 'iyi', 'Ürün görselleri', d.katalog.gorselsiz ? d.katalog.gorselsiz + ' üründe görsel yok' : 'Satıştaki tüm ürünlerin görseli var');
+          ekle(d.hatalar.length ? 'uyari' : 'iyi', 'Sunucu hataları', d.hatalar.length ? d.hatalar.length + ' hata kaydı (aşağıda)' : 'Hata yok');
+          document.getElementById('sg-kartlar').innerHTML = k.join('');
+          document.getElementById('sg-genel').innerHTML = sorun ? '<i style="background:#c2452f"></i>' + sorun + ' konu müdahale bekliyor' : (uyari ? '<i style="background:#d4a12a"></i>Site çalışıyor · ' + uyari + ' uyarı var' : '<i style="background:#3d9a52"></i>Her şey yolunda');
+          document.getElementById('sg-stok').innerHTML = (d.katalog.tukenen.length || d.katalog.azalan.length) ?
+            d.katalog.tukenen.map(function (x) { return '<div style="padding:6px 0;border-bottom:1px solid var(--line);font-size:.84rem;"><span class="wa-etiket kirmizi">tükendi</span>' + esc(x) + '</div>'; }).join('') +
+            d.katalog.azalan.map(function (x) { return '<div style="padding:6px 0;border-bottom:1px solid var(--line);font-size:.84rem;"><span class="wa-etiket">azaldı</span>' + esc(x) + '</div>'; }).join('')
+            : '<div class="wa-bos">Stok uyarısı yok (stok takibi açık ürünlerde 5 adet ve altı uyarılır).</div>';
+          document.getElementById('sg-hata').innerHTML = d.hatalar.length ? d.hatalar.map(function (h) { return '<div style="padding:6px 0;border-bottom:1px solid var(--line);font-size:.78rem;"><small style="color:var(--soft);">' + new Date(h.t).toLocaleString('tr-TR') + '</small><br>' + esc(h.m) + '</div>'; }).join('') : '<div class="wa-bos">Kayıtlı hata yok.</div>';
+          rozetKoy('health', sorun, !sorun && false);
+        })
+        .catch(function () { document.getElementById('sg-kartlar').innerHTML = '<div class="wa-bos">Sağlık kontrolü yalnız canlı sunucuda (olivamore.de/panel) görünür.</div>'; });
+    };
+    document.getElementById('sg-yenile').addEventListener('click', function () { sgYukle(); });
+    // Panel açılınca sessizce kontrol et: sorun varsa menüde kırmızı rozet çıkar
+    setTimeout(function () { if (window.sgYukle) sgYukle(); }, 2500);
+  })();
+
   document.getElementById('an-donem').addEventListener('change', renderAnalytics);
   document.getElementById('an-yenile').addEventListener('click', renderAnalytics);
 

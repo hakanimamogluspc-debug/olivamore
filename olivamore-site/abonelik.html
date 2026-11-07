@@ -215,6 +215,7 @@ document.getElementById('abf-ekle').addEventListener('click', function () { setT
 (function () {
   var mesaj = document.getElementById('abf-mesaj');
   if (location.hash.indexOf('#odeme-ok') === 0) {
+    (function () { var no = (location.hash.match(/OM-\d+/) || [''])[0]; var dene = setInterval(function () { if (window.omIz) { clearInterval(dene); window.omIz('satin_al', { no: no, y: 1 }); } }, 100); setTimeout(function () { clearInterval(dene); }, 5000); })();
     mesaj.textContent = 'Ödemen alındı, aboneliğin aktif ✓ Sipariş onayı ve sonraki teslim tarihi e-postana gelecek.';
     mesaj.className = 'ab-mesaj ok';
     mesaj.scrollIntoView({ behavior: 'smooth', block: 'center' });
