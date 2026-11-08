@@ -1832,7 +1832,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="top"><span>Toplam</span>' + tl(s.toplam) + '</div></div>';
     var odeme = '<div class="od-odeme"><div class="od-alan"><span>Ödeme yöntemi</span>' + esc(odemeAd) + ' ' + odemeDurum + '</div>' +
       (s.odemeId ? odSatir('Ödeme işlem no', esc(s.odemeId)) : '') +
-      (s.fatura && (s.fatura.no || s.fatura.id) ? odSatir('Fatura', esc((s.fatura.belge || '') + ' ' + (s.fatura.no || s.fatura.id))) : '') +
+      (s.fatura && (s.fatura.no || s.fatura.id) ? odSatir('Fatura', esc((s.fatura.belge || '') + ' ' + (s.fatura.no || s.fatura.id)) + (s.fatura.durum === 'taslak' ? ' <span class="od-rozet sari">Paraşüt\'te taslak</span>' : '')) : '') +
+      (!(s.fatura && s.fatura.durum === 'kesildi') ? '<div class="od-alan"><span>Fatura</span>' + (s.fatura && s.fatura.durum === 'taslak' ? '' : (s.kaynak === 'wordpress' ? 'Eski sitede kesilmiş olabilir — kesilmediyse: ' : 'Henüz kesilmedi. ')) +
+        '<button type="button" class="btn btn-outline btn-sm od-taslak" data-no="' + s.no + '" style="margin-top:6px;">🧾 ' + (s.fatura && s.fatura.durum === 'taslak' ? 'Yeniden taslak oluştur' : 'Paraşüt\'te taslak fatura oluştur') + '</button></div>' : '') +
       (s.kargoNo ? odSatir('Kargo', esc((s.kargoFirma || '') + ' · ' + s.kargoNo)) : '') + '</div>';
     var ilIlce = [m.postaKodu, [m.ilce, m.il].filter(Boolean).join(' / ')].filter(Boolean).join(' ');
     var fatura = '<div class="od-kart" data-blok="fatura"><div class="od-kart-bas"><b>Faturalama</b><button type="button" class="od-duzenle" data-no="' + s.no + '" data-blok="fatura" title="Düzenle">✎</button></div>' +
@@ -1887,6 +1889,25 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       .catch(function () { alert('Sunucuya ulaşılamadı.'); kb.disabled = false; kb.textContent = 'Kaydet'; });
   });
   var ORD_ACIK = null;
+  // Paraşüt taslak fatura (resmileştirilmez; muhasebe Paraşüt'te kontrol edip keser)
+  document.getElementById('orders-list').addEventListener('click', function (e) {
+    var b = e.target.closest('.od-taslak'); if (!b) return;
+    var no = b.dataset.no;
+    if (!confirm(no + ' için Paraşüt\'te TASLAK fatura oluşturulsun mu?\n\nTaslak resmî fatura değildir; Paraşüt → Satışlar → Faturalar\'da kontrol edip tarih ve bilgileri onayladıktan sonra oradan resmileştirirsin. Müşteriye bir şey gönderilmez.')) return;
+    function gonder(yeniden) {
+      b.disabled = true; b.textContent = 'Oluşturuluyor…';
+      fetch('/api/admin/taslak-fatura', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, yeniden: !!yeniden }) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (x) {
+          if (!x.ok && (x.j.kod === 'taslak-var' || x.j.kod === 'durum-uyari')) { if (confirm(x.j.hata)) return gonder(true); b.disabled = false; b.textContent = '🧾 Paraşüt\'te taslak fatura oluştur'; return; }
+          if (!x.ok) { alert(x.j.hata || 'Taslak oluşturulamadı.'); b.disabled = false; b.textContent = '🧾 Paraşüt\'te taslak fatura oluştur'; return; }
+          ORD_ACIK = no; renderOrders();
+        })
+        .catch(function () { alert('Sunucuya ulaşılamadı.'); b.disabled = false; });
+    }
+    gonder(false);
+  });
+
   function ordListe() {
     var host = document.getElementById('orders-list');
     var f = document.getElementById('ord-filtre').value;

@@ -940,7 +940,8 @@ async function parasutTokenAl() {
   parasutJeton = { token: v.access_token, bitis: Date.now() + ((v.expires_in || 7200) - 120) * 1000 };
   return parasutJeton.token;
 }
-async function parasutFaturaKes(s) {
+async function parasutFaturaKes(s, secenek) {
+  secenek = secenek || {};
   const env = oku('env.json', {});
   const firma = env.parasutFirmaId;
   const token = await parasutTokenAl();
@@ -1026,7 +1027,7 @@ async function parasutFaturaKes(s) {
         issue_date: new Date().toISOString().slice(0, 10),
         currency: 'TRL',
         shipment_included: false,
-        description: 'Sipariş ' + s.no + (s.indirim ? ' · İndirim: ₺' + s.indirim : '')
+        description: 'Sipariş ' + s.no + (s.kaynak === 'wordpress' ? ' (eski site, sipariş tarihi: ' + String(s.tarih || '').slice(0, 10) + ')' : '') + (s.indirim ? ' · İndirim: ₺' + s.indirim : '')
       },
       relationships: {
         contact: { data: { id: kisiId, type: 'contacts' } },
@@ -1039,6 +1040,11 @@ async function parasutFaturaKes(s) {
   // TEST MODU: env.parasutTaslak=true → resmileştirme yapılmaz, Paraşüt'te taslak kalır (silinebilir)
   if (env.parasutTaslak) {
     s.fatura = { durum: 'kesildi', kaynak: 'parasut', belge: 'taslak (test)', parasutId: fatId, no: 'TASLAK-' + fatId, tarih: new Date().toISOString() };
+    return s.fatura;
+  }
+  // İSTENEN TASLAK: panelden "taslak fatura oluştur" → resmileştirilmez; muhasebe Paraşüt'te kontrol edip keser
+  if (secenek.taslak) {
+    s.fatura = { durum: 'taslak', kaynak: 'parasut', belge: 'Paraşüt taslağı', parasutId: fatId, no: 'TASLAK-' + fatId, tarih: new Date().toISOString(), eski: !!(s.fatura && s.fatura.eski) };
     return s.fatura;
   }
   // 3) Resmileştirme: kurumsal alıcı e-Fatura mükellefiyse e-Fatura, değilse e-Arşiv
@@ -2502,6 +2508,26 @@ const sunucu = http.createServer(async (req, res) => {
     }
 
     /* ---- Fatura: manuel Paraşüt kesimi / tekrar deneme ---- */
+    // Panelden: Paraşüt'te TASLAK fatura (resmileştirmeden) — eski site siparişleri ve faturası unutulmuş siparişler için
+    if (req.method === 'POST' && yol === '/api/admin/taslak-fatura') {
+      if (!parasutAktif()) return json(res, 400, { hata: 'Paraşüt anahtarları env.json\'da tanımlı değil.' });
+      const g = await govde(req, 1);
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === g.no);
+      if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+      if (s.fatura && s.fatura.durum === 'kesildi') return json(res, 400, { hata: 'Bu siparişin faturası zaten kesilmiş.' });
+      if (s.fatura && s.fatura.durum === 'taslak' && !g.yeniden) return json(res, 409, { hata: 'Bu sipariş için Paraşüt\'te zaten bir taslak var (' + (s.fatura.no || '') + '). Yine de yenisini oluşturmak istiyor musun?', kod: 'taslak-var' });
+      if (['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) !== -1 && !g.yeniden) return json(res, 409, { hata: 'Sipariş "' + s.durum + '" durumunda. Yine de taslak fatura oluşturulsun mu?', kod: 'durum-uyari' });
+      try {
+        await parasutFaturaKes(s, { taslak: true });
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Paraşüt\'te taslak fatura oluşturuldu · ' + (s.fatura.no || '') });
+        yaz('siparisler.json', liste);
+        return json(res, 200, { tamam: true, fatura: s.fatura });
+      } catch (e) {
+        return json(res, 502, { hata: 'Taslak oluşturulamadı: ' + e.message });
+      }
+    }
     if (req.method === 'POST' && yol === '/api/admin/fatura-kes') {
       if (!parasutAktif()) return json(res, 400, { hata: 'Paraşüt anahtarları env.json\'da tanımlı değil.' });
       const g = await govde(req, 1);
