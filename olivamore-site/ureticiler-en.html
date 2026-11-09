@@ -105,7 +105,7 @@
 /* Üreticiyi Tanı: panelde girilen bahçeler (parsel + uydu görüntüsü) */
 (function () {
   var EN = true;
-  var L = EN ? { konum: 'Location', parsel: 'Land registry', alan: 'Area', cesit: 'Variety', agac: 'Trees', yas: 'Tree age', rakim: 'Altitude', sulama: 'Irrigation', kurulus: 'With us since', ada: 'Block', par: 'Parcel', harita: 'Open in Google Maps', kaynak: 'Parcel boundary: TKGM land registry · Imagery: Esri' }
+  var Y = EN ? { konum: 'Location', parsel: 'Land registry', alan: 'Area', cesit: 'Variety', agac: 'Trees', yas: 'Tree age', rakim: 'Altitude', sulama: 'Irrigation', kurulus: 'With us since', ada: 'Block', par: 'Parcel', harita: 'Open in Google Maps', kaynak: 'Parcel boundary: TKGM land registry · Imagery: Esri' }
              : { konum: 'Konum', parsel: 'Tapu kaydı', alan: 'Alan', cesit: 'Çeşit', agac: 'Ağaç sayısı', yas: 'Ağaç yaşı', rakim: 'Rakım', sulama: 'Sulama', kurulus: 'Bize katıldığı yıl', ada: 'Ada', par: 'Parsel', harita: 'Google Haritalar\'da aç', kaynak: 'Parsel sınırı: TKGM tapu kaydı · Uydu görüntüsü: Esri' };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function leafletYukle(cb) {
@@ -134,20 +134,20 @@
     kutu.innerHTML = liste.map(function (b) {
       var gm = (b.enlem && b.boylam) ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(b.enlem + ',' + b.boylam) : '';
       var bilgi = [
-        [L.konum, [b.mevkii, b.mahalle, b.ilce, b.il].filter(Boolean).join(', ')],
-        [L.parsel, b.ada || b.parsel ? L.ada + ' ' + (b.ada || '—') + ' · ' + L.par + ' ' + (b.parsel || '—') : ''],
-        [L.alan, b.alan], [L.cesit, b.cesit], [L.agac, b.agac], [L.yas, b.yas], [L.rakim, b.rakim], [L.sulama, b.sulama], [L.kurulus, b.kurulus]
+        [Y.konum, [b.mevkii, b.mahalle, b.ilce, b.il].filter(Boolean).join(', ')],
+        [Y.parsel, b.ada || b.parsel ? Y.ada + ' ' + (b.ada || '—') + ' · ' + Y.par + ' ' + (b.parsel || '—') : ''],
+        [Y.alan, b.alan], [Y.cesit, b.cesit], [Y.agac, b.agac], [Y.yas, b.yas], [Y.rakim, b.rakim], [Y.sulama, b.sulama], [Y.kurulus, b.kurulus]
       ].filter(function (x) { return x[1]; });
       var aciklama = EN ? (b.aciklamaEN || b.aciklamaTR) : b.aciklamaTR;
       return '<article class="bahce" id="bahce-' + esc(b.id) + '">' +
-        '<div class="bahce-harita"><div class="bh-map" data-id="' + esc(b.id) + '"></div><small>' + L.kaynak + '</small></div>' +
+        '<div class="bahce-harita"><div class="bh-map" data-id="' + esc(b.id) + '"></div><small>' + Y.kaynak + '</small></div>' +
         '<div class="bahce-bilgi">' +
           (b.bolge ? '<span class="region">' + esc(b.bolge) + '</span>' : '') +
           '<h3>' + esc(b.ad) + '</h3>' +
           (aciklama ? '<p class="card-note">' + esc(aciklama) + '</p>' : '') +
           '<dl class="bahce-tablo">' + bilgi.map(function (x) { return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>'; }).join('') + '</dl>' +
           (b.foto ? '<img class="bahce-foto" src="' + esc(b.foto) + '" alt="' + esc(b.ad) + '" loading="lazy">' : '') +
-          (gm ? '<a class="link-arrow" href="' + gm + '" target="_blank" rel="noopener">' + L.harita + ' →</a>' : '') +
+          (gm ? '<a class="link-arrow" href="' + gm + '" target="_blank" rel="noopener">' + Y.harita + ' →</a>' : '') +
         '</div></article>';
     }).join('');
     leafletYukle(function () {
