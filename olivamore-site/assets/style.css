@@ -2513,4 +2513,4 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 
 /* Üreticiyi Tanı · Toprak Sağlığı: koyu rozet yerine bahçe fotoğrafı */
 .split-art.toprak-foto{background:#e9e5da;padding:0;overflow:hidden}
-.split-art.toprak-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.split-art.toprak-foto img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:50% 55%;display:block}
