@@ -2118,7 +2118,7 @@ footer.site{background:#1B1A18}
 .fig-dogal .fd-ust{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(1.7rem,3vw,2.8rem);color:var(--omx-gold);letter-spacing:.02em}
 .fig-dogal .fd-el{font-family:'Italianno',cursive;font-size:clamp(2rem,3.2vw,2.9rem);color:#4D5358;letter-spacing:.05em;margin:2px 0 26px}
 .fig-dogal p{font-family:'Poppins',sans-serif;font-size:clamp(.9rem,1.3vw,1.12rem);line-height:1.7;color:#4D5358;letter-spacing:.05em;max-width:1060px;margin:0 auto 40px}
-.fig-dogal .fd-amblem{height:92px;width:auto}
+.fig-dogal .fd-amblem{height:92px;width:auto;display:block;margin:0 auto}
 
 /* Kategori kartları (poster dili: krem doku + gold kurdele + serif başlık) */
 .fig-kategori{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;max-width:1426px;margin:0 auto;padding:56px 15px}
