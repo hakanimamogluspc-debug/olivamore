@@ -2380,10 +2380,7 @@ nav.main a.top:hover,nav.main a.top.active,.nav-right a.top:hover,.nav-right a.t
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header.site{background:rgba(255,255,255,.96)}}
 
 /* Header düzeltmesi: gerçek cam görünüm + sepet rozeti */
-header.site{background:rgba(255,255,255,.42);border-bottom:1px solid rgba(255,255,255,.55);box-shadow:0 8px 30px rgba(20,18,15,.08),inset 0 -1px 0 rgba(30,28,25,.06)}
 /* Ana sayfada header, hero görselinin ÜSTÜNE biner → buzlu cam etkisi ilk açılışta görünür */
-body[data-page="home"] header.site{margin-bottom:calc(-1 * var(--hdr-h))}
-body[data-page="home"] .fig-manset .fm-icerik{padding-top:calc(96px + var(--hdr-h))}
 /* Sepet sayısı: ikonun sağ üst köşesine oturur */
 .icon-btn{display:inline-flex;align-items:center;justify-content:center}
 #cart-btn .cart-count{top:4px;right:2px}
@@ -2469,3 +2466,12 @@ html.ta-acik{overflow:hidden}
 .ra-edamam .ta-grid{margin-top:6px}
 .ra-edamam-alt{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;font-size:12px;color:#999}
 .ra-edamam-alt img{height:20px;width:auto;display:block}
+
+/* Header: düz beyaz (cam efekti kaldırıldı), ana sayfada hero'nun üstüne binmez */
+header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid rgba(30,28,25,.08);box-shadow:0 4px 18px rgba(30,28,25,.05)}
+/* Mobil: amblem OLIVAMORE yazısının solunda, yan yana */
+@media(max-width:960px){
+  .nav-wrap.nav3 .logo-link{flex-direction:row;align-items:center;gap:8px}
+  .nav-wrap.nav3 .logo-link img.logo-amblem{height:28px!important;width:auto!important}
+  .nav-wrap.nav3 .logo-link img.logo-yazi{height:auto!important;width:min(112px,30vw)!important}
+}
