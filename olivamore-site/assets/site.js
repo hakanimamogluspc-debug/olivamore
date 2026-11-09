@@ -243,7 +243,8 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         <div><a class="top" data-nav="abonelik" href="${P('abonelik.html')}">${T.abonelik}</a></div>
       </nav>
       <a class="logo-link" href="${EN ? '/en' : '/'}" aria-label="Olivamore">
-        <img src="assets/logo-word.svg" style="height:17px;width:auto;" alt="OLIVAMORE">
+        <img class="logo-amblem" src="assets/logo-mark.svg" alt="" aria-hidden="true">
+        <img class="logo-yazi" src="assets/logo-word.svg" alt="OLIVAMORE">
       </a>
       <div class="nav-right">
         <a class="top" data-nav="ogren" href="${P('ogren.html')}">${T.learn}</a>

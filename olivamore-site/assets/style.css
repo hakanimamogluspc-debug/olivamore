@@ -2350,3 +2350,31 @@ body[data-page="home"] section .zsus{position:absolute}
 .fig-kart .fk-fiyat s{color:#8a8377}
 .chip.chip-indirim{border-color:#d9b3aa;color:#9a3b2c}
 .chip.chip-indirim.on{background:#9a3b2c;border-color:#9a3b2c;color:#fff}
+
+/* ===== Header: amblem + yazı, cam (glassy) görünüm, sayfayla birlikte yapışık ===== */
+:root{--hdr-h:84px}
+#om-header{display:contents} /* header'ın sayfa boyunca yapışabilmesi için kap kutu devre dışı */
+header.site{position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,.62);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);
+  border-bottom:1px solid rgba(30,28,25,.08);box-shadow:0 6px 24px rgba(30,28,25,.05)}
+.nav-wrap.nav3,.nav-wrap{height:var(--hdr-h)}
+.nav-wrap.nav3 .logo-link{flex-direction:column;gap:5px}
+.logo-link .logo-amblem{height:30px;width:auto;display:block}
+.logo-link .logo-yazi{height:15px;width:auto;display:block}
+/* Menü yazıları: Poppins, büyük harf, ince — logo hariç */
+nav.main a.top,.nav-right a.top{font-family:'Poppins',var(--font-sans),sans-serif;font-size:15px;font-weight:400;text-transform:uppercase;letter-spacing:.03em;color:#2a2a2a}
+.nav-right a.top.lang-switch{font-size:12px;letter-spacing:.06em}
+nav.main a.top:hover,nav.main a.top.active,.nav-right a.top:hover,.nav-right a.top.active{color:var(--gold)}
+/* Yapışık header altında kalan diğer yapışık öğeler */
+.quality-index{top:var(--hdr-h)}
+.gb-visual,.journey-visual{top:calc(var(--hdr-h) + 24px)}
+.editorial-toc{top:calc(var(--hdr-h) + 26px)}
+[id]{scroll-margin-top:calc(var(--hdr-h) + 12px)}
+@media(max-width:960px){
+  :root{--hdr-h:66px}
+  .nav-wrap.nav3 .logo-link img.logo-amblem{height:22px!important;width:auto!important}
+  .nav-wrap.nav3 .logo-link img.logo-yazi{height:auto!important;width:min(118px,34vw)!important}
+  .nav-wrap.nav3 .logo-link{gap:4px}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header.site{background:rgba(255,255,255,.96)}}
