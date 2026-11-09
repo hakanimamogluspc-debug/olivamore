@@ -82,7 +82,6 @@
           <div class="pp-row"><b>Zeytin çeşidi</b><span id="pp-cesit"></span></div>
           <div class="pp-row"><b>Kalite sınıfı</b><span id="pp-sinif"></span></div>
           <div class="pp-row"><b>Bahçe / parsel</b><span id="pp-parsel"></span></div>
-          <div class="pp-row"><b>Asidite (FFA)</b><span id="pp-asidite"></span></div>
         </div>
 
         <div class="pp-zaman" id="pp-zaman" style="display:none;margin:0 0 22px;">
@@ -218,7 +217,6 @@ document.addEventListener('DOMContentLoaded', function () {
     koy('pp-sinif', d.sinif || '—');
     var yer = d.bahce || d.ilce || '';
     koy('pp-parsel', (yer && d.il) ? (yer + ', ' + d.il) : (yer || d.il || '—'));
-    koy('pp-asidite', trAsitlik(d.asitlik));
     // Zaman çizgisi: Hasat → Sıkım → Dolum
     var zaman = document.getElementById('pp-zaman');
     if (d.hasat_tarihi || d.sikim_tarihi || d.dolum_tarihi) {
@@ -327,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function () {
     koy('pp-cesit', d.cesit);
     koy('pp-sinif', d.sinif || '—');
     koy('pp-parsel', d.parsel);
-    koy('pp-asidite', d.asidite ? (String(d.asidite).indexOf('%') === -1 ? '%' + String(d.asidite).replace('.', ',') : d.asidite) : '—');
     var zaman = document.getElementById('pp-zaman');
     if (d.hasat || d.sikim || r.dolum) {
       koy('pz-hasat', kisa(d.hasat)); koy('pz-sikim', kisa(d.sikim)); koy('pz-dolum', r.dolum ? trTarihKisa(r.dolum) : '—');

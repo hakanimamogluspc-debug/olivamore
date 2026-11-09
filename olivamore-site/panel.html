@@ -1617,8 +1617,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     ['baslangic', 'Dönem başlangıcı (bu tarihten itibaren dolan şişeler)', 'date'], ['bitis', 'Dönem bitişi (boş = devam ediyor)', 'date'],
     ['urun', 'Ürün adı (müşteri görür)', 'text'], ['href', 'Ürün sayfası', 'href'],
     ['hasat', 'Hasat tarihi', 'date'], ['sikim', 'Sıkım tarihi', 'date'], ['cesit', 'Zeytin çeşidi', 'text'],
-    ['sinif', 'Kalite sınıfı', 'text'], ['parsel', 'Bahçe / parsel', 'text'], ['asidite', 'Asidite (%)', 'text'],
-    ['polifenol', 'Polifenol (mg/kg)', 'text'], ['peroksit', 'Peroksit', 'text'], ['lab', 'Analiz raporu bağlantısı (PDF)', 'text'],
+    ['sinif', 'Kalite sınıfı', 'text'], ['parsel', 'Bahçe / parsel', 'text'], ['lab', 'Analiz raporu bağlantısı (PDF)', 'text'],
     ['uretici', 'Üretici', 'text'], ['tadim', 'Tadım notu', 'textarea']
   ];
   function tankDonemHtml(d, j) {
@@ -1700,7 +1699,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   /* ================== PARTİLER ================== */
   function batchItem(b, i) {
     return '<details class="item" data-idx="' + i + '">' +
-      '<summary><div class="t" style="margin-left:4px;"><b>' + esc(b.kod) + ' · ' + esc(b.urun) + '</b><span>' + esc(b.hasat) + '</span></div><span class="pill">' + esc(b.asidite) + ' · ' + esc(b.polifenol) + '</span></summary>' +
+      '<summary><div class="t" style="margin-left:4px;"><b>' + esc(b.kod) + ' · ' + esc(b.urun) + '</b><span>' + esc(b.hasat) + '</span></div></summary>' +
       '<div class="body">' +
       '<div class="grid3">' +
       '<div class="field"><label>Parti Kodu</label><input type="text" class="bt-kod" value="' + esc(b.kod) + '"></div>' +
@@ -1716,11 +1715,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '</div>' +
       '<div class="grid3">' +
       '<div class="field"><label>Bahçe / Parsel</label><input type="text" class="bt-parsel" value="' + esc(b.parsel) + '"></div>' +
-      '<div class="field"><label>Asidite</label><input type="text" class="bt-asidite" value="' + esc(b.asidite) + '"></div>' +
-      '<div class="field"><label>Polifenol</label><input type="text" class="bt-polifenol" value="' + esc(b.polifenol) + '"></div>' +
       '</div>' +
       '<div class="grid3">' +
-      '<div class="field"><label>Peroksit</label><input type="text" class="bt-peroksit" value="' + esc(b.peroksit) + '"></div>' +
       '<div class="field"><label>Laboratuvar analizi</label><input type="text" class="bt-lab" value="' + esc(b.lab) + '"></div>' +
       '<div class="field"><label>Üretici</label><input type="text" class="bt-uretici" value="' + esc(b.uretici) + '"></div>' +
       '</div>' +
@@ -1752,8 +1748,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var g = function (c) { var el = d.querySelector('.' + c); return el ? el.value : ''; };
       b.kod = g('bt-kod').toUpperCase(); b.urun = g('bt-urun'); b.href = g('bt-href');
       b.hasat = g('bt-hasat'); b.sikim = g('bt-sikim'); b.cesit = g('bt-cesit');
-      b.parsel = g('bt-parsel'); b.asidite = g('bt-asidite'); b.polifenol = g('bt-polifenol');
-      b.peroksit = g('bt-peroksit'); b.lab = g('bt-lab'); b.uretici = g('bt-uretici');
+      b.parsel = g('bt-parsel'); b.lab = g('bt-lab'); b.uretici = g('bt-uretici');
       b.tadim = g('bt-tadim');
       b.avatar = (b.uretici || 'OM').slice(0, 2).toUpperCase();
     });
