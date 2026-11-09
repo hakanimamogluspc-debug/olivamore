@@ -611,7 +611,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
 
     // ---- 4c) Ana sayfa tanıtım blokları (panel > Sayfalar > Tanıtım Blokları) ----
     if (document.body.dataset.page === 'home' && C.bloklar && typeof C.bloklar === 'object') {
-      ['hediye', 'damak'].forEach(id => {
+      ['damak'].forEach(id => {
         const b = C.bloklar[id], sec = document.getElementById(id);
         if (!b || !sec) return;
         const v = (EN ? b.EN : b.TR) || {};
@@ -1565,4 +1565,66 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       });
     });
   });
+})();
+
+/* ---------- Ana sayfa Tarif Asistanı (Edamam üzerinden /api/tarif-ara) ---------- */
+(function () {
+  function kur() {
+    const sec = document.getElementById('tarif-asistan');
+    if (!sec) return;
+    const EN = document.body.dataset.lang === 'en';
+    const form = sec.querySelector('.ta-form'), girdi = sec.querySelector('.ta-girdi'), btn = sec.querySelector('.ta-git');
+    const kutu = document.getElementById('ta-sonuc'), notEl = document.getElementById('ta-not');
+    const yerel = EN ? 'tarif-asistani-en.html' : 'tarif-asistani.html';
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const guvenliUrl = u => /^https:\/\//i.test(u || '') ? u : '';
+    sec.querySelectorAll('.ta-chip').forEach(c => c.addEventListener('click', () => {
+      const v = girdi.value.trim();
+      const liste = v ? v.split(/\s*,\s*/) : [];
+      if (liste.indexOf(c.textContent) === -1) liste.push(c.textContent);
+      girdi.value = liste.filter(Boolean).join(', ');
+      c.classList.add('secili'); girdi.focus();
+    }));
+    function yonlendir(m) { location.href = yerel + '?m=' + encodeURIComponent(m); }
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const m = girdi.value.trim();
+      if (!m) { girdi.focus(); return; }
+      btn.disabled = true; const eskiYazi = btn.textContent; btn.textContent = EN ? 'Searching…' : 'Aranıyor…';
+      kutu.hidden = false; notEl.hidden = true;
+      kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'Searching world cuisine…' : 'Dünya mutfağında arıyoruz…') + '</p>';
+      try { if (window.omIz) window.omIz('tarif_ara', { m: m.slice(0, 60) }); } catch (e2) {}
+      let j = null, kod = 0;
+      try {
+        const r = await fetch('/api/tarif-ara', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ malzemeler: m, dil: EN ? 'en' : 'tr' }) });
+        kod = r.status; j = await r.json().catch(() => null);
+      } catch (e3) { kod = 0; }
+      btn.disabled = false; btn.textContent = eskiYazi;
+      // Servis kapalı/yoğun/erişilemez → kendi tarif motorumuza devret
+      if (!j || !j.tamam) {
+        if (kod === 400) { kutu.hidden = true; girdi.focus(); return; }
+        if (kod === 429) { kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'Lots of searches right now — showing our own recipes…' : 'Şu an çok arama var — kendi tariflerimize yönlendiriyoruz…') + '</p>'; setTimeout(() => yonlendir(m), 1200); return; }
+        yonlendir(m); return;
+      }
+      if (!j.sonuclar.length) {
+        kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'No recipes found for these ingredients. ' : 'Bu malzemelerle tarif bulamadık. ') + '<a href="' + yerel + '?m=' + encodeURIComponent(m) + '">' + (EN ? 'Try our own recipe assistant →' : 'Kendi tarif asistanımızı dene →') + '</a></p>';
+        return;
+      }
+      kutu.innerHTML = '<div class="ta-grid">' + j.sonuclar.map(t => {
+        const y = t.yag;
+        const meta = [t.sure ? t.sure + (EN ? ' min' : ' dk') : '', t.porsiyon ? t.porsiyon + (EN ? ' servings' : ' kişilik') : ''].filter(Boolean).join(' · ');
+        return '<article class="ta-kart">' +
+          (guvenliUrl(t.resim) ? '<div class="ta-resim"><img src="' + esc(t.resim) + '" alt="' + esc(t.baslik) + '" loading="lazy" referrerpolicy="no-referrer"></div>' : '') +
+          '<div class="ta-govde"><h3>' + esc(t.baslik) + '</h3>' +
+          '<div class="ta-meta">' + esc(t.kaynak || '') + (meta ? ' · ' + esc(meta) : '') + '</div>' +
+          '<details><summary>' + (EN ? 'Ingredients' : 'Malzemeler') + ' (' + t.malzemeler.length + ')</summary><ul>' + t.malzemeler.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>' +
+          (y ? '<a class="ta-yag" href="' + esc(y.href) + '"><img src="' + esc(y.img || '') + '" alt=""><span><b>' + esc(y.ad) + '</b><small>' + esc(y.neden) + '</small></span></a>' : '') +
+          (guvenliUrl(t.url) ? '<a class="ta-kaynak" href="' + esc(t.url) + '" target="_blank" rel="noopener nofollow">' + (EN ? 'How to make it →' : 'Yapılışı (kaynak site) →') + '</a>' : '') +
+          '</div></article>';
+      }).join('') + '</div>';
+      notEl.hidden = false;
+      kutu.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kur); else kur();
 })();

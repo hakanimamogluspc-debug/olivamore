@@ -309,6 +309,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!tx.value.trim()) { tx.focus(); tx.placeholder = 'Önce birkaç malzeme yaz ya da aşağıdan seç ↓'; return; }
     withThinking(function () { generate(false); });
   });
+  // Ana sayfadan ?m=malzemeler ile gelindiyse otomatik üret
+  (function () {
+    var m = new URLSearchParams(location.search).get('m');
+    if (m && m.trim()) { tx.value = m.trim().slice(0, 200); withThinking(function () { generate(false); }); }
+  })();
   document.getElementById('ra-again').addEventListener('click', function () {
     withThinking(function () { generate(true); });
   });

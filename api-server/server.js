@@ -353,6 +353,114 @@ function metaSatinAlma(s, req) {
   } catch (e) { console.error('[meta-capi]', e.message); }
 }
 const META_OLAY = { urun_gor: 'ViewContent', sepete_ekle: 'AddToCart', odeme_basla: 'InitiateCheckout', odeme_adim2: 'AddPaymentInfo' };
+
+/* ---------- Tarif asistanı: Edamam Recipe Search + DeepL çeviri ----------
+   env.json: "edamamAppId", "edamamAppKey", isteğe bağlı "deeplKey" (Free anahtarlar ":fx" ile biter)
+   Edamam koşulları: sonuçlar SAKLANMAZ (önbellek yok), yalnız isteği yapan kişiye gösterilir, "Powered by Edamam" rozeti zorunlu. */
+const MALZEME_SOZLUK = {
+  'domates':'tomato','yumurta':'egg','biber':'pepper','sivri biber':'green pepper','kırmızı biber':'red pepper','soğan':'onion','taze soğan':'scallion',
+  'sarımsak':'garlic','patlıcan':'eggplant','kabak':'zucchini','taze fasulye':'green beans','fasulye':'beans','nohut':'chickpeas','mercimek':'lentils',
+  'kırmızı mercimek':'red lentils','makarna':'pasta','pirinç':'rice','bulgur':'bulgur','levrek':'sea bass','çupra':'sea bream','somon':'salmon',
+  'karides':'shrimp','balık':'fish','ahtapot':'octopus','kalamar':'squid','midye':'mussels','ton balığı':'tuna','roka':'arugula','enginar':'artichoke',
+  'yoğurt':'yogurt','süzme yoğurt':'greek yogurt','limon':'lemon','portakal':'orange','mandalina':'mandarin','beyaz peynir':'feta','peynir':'cheese',
+  'kaşar':'cheddar','lor':'ricotta','tavuk':'chicken','tavuk göğsü':'chicken breast','kıyma':'ground beef','dana':'beef','kuzu':'lamb','et':'beef',
+  'patates':'potato','tatlı patates':'sweet potato','havuç':'carrot','ıspanak':'spinach','brokoli':'broccoli','karnabahar':'cauliflower','mantar':'mushroom',
+  'mısır':'corn','bezelye':'peas','marul':'lettuce','salatalık':'cucumber','avokado':'avocado','fesleğen':'basil','maydanoz':'parsley','dereotu':'dill',
+  'nane':'mint','kekik':'thyme','biberiye':'rosemary','zeytin':'olives','ceviz':'walnut','badem':'almond','fıstık':'pistachio','un':'flour','ekmek':'bread',
+  'pırasa':'leek','kereviz':'celery','lahana':'cabbage','pancar':'beet','turp':'radish','elma':'apple','armut':'pear','incir':'fig','nar':'pomegranate',
+  'nar ekşisi':'pomegranate molasses','sirke':'vinegar','balsamik':'balsamic','bal':'honey','çikolata':'chocolate','şeftali':'peach','çilek':'strawberry',
+  'semizotu':'purslane','kinoa':'quinoa','tofu':'tofu','hindi':'turkey','sucuk':'sausage','mozzarella':'mozzarella','parmesan':'parmesan','krema':'cream',
+  'süt':'milk','tereyağı':'butter','bamya':'okra','barbunya':'borlotti beans','kuru fasulye':'white beans','yeşil mercimek':'green lentils','kapya':'red bell pepper'
+};
+let tarifCagri = [];
+const tarifIpSayac = new Map();
+setInterval(() => tarifIpSayac.clear(), 60000);
+function tarifAyar() {
+  const e = oku('env.json', {});
+  return (e.edamamAppId && e.edamamAppKey) ? { id: e.edamamAppId, key: e.edamamAppKey, deepl: e.deeplKey || '', kullanici: e.edamamKullanici || 'olivamore' } : null;
+}
+function httpsJson(secenek, govdeStr) {
+  return new Promise((cozul, red) => {
+    const istek = require('https').request(Object.assign({ timeout: 9000 }, secenek), r => {
+      let p = ''; r.setEncoding('utf8'); r.on('data', d => p += d);
+      r.on('end', () => { try { cozul({ kod: r.statusCode, veri: JSON.parse(p || '{}') }); } catch (e) { cozul({ kod: r.statusCode, veri: {} }); } });
+    });
+    istek.on('timeout', () => istek.destroy(new Error('zaman aşımı')));
+    istek.on('error', red);
+    if (govdeStr) istek.write(govdeStr);
+    istek.end();
+  });
+}
+async function deeplCevir(metinler, hedef, kaynak, anahtar) {
+  if (!anahtar || !metinler.length) return null;
+  const host = /:fx$/.test(anahtar) ? 'api-free.deepl.com' : 'api.deepl.com';
+  const govdeStr = JSON.stringify(Object.assign({ text: metinler, target_lang: hedef }, kaynak ? { source_lang: kaynak } : {}));
+  const y = await httpsJson({ hostname: host, path: '/v2/translate', method: 'POST',
+    headers: { 'Authorization': 'DeepL-Auth-Key ' + anahtar, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(govdeStr) } }, govdeStr);
+  if (y.kod !== 200 || !Array.isArray(y.veri.translations)) { console.error('[deepl]', y.kod); return null; }
+  return y.veri.translations.map(t => t.text);
+}
+// Tarife en uygun Olivamore yağı (katalogdaki güncel ürünle)
+function tarifYagi(metin, en) {
+  const t = metin.toLowerCase();
+  const cfg = oku('cms.json', {});
+  const urun = id => (cfg.products || []).find(p => p.id === id && p.visible !== false);
+  const sec = (id, nedenTR, nedenEN) => { const p = urun(id); return p ? { ad: en ? (p.nameEN || p.nameTR) : p.nameTR, birim: (en ? p.unitEN : p.unitTR) || '', img: p.img, href: 'p.html?id=' + encodeURIComponent(p.id), neden: en ? nedenEN : nedenTR } : null; };
+  if (/(cake|dessert|cookie|muffin|orange|citrus|mandarin|tart)/.test(t)) return sec('ces-mand', 'Narenciyeli ve tatlı tariflerde Bodrum Mandalina Çeşnili yağ aromayı tamamlar; servisten önce az miktarda ekle.', 'In citrus and sweet recipes, the Bodrum Mandarin infused oil rounds off the aroma; add a little before serving.');
+  if (/(fish|salmon|bass|bream|seafood|shrimp|prawn|octopus|squid|mussel|tuna|carpaccio)/.test(t)) return sec('ces-berg', 'Balık ve deniz ürünlerinde Bergamot Çeşnili yağ, servisten hemen önce damla damla eklenince ferah bir bitiş verir.', 'With fish and seafood, a few drops of Bergamot infused oil just before serving give a fresh finish.');
+  if (/(salad|dressing|hummus|bruschetta|dip|raw|carpaccio|gazpacho|tabbouleh)/.test(t)) return sec('ay500', 'Çiğ ve soğuk tabaklarda Ayvalık Erken Hasat’ın yumuşak, meyvemsi karakteri öne çıkar; serviste gezdir.', 'In raw and cold dishes the smooth, fruity Ayvalık Early Harvest shines; drizzle at serving.');
+  if (/(tomato|feta|greek|mediterranean|bean|chickpea|grilled vegetable|eggplant|aubergine)/.test(t)) return sec('tr750', 'Domates, peynir ve baklagillerle Trilye Erken Hasat’ın yoğun, biberimsi bitişi iyi eşleşir; servis sırasında ekle.', 'Trilye Early Harvest’s intense, peppery finish pairs well with tomato, cheese and pulses; add at serving.');
+  return sec('og5l', 'Fırın, kavurma ve ocak yemeklerinde günlük pişirme yağı olarak Olgun Hasat; tabağa son dokunuşu Erken Hasat ile yapabilirsin.', 'For roasting, sautéing and stovetop cooking, Ripe Harvest is the everyday cooking oil; finish the plate with Early Harvest.')
+    || sec('ay500', '', '');
+}
+async function tarifAra(malzemeMetni, en, istemciKimligi) {
+  const ayar = tarifAyar();
+  if (!ayar) return { durum: 503, veri: { hata: 'kapali' } };
+  const simdi = Date.now();
+  tarifCagri = tarifCagri.filter(t => simdi - t < 60000);
+  if (tarifCagri.length >= 9) return { durum: 429, veri: { hata: 'yogun' } }; // Edamam Basic: dakikada 10
+  // Türkçe malzemeler → İngilizce sorgu (sözlük + gerekirse DeepL)
+  const parcalar = String(malzemeMetni || '').toLocaleLowerCase('tr').split(/[,\n;]+| ve /).map(x => x.trim()).filter(Boolean).slice(0, 8);
+  if (!parcalar.length) return { durum: 400, veri: { hata: 'bos' } };
+  let sorguParca = parcalar.map(p => en ? p : (MALZEME_SOZLUK[p] || null));
+  const bilinmeyen = parcalar.filter((p, i) => sorguParca[i] === null);
+  if (bilinmeyen.length) {
+    const ceviri = await deeplCevir(bilinmeyen, 'EN-US', 'TR', ayar.deepl).catch(() => null);
+    let j = 0;
+    sorguParca = sorguParca.map((x, i) => x !== null ? x : ((ceviri && ceviri[j++]) || parcalar[i]));
+  }
+  const q = sorguParca.join(' ');
+  tarifCagri.push(simdi);
+  const alanlar = ['label', 'image', 'url', 'source', 'ingredientLines', 'yield', 'totalTime', 'dishType', 'cuisineType', 'uri'].map(a => '&field=' + a).join('');
+  const yol = '/api/recipes/v2?type=public&q=' + encodeURIComponent(q) + '&app_id=' + encodeURIComponent(ayar.id) + '&app_key=' + encodeURIComponent(ayar.key) + alanlar;
+  let y;
+  try {
+    y = await httpsJson({ hostname: 'api.edamam.com', path: yol, method: 'GET', headers: { 'Accept': 'application/json', 'Edamam-Account-User': istemciKimligi || ayar.kullanici } });
+  } catch (e) { console.error('[edamam]', e.message); return { durum: 502, veri: { hata: 'baglanti' } }; }
+  if (y.kod === 429) return { durum: 429, veri: { hata: 'yogun' } };
+  if (y.kod !== 200) { console.error('[edamam]', y.kod, JSON.stringify(y.veri).slice(0, 200)); return { durum: 502, veri: { hata: 'servis' } }; }
+  const tarifler = (y.veri.hits || []).slice(0, 6).map(h => h.recipe).filter(Boolean);
+  // Başlık + malzemeler Türkçeye (tek DeepL çağrısı)
+  let ceviriler = null;
+  if (!en && tarifler.length) {
+    const metinler = [];
+    tarifler.forEach(r => { metinler.push(r.label || ''); (r.ingredientLines || []).slice(0, 12).forEach(l => metinler.push(l)); });
+    ceviriler = await deeplCevir(metinler, 'TR', 'EN', ayar.deepl).catch(() => null);
+  }
+  let k = 0;
+  const sonuclar = tarifler.map(r => {
+    const satir = (r.ingredientLines || []).slice(0, 12);
+    const baslikTr = ceviriler ? ceviriler[k++] : null;
+    const malz = satir.map(l => (ceviriler ? ceviriler[k++] : l));
+    const tumMetin = [r.label, (r.dishType || []).join(' '), (r.cuisineType || []).join(' '), satir.join(' ')].join(' ');
+    return {
+      baslik: baslikTr || r.label, baslikOrijinal: r.label, resim: r.image, kaynak: r.source, url: r.url,
+      malzemeler: malz, cevrildi: !!ceviriler, sure: r.totalTime || 0, porsiyon: r.yield || 0,
+      yag: tarifYagi(tumMetin, en)
+    };
+  });
+  return { durum: 200, veri: { tamam: true, sorgu: q, sonuclar: sonuclar } };
+}
 /* ---------- Havale / EFT ---------- */
 function bankaBilgi() {
   const b = (oku('cms.json', {}).banka) || {};
@@ -1164,7 +1272,7 @@ function hizAsimi(req) {
    Olaylar /var/www/olivamore-data/analiz/GG-AA-YYYY değil YYYY-AA-GG.jsonl dosyalarına satır satır eklenir.
    IP adresi SAKLANMAZ. Botlar elenir. */
 const ANALIZ_DIZIN = () => { const d = dosya('analiz'); if (!fs.existsSync(d)) fs.mkdirSync(d); return d; };
-const OLAY_TURLERI = ['sayfa', 'urun_gor', 'sepete_ekle', 'sepetten_cikar', 'odeme_basla', 'odeme_adim2', 'satin_al'];
+const OLAY_TURLERI = ['sayfa', 'urun_gor', 'sepete_ekle', 'sepetten_cikar', 'odeme_basla', 'odeme_adim2', 'satin_al', 'tarif_ara'];
 const olaySayac = new Map();
 setInterval(() => olaySayac.clear(), 60000);
 function olayKaydet(req, g) {
@@ -1367,6 +1475,7 @@ function saglikRaporu() {
       yurtici: !!(env.yurticiWsUser && env.yurticiWsSifre), yurticiTest: !!env.yurticiTest,
       trendyol: !!(env.trendyolSaticiId && env.trendyolApiKey), hepsiburada: !!(env.hbMerchantId && env.hbKullanici),
       panelSifre: !!(env.adminKullanici && env.adminHash),
+      tarifAsistani: !!(env.edamamAppId && env.edamamAppKey), ceviri: !!env.deeplKey,
       metaCapi: !!env.metaCapiToken, metaTest: !!env.metaTestKodu, siteAdresi: SITE(),
       banka: !!(bankaBilgi().iban)
     },
@@ -1411,6 +1520,16 @@ const sunucu = http.createServer(async (req, res) => {
       res.writeHead(204); return res.end();
     }
 
+    // Tarif asistanı (Edamam). Rate-limit: kişi başı dakikada 6, toplam dakikada 9
+    if (req.method === 'POST' && yol === '/api/tarif-ara') {
+      const ip = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
+      const n = (tarifIpSayac.get(ip) || 0) + 1; tarifIpSayac.set(ip, n);
+      if (n > 6) return json(res, 429, { hata: 'yogun' });
+      const g = await govde(req, 0.02);
+      const kimlik = 'om-' + crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+      const r = await tarifAra(temiz(g.malzemeler, 300), g.dil === 'en', kimlik);
+      return json(res, r.durum, r.veri);
+    }
     // Hız sınırı: yönetici istekleri ve iyzico geri dönüşü hariç (iyzico tüm müşteriler için aynı IP'den gelir)
     if (req.method === 'POST' && yol !== '/api/odeme-sonuc' && !(yol.indexOf('/api/admin/') === 0 && adminYetkili(req)) && hizAsimi(req)) {
       return json(res, 429, { hata: 'Çok fazla istek; bir dakika sonra tekrar dene.' });
