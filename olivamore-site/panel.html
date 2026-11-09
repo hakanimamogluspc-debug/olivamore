@@ -1329,6 +1329,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Rozet (EN)</label><input type="text" class="p-badgeEN" value="' + esc(p.badgeEN) + '"></div>' +
       '<div class="field"><label>Vitrin sırası (0-4)</label><input type="number" class="p-featured" min="0" max="4" value="' + (p.featured || 0) + '"></div>' +
       '</div>' +
+      '<div class="grid3">' +
+      '<div class="field"><label>Hasat tarihi (ay / yıl)</label><input type="month" class="p-hasat" value="' + esc(p.hasatTarihi || '') + '" min="2020-01" max="2035-12"><small style="display:block;margin-top:4px;color:var(--soft);">Ürün sayfasında "Ekim 2025 hasadı" olarak görünür. Boş = gösterilmez.</small></div>' +
+      '<div class="field"><label>Hasat notu (TR, isteğe bağlı)</label><input type="text" class="p-hasatNotTR" value="' + esc(p.hasatNotTR || '') + '" placeholder="örn. erken hasat · soğuk sıkım"></div>' +
+      '<div class="field"><label>Hasat notu (EN)</label><input type="text" class="p-hasatNotEN" value="' + esc(p.hasatNotEN || '') + '" placeholder="e.g. early harvest · cold pressed"></div>' +
+      '</div>' +
       '<div class="field"><label>Green Ops stok kodu (fatura)</label><input type="text" class="p-stokKodu" value="' + esc(p.stokKodu || '') + '" placeholder="Örn: 152.04.01.02 — boşsa standart eşleme kullanılır"></div>' +
       '<div class="field"><label>Kategori (koleksiyon filtresi)</label><select class="p-role">' +
       [['', 'Yok (yalnız Tümü\'nde görünür)']].concat(urunKategorileri().map(function (k) { return [k.id, k.adTR]; })).map(function (r) {
@@ -1440,6 +1445,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var stok = g('p-stok');
       p.stok = (stok === '' || stok === undefined) ? undefined : Math.max(0, parseInt(stok, 10) || 0);
       p.badgeTR = g('p-badgeTR'); p.badgeEN = g('p-badgeEN');
+      var hasat = g('p-hasat');
+      if (hasat !== undefined) { if (/^\d{4}-\d{2}$/.test(hasat)) p.hasatTarihi = hasat; else delete p.hasatTarihi; }
+      if (g('p-hasatNotTR') !== undefined) { p.hasatNotTR = g('p-hasatNotTR').trim(); p.hasatNotEN = g('p-hasatNotEN').trim(); }
       p.featured = parseInt(g('p-featured'), 10) || 0;
       p.role = g('p-role') === '__yeni__' ? '' : (g('p-role') || '');
       var sk = g('p-stokKodu'); if (sk !== undefined) p.stokKodu = sk.trim();

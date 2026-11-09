@@ -63,6 +63,7 @@
       <div class="buy">
         <div class="kicker" id="dp-rol"></div>
         <h1 id="dp-ad" style="font-family:Fraunces,serif;font-weight:300;font-size:clamp(1.8rem,3.5vw,2.5rem);margin:8px 0 12px;"></h1>
+        <div class="product-proof-line" id="dp-hasat" style="display:none;margin:-4px 0 14px;"></div>
         <p class="sub" id="dp-not" style="color:var(--ink-soft);line-height:1.7;margin-bottom:20px;"></p>
         <div style="margin-bottom:20px;"><span class="price" id="fiyat-tek" style="font-size:1.6rem;font-weight:700;"></span> <small id="dp-birim" style="color:var(--ink-soft);"></small></div>
         <button class="btn btn-dark" style="width:100%;" id="sepet-btn" data-add>Sepete Ekle</button>
@@ -207,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('dp-ad').textContent = p.nameTR;
       document.getElementById('dp-not').textContent = p.noteTR || '';
       document.getElementById('dp-birim').textContent = p.unitTR || '';
+      (function () { var h = document.getElementById('dp-hasat'), y = window.omHasatYazi ? window.omHasatYazi(p, false) : ''; if (h) { h.textContent = y; h.style.display = y ? '' : 'none'; } })();
       var img = document.getElementById('gallery-img');
       img.src = p.img || 'assets/img/ayvalik-500.jpg';
       img.alt = p.nameTR;

@@ -19,6 +19,15 @@ window.omPixelKur = function (cfg) {
   } catch (e) { }
 };
 /* Satın alma (tarayıcı tarafı; sunucu da aynı event_id ile gönderir → Meta tek sayar) */
+/* Hasat etiketi: "2025-10" → "Ekim 2025 hasadı" / "October 2025 harvest" (panelde ürün başına seçilir) */
+window.omHasatYazi = function (p, en) {
+  if (!p || !/^\d{4}-\d{2}$/.test(p.hasatTarihi || '')) return '';
+  var y = p.hasatTarihi.slice(0, 4), a = +p.hasatTarihi.slice(5, 7);
+  var TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  var EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var not = en ? (p.hasatNotEN || '') : (p.hasatNotTR || '');
+  return (en ? EN[a - 1] + ' ' + y + ' harvest' : TR[a - 1] + ' ' + y + ' hasadı') + (not ? ' · ' + not : '');
+};
 window.omMetaSatin = function (no, toplam, kalemler) {
   try {
     if (!window.fbq || !window.omRiza() || !no) return;
@@ -1287,6 +1296,12 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       const price = document.getElementById('fiyat-tek');
       const addButton = document.getElementById('sepet-btn');
       const gallery = document.getElementById('gallery-img');
+      const hasatEl = document.querySelector('.hasat-etiket');
+      if (hasatEl && AC && AC.products) {
+        const hp = AC.products.find(x => x.id === button.dataset.pid);
+        const yazi = window.omHasatYazi(hp, EN);
+        if (yazi) hasatEl.textContent = yazi;
+      }
       if (price && button.dataset.price) price.innerHTML = (button.dataset.eski ? '<s style="opacity:.5;font-weight:400;font-size:.8em;margin-right:8px;">₺' + button.dataset.eski + '</s>' : '') + '₺' + button.dataset.price;
       if (addButton) {
         addButton.dataset.pid = button.dataset.pid || '';
