@@ -2519,3 +2519,20 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 .bahce-harita{isolation:isolate;z-index:0}
 .bahce-harita .bh-map{z-index:0}
 .ta-pencere{z-index:1100}
+
+/* Bahçe kartları: altın çerçeve + daha kompakt ölçü */
+.bahce-liste{gap:26px;max-width:1080px;margin-left:auto;margin-right:auto}
+.bahce{grid-template-columns:1fr 1fr;border:1px solid #BFA25D;outline:1px solid rgba(191,162,93,.35);outline-offset:5px;box-shadow:0 10px 28px rgba(30,28,25,.06);margin:6px}
+.bahce.vurgu{box-shadow:0 0 0 3px #BFA25D,0 14px 36px rgba(30,28,25,.14)}
+.bahce-harita{min-height:330px;border-right:1px solid #BFA25D}
+.bahce-bilgi{padding:24px 28px;gap:8px}
+.bahce-bilgi .region{font-size:.66rem}
+.bahce-bilgi h3{font-size:1.45rem}
+.bahce-bilgi .card-note{font-size:.88rem;line-height:1.6;margin:0}
+.bahce-tablo{grid-template-columns:repeat(3,1fr);gap:0 16px;margin-top:4px}
+.bahce-tablo div{padding:7px 0}
+.bahce-tablo dt{font-size:.6rem;margin-bottom:2px}
+.bahce-tablo dd{font-size:.84rem;line-height:1.35}
+.bahce-foto{max-height:150px}
+.bahce-bilgi .link-arrow{font-size:.82rem}
+@media(max-width:900px){.bahce{grid-template-columns:1fr}.bahce-harita{min-height:240px;border-right:0;border-bottom:1px solid #BFA25D}.bahce-tablo{grid-template-columns:1fr 1fr}.bahce-bilgi{padding:20px 18px}}
