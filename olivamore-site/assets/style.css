@@ -2536,3 +2536,11 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 .bahce-foto{max-height:150px}
 .bahce-bilgi .link-arrow{font-size:.82rem}
 @media(max-width:900px){.bahce{grid-template-columns:1fr}.bahce-harita{min-height:240px;border-right:0;border-bottom:1px solid #BFA25D}.bahce-tablo{grid-template-columns:1fr 1fr}.bahce-bilgi{padding:20px 18px}}
+
+/* Ödüller: 6 kutu → 3 sütun; madalya kutularında ürün etiketi */
+.quality-award-grid{grid-template-columns:repeat(3,1fr)}
+.quality-award-grid a.odul-madalya{flex-direction:column;gap:14px}
+.quality-award-grid a.odul-madalya img{height:170px;width:auto;max-width:100%}
+.quality-award-grid a.odul-madalya span{font-family:'Poppins',sans-serif;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#8a6f3c;text-align:center;line-height:1.7}
+.quality-award-grid a.odul-madalya span b{font-family:var(--font-serif,serif);font-size:1.15rem;letter-spacing:0;text-transform:none;color:#1e1c19;font-weight:400}
+@media(max-width:900px){.quality-award-grid{grid-template-columns:repeat(2,1fr)}.quality-award-grid a.odul-madalya img{height:120px}}
