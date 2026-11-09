@@ -377,7 +377,7 @@ const tarifIpSayac = new Map();
 setInterval(() => tarifIpSayac.clear(), 60000);
 function tarifAyar() {
   const e = oku('env.json', {});
-  return (e.edamamAppId && e.edamamAppKey) ? { id: e.edamamAppId, key: e.edamamAppKey, deepl: e.deeplKey || '', kullanici: e.edamamKullanici || 'olivamore' } : null;
+  return (e.edamamAppId && e.edamamAppKey) ? { id: e.edamamAppId, key: e.edamamAppKey, deepl: e.deeplKey || '', kullanici: e.edamamKullanici || 'olivamore', kullaniciBasligi: e.edamamKullaniciBasligi === true } : null;
 }
 function httpsJson(secenek, govdeStr) {
   return new Promise((cozul, red) => {
@@ -435,7 +435,7 @@ async function tarifAra(malzemeMetni, en, istemciKimligi) {
   const yol = '/api/recipes/v2?type=public&q=' + encodeURIComponent(q) + '&app_id=' + encodeURIComponent(ayar.id) + '&app_key=' + encodeURIComponent(ayar.key) + alanlar;
   let y;
   try {
-    y = await httpsJson({ hostname: 'api.edamam.com', path: yol, method: 'GET', headers: { 'Accept': 'application/json', 'Edamam-Account-User': istemciKimligi || ayar.kullanici } });
+    y = await httpsJson({ hostname: 'api.edamam.com', path: yol, method: 'GET', headers: Object.assign({ 'Accept': 'application/json' }, ayar.kullaniciBasligi ? { 'Edamam-Account-User': istemciKimligi || ayar.kullanici } : {}) });
   } catch (e) { console.error('[edamam]', e.message); return { durum: 502, veri: { hata: 'baglanti' } }; }
   if (y.kod === 429) return { durum: 429, veri: { hata: 'yogun' } };
   if (y.kod !== 200) { console.error('[edamam]', y.kod, JSON.stringify(y.veri).slice(0, 200)); return { durum: 502, veri: { hata: 'servis' } }; }
