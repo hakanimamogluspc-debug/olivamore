@@ -401,8 +401,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ PARTİLER (HASAT PASAPORTU) ============ -->
     <section class="view" id="view-batches">
-      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(3,1fr);">
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(4,1fr);">
         <button type="button" class="sg-tab aktif" data-sg="tanklar"><b>Tanklar</b><span>Tank bilgileri ve dönemleri</span></button>
+        <button type="button" class="sg-tab" data-sg="bahceler"><b>Bahçeler</b><span>Parsel, uydu görüntüsü, Üreticiyi Tanı</span></button>
         <button type="button" class="sg-tab" data-sg="dene"><b>Sorgu Testi</b><span>Parti numarasını dene</span></button>
         <button type="button" class="sg-tab" data-sg="eski"><b>Eski Parti Kayıtları</b><span>Önceki sistemle girilenler</span></button>
       </div>
@@ -410,6 +411,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <div class="note"><b>Nasıl çalışır:</b> Şişedeki parti numarasının <b>başındaki tarih dolum tarihidir</b>, <b>sonundaki kod tank kodudur</b> (örn. <code>20261102-YT21</code>, <code>230826AYT7</code>, <code>23.06.2026/TYT16</code>). Müşteri Hasat Pasaportu'nda numarayı yazınca sistem tankı bulur, dolum tarihine göre o tankın <b>o tarihteki dönemini</b> gösterir. Tank yeni hasatla dolduğunda tankı silme; <b>yeni dönem ekle</b> — eski şişeler eski dönemi görmeye devam eder.</div>
         <div id="tank-list"></div>
         <button class="btn btn-dark" id="btn-add-tank" type="button">+ Yeni Tank Ekle</button>
+      </div>
+      <div class="sg-pane" data-sg="bahceler" hidden>
+        <div class="note"><b>Bahçeler:</b> Burada girilen her bahçe <b>Üreticiyi Tanı</b> sayfasında uydu görüntüsü, parsel sınırı ve bilgileriyle yayınlanır. Tank dönemlerinde "Bahçe" seçersen Hasat Pasaportu'ndaki <b>Üreticiyi tanı</b> bağlantısı doğrudan o bahçeye gider.<br><b>Parsel sınırı:</b> Google Haritalar'da bahçenin ortasına sağ tıkla → koordinatı kopyala → aşağıya yapıştır → <b>TKGM'den parseli getir</b>. Olmazsa parselsorgu.tkgm.gov.tr'den parseli bulup GeoJSON indir ve "Parsel sınırı" alanına yapıştır.</div>
+        <div id="bahce-list"></div>
+        <button class="btn btn-dark" id="btn-add-bahce" type="button">+ Yeni Bahçe Ekle</button>
       </div>
       <div class="sg-pane" data-sg="dene" hidden>
         <div class="panel">
@@ -1021,7 +1027,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     { kod: '2505969', urun: 'Trilye Erken Hasat Soğuk Sıkım Natürel Sızma Zeytinyağı', hasat: 'Raporda belirtilmemiş', sikim: 'Ürün adında soğuk sıkım olarak belirtilmiş', cesit: 'Trilye', parsel: 'Raporda belirtilmemiş', asidite: '%0,12 ± 0,01', polifenol: 'Raporda belirtilmemiş', peroksit: '3,41 ± 0,848 meq O₂/kg', lab: 'DEPPO · 11.03.2025 · Rapor 2505969', tadim: 'Bu laboratuvar raporunda duyusal profil yer almıyor.', uretici: 'Gönderen: Pektaş Tarım · Marka: Olivamore', avatar: 'PT', href: 'urun-trilye.html' }
   ];
 
-  var PAGE_NAMES = { 'koleksiyon': 'Koleksiyon', 'kulup': 'Club', 'ureticiler': 'Üreticiler', 'hikayemiz': 'Hikâyemiz', 'ogren': 'Öğren', 'sss': 'SSS', 'iletisim': 'İletişim', 'hediye-olustur': 'Hediye Oluşturucu', 'tarif-asistani': 'Tarif Asistanı' };
+  var PAGE_NAMES = { 'koleksiyon': 'Koleksiyon', 'kulup': 'Club', 'ureticiler': 'Üreticiyi Tanı', 'hikayemiz': 'Hikâyemiz', 'ogren': 'Öğren', 'sss': 'SSS', 'iletisim': 'İletişim', 'hediye-olustur': 'Hediye Oluşturucu', 'tarif-asistani': 'Tarif Asistanı' };
   var MOD_NAMES = {
     announce: ['Duyuru Şeridi', 'Tüm sayfaların üstündeki bant'],
     trust: ['Güven Şeridi', 'Ana sayfa: 5 rozetli siyah şerit'],
@@ -1618,7 +1624,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     ['urun', 'Ürün adı (müşteri görür)', 'text'], ['href', 'Ürün sayfası', 'href'],
     ['hasat', 'Hasat tarihi', 'date'], ['sikim', 'Sıkım tarihi', 'date'], ['cesit', 'Zeytin çeşidi', 'text'],
     ['sinif', 'Kalite sınıfı', 'text'], ['parsel', 'Bahçe / parsel', 'text'], ['lab', 'Analiz raporu bağlantısı (PDF)', 'text'],
-    ['uretici', 'Üretici', 'text'], ['tadim', 'Tadım notu', 'textarea']
+    ['uretici', 'Üretici', 'text'], ['bahce', 'Bahçe (Üreticiyi Tanı bağlantısı)', 'bahce'], ['tadim', 'Tadım notu', 'textarea']
   ];
   function tankDonemHtml(d, j) {
     return '<div class="tk-donem" data-j="' + j + '"><div class="tk-donem-bas"><b>Dönem ' + (j + 1) + '</b>' + (d.baslangic ? ' · ' + esc(d.baslangic) + (d.bitis ? ' → ' + esc(d.bitis) : ' → devam ediyor') : '') +
@@ -1626,6 +1632,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       TANK_ALAN.map(function (a) {
         var v = d[a[0]] || '';
         if (a[2] === 'textarea') return '</div><div class="field"><label>' + a[1] + '</label><textarea class="tkd-' + a[0] + '" rows="2">' + esc(v) + '</textarea></div><div class="grid3">';
+        if (a[2] === 'bahce') return '<div class="field"><label>' + a[1] + '</label><select class="tkd-bahce"><option value="">— seçilmedi —</option>' + (C.bahceler || []).map(function (b) { return '<option value="' + esc(b.id) + '"' + (b.id === v ? ' selected' : '') + '>' + esc(b.ad || b.id) + '</option>'; }).join('') + '</select></div>';
         if (a[2] === 'href') return '<div class="field"><label>' + a[1] + '</label><select class="tkd-href">' + ['urun.html', 'urun-trilye.html', 'koleksiyon.html'].concat((C.products || []).filter(function (p) { return p.visible !== false && (p.type === 'product' || !p.type); }).map(function (p) { return 'p.html?id=' + p.id; })).map(function (h) { return '<option value="' + esc(h) + '"' + (h === v ? ' selected' : '') + '>' + esc(h) + '</option>'; }).join('') + '</select></div>';
         return '<div class="field"><label>' + a[1] + '</label><input type="' + (a[2] === 'date' ? 'date' : 'text') + '" class="tkd-' + a[0] + '" value="' + esc(v) + '"></div>';
       }).join('') + '</div></div>';
@@ -1676,7 +1683,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       var t = C.tanklar[i], onceki = (t.donemler || []).slice().sort(function (a, b) { return (a.baslangic || '') < (b.baslangic || '') ? 1 : -1; })[0] || {};
       var bugun = new Date().toISOString().slice(0, 10);
       if (onceki.baslangic && !onceki.bitis) onceki.bitis = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      t.donemler.push({ baslangic: bugun, urun: onceki.urun || '', href: onceki.href || 'urun.html', cesit: onceki.cesit || '', parsel: onceki.parsel || '', sinif: onceki.sinif || '', uretici: onceki.uretici || '' });
+      t.donemler.push({ baslangic: bugun, urun: onceki.urun || '', href: onceki.href || 'urun.html', cesit: onceki.cesit || '', parsel: onceki.parsel || '', sinif: onceki.sinif || '', uretici: onceki.uretici || '', bahce: onceki.bahce || '' });
       renderTanklar(); dirty();
     } else if (e.target.classList.contains('tk-donem-sil')) {
       if (!confirm('Bu dönem silinsin mi?')) return;
@@ -1695,6 +1702,97 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       satir('Müşteri sonucu', r.tank && r.donem ? '✓ Pasaport kartı gösterilir' : 'Bulunamadı mesajı gösterilir', !!(r.tank && r.donem));
   });
   document.getElementById('tank-dene').addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('tank-dene-btn').click(); });
+
+  /* ================== BAHÇELER (Üreticiyi Tanı) ================== */
+  var BAHCE_ALAN = [
+    ['ad', 'Bahçe adı', 'text', 'örn. Olivamore Bahçesi — Küçükköy'], ['bolge', 'Bölge etiketi', 'text', 'örn. Ayvalık · 2017\'den beri'],
+    ['kurulus', 'Bize katıldığı yıl', 'text', 'örn. 2017'], ['cesit', 'Zeytin çeşidi', 'text', 'örn. Ayvalık (Edremit)'],
+    ['agac', 'Ağaç sayısı', 'text', 'örn. 1.200'], ['yas', 'Ağaç yaşı', 'text', 'örn. 40–120 yıl'],
+    ['rakim', 'Rakım', 'text', 'örn. 180 m'], ['sulama', 'Sulama', 'text', 'örn. Kuru tarım'],
+    ['enlem', 'Enlem', 'text', 'örn. 39.3190'], ['boylam', 'Boylam', 'text', 'örn. 26.6930'],
+    ['il', 'İl', 'text', ''], ['ilce', 'İlçe', 'text', ''], ['mahalle', 'Mahalle / köy', 'text', ''],
+    ['mevkii', 'Mevkii', 'text', ''], ['ada', 'Ada', 'text', ''], ['parsel', 'Parsel', 'text', ''],
+    ['alan', 'Alan', 'text', 'örn. 18.500 m²']
+  ];
+  function bahceSlug(s) { return String(s || '').toLocaleLowerCase('tr').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40); }
+  function bahceItem(b, i) {
+    var nokta = 0; try { nokta = JSON.stringify(JSON.parse(b.sinir || 'null')).split('],[').length; } catch (e) { nokta = -1; }
+    return '<details class="item bh-item" data-i="' + i + '"><summary>' + (b.foto ? '<img src="' + esc(b.foto) + '" alt="" style="width:46px;height:46px;object-fit:cover;">' : '') + '<div class="t" style="margin-left:4px;"><b>' + esc(b.ad || 'Yeni bahçe') + '</b><span>' + esc([b.mahalle, b.ilce].filter(Boolean).join(', ') || 'konum girilmedi') + (b.ada ? ' · Ada ' + esc(b.ada) + ' / Parsel ' + esc(b.parsel || '') : '') + (b.gizli ? ' · <b style="color:#b04a3a;">gizli</b>' : '') + '</span></div></summary><div class="body">' +
+      '<div class="grid3">' + BAHCE_ALAN.map(function (a) {
+        return '<div class="field"><label>' + a[1] + '</label><input type="text" class="bh-' + a[0] + '" value="' + esc(b[a[0]] || '') + '" placeholder="' + esc(a[3]) + '"></div>';
+      }).join('') + '</div>' +
+      '<div class="row-actions" style="margin-top:0;"><button type="button" class="btn btn-gold btn-sm bh-tkgm">TKGM\'den parseli getir (enlem/boylama göre)</button><span class="bh-durum" style="font-size:.85rem;color:var(--soft);">' + (nokta > 0 ? '✓ Parsel sınırı kayıtlı' : nokta < 0 ? '⚠ Parsel sınırı okunamıyor (geçersiz GeoJSON)' : 'Parsel sınırı yok — haritada yalnız işaret gösterilir') + '</span></div>' +
+      '<div class="field"><label>Parsel sınırı (GeoJSON — otomatik dolar)</label><textarea class="bh-sinir" rows="2" style="font-family:monospace;font-size:.75rem;">' + esc(b.sinir || '') + '</textarea></div>' +
+      '<div class="grid2"><div class="field"><label>Açıklama (TR)</label><textarea class="bh-aciklamaTR" rows="3">' + esc(b.aciklamaTR || '') + '</textarea></div>' +
+      '<div class="field"><label>Açıklama (EN)</label><textarea class="bh-aciklamaEN" rows="3">' + esc(b.aciklamaEN || '') + '</textarea></div></div>' +
+      '<div class="grid2"><div class="field"><label>Bahçe fotoğrafı</label><input type="file" accept="image/*" class="bh-foto-dosya"><input type="hidden" class="bh-foto" value="' + esc(b.foto || '') + '">' + (b.foto ? '<img src="' + esc(b.foto) + '" alt="" style="margin-top:8px;max-width:180px;">' : '') + '</div>' +
+      '<div class="field"><label>Bağlantı adı</label><input type="text" class="bh-id" value="' + esc(b.id || '') + '" placeholder="otomatik"><small style="display:block;margin-top:4px;color:var(--soft);">ureticiler.html#bahce-' + esc(b.id || '…') + '</small>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin-top:10px;"><input type="checkbox" class="bh-gizli"' + (b.gizli ? ' checked' : '') + ' style="width:auto;"> Sitede gösterme</label></div></div>' +
+      '<div class="row-actions"><button type="button" class="btn btn-danger btn-sm bh-sil">Bahçeyi sil</button></div>' +
+      '</div></details>';
+  }
+  function renderBahceler() {
+    if (!Array.isArray(C.bahceler)) C.bahceler = [];
+    var el = document.getElementById('bahce-list'); if (!el) return;
+    var acik = [].map.call(document.querySelectorAll('#bahce-list .bh-item[open]'), function (d) { return d.dataset.i; });
+    el.innerHTML = C.bahceler.length ? C.bahceler.map(bahceItem).join('') : '<p style="color:var(--soft);">Henüz bahçe yok. "+ Yeni Bahçe Ekle" ile başla.</p>';
+    acik.forEach(function (i) { var d = document.querySelector('#bahce-list .bh-item[data-i="' + i + '"]'); if (d) d.open = true; });
+  }
+  function syncBahcelerFromDOM() {
+    if (!Array.isArray(C.bahceler)) C.bahceler = [];
+    var kullanilan = {};
+    document.querySelectorAll('#bahce-list .bh-item').forEach(function (d) {
+      var b = C.bahceler[+d.dataset.i]; if (!b) return;
+      BAHCE_ALAN.forEach(function (a) { b[a[0]] = d.querySelector('.bh-' + a[0]).value.trim(); });
+      b.enlem = b.enlem.replace(',', '.'); b.boylam = b.boylam.replace(',', '.');
+      b.sinir = d.querySelector('.bh-sinir').value.trim();
+      b.aciklamaTR = d.querySelector('.bh-aciklamaTR').value.trim();
+      b.aciklamaEN = d.querySelector('.bh-aciklamaEN').value.trim();
+      b.foto = d.querySelector('.bh-foto').value;
+      b.gizli = d.querySelector('.bh-gizli').checked;
+      var id = bahceSlug(d.querySelector('.bh-id').value || b.ad) || ('bahce-' + (+d.dataset.i + 1));
+      while (kullanilan[id]) id += '-2';
+      kullanilan[id] = 1; b.id = id;
+    });
+  }
+  document.getElementById('btn-add-bahce').addEventListener('click', function () {
+    syncBahcelerFromDOM();
+    C.bahceler.push({ ad: '', bolge: 'Ayvalık', il: 'Balıkesir', ilce: 'Ayvalık' });
+    renderBahceler(); dirty();
+    var it = document.querySelectorAll('#bahce-list .bh-item'); it[it.length - 1].open = true; it[it.length - 1].querySelector('.bh-ad').focus();
+  });
+  document.getElementById('bahce-list').addEventListener('input', function () { dirty(); });
+  document.getElementById('bahce-list').addEventListener('change', function (e) {
+    if (!e.target.classList.contains('bh-foto-dosya') || !e.target.files[0]) return;
+    var kutu = e.target.closest('.bh-item');
+    resizeImage(e.target.files[0], function (dataUrl) { kutu.querySelector('.bh-foto').value = dataUrl; syncBahcelerFromDOM(); renderBahceler(); dirty(); });
+  });
+  document.getElementById('bahce-list').addEventListener('click', function (e) {
+    var item = e.target.closest('.bh-item'); if (!item) return;
+    if (e.target.classList.contains('bh-sil')) {
+      if (!confirm('Bu bahçe silinsin mi? Ona bağlı tank dönemlerindeki bağlantı boşa düşer.')) return;
+      syncBahcelerFromDOM(); C.bahceler.splice(+item.dataset.i, 1); renderBahceler(); dirty();
+    } else if (e.target.classList.contains('bh-tkgm')) {
+      var lat = item.querySelector('.bh-enlem').value.replace(',', '.').trim(), lng = item.querySelector('.bh-boylam').value.replace(',', '.').trim();
+      var durum = item.querySelector('.bh-durum');
+      // Google Haritalar'dan "39.31, 26.69" biçiminde tek kutuya yapıştırılmışsa ayır
+      var ikili = lat.match(/^(-?\d+\.\d+)\s*[, ]\s*(-?\d+\.\d+)$/);
+      if (ikili) { lat = ikili[1]; lng = ikili[2]; item.querySelector('.bh-enlem').value = lat; item.querySelector('.bh-boylam').value = lng; }
+      if (!lat || !lng) { durum.textContent = 'Önce enlem ve boylam gir.'; return; }
+      if (MODE !== 'api') { durum.textContent = 'Yalnız canlı sunucuda çalışır.'; return; }
+      durum.textContent = 'TKGM sorgulanıyor…';
+      fetch('/api/admin/tkgm-parsel?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng))
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j.tamam) { durum.textContent = '⚠ ' + (j.hata || 'Bulunamadı'); return; }
+          ['il', 'ilce', 'mahalle', 'mevkii', 'ada', 'parsel', 'alan'].forEach(function (k) { if (j[k]) item.querySelector('.bh-' + k).value = j[k]; });
+          item.querySelector('.bh-sinir').value = j.sinir;
+          durum.textContent = '✓ Parsel getirildi: ' + [j.mahalle, 'Ada ' + j.ada, 'Parsel ' + j.parsel, j.nitelik].filter(Boolean).join(' · ');
+          dirty();
+        })
+        .catch(function () { durum.textContent = '⚠ Bağlantı hatası'; });
+    }
+  });
 
   /* ================== PARTİLER ================== */
   function batchItem(b, i) {
@@ -1830,6 +1928,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     syncProductsFromDOM();
     syncBlogsFromDOM();
     syncBatchesFromDOM();
+    syncBahcelerFromDOM();
     syncTanklarFromDOM();
     syncCouponsFromDOM();
     syncKategorilerFromDOM();
@@ -3733,7 +3832,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
   /* ================== BAŞLAT ================== */
   function renderAll() {
-    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderTanklar(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderBloklar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderBahceler(); renderTanklar(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderBloklar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
   fetch('/api/admin/config', { cache: 'no-store' })

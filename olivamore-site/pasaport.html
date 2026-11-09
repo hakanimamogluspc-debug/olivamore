@@ -103,7 +103,7 @@
             <b style="font-weight:400;" id="pp-uretici"></b>
             <p style="font-size:.85rem;color:var(--ink-soft);">Bu kart yalnızca bağlantılı raporda açıkça yer alan bilgileri gösterir; raporda bulunmayan hasat, parsel veya tadım ayrıntıları tahmin edilmez.</p>
 
-            <a class="link-arrow" style="font-size:.85rem;" href="ureticiler.html">Üreticiyi tanı →</a>
+            <a class="link-arrow" style="font-size:.85rem;" id="pp-uretici-link" href="ureticiler.html">Üreticiyi tanı →</a>
           </div>
         </div>
 
@@ -333,6 +333,12 @@ document.addEventListener('DOMContentLoaded', function () {
     koy('pp-tadim', d.tadim || 'Gösterilen bilgiler bu dolumun ait olduğu tankın kendi kayıtlarımızdaki değerleridir.');
     koy('pp-uretici', d.uretici || 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık');
     document.getElementById('pp-avatar').textContent = (d.uretici || 'PT').replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, '').slice(0, 2).toUpperCase() || 'PT';
+    (function () {
+      var bh = d.bahce ? (window.__omBahceler || []).find(function (b) { return b.id === d.bahce && !b.gizli; }) : null;
+      var ln = document.getElementById('pp-uretici-link');
+      if (ln) ln.href = 'ureticiler.html' + (bh ? '#bahce-' + bh.id : '');
+      if (bh && !d.parsel) koy('pp-parsel', bh.ad + (bh.ada ? ' · Ada ' + bh.ada + '/' + (bh.parsel || '') : ''));
+    })();
     document.getElementById('pp-link').href = d.href || 'urun.html';
     document.getElementById('pp-report').href = d.lab || 'kalite.html#analizler';
     card.classList.add('on');
@@ -346,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       // 1) Tank sistemi: "TARİH + TANK" biçimli numara → panelde girilen tank dönemi
       var cfg = await yerelVeri();
+      window.__omBahceler = cfg.bahceler || [];
       var tc = omPartiCoz(q, cfg.tanklar || []);
       if (tc && tc.tank && tc.donem && tc.dolum) { tankDoldur(tc); return; }
       // 2) Eski tip parti kodu (tam eşleşme)

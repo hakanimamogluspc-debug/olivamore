@@ -35,17 +35,18 @@
 <!-- 1. MANIFESTO -->
 <div class="page-hero">
   <div class="container narrow">
-    <div class="kicker">Producers &amp; Traceability</div>
+    <div class="kicker">Meet the Producer</div>
     <h1>We know who's behind it</h1>
-    <p class="lead">Olivamore's production journey began with a grove acquired in Ayvalık in 2017. We trace our own harvest and carefully selected harvests by batch, and pair each bottle only with origin, production and analysis details we can verify.</p>
+    <p class="lead">Olivamore's production journey began with a grove acquired in Ayvalık in 2017. Below are our groves with their land-registry parcels and satellite views; each bottle is traced by batch back to the grove it came from.</p>
   </div>
 </div>
 
 <!-- 2. PRODUCER CARDS -->
 <section class="block">
   <div class="container">
-    <div class="sec-head center"><div class="kicker">Origin</div><h2>The production approach behind the bottle</h2></div>
-    <div class="producer-grid">
+    <div class="sec-head center"><div class="kicker">Our Groves</div><h2>The land our olives grow on</h2><p class="lead">Land-registry parcel, satellite view and grove details — the place behind every bottle.</p></div>
+    <div id="bahce-liste" class="bahce-liste"></div>
+    <div class="producer-grid" id="uretici-statik">
       <div class="producer-card">
         <div class="producer-photo art-olive"><div class="avatar" style="width:90px;height:90px;font-size:2rem;">PT</div></div>
         <div class="card-body">
@@ -54,16 +55,7 @@
           <p class="card-note">The grove where Olivamore's olive-growing journey began. Harvest and batch details are published in the Harvest Passport only when supported by documentation.</p>
         </div>
       </div>
-      <div class="producer-card">
-        <div class="producer-photo art-gold"><div class="avatar" style="width:90px;height:90px;font-size:2rem;">HK</div></div>
-        <div class="card-body">
-          <span class="region">Selected harvests</span>
-          <h3>Sourcing &amp; Batch Control</h3>
-          <p class="card-note">For products outside our own grove, we publish only verified supplier, variety, harvest and analysis information. Unverified people or parcel names are not displayed.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
 </section>
 
 <!-- 3. TRACE A BOTTLE BACK -->
@@ -109,6 +101,66 @@
   </div>
 </section>
 
+<script>
+/* Üreticiyi Tanı: panelde girilen bahçeler (parsel + uydu görüntüsü) */
+(function () {
+  var EN = true;
+  var L = EN ? { konum: 'Location', parsel: 'Land registry', alan: 'Area', cesit: 'Variety', agac: 'Trees', yas: 'Tree age', rakim: 'Altitude', sulama: 'Irrigation', kurulus: 'With us since', ada: 'Block', par: 'Parcel', harita: 'Open in Google Maps', kaynak: 'Parcel boundary: TKGM land registry · Imagery: Esri' }
+             : { konum: 'Konum', parsel: 'Tapu kaydı', alan: 'Alan', cesit: 'Çeşit', agac: 'Ağaç sayısı', yas: 'Ağaç yaşı', rakim: 'Rakım', sulama: 'Sulama', kurulus: 'Bize katıldığı yıl', ada: 'Ada', par: 'Parsel', harita: 'Google Haritalar\'da aç', kaynak: 'Parsel sınırı: TKGM tapu kaydı · Uydu görüntüsü: Esri' };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function leafletYukle(cb) {
+    if (window.L && window.L.map) return cb();
+    var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+    var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload = cb; document.head.appendChild(s);
+  }
+  function haritaKur(el, b) {
+    var lat = parseFloat(b.enlem), lng = parseFloat(b.boylam), geo = null;
+    try { geo = b.sinir ? JSON.parse(b.sinir) : null; } catch (e) { geo = null; }
+    if (!(lat && lng) && !geo) { el.style.display = 'none'; return; }
+    var harita = L.map(el, { scrollWheelZoom: false, attributionControl: true, zoomControl: true });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics' }).addTo(harita);
+    if (geo) {
+      var kat = L.geoJSON(geo, { style: { color: '#E8C978', weight: 3, fillColor: '#BFA25D', fillOpacity: .18 } }).addTo(harita);
+      harita.fitBounds(kat.getBounds(), { padding: [30, 30], maxZoom: 18 });
+    } else {
+      harita.setView([lat, lng], 17);
+      L.circleMarker([lat, lng], { radius: 9, color: '#fff', weight: 2, fillColor: '#BFA25D', fillOpacity: 1 }).addTo(harita);
+    }
+  }
+  function ciz(liste) {
+    var kutu = document.getElementById('bahce-liste');
+    if (!kutu || !liste.length) return;
+    document.getElementById('uretici-statik').style.display = 'none';
+    kutu.innerHTML = liste.map(function (b) {
+      var gm = (b.enlem && b.boylam) ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(b.enlem + ',' + b.boylam) : '';
+      var bilgi = [
+        [L.konum, [b.mevkii, b.mahalle, b.ilce, b.il].filter(Boolean).join(', ')],
+        [L.parsel, b.ada || b.parsel ? L.ada + ' ' + (b.ada || '—') + ' · ' + L.par + ' ' + (b.parsel || '—') : ''],
+        [L.alan, b.alan], [L.cesit, b.cesit], [L.agac, b.agac], [L.yas, b.yas], [L.rakim, b.rakim], [L.sulama, b.sulama], [L.kurulus, b.kurulus]
+      ].filter(function (x) { return x[1]; });
+      var aciklama = EN ? (b.aciklamaEN || b.aciklamaTR) : b.aciklamaTR;
+      return '<article class="bahce" id="bahce-' + esc(b.id) + '">' +
+        '<div class="bahce-harita"><div class="bh-map" data-id="' + esc(b.id) + '"></div><small>' + L.kaynak + '</small></div>' +
+        '<div class="bahce-bilgi">' +
+          (b.bolge ? '<span class="region">' + esc(b.bolge) + '</span>' : '') +
+          '<h3>' + esc(b.ad) + '</h3>' +
+          (aciklama ? '<p class="card-note">' + esc(aciklama) + '</p>' : '') +
+          '<dl class="bahce-tablo">' + bilgi.map(function (x) { return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>'; }).join('') + '</dl>' +
+          (b.foto ? '<img class="bahce-foto" src="' + esc(b.foto) + '" alt="' + esc(b.ad) + '" loading="lazy">' : '') +
+          (gm ? '<a class="link-arrow" href="' + gm + '" target="_blank" rel="noopener">' + L.harita + ' →</a>' : '') +
+        '</div></article>';
+    }).join('');
+    leafletYukle(function () {
+      liste.forEach(function (b) { var el = kutu.querySelector('.bh-map[data-id="' + b.id + '"]'); if (el) haritaKur(el, b); });
+      var h = location.hash.match(/^#bahce-([\w-]+)$/);
+      if (h) { var hedef = document.getElementById('bahce-' + h[1]); if (hedef) { hedef.classList.add('vurgu'); setTimeout(function () { hedef.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150); } }
+    });
+  }
+  fetch('/api/config', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (c) { ciz((c.bahceler || []).filter(function (b) { return b && b.ad && !b.gizli; })); })
+    .catch(function () {});
+})();
+</script>
 <div id="om-footer"></div>
 </body>
 </html>

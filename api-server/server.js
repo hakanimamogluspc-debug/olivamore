@@ -2210,6 +2210,21 @@ const sunucu = http.createServer(async (req, res) => {
       return json(res, 200, { tamam: true });
     }
 
+    // Bahçe koordinatından TKGM (Parsel Sorgu) parsel bilgisi + sınır poligonu
+    if (req.method === 'GET' && yol === '/api/admin/tkgm-parsel') {
+      const tu = new URL(req.url, 'http://x'); const lat = parseFloat(tu.searchParams.get('lat')), lng = parseFloat(tu.searchParams.get('lng'));
+      if (!(lat > 35 && lat < 43 && lng > 25 && lng < 45)) return json(res, 400, { hata: 'Koordinat Türkiye sınırları içinde değil' });
+      try {
+        const y = await httpsJson({ hostname: 'cbsapi.tkgm.gov.tr', path: '/megsiswebapi.v3/api/parsel/' + lat.toFixed(6) + '/' + lng.toFixed(6) + '/', method: 'GET',
+          headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (Olivamore panel)', 'Referer': 'https://parselsorgu.tkgm.gov.tr/', 'Origin': 'https://parselsorgu.tkgm.gov.tr' } });
+        let ft = y.veri;
+        if (ft && ft.type === 'FeatureCollection') ft = (ft.features || [])[0];
+        if (y.kod !== 200 || !ft || !ft.geometry) return json(res, 502, { hata: 'TKGM yanıt vermedi (kod ' + y.kod + '). Sınırı parselsorgu.tkgm.gov.tr\'den GeoJSON olarak indirip yapıştırabilirsin.' });
+        const p = ft.properties || {};
+        return json(res, 200, { tamam: true, il: p.ilAd || '', ilce: p.ilceAd || '', mahalle: p.mahalleAd || '', ada: String(p.adaNo || ''), parsel: String(p.parselNo || ''),
+          alan: p.alan ? String(p.alan) + ' m²' : '', mevkii: p.mevkii || '', nitelik: p.nitelik || '', sinir: JSON.stringify(ft.geometry) });
+      } catch (e) { return json(res, 502, { hata: 'TKGM bağlantı hatası: ' + e.message + '. Sınırı elle yapıştırabilirsin.' }); }
+    }
     if (req.method === 'GET' && yol === '/api/admin/web-analiz') {
       const q = new URLSearchParams((req.url || '').split('?')[1] || '');
       const gun = Math.min(90, Math.max(1, parseInt(q.get('gun'), 10) || 7));

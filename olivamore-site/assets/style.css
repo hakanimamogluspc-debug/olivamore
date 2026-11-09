@@ -2493,3 +2493,20 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
   .fk-altyazi b{font-size:1.35rem}
   .fk-altyazi i{font-size:.62rem;letter-spacing:.12em;margin-top:4px}
 }
+
+/* ===== Üreticiyi Tanı: bahçeler (uydu haritası + parsel bilgisi) ===== */
+.bahce-liste{display:flex;flex-direction:column;gap:34px;margin-top:10px}
+.bahce{display:grid;grid-template-columns:1.25fr 1fr;gap:0;background:#fff;box-shadow:0 14px 40px rgba(30,28,25,.08);scroll-margin-top:calc(var(--hdr-h) + 20px);transition:box-shadow .4s}
+.bahce.vurgu{box-shadow:0 0 0 3px var(--gold),0 18px 50px rgba(30,28,25,.16)}
+.bahce-harita{position:relative;min-height:420px;background:#e9e5da}
+.bahce-harita .bh-map{position:absolute;inset:0}
+.bahce-harita small{position:absolute;left:10px;bottom:8px;z-index:500;background:rgba(255,255,255,.85);padding:3px 8px;font-size:11px;color:#555;pointer-events:none}
+.bahce-harita .leaflet-control-attribution{font-size:9px}
+.bahce-bilgi{padding:34px 36px;display:flex;flex-direction:column;gap:12px}
+.bahce-bilgi h3{font-family:var(--font-serif,serif);font-size:1.9rem;font-weight:400;line-height:1.2;margin:0}
+.bahce-tablo{margin:6px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
+.bahce-tablo div{padding:10px 0;border-bottom:1px solid var(--line,rgba(30,28,25,.1))}
+.bahce-tablo dt{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#8a8377;margin-bottom:3px}
+.bahce-tablo dd{margin:0;font-size:.95rem;color:#2a2a2a}
+.bahce-foto{width:100%;max-height:220px;object-fit:cover;margin-top:6px}
+@media(max-width:900px){.bahce{grid-template-columns:1fr}.bahce-harita{min-height:300px}.bahce-bilgi{padding:24px 20px}.bahce-bilgi h3{font-size:1.5rem}}
