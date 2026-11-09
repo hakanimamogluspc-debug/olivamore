@@ -61,7 +61,7 @@
 <section class="block tight">
   <div class="container">
     <div class="pp-search">
-      <input type="text" id="partiInput" placeholder="Batch or LOT no · e.g. SP-20260915-001-01" maxlength="30">
+      <input type="text" id="partiInput" placeholder="Batch no on the bottle · e.g. 20261102-YT21" maxlength="30">
       <button class="btn btn-dark" id="pp-btn">Look Up</button>
     </div>
     <div class="pp-samples">
@@ -228,12 +228,125 @@ document.addEventListener('DOMContentLoaded', function () {
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+
+  /* ---- Tank sistemi (panel → Tanklar) ---- */
+  /* Parti no çözümleyici: "20261102-YT21", "230826AYT7", "23.06.2026/TYT16", "261102 YT21" ...
+     Baştaki tarih = dolum tarihi (YYYYAAGG, GGAAYYYY, YYAAGG, GGAAYY; ayraçlı ya da bitişik), sondaki = tank kodu. */
+  function omPartiCoz(girdi, tanklar, bugun) {
+    var ham = String(girdi || '').toUpperCase().replace(/\s+/g, ' ').trim();
+    if (!ham) return null;
+    bugun = bugun || new Date();
+    var temizle = function (s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+    // 1) Tarih kısmı: baştaki rakam/ayraç dizisi; tank kısmı: ilk harften itibaren
+    var m = ham.match(/^([0-9][0-9 .\/\-_]*?[0-9])\s*[ .\/\-_]?\s*([A-Z][A-Z0-9 .\/\-_]*)$/);
+    if (!m) return null;
+    var tarihHam = m[1], tankHam = temizle(m[2]);
+    // 2) Tarih adayları
+    var adaylar = [];
+    var ekle = function (y, a, g, bicim) {
+      y = +y; a = +a; g = +g;
+      if (y < 100) y += 2000;
+      if (a < 1 || a > 12 || g < 1 || g > 31 || y < 2015 || y > 2099) return;
+      var d = new Date(Date.UTC(y, a - 1, g));
+      if (d.getUTCMonth() !== a - 1) return; // 31 Şubat gibi
+      if (d.getTime() > bugun.getTime() + 2 * 86400000) return; // gelecek tarih olamaz
+      adaylar.push({ tarih: d.toISOString().slice(0, 10), bicim: bicim });
+    };
+    var parca = tarihHam.split(/[ .\/\-_]+/).filter(Boolean);
+    if (parca.length === 3) {
+      var p = parca;
+      if (p[0].length === 4) ekle(p[0], p[1], p[2], 'YYYY.AA.GG');
+      else if (p[2].length === 4) ekle(p[2], p[1], p[0], 'GG.AA.YYYY');
+      else { ekle(p[2], p[1], p[0], 'GG.AA.YY'); ekle(p[0], p[1], p[2], 'YY.AA.GG'); }
+    } else {
+      var r = tarihHam.replace(/\D/g, '');
+      if (r.length === 8) { ekle(r.slice(0, 4), r.slice(4, 6), r.slice(6, 8), 'YYYYAAGG'); ekle(r.slice(4, 8), r.slice(2, 4), r.slice(0, 2), 'GGAAYYYY'); }
+      else if (r.length === 6) { ekle(r.slice(0, 2), r.slice(2, 4), r.slice(4, 6), 'YYAAGG'); ekle(r.slice(4, 6), r.slice(2, 4), r.slice(0, 2), 'GGAAYY'); }
+    }
+    // 3) Tank: kayıtlı tanklarla eşleştir (tam eşleşme; yoksa en uzun sonek)
+    var tank = null;
+    (tanklar || []).forEach(function (t) {
+      var k = temizle(t.kod);
+      if (!k) return;
+      if (k === tankHam) tank = t;
+    });
+    if (!tank) {
+      (tanklar || []).slice().sort(function (a, b) { return temizle(b.kod).length - temizle(a.kod).length; }).some(function (t) {
+        var k = temizle(t.kod);
+        if (k && tankHam.length > k.length && tankHam.slice(-k.length) === k) { tank = t; return true; }
+        return false;
+      });
+    }
+    // 4) Birden çok tarih yorumu varsa: tankın bir dönemine düşen, sonra en yakın (en yeni) olan
+    var donemBul = function (t, tarih) {
+      var d = (t && t.donemler || []).filter(function (x) { return x.baslangic && x.baslangic <= tarih && (!x.bitis || x.bitis >= tarih); });
+      d.sort(function (a, b) { return a.baslangic < b.baslangic ? 1 : -1; });
+      return d[0] || null;
+    };
+    adaylar.sort(function (a, b) {
+      var da = tank && donemBul(tank, a.tarih) ? 1 : 0, db = tank && donemBul(tank, b.tarih) ? 1 : 0;
+      if (da !== db) return db - da;
+      return a.tarih < b.tarih ? 1 : -1;
+    });
+    var secilen = adaylar[0] || null;
+    var donem = tank && secilen ? donemBul(tank, secilen.tarih) : null;
+    if (tank && !donem && (tank.donemler || []).length === 1 && !(tank.donemler[0].baslangic)) donem = tank.donemler[0];
+    return {
+      girdi: ham, tankKod: tankHam, tank: tank, donem: donem,
+      dolum: secilen ? secilen.tarih : null, bicim: secilen ? secilen.bicim : null,
+      belirsiz: adaylar.length > 1 && adaylar[0].tarih !== adaylar[1].tarih,
+      duzgun: secilen && tankHam ? secilen.tarih.replace(/-/g, '') + '-' + tankHam : ham
+    };
+  }
+  
+  var YEREL = null;
+  async function yerelVeri() {
+    if (YEREL) return YEREL;
+    try { var r = await fetch('/api/config', { cache: 'no-store' }); YEREL = r.ok ? await r.json() : {}; } catch (e) { YEREL = {}; }
+    return YEREL;
+  }
+  function tankDoldur(r) {
+    var d = r.donem || {};
+    var tarihGoster = function (v) { return /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? trTarih(v) : (v || '—'); };
+    var kisa = function (v) { return /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? trTarihKisa(v) : (v || '—'); };
+    empty.classList.remove('on');
+    koy('pp-urun', d.urun || 'Olive oil');
+    koy('pp-kod', r.duzgun + (r.tank && r.tank.kod ? ' · Tank ' + r.tank.kod : ''));
+    koy('pp-hasat', tarihGoster(d.hasat));
+    koy('pp-sikim', d.sikim ? tarihGoster(d.sikim) : '—');
+    koy('pp-cesit', d.cesit);
+    koy('pp-sinif', d.sinif || '—');
+    koy('pp-parsel', d.parsel);
+    koy('pp-asidite', d.asidite ? (String(d.asidite).indexOf('%') === -1 ? '%' + String(d.asidite).replace('.', ',') : d.asidite) : '—');
+    var zaman = document.getElementById('pp-zaman');
+    if (d.hasat || d.sikim || r.dolum) {
+      koy('pz-hasat', kisa(d.hasat)); koy('pz-sikim', kisa(d.sikim)); koy('pz-dolum', r.dolum ? trTarihKisa(r.dolum) : '—');
+      zaman.style.display = '';
+    } else zaman.style.display = 'none';
+    koy('pp-tadim', d.tadim || 'Values shown come from our own tank and analysis records for this filling.');
+    koy('pp-uretici', d.uretici || 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık');
+    document.getElementById('pp-avatar').textContent = (d.uretici || 'PT').replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, '').slice(0, 2).toUpperCase() || 'PT';
+    document.getElementById('pp-link').href = (d.href || 'urun.html').replace(/^(urun(?:-trilye)?)\.html/, '$1-en.html').replace(/^p\.html/, 'p-en.html').replace(/^koleksiyon\.html/, 'koleksiyon-en.html');
+    document.getElementById('pp-report').href = d.lab || 'kalite-en.html#analizler';
+    card.classList.add('on');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   var sorguda = false;
   async function sorgula() {
     var q = giris.value.trim();
     if (!q || sorguda) return;
     sorguda = true; bekleme(true);
     try {
+      // 1) Tank sistemi: "TARİH + TANK" biçimli numara → panelde girilen tank dönemi
+      var cfg = await yerelVeri();
+      var tc = omPartiCoz(q, cfg.tanklar || []);
+      if (tc && tc.tank && tc.donem && tc.dolum) { tankDoldur(tc); return; }
+      // 2) Eski tip parti kodu (tam eşleşme)
+      var eskiB = (cfg.batches || []).find(function (b) { return String(b.kod || '').toUpperCase() === q.toUpperCase(); });
+      if (eskiB) { tankDoldur({ duzgun: eskiB.kod, tank: { kod: '' }, dolum: null, donem: { urun: eskiB.urun, href: eskiB.href, hasat: eskiB.hasat, sikim: eskiB.sikim, cesit: eskiB.cesit, parsel: eskiB.parsel, asidite: eskiB.asidite, tadim: eskiB.tadim, uretici: eskiB.uretici, lab: eskiB.lab } }); return; }
+      // Tank kodu tanındı ama tarih/dönem uymadıysa açık mesaj
+      if (tc && tc.tank && !tc.donem) { bulunamadi('We found tank ' + tc.tank.kod + ' but no record for this filling date yet. <a class="link-arrow" href="iletisim-en.html">Write to us</a> and we will check it.'); return; }
+      // 3) GreenOps LOT kaydı
       var res = await fetch(API + encodeURIComponent(q));
       var data = await res.json().catch(function () { return {}; });
       if (res.status === 429) {

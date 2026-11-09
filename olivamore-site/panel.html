@@ -213,6 +213,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .od-gecmis div{padding:4px 0}
 .od-gecmis small{display:inline-block;min-width:150px;color:var(--soft);font-family:'Poppins',sans-serif;font-variant-numeric:tabular-nums}
 @media(max-width:900px){.od-alt,.od-kartlar{grid-template-columns:1fr}}
+.tk-donem{border:1px solid var(--line);background:#FBFAF8;padding:14px 16px;margin:12px 0}
+.tk-donem-bas{display:flex;align-items:center;gap:8px;font-size:.86rem;margin-bottom:10px}
 .pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
 textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
 </style>
@@ -245,7 +247,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <a data-view="pages">Sayfalar</a>
       <a data-view="products">Ürünler</a>
       <a data-view="blogs">Blog</a>
-      <a data-view="batches">Partiler</a>
+      <a data-view="batches">Tanklar</a>
       <a data-view="orders">Siparişler</a>
       <a data-view="invoices">Fatura</a>
       <a data-view="analytics">Satış Analizi</a>
@@ -399,9 +401,29 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ PARTİLER (HASAT PASAPORTU) ============ -->
     <section class="view" id="view-batches">
-      <div class="note"><b>Hasat Pasaportu:</b> Buradaki partiler pasaport.html'de sorgulanabilir (QR kod etikete <code>olivamore.com/pasaport.html?parti=KOD</code> adresiyle basılır). Not: panelden eklenen partiler bu tarayıcıda görünür; canlıda backend'e bağlanır.</div>
-      <div id="batches-list"></div>
-      <button class="btn btn-dark" id="btn-add-batch">+ Yeni Parti Ekle</button>
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(3,1fr);">
+        <button type="button" class="sg-tab aktif" data-sg="tanklar"><b>Tanklar</b><span>Tank bilgileri ve dönemleri</span></button>
+        <button type="button" class="sg-tab" data-sg="dene"><b>Sorgu Testi</b><span>Parti numarasını dene</span></button>
+        <button type="button" class="sg-tab" data-sg="eski"><b>Eski Parti Kayıtları</b><span>Önceki sistemle girilenler</span></button>
+      </div>
+      <div class="sg-pane" data-sg="tanklar">
+        <div class="note"><b>Nasıl çalışır:</b> Şişedeki parti numarasının <b>başındaki tarih dolum tarihidir</b>, <b>sonundaki kod tank kodudur</b> (örn. <code>20261102-YT21</code>, <code>230826AYT7</code>, <code>23.06.2026/TYT16</code>). Müşteri Hasat Pasaportu'nda numarayı yazınca sistem tankı bulur, dolum tarihine göre o tankın <b>o tarihteki dönemini</b> gösterir. Tank yeni hasatla dolduğunda tankı silme; <b>yeni dönem ekle</b> — eski şişeler eski dönemi görmeye devam eder.</div>
+        <div id="tank-list"></div>
+        <button class="btn btn-dark" id="btn-add-tank" type="button">+ Yeni Tank Ekle</button>
+      </div>
+      <div class="sg-pane" data-sg="dene" hidden>
+        <div class="panel">
+          <h2>Sorgu testi</h2>
+          <div class="desc">Şişedeki numarayı yaz; müşterinin pasaportta ne göreceğini kontrol et. (Kaydedilmemiş değişiklikler de dikkate alınır.)</div>
+          <div class="row-actions" style="margin-top:0;"><input type="text" id="tank-dene" placeholder="örn. 20261102-YT21" style="max-width:260px;"><button class="btn btn-dark btn-sm" id="tank-dene-btn" type="button">Dene</button></div>
+          <div id="tank-dene-sonuc" style="margin-top:14px;font-size:.88rem;"></div>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="eski" hidden>
+        <div class="note">Önceki sistemle girilmiş parti kodları. Bu kodlar pasaportta <b>tam haliyle</b> yazılırsa hâlâ çalışır. Yeni üretimler için Tanklar sekmesini kullan.</div>
+        <div id="batches-list"></div>
+        <button class="btn btn-outline btn-sm" id="btn-add-batch">+ Eski tip parti ekle</button>
+      </div>
     </section>
 
     <!-- ============ SİPARİŞLER ============ -->
@@ -1082,7 +1104,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       .then(function () { localStorage.removeItem('om-admin-jeton'); location.href = 'panel-giris.html'; });
   });
 
-  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Partiler', orders: 'Siparişler', invoices: 'Fatura', analytics: 'Satış Analizi', web: 'Web Analiz', health: 'Site Sağlığı', marketing: 'Pazarlama', channels: 'Satış Kanalları', members: 'Üyeler', subs: 'Abonelikler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
+  var TITLES = { dash: 'Panel', pages: 'Sayfalar', products: 'Ürünler', blogs: 'Blog', batches: 'Tanklar ve Hasat Pasaportu', orders: 'Siparişler', invoices: 'Fatura', analytics: 'Satış Analizi', web: 'Web Analiz', health: 'Site Sağlığı', marketing: 'Pazarlama', channels: 'Satış Kanalları', members: 'Üyeler', subs: 'Abonelikler', reviews: 'Yorumlar', coupons: 'Kuponlar', library: 'Görsel Kütüphanesi', msgs: 'Mesajlar', mods: 'Modüller', settings: 'Ayarlar' };
   function show(v) {
     document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
     document.getElementById('view-' + v).classList.add('on');
@@ -1520,6 +1542,161 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     });
   }
 
+
+  /* ================== TANKLAR (Hasat Pasaportu) ================== */
+  /* Parti no çözümleyici: "20261102-YT21", "230826AYT7", "23.06.2026/TYT16", "261102 YT21" ...
+     Baştaki tarih = dolum tarihi (YYYYAAGG, GGAAYYYY, YYAAGG, GGAAYY; ayraçlı ya da bitişik), sondaki = tank kodu. */
+  function omPartiCoz(girdi, tanklar, bugun) {
+    var ham = String(girdi || '').toUpperCase().replace(/\s+/g, ' ').trim();
+    if (!ham) return null;
+    bugun = bugun || new Date();
+    var temizle = function (s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+    // 1) Tarih kısmı: baştaki rakam/ayraç dizisi; tank kısmı: ilk harften itibaren
+    var m = ham.match(/^([0-9][0-9 .\/\-_]*?[0-9])\s*[ .\/\-_]?\s*([A-Z][A-Z0-9 .\/\-_]*)$/);
+    if (!m) return null;
+    var tarihHam = m[1], tankHam = temizle(m[2]);
+    // 2) Tarih adayları
+    var adaylar = [];
+    var ekle = function (y, a, g, bicim) {
+      y = +y; a = +a; g = +g;
+      if (y < 100) y += 2000;
+      if (a < 1 || a > 12 || g < 1 || g > 31 || y < 2015 || y > 2099) return;
+      var d = new Date(Date.UTC(y, a - 1, g));
+      if (d.getUTCMonth() !== a - 1) return; // 31 Şubat gibi
+      if (d.getTime() > bugun.getTime() + 2 * 86400000) return; // gelecek tarih olamaz
+      adaylar.push({ tarih: d.toISOString().slice(0, 10), bicim: bicim });
+    };
+    var parca = tarihHam.split(/[ .\/\-_]+/).filter(Boolean);
+    if (parca.length === 3) {
+      var p = parca;
+      if (p[0].length === 4) ekle(p[0], p[1], p[2], 'YYYY.AA.GG');
+      else if (p[2].length === 4) ekle(p[2], p[1], p[0], 'GG.AA.YYYY');
+      else { ekle(p[2], p[1], p[0], 'GG.AA.YY'); ekle(p[0], p[1], p[2], 'YY.AA.GG'); }
+    } else {
+      var r = tarihHam.replace(/\D/g, '');
+      if (r.length === 8) { ekle(r.slice(0, 4), r.slice(4, 6), r.slice(6, 8), 'YYYYAAGG'); ekle(r.slice(4, 8), r.slice(2, 4), r.slice(0, 2), 'GGAAYYYY'); }
+      else if (r.length === 6) { ekle(r.slice(0, 2), r.slice(2, 4), r.slice(4, 6), 'YYAAGG'); ekle(r.slice(4, 6), r.slice(2, 4), r.slice(0, 2), 'GGAAYY'); }
+    }
+    // 3) Tank: kayıtlı tanklarla eşleştir (tam eşleşme; yoksa en uzun sonek)
+    var tank = null;
+    (tanklar || []).forEach(function (t) {
+      var k = temizle(t.kod);
+      if (!k) return;
+      if (k === tankHam) tank = t;
+    });
+    if (!tank) {
+      (tanklar || []).slice().sort(function (a, b) { return temizle(b.kod).length - temizle(a.kod).length; }).some(function (t) {
+        var k = temizle(t.kod);
+        if (k && tankHam.length > k.length && tankHam.slice(-k.length) === k) { tank = t; return true; }
+        return false;
+      });
+    }
+    // 4) Birden çok tarih yorumu varsa: tankın bir dönemine düşen, sonra en yakın (en yeni) olan
+    var donemBul = function (t, tarih) {
+      var d = (t && t.donemler || []).filter(function (x) { return x.baslangic && x.baslangic <= tarih && (!x.bitis || x.bitis >= tarih); });
+      d.sort(function (a, b) { return a.baslangic < b.baslangic ? 1 : -1; });
+      return d[0] || null;
+    };
+    adaylar.sort(function (a, b) {
+      var da = tank && donemBul(tank, a.tarih) ? 1 : 0, db = tank && donemBul(tank, b.tarih) ? 1 : 0;
+      if (da !== db) return db - da;
+      return a.tarih < b.tarih ? 1 : -1;
+    });
+    var secilen = adaylar[0] || null;
+    var donem = tank && secilen ? donemBul(tank, secilen.tarih) : null;
+    if (tank && !donem && (tank.donemler || []).length === 1 && !(tank.donemler[0].baslangic)) donem = tank.donemler[0];
+    return {
+      girdi: ham, tankKod: tankHam, tank: tank, donem: donem,
+      dolum: secilen ? secilen.tarih : null, bicim: secilen ? secilen.bicim : null,
+      belirsiz: adaylar.length > 1 && adaylar[0].tarih !== adaylar[1].tarih,
+      duzgun: secilen && tankHam ? secilen.tarih.replace(/-/g, '') + '-' + tankHam : ham
+    };
+  }
+  
+  var TANK_ALAN = [
+    ['baslangic', 'Dönem başlangıcı (bu tarihten itibaren dolan şişeler)', 'date'], ['bitis', 'Dönem bitişi (boş = devam ediyor)', 'date'],
+    ['urun', 'Ürün adı (müşteri görür)', 'text'], ['href', 'Ürün sayfası', 'href'],
+    ['hasat', 'Hasat tarihi', 'date'], ['sikim', 'Sıkım tarihi', 'date'], ['cesit', 'Zeytin çeşidi', 'text'],
+    ['sinif', 'Kalite sınıfı', 'text'], ['parsel', 'Bahçe / parsel', 'text'], ['asidite', 'Asidite (%)', 'text'],
+    ['polifenol', 'Polifenol (mg/kg)', 'text'], ['peroksit', 'Peroksit', 'text'], ['lab', 'Analiz raporu bağlantısı (PDF)', 'text'],
+    ['uretici', 'Üretici', 'text'], ['tadim', 'Tadım notu', 'textarea']
+  ];
+  function tankDonemHtml(d, j) {
+    return '<div class="tk-donem" data-j="' + j + '"><div class="tk-donem-bas"><b>Dönem ' + (j + 1) + '</b>' + (d.baslangic ? ' · ' + esc(d.baslangic) + (d.bitis ? ' → ' + esc(d.bitis) : ' → devam ediyor') : '') +
+      '<button type="button" class="btn btn-ghost btn-sm tk-donem-sil" style="margin-left:auto;">Dönemi sil</button></div><div class="grid3">' +
+      TANK_ALAN.map(function (a) {
+        var v = d[a[0]] || '';
+        if (a[2] === 'textarea') return '</div><div class="field"><label>' + a[1] + '</label><textarea class="tkd-' + a[0] + '" rows="2">' + esc(v) + '</textarea></div><div class="grid3">';
+        if (a[2] === 'href') return '<div class="field"><label>' + a[1] + '</label><select class="tkd-href">' + ['urun.html', 'urun-trilye.html', 'koleksiyon.html'].concat((C.products || []).filter(function (p) { return p.visible !== false && (p.type === 'product' || !p.type); }).map(function (p) { return 'p.html?id=' + p.id; })).map(function (h) { return '<option value="' + esc(h) + '"' + (h === v ? ' selected' : '') + '>' + esc(h) + '</option>'; }).join('') + '</select></div>';
+        return '<div class="field"><label>' + a[1] + '</label><input type="' + (a[2] === 'date' ? 'date' : 'text') + '" class="tkd-' + a[0] + '" value="' + esc(v) + '"></div>';
+      }).join('') + '</div></div>';
+  }
+  function tankItem(t, i) {
+    var donemler = t.donemler || [];
+    var son = donemler.slice().sort(function (a, b) { return (a.baslangic || '') < (b.baslangic || '') ? 1 : -1; })[0];
+    return '<details class="item tk-item" data-i="' + i + '"><summary><div class="t" style="margin-left:4px;"><b>' + esc(t.kod || 'Yeni tank') + (t.ad ? ' · ' + esc(t.ad) : '') + '</b><span>' + donemler.length + ' dönem' + (son && son.urun ? ' · şu an: ' + esc(son.urun) : '') + '</span></div></summary><div class="body">' +
+      '<div class="grid2"><div class="field"><label>Tank kodu (şişedeki numaranın sonundaki)</label><input type="text" class="tk-kod" value="' + esc(t.kod || '') + '" placeholder="örn. YT21" style="text-transform:uppercase;"></div>' +
+      '<div class="field"><label>Tank açıklaması (yalnız panelde)</label><input type="text" class="tk-ad" value="' + esc(t.ad || '') + '" placeholder="örn. Ayvalık erken hasat — 5 ton"></div></div>' +
+      '<div class="tk-donemler">' + donemler.map(tankDonemHtml).join('') + '</div>' +
+      '<div class="row-actions"><button type="button" class="btn btn-outline btn-sm tk-donem-ekle">+ Yeni dönem (tank yeniden doldu)</button><button type="button" class="btn btn-danger btn-sm tk-sil">Tankı sil</button></div>' +
+      '</div></details>';
+  }
+  function renderTanklar() {
+    if (!Array.isArray(C.tanklar)) C.tanklar = [];
+    var acik = [].map.call(document.querySelectorAll('#tank-list .tk-item[open]'), function (d) { return d.dataset.i; });
+    document.getElementById('tank-list').innerHTML = C.tanklar.length ? C.tanklar.map(tankItem).join('') : '<p style="color:var(--soft);">Henüz tank yok. "+ Yeni Tank Ekle" ile başla.</p>';
+    acik.forEach(function (i) { var d = document.querySelector('#tank-list .tk-item[data-i="' + i + '"]'); if (d) d.open = true; });
+  }
+  function syncTanklarFromDOM() {
+    if (!Array.isArray(C.tanklar)) C.tanklar = [];
+    document.querySelectorAll('#tank-list .tk-item').forEach(function (d) {
+      var t = C.tanklar[+d.dataset.i]; if (!t) return;
+      t.kod = d.querySelector('.tk-kod').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      t.ad = d.querySelector('.tk-ad').value.trim();
+      t.donemler = [].map.call(d.querySelectorAll('.tk-donem'), function (dd) {
+        var o = {};
+        TANK_ALAN.forEach(function (a) { var el = dd.querySelector('.tkd-' + a[0]); if (el) o[a[0]] = el.value.trim(); });
+        return o;
+      });
+    });
+  }
+  document.getElementById('btn-add-tank').addEventListener('click', function () {
+    syncTanklarFromDOM();
+    C.tanklar.push({ kod: '', ad: '', donemler: [{ baslangic: new Date().toISOString().slice(0, 10), uretici: 'Pektaş Tarım Gıda ve Ticaret Ltd. Şti. · Ayvalık', href: 'urun.html' }] });
+    renderTanklar(); dirty();
+    var it = document.querySelectorAll('#tank-list .tk-item'); it[it.length - 1].open = true; it[it.length - 1].querySelector('.tk-kod').focus();
+  });
+  document.getElementById('tank-list').addEventListener('click', function (e) {
+    var item = e.target.closest('.tk-item'); if (!item) return;
+    var i = +item.dataset.i;
+    if (e.target.classList.contains('tk-sil')) {
+      if (!confirm('Bu tank ve tüm dönemleri silinecek. O tanktan dolmuş şişeler pasaportta bulunamaz. Emin misin?')) return;
+      syncTanklarFromDOM(); C.tanklar.splice(i, 1); renderTanklar(); dirty();
+    } else if (e.target.classList.contains('tk-donem-ekle')) {
+      syncTanklarFromDOM();
+      var t = C.tanklar[i], onceki = (t.donemler || []).slice().sort(function (a, b) { return (a.baslangic || '') < (b.baslangic || '') ? 1 : -1; })[0] || {};
+      var bugun = new Date().toISOString().slice(0, 10);
+      if (onceki.baslangic && !onceki.bitis) onceki.bitis = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      t.donemler.push({ baslangic: bugun, urun: onceki.urun || '', href: onceki.href || 'urun.html', cesit: onceki.cesit || '', parsel: onceki.parsel || '', sinif: onceki.sinif || '', uretici: onceki.uretici || '' });
+      renderTanklar(); dirty();
+    } else if (e.target.classList.contains('tk-donem-sil')) {
+      if (!confirm('Bu dönem silinsin mi?')) return;
+      syncTanklarFromDOM(); C.tanklar[i].donemler.splice(+e.target.closest('.tk-donem').dataset.j, 1); renderTanklar(); dirty();
+    }
+  });
+  document.getElementById('tank-list').addEventListener('input', function () { dirty(); });
+  document.getElementById('tank-dene-btn').addEventListener('click', function () {
+    syncTanklarFromDOM();
+    var r = omPartiCoz(document.getElementById('tank-dene').value, C.tanklar), el = document.getElementById('tank-dene-sonuc');
+    if (!r) { el.innerHTML = '<span style="color:#b04a3a;">Numara çözümlenemedi: başta tarih, sonda tank kodu olmalı.</span>'; return; }
+    var satir = function (a, b, ok) { return '<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);"><b style="min-width:150px;">' + a + '</b><span' + (ok === false ? ' style="color:#b04a3a;"' : '') + '>' + b + '</span></div>'; };
+    el.innerHTML = satir('Dolum tarihi', r.dolum ? new Date(r.dolum).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + ' (' + r.bicim + ')' + (r.belirsiz ? ' — birden çok okuma mümkündü, tank dönemine uyan seçildi' : '') : 'okunamadı', !!r.dolum) +
+      satir('Tank', r.tank ? esc(r.tank.kod) + (r.tank.ad ? ' · ' + esc(r.tank.ad) : '') : esc(r.tankKod) + ' — bu kodda kayıtlı tank yok', !!r.tank) +
+      satir('Dönem', r.donem ? (esc(r.donem.urun || '(ürün adı yok)') + ' · ' + esc(r.donem.baslangic || '') + (r.donem.bitis ? ' → ' + esc(r.donem.bitis) : '')) : 'dolum tarihine uyan dönem yok', !!r.donem) +
+      satir('Müşteri sonucu', r.tank && r.donem ? '✓ Pasaport kartı gösterilir' : 'Bulunamadı mesajı gösterilir', !!(r.tank && r.donem));
+  });
+  document.getElementById('tank-dene').addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('tank-dene-btn').click(); });
+
   /* ================== PARTİLER ================== */
   function batchItem(b, i) {
     return '<details class="item" data-idx="' + i + '">' +
@@ -1562,6 +1739,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   });
   document.getElementById('btn-add-batch').addEventListener('click', function () {
     syncBatchesFromDOM();
+    syncTanklarFromDOM();
     C.batches.push({ kod: 'YENI-' + String(Date.now()).slice(-4), urun: 'Yeni Parti', hasat: '', sikim: '', cesit: '', parsel: '', asidite: '', polifenol: '', peroksit: '', lab: '', tadim: '', uretici: '', avatar: '', href: 'urun.html' });
     renderBatches(); dirty();
     var items = document.querySelectorAll('#batches-list .item');
@@ -1657,6 +1835,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     syncProductsFromDOM();
     syncBlogsFromDOM();
     syncBatchesFromDOM();
+    syncTanklarFromDOM();
     syncCouponsFromDOM();
     syncKategorilerFromDOM();
     syncUrunKategorilerFromDOM();
@@ -3562,7 +3741,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
   /* ================== BAŞLAT ================== */
   function renderAll() {
-    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderBloklar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
+    renderPages(); renderProducts(); renderBlogs(); renderBatches(); renderTanklar(); renderCoupons(); renderKategoriler(); renderUrunKategorileri(); renderSiralar(); renderBloklar(); renderLibrary(); renderMods(); fillSettings(); refreshStats();
   }
   // Önce sunucu CMS'ini dene (canlı); yoksa yerel modda çalış
   fetch('/api/admin/config', { cache: 'no-store' })
