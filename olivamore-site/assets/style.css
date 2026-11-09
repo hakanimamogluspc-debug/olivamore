@@ -2514,3 +2514,8 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 /* Üreticiyi Tanı · Toprak Sağlığı: koyu rozet yerine bahçe fotoğrafı */
 .split-art.toprak-foto{background:#e9e5da;padding:0;overflow:hidden}
 .split-art.toprak-foto img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:50% 55%;display:block}
+
+/* Harita katmanları (Leaflet z-index 400–1000) yapışkan header'ın üstüne çıkmasın: kendi katman bağlamında kalsın */
+.bahce-harita{isolation:isolate;z-index:0}
+.bahce-harita .bh-map{z-index:0}
+.ta-pencere{z-index:1100}
