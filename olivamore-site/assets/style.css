@@ -2378,3 +2378,13 @@ nav.main a.top:hover,nav.main a.top.active,.nav-right a.top:hover,.nav-right a.t
   .nav-wrap.nav3 .logo-link{gap:4px}
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header.site{background:rgba(255,255,255,.96)}}
+
+/* Header düzeltmesi: gerçek cam görünüm + sepet rozeti */
+header.site{background:rgba(255,255,255,.42);border-bottom:1px solid rgba(255,255,255,.55);box-shadow:0 8px 30px rgba(20,18,15,.08),inset 0 -1px 0 rgba(30,28,25,.06)}
+/* Ana sayfada header, hero görselinin ÜSTÜNE biner → buzlu cam etkisi ilk açılışta görünür */
+body[data-page="home"] header.site{margin-bottom:calc(-1 * var(--hdr-h))}
+body[data-page="home"] .fig-manset .fm-icerik{padding-top:calc(96px + var(--hdr-h))}
+/* Sepet sayısı: ikonun sağ üst köşesine oturur */
+.icon-btn{display:inline-flex;align-items:center;justify-content:center}
+#cart-btn .cart-count{top:4px;right:2px}
+@media(max-width:960px){#cart-btn .cart-count{top:4px;right:2px}}
