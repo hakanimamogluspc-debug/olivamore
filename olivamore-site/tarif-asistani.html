@@ -65,12 +65,13 @@
         <button class="chip" data-ing="limon">limon</button>
       </div>
       <div class="ra-actions">
-        <button class="btn btn-dark" id="ra-go">Tarif Üret</button>
+        <button class="btn btn-dark" id="ra-go">Tarif Bul</button>
         <button class="btn btn-outline" id="ra-again" style="display:none;">Başka Tarif Dene</button>
       </div>
       <div class="ra-thinking" id="ra-thinking"><span class="ra-dot"></span><span id="ra-status">Malzemeler inceleniyor...</span></div>
     </div>
 
+    <div class="ra-edamam" id="ra-edamam" hidden aria-live="polite"></div>
     <div class="ra-result" id="ra-result">
       <div class="ra-recipe">
         <div class="kicker" id="ra-kicker">Sana Özel Tarif</div>
@@ -305,14 +306,33 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     c.classList.add('on');
   });
+  // Önce Edamam (Türk / Orta Doğu mutfağı öncelikli); yanıt yoksa kendi tarif motorumuz
+  var edKutu = document.getElementById('ra-edamam');
+  function yerelCalistir() { edKutu.hidden = true; withThinking(function () { generate(false); }); }
+  async function tarifBul(sadeceYerel) {
+    if (!tx.value.trim()) { tx.focus(); return; }
+    if (sadeceYerel || !window.omTarif) { yerelCalistir(); return; }
+    var goBtn = document.getElementById('ra-go'), eski = goBtn.textContent;
+    goBtn.disabled = true; goBtn.textContent = 'Aranıyor…';
+    document.getElementById('ra-result').classList.remove('show');
+    document.getElementById('ra-again').style.display = 'none';
+    edKutu.hidden = false; edKutu.innerHTML = '<p class="ta-bekle">' + 'Tarifler aranıyor…' + '</p>';
+    try { if (window.omIz) window.omIz('tarif_ara', { m: tx.value.trim().slice(0, 60) }); } catch (e) {}
+    var r = await window.omTarif.ara(tx.value.trim());
+    goBtn.disabled = false; goBtn.textContent = eski;
+    if (!r.j || !r.j.tamam || !(r.j.sonuclar || []).length) { yerelCalistir(); return; }
+    window.omTarif.kartlar(edKutu, r.j.sonuclar);
+    edKutu.insertAdjacentHTML('beforeend', '<div class="ra-edamam-alt"><span>' + 'Tarifler Edamam üzerinden geliyor; Türk ve Akdeniz mutfağı öncelikli. Yapılışı görmek için tarife tıkla.' + '</span><a href="https://developer.edamam.com" target="_blank" rel="noopener"><img src="https://developer.edamam.com/images/transparent.png" alt="Powered by Edamam"></a></div>');
+    edKutu.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   document.getElementById('ra-go').addEventListener('click', function () {
     if (!tx.value.trim()) { tx.focus(); tx.placeholder = 'Önce birkaç malzeme yaz ya da aşağıdan seç ↓'; return; }
-    withThinking(function () { generate(false); });
+    tarifBul(false);
   });
   // Ana sayfadan ?m=malzemeler ile gelindiyse otomatik üret
   (function () {
     var m = new URLSearchParams(location.search).get('m');
-    if (m && m.trim()) { tx.value = m.trim().slice(0, 200); withThinking(function () { generate(false); }); }
+    if (m && m.trim()) { tx.value = m.trim().slice(0, 200); tarifBul(new URLSearchParams(location.search).get('yerel') === '1'); }
   })();
   document.getElementById('ra-again').addEventListener('click', function () {
     withThinking(function () { generate(true); });

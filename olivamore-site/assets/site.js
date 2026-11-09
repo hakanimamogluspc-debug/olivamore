@@ -1567,20 +1567,118 @@ window.omMetaSatin = function (no, toplam, kalemler) {
   });
 })();
 
-/* ---------- Ana sayfa Tarif Asistanı (Edamam üzerinden /api/tarif-ara) ---------- */
+/* ---------- Tarif Asistanı (Edamam üzerinden /api/tarif-ara) — ana sayfa + tarif asistanı sayfası ortak ---------- */
+window.omTarif = (function () {
+  const EN = () => document.body.dataset.lang === 'en';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const guvenliUrl = u => /^https:\/\//i.test(u || '') ? u : '';
+  const ceviriBellek = {}; // yalnız sayfa açıkken (Edamam: kalıcı saklama yok)
+  let pen = null;
+  function metaYaz(t) { const en = EN(); return [t.sure ? t.sure + (en ? ' min' : ' dk') : '', t.porsiyon ? t.porsiyon + (en ? ' servings' : ' kişilik') : ''].filter(Boolean).join(' · '); }
+  function yagKutusu(y) {
+    const en = EN();
+    return y ? '<a class="ta-yag" href="' + esc(y.href) + '"><img src="' + esc(y.img || '') + '" alt=""><span><small class="ta-yag-et">' + (en ? 'Our pick for this recipe' : 'Bu tarif için önerimiz') + '</small><b>' + esc(y.ad) + '</b><small>' + esc(y.neden) + '</small></span></a>' : '';
+  }
+  async function ara(m) {
+    try {
+      const r = await fetch('/api/tarif-ara', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ malzemeler: m, dil: EN() ? 'en' : 'tr' }) });
+      const j = await r.json().catch(() => null);
+      return { kod: r.status, j: j };
+    } catch (e) { return { kod: 0, j: null }; }
+  }
+  function pencereKur() {
+    if (pen) return;
+    pen = document.createElement('div');
+    pen.className = 'ta-pencere'; pen.hidden = true;
+    pen.setAttribute('role', 'dialog'); pen.setAttribute('aria-modal', 'true');
+    document.body.appendChild(pen);
+    pen.addEventListener('click', e => { if (e.target === pen || e.target.closest('.ta-kapat')) kapat(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && pen && !pen.hidden) kapat(); });
+  }
+  function kapat() { pen.hidden = true; pen.innerHTML = ''; document.documentElement.classList.remove('ta-acik'); }
+  function listeler(t, malz, adim, cevrildi) {
+    const en = EN();
+    return '<div class="ta-d-kolon"><h3>' + (en ? 'Ingredients' : 'Malzemeler') + '</h3><ul class="ta-d-malz">' + malz.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' + yagKutusu(t.yag) + '</div>' +
+      '<div class="ta-d-kolon"><h3>' + (en ? 'Method' : 'Yapılışı') + '</h3>' +
+      (adim.length ? '<ol class="ta-d-adim">' + adim.map(x => '<li>' + esc(x) + '</li>').join('') + '</ol>'
+        : '<p class="ta-bekle">' + (en ? 'Step-by-step instructions are not available for this recipe.' : 'Bu tarif için adım adım yapılış bilgisi yok.') + '</p>') +
+      (cevrildi === false && !en ? '<p class="ta-d-uyari">Çeviri şu an yapılamadı; orijinal dilinde gösteriliyor.</p>' : '') +
+      '</div>';
+  }
+  async function ac(t) {
+    if (!t) return;
+    const en = EN();
+    pencereKur();
+    document.documentElement.classList.add('ta-acik');
+    pen.hidden = false;
+    pen.innerHTML = '<article class="ta-detay">' +
+      '<button type="button" class="ta-kapat" aria-label="' + (en ? 'Close' : 'Kapat') + '">×</button>' +
+      '<div class="ta-d-ic"><header class="ta-d-bas">' +
+      (guvenliUrl(t.resimBuyuk || t.resim) ? '<div class="ta-d-resim"><img src="' + esc(t.resimBuyuk || t.resim) + '" alt="' + esc(t.baslik) + '" referrerpolicy="no-referrer"></div>' : '') +
+      '<div><div class="omx-eyebrow">' + (en ? 'Recipe Assistant' : 'Tarif Asistanı') + '</div><h2>' + esc(t.baslik) + '</h2>' +
+      '<div class="ta-meta">' + esc(metaYaz(t)) + '</div></div></header>' +
+      '<div class="ta-d-govde">' + (en ? listeler(t, t.malzemeler, t.adimlar) : '<p class="ta-bekle">Tarif Türkçeye çevriliyor…</p>') + '</div>' +
+      '<div class="ta-d-alt"><span>' + (en ? 'Recipe source: ' : 'Tarif kaynağı: ') + (guvenliUrl(t.url) ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener nofollow">' + esc(t.kaynak || 'web') + '</a>' : esc(t.kaynak || '')) +
+      (en ? '' : ' · otomatik çeviri') + '</span>' +
+      '<a href="https://developer.edamam.com" target="_blank" rel="noopener"><img src="https://developer.edamam.com/images/transparent.png" alt="Powered by Edamam" height="18"></a></div>' +
+      '</div></article>';
+    pen.querySelector('.ta-kapat').focus();
+    if (en) return;
+    const govdeEl = pen.querySelector('.ta-d-govde');
+    const anahtar = t.url || t.baslikOrijinal;
+    let tr = ceviriBellek[anahtar];
+    if (!tr) {
+      const satirlar = t.malzemeler.concat(t.adimlar);
+      try {
+        const r = await fetch('/api/tarif-cevir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ satirlar: satirlar }) });
+        const j = await r.json().catch(() => null);
+        if (j && j.tamam && j.satirlar.length === satirlar.length) {
+          tr = { malz: j.satirlar.slice(0, t.malzemeler.length), adim: j.satirlar.slice(t.malzemeler.length) };
+          ceviriBellek[anahtar] = tr;
+        }
+      } catch (e) {}
+    }
+    if (pen.hidden || !pen.contains(govdeEl)) return;
+    govdeEl.innerHTML = tr ? listeler(t, tr.malz, tr.adim) : listeler(t, t.malzemeler, t.adimlar, false);
+  }
+  // Kartları çiz; tıklayınca sitede detay açılır
+  function kartlar(kutu, sonuclar, adet) {
+    const en = EN();
+    const liste = sonuclar.slice(0, adet || sonuclar.length);
+    kutu.innerHTML = '<div class="ta-grid">' + liste.map((t, n) => {
+      const meta = metaYaz(t);
+      return '<article class="ta-kart" data-ta="' + n + '" tabindex="0">' +
+        (guvenliUrl(t.resim) ? '<div class="ta-resim"><img src="' + esc(t.resim) + '" alt="' + esc(t.baslik) + '" loading="lazy" referrerpolicy="no-referrer"></div>' : '') +
+        '<div class="ta-govde"><h3>' + esc(t.baslik) + '</h3>' +
+        '<div class="ta-meta">' + esc(meta || (t.malzemeler.length + (en ? ' ingredients' : ' malzeme'))) + '</div>' +
+        yagKutusu(t.yag) +
+        '<button type="button" class="ta-ac">' + (en ? 'View recipe' : 'Tarifi Gör') + ' →</button>' +
+        '</div></article>';
+    }).join('') + '</div>';
+    kutu._taListe = liste;
+    if (!kutu._taBagli) {
+      kutu._taBagli = true;
+      kutu.addEventListener('click', e => {
+        const k = e.target.closest('[data-ta]');
+        if (!k || e.target.closest('.ta-yag')) return;
+        e.preventDefault(); ac(kutu._taListe[+k.dataset.ta]);
+      });
+      kutu.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.ta-kart')) ac(kutu._taListe[+e.target.dataset.ta]); });
+    }
+  }
+  return { ara, kartlar, ac, esc };
+})();
+
+/* Ana sayfa bölümü */
 (function () {
   function kur() {
     const sec = document.getElementById('tarif-asistan');
     if (!sec) return;
     const EN = document.body.dataset.lang === 'en';
+    const T = window.omTarif;
     const form = sec.querySelector('.ta-form'), girdi = sec.querySelector('.ta-girdi'), btn = sec.querySelector('.ta-git');
     const kutu = document.getElementById('ta-sonuc'), notEl = document.getElementById('ta-not');
     const yerel = EN ? 'tarif-asistani-en.html' : 'tarif-asistani.html';
-    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-    const guvenliUrl = u => /^https:\/\//i.test(u || '') ? u : '';
-    let sonuclar = [];
-    const ceviriBellek = {}; // yalnız bu sayfa açıkken (Edamam: kalıcı saklama yok)
-
     sec.querySelectorAll('.ta-chip').forEach(c => c.addEventListener('click', () => {
       const v = girdi.value.trim();
       const liste = v ? v.split(/\s*,\s*/) : [];
@@ -1588,108 +1686,33 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       girdi.value = liste.filter(Boolean).join(', ');
       c.classList.add('secili'); girdi.focus();
     }));
-    function yonlendir(m) { location.href = yerel + '?m=' + encodeURIComponent(m); }
-    function metaYaz(t) { return [t.sure ? t.sure + (EN ? ' min' : ' dk') : '', t.porsiyon ? t.porsiyon + (EN ? ' servings' : ' kişilik') : ''].filter(Boolean).join(' · '); }
-    function yagKutusu(y) {
-      return y ? '<a class="ta-yag" href="' + esc(y.href) + '"><img src="' + esc(y.img || '') + '" alt=""><span><small class="ta-yag-et">' + (EN ? 'Our pick for this recipe' : 'Bu tarif için önerimiz') + '</small><b>' + esc(y.ad) + '</b><small>' + esc(y.neden) + '</small></span></a>' : '';
-    }
-
-    // ---- Tarif detayı (sitede açılan pencere) ----
-    const pen = document.createElement('div');
-    pen.className = 'ta-pencere'; pen.hidden = true;
-    pen.setAttribute('role', 'dialog'); pen.setAttribute('aria-modal', 'true');
-    document.body.appendChild(pen);
-    function kapat() { pen.hidden = true; pen.innerHTML = ''; document.documentElement.classList.remove('ta-acik'); }
-    pen.addEventListener('click', e => { if (e.target === pen || e.target.closest('.ta-kapat')) kapat(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pen.hidden) kapat(); });
-
-    function listeler(t, malz, adim, cevrildi) {
-      return '<div class="ta-d-kolon"><h3>' + (EN ? 'Ingredients' : 'Malzemeler') + '</h3><ul class="ta-d-malz">' + malz.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' + yagKutusu(t.yag) + '</div>' +
-        '<div class="ta-d-kolon"><h3>' + (EN ? 'Method' : 'Yapılışı') + '</h3>' +
-        (adim.length ? '<ol class="ta-d-adim">' + adim.map(x => '<li>' + esc(x) + '</li>').join('') + '</ol>'
-          : '<p class="ta-bekle">' + (EN ? 'Step-by-step instructions are not available for this recipe.' : 'Bu tarif için adım adım yapılış bilgisi yok.') + '</p>') +
-        (cevrildi === false && !EN ? '<p class="ta-d-uyari">Çeviri şu an yapılamadı; orijinal dilinde gösteriliyor.</p>' : '') +
-        '</div>';
-    }
-    async function ac(n) {
-      const t = sonuclar[n]; if (!t) return;
-      document.documentElement.classList.add('ta-acik');
-      pen.hidden = false;
-      pen.innerHTML = '<article class="ta-detay">' +
-        '<button type="button" class="ta-kapat" aria-label="' + (EN ? 'Close' : 'Kapat') + '">×</button>' +
-        (guvenliUrl(t.resim) ? '<div class="ta-d-resim"><img src="' + esc(t.resim) + '" alt="' + esc(t.baslik) + '" referrerpolicy="no-referrer"></div>' : '') +
-        '<div class="ta-d-ic"><div class="omx-eyebrow">' + (EN ? 'Recipe Assistant' : 'Tarif Asistanı') + '</div><h2>' + esc(t.baslik) + '</h2>' +
-        '<div class="ta-meta">' + esc(metaYaz(t)) + '</div>' +
-        '<div class="ta-d-govde">' + (EN ? listeler(t, t.malzemeler, t.adimlar) : '<p class="ta-bekle">Tarif Türkçeye çevriliyor…</p>') + '</div>' +
-        '<div class="ta-d-alt"><span>' + (EN ? 'Recipe source: ' : 'Tarif kaynağı: ') + (guvenliUrl(t.url) ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener nofollow">' + esc(t.kaynak || 'web') + '</a>' : esc(t.kaynak || '')) +
-        (EN ? '' : ' · otomatik çeviri') + '</span>' +
-        '<a href="https://developer.edamam.com" target="_blank" rel="noopener"><img src="https://developer.edamam.com/images/transparent.png" alt="Powered by Edamam" height="18"></a></div>' +
-        '</div></article>';
-      pen.querySelector('.ta-kapat').focus();
-      try { if (window.omIz) window.omIz('tarif_ara', { m: 'detay: ' + String(t.baslikOrijinal || '').slice(0, 50) }); } catch (e) {}
-      if (EN) return;
-      const govdeEl = pen.querySelector('.ta-d-govde');
-      const anahtar = t.url || t.baslikOrijinal;
-      let tr = ceviriBellek[anahtar];
-      if (!tr) {
-        const satirlar = t.malzemeler.concat(t.adimlar);
-        try {
-          const r = await fetch('/api/tarif-cevir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ satirlar: satirlar }) });
-          const j = await r.json().catch(() => null);
-          if (j && j.tamam && j.satirlar.length === satirlar.length) {
-            tr = { malz: j.satirlar.slice(0, t.malzemeler.length), adim: j.satirlar.slice(t.malzemeler.length) };
-            ceviriBellek[anahtar] = tr;
-          }
-        } catch (e) {}
-      }
-      if (pen.hidden || !pen.contains(govdeEl)) return; // pencere bu arada kapandıysa
-      govdeEl.innerHTML = tr ? listeler(t, tr.malz, tr.adim) : listeler(t, t.malzemeler, t.adimlar, false);
-    }
-    kutu.addEventListener('click', e => {
-      const k = e.target.closest('[data-ta]');
-      if (!k || e.target.closest('.ta-yag')) return;
-      e.preventDefault(); ac(+k.dataset.ta);
-    });
-
+    // Edamam yanıt veremezse kendi tarif motorumuza (yerel=1: sayfa Edamam'ı tekrar denemez)
+    function yonlendir(m) { location.href = yerel + '?yerel=1&m=' + encodeURIComponent(m); }
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const m = girdi.value.trim();
       if (!m) { girdi.focus(); return; }
       btn.disabled = true; const eskiYazi = btn.textContent; btn.textContent = EN ? 'Searching…' : 'Aranıyor…';
       kutu.hidden = false; notEl.hidden = true;
-      kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'Searching world cuisine…' : 'Dünya mutfağında arıyoruz…') + '</p>';
+      kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'Searching recipes…' : 'Tarifler aranıyor…') + '</p>';
       try { if (window.omIz) window.omIz('tarif_ara', { m: m.slice(0, 60) }); } catch (e2) {}
-      let j = null, kod = 0;
-      try {
-        const r = await fetch('/api/tarif-ara', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ malzemeler: m, dil: EN ? 'en' : 'tr' }) });
-        kod = r.status; j = await r.json().catch(() => null);
-      } catch (e3) { kod = 0; }
+      const { kod, j } = await T.ara(m);
       btn.disabled = false; btn.textContent = eskiYazi;
-      // Servis kapalı/yoğun/erişilemez → kendi tarif motorumuza devret
       if (!j || !j.tamam) {
         if (kod === 400) { kutu.hidden = true; girdi.focus(); return; }
         if (kod === 429) { kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'Lots of searches right now — showing our own recipes…' : 'Şu an çok arama var — kendi tariflerimize yönlendiriyoruz…') + '</p>'; setTimeout(() => yonlendir(m), 1200); return; }
         yonlendir(m); return;
       }
-      sonuclar = j.sonuclar || [];
+      const sonuclar = j.sonuclar || [];
       if (!sonuclar.length) {
-        kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'No recipes found for these ingredients. ' : 'Bu malzemelerle tarif bulamadık. ') + '<a href="' + yerel + '?m=' + encodeURIComponent(m) + '">' + (EN ? 'Try our own recipe assistant →' : 'Kendi tarif asistanımızı dene →') + '</a></p>';
+        kutu.innerHTML = '<p class="ta-bekle">' + (EN ? 'No recipes found for these ingredients. ' : 'Bu malzemelerle tarif bulamadık. ') + '<a href="' + yerel + '?yerel=1&m=' + encodeURIComponent(m) + '">' + (EN ? 'Try our own recipe assistant →' : 'Kendi tarif asistanımızı dene →') + '</a></p>';
         return;
       }
-      kutu.innerHTML = '<div class="ta-grid">' + sonuclar.map((t, n) => {
-        const meta = metaYaz(t);
-        return '<article class="ta-kart" data-ta="' + n + '" tabindex="0">' +
-          (guvenliUrl(t.resim) ? '<div class="ta-resim"><img src="' + esc(t.resim) + '" alt="' + esc(t.baslik) + '" loading="lazy" referrerpolicy="no-referrer"></div>' : '') +
-          '<div class="ta-govde"><h3>' + esc(t.baslik) + '</h3>' +
-          '<div class="ta-meta">' + esc(meta || (t.malzemeler.length + (EN ? ' ingredients' : ' malzeme'))) + '</div>' +
-          yagKutusu(t.yag) +
-          '<button type="button" class="ta-ac">' + (EN ? 'View recipe' : 'Tarifi Gör') + ' →</button>' +
-          '</div></article>';
-      }).join('') + '</div>';
+      T.kartlar(kutu, sonuclar, 6);
+      if (sonuclar.length > 6) kutu.insertAdjacentHTML('beforeend', '<p class="ta-dahafazla"><a href="' + yerel + '?m=' + encodeURIComponent(m) + '">' + (EN ? 'See more recipes →' : 'Daha fazla tarif gör →') + '</a></p>');
       notEl.hidden = false;
       kutu.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-    kutu.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.ta-kart')) ac(+e.target.dataset.ta); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kur); else kur();
 })();

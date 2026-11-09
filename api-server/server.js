@@ -430,18 +430,40 @@ async function tarifAra(malzemeMetni, en, istemciKimligi) {
     sorguParca = sorguParca.map((x, i) => x !== null ? x : ((ceviri && ceviri[j++]) || parcalar[i]));
   }
   const q = sorguParca.join(' ');
-  tarifCagri.push(simdi);
-  const alanlar = ['label', 'image', 'url', 'source', 'ingredientLines', 'instructionLines', 'yield', 'totalTime', 'dishType', 'cuisineType', 'uri'].map(a => '&field=' + a).join('');
-  const yol = '/api/recipes/v2?type=public&q=' + encodeURIComponent(q) + '&app_id=' + encodeURIComponent(ayar.id) + '&app_key=' + encodeURIComponent(ayar.key) + alanlar;
+  const alanlar = ['label', 'image', 'images', 'url', 'source', 'ingredientLines', 'instructionLines', 'yield', 'totalTime', 'dishType', 'cuisineType', 'uri'].map(a => '&field=' + a).join('');
+  const basliklar_ = Object.assign({ 'Accept': 'application/json' }, ayar.kullaniciBasligi ? { 'Edamam-Account-User': istemciKimligi || ayar.kullanici } : {});
+  async function edamam(mutfaklar) {
+    tarifCagri.push(Date.now());
+    const yol = '/api/recipes/v2?type=public&q=' + encodeURIComponent(q) + '&app_id=' + encodeURIComponent(ayar.id) + '&app_key=' + encodeURIComponent(ayar.key) + alanlar +
+      (mutfaklar || []).map(m => '&cuisineType=' + encodeURIComponent(m)).join('');
+    return httpsJson({ hostname: 'api.edamam.com', path: yol, method: 'GET', headers: basliklar_ });
+  }
+  // Edamam'da ayrı "Turkish" mutfağı yok; Türk yemekleri "Middle Eastern" altında. Akdeniz yakın ikinci tercih.
+  const TURK = /turk|türk|kebab|kebap|kofte|köfte|pilaf|pilav|borek|börek|meze|lahmacun|dolma|sarma|imam bayildi|baklava|cacik|menemen|shakshuka|ezme|mercimek|kisir|kısır|pide|gozleme|gözleme|manti|mantı|sucuk|bulgur|hummus|tahini|sumac|pomegranate molasses|urfa|aleppo|za'atar|zaatar/i;
   let y;
-  try {
-    y = await httpsJson({ hostname: 'api.edamam.com', path: yol, method: 'GET', headers: Object.assign({ 'Accept': 'application/json' }, ayar.kullaniciBasligi ? { 'Edamam-Account-User': istemciKimligi || ayar.kullanici } : {}) });
-  } catch (e) { console.error('[edamam]', e.message); return { durum: 502, veri: { hata: 'baglanti' } }; }
+  try { y = await edamam(['Middle Eastern', 'Mediterranean']); }
+  catch (e) { console.error('[edamam]', e.message); return { durum: 502, veri: { hata: 'baglanti' } }; }
   if (y.kod === 429) return { durum: 429, veri: { hata: 'yogun' } };
   if (y.kod !== 200) { console.error('[edamam]', y.kod, JSON.stringify(y.veri).slice(0, 200)); return { durum: 502, veri: { hata: 'servis' } }; }
-  const hamlar = (y.veri.hits || []).map(h => h.recipe).filter(Boolean);
-  const adimli = hamlar.filter(r => (r.instructionLines || []).length);
-  const tarifler = adimli.concat(hamlar.filter(r => !(r.instructionLines || []).length)).slice(0, 6);
+  let hamlar = (y.veri.hits || []).map(h => h.recipe).filter(Boolean);
+  // Mutfak filtresiyle az sonuç geldiyse (ve dakikalık sınır izin veriyorsa) filtresiz arama ile tamamla
+  if (hamlar.filter(r => (r.instructionLines || []).length).length < 4 && tarifCagri.filter(t => Date.now() - t < 60000).length < 9) {
+    try {
+      const y2 = await edamam(null);
+      if (y2.kod === 200) {
+        const gorulen = new Set(hamlar.map(r => r.uri));
+        hamlar = hamlar.concat((y2.veri.hits || []).map(h => h.recipe).filter(r => r && !gorulen.has(r.uri)));
+      }
+    } catch (e) { /* ilk sonuçlarla devam */ }
+  }
+  // Sıralama: yapılışı olan > Türk izi taşıyan > Orta Doğu > Akdeniz > diğer
+  const puan = r => {
+    const metin = [r.label, r.source, r.url, (r.ingredientLines || []).join(' ')].join(' ');
+    const mutfak = (r.cuisineType || []).join(' ').toLowerCase();
+    return ((r.instructionLines || []).length ? 100 : 0) + (TURK.test(r.label || '') ? 40 : TURK.test(metin) ? 15 : 0) +
+      (mutfak.indexOf('middle eastern') !== -1 ? 20 : mutfak.indexOf('mediterranean') !== -1 ? 10 : 0);
+  };
+  const tarifler = hamlar.map((r, n) => ({ r, p: puan(r), n })).sort((a, b) => b.p - a.p || a.n - b.n).map(x => x.r).slice(0, 9);
   // Aramada yalnız başlıklar Türkçeye (DeepL kotasını korur); malzeme + yapılış, tarif açılınca /api/tarif-cevir ile çevrilir
   let basliklar = null;
   if (!en && tarifler.length) basliklar = await deeplCevir(tarifler.map(r => r.label || ''), 'TR', 'EN', ayar.deepl).catch(() => null);
@@ -450,7 +472,9 @@ async function tarifAra(malzemeMetni, en, istemciKimligi) {
     const adim = (r.instructionLines || []).slice(0, 25).map(x => String(x).slice(0, 600));
     const tumMetin = [r.label, (r.dishType || []).join(' '), (r.cuisineType || []).join(' '), malz.join(' ')].join(' ');
     return {
-      baslik: (basliklar && basliklar[i]) || r.label, baslikOrijinal: r.label, resim: r.image, kaynak: r.source, url: r.url,
+      baslik: (basliklar && basliklar[i]) || r.label, baslikOrijinal: r.label,
+      resim: (r.images && r.images.REGULAR && r.images.REGULAR.url) || r.image,
+      resimBuyuk: (r.images && r.images.LARGE && r.images.LARGE.url) || (r.images && r.images.REGULAR && r.images.REGULAR.url) || r.image, kaynak: r.source, url: r.url,
       malzemeler: malz, adimlar: adim, sure: r.totalTime || 0, porsiyon: r.yield || 0,
       yag: tarifYagi(tumMetin, en)
     };

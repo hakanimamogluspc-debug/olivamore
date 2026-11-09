@@ -2455,3 +2455,17 @@ html.ta-acik{overflow:hidden}
 .ta-d-alt a{color:inherit}
 .ta-d-alt img{height:18px;width:auto;display:block}
 @media(max-width:760px){.ta-pencere{padding:0}.ta-detay{min-height:100%}.ta-d-ic{padding:22px 20px}.ta-d-ic h2{font-size:25px}.ta-d-govde{grid-template-columns:1fr;gap:24px}.ta-d-resim{aspect-ratio:16/10}}
+
+/* Tarif detayı: Edamam görselleri kare ve en fazla 600px → geniş bant yerine yanda kare görsel (bulanıklık olmaz) */
+.ta-d-bas{display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:center;padding-right:40px}
+.ta-d-bas .ta-d-resim{aspect-ratio:1/1;width:100%;overflow:hidden;background:#eee;box-shadow:0 14px 34px rgba(30,28,25,.14)}
+.ta-d-ic{padding-top:40px}
+@media(max-width:760px){.ta-d-bas{grid-template-columns:1fr;gap:18px;padding-right:0}.ta-d-bas .ta-d-resim{max-width:320px;margin:0 auto}.ta-d-ic{padding-top:56px}}
+
+/* Tarif asistanı sayfası: Edamam sonuçları */
+.ta-dahafazla{text-align:center;margin:22px 0 0}
+.ta-dahafazla a{color:var(--gold)}
+.ra-edamam{margin-top:34px}
+.ra-edamam .ta-grid{margin-top:6px}
+.ra-edamam-alt{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;font-size:12px;color:#999}
+.ra-edamam-alt img{height:20px;width:auto;display:block}
