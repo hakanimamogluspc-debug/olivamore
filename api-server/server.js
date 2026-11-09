@@ -373,8 +373,8 @@ const MALZEME_SOZLUK = {
   'süt':'milk','tereyağı':'butter','bamya':'okra','barbunya':'borlotti beans','kuru fasulye':'white beans','yeşil mercimek':'green lentils','kapya':'red bell pepper'
 };
 let tarifCagri = [];
-const tarifIpSayac = new Map();
-setInterval(() => tarifIpSayac.clear(), 60000);
+const tarifIpSayac = new Map(), tarifCeviriSayac = new Map();
+setInterval(() => { tarifIpSayac.clear(); tarifCeviriSayac.clear(); }, 60000);
 function tarifAyar() {
   const e = oku('env.json', {});
   return (e.edamamAppId && e.edamamAppKey) ? { id: e.edamamAppId, key: e.edamamAppKey, deepl: e.deeplKey || '', kullanici: e.edamamKullanici || 'olivamore', kullaniciBasligi: e.edamamKullaniciBasligi === true } : null;
@@ -431,7 +431,7 @@ async function tarifAra(malzemeMetni, en, istemciKimligi) {
   }
   const q = sorguParca.join(' ');
   tarifCagri.push(simdi);
-  const alanlar = ['label', 'image', 'url', 'source', 'ingredientLines', 'yield', 'totalTime', 'dishType', 'cuisineType', 'uri'].map(a => '&field=' + a).join('');
+  const alanlar = ['label', 'image', 'url', 'source', 'ingredientLines', 'instructionLines', 'yield', 'totalTime', 'dishType', 'cuisineType', 'uri'].map(a => '&field=' + a).join('');
   const yol = '/api/recipes/v2?type=public&q=' + encodeURIComponent(q) + '&app_id=' + encodeURIComponent(ayar.id) + '&app_key=' + encodeURIComponent(ayar.key) + alanlar;
   let y;
   try {
@@ -439,23 +439,19 @@ async function tarifAra(malzemeMetni, en, istemciKimligi) {
   } catch (e) { console.error('[edamam]', e.message); return { durum: 502, veri: { hata: 'baglanti' } }; }
   if (y.kod === 429) return { durum: 429, veri: { hata: 'yogun' } };
   if (y.kod !== 200) { console.error('[edamam]', y.kod, JSON.stringify(y.veri).slice(0, 200)); return { durum: 502, veri: { hata: 'servis' } }; }
-  const tarifler = (y.veri.hits || []).slice(0, 6).map(h => h.recipe).filter(Boolean);
-  // Başlık + malzemeler Türkçeye (tek DeepL çağrısı)
-  let ceviriler = null;
-  if (!en && tarifler.length) {
-    const metinler = [];
-    tarifler.forEach(r => { metinler.push(r.label || ''); (r.ingredientLines || []).slice(0, 12).forEach(l => metinler.push(l)); });
-    ceviriler = await deeplCevir(metinler, 'TR', 'EN', ayar.deepl).catch(() => null);
-  }
-  let k = 0;
-  const sonuclar = tarifler.map(r => {
-    const satir = (r.ingredientLines || []).slice(0, 12);
-    const baslikTr = ceviriler ? ceviriler[k++] : null;
-    const malz = satir.map(l => (ceviriler ? ceviriler[k++] : l));
-    const tumMetin = [r.label, (r.dishType || []).join(' '), (r.cuisineType || []).join(' '), satir.join(' ')].join(' ');
+  const hamlar = (y.veri.hits || []).map(h => h.recipe).filter(Boolean);
+  const adimli = hamlar.filter(r => (r.instructionLines || []).length);
+  const tarifler = adimli.concat(hamlar.filter(r => !(r.instructionLines || []).length)).slice(0, 6);
+  // Aramada yalnız başlıklar Türkçeye (DeepL kotasını korur); malzeme + yapılış, tarif açılınca /api/tarif-cevir ile çevrilir
+  let basliklar = null;
+  if (!en && tarifler.length) basliklar = await deeplCevir(tarifler.map(r => r.label || ''), 'TR', 'EN', ayar.deepl).catch(() => null);
+  const sonuclar = tarifler.map((r, i) => {
+    const malz = (r.ingredientLines || []).slice(0, 25).map(x => String(x).slice(0, 300));
+    const adim = (r.instructionLines || []).slice(0, 25).map(x => String(x).slice(0, 600));
+    const tumMetin = [r.label, (r.dishType || []).join(' '), (r.cuisineType || []).join(' '), malz.join(' ')].join(' ');
     return {
-      baslik: baslikTr || r.label, baslikOrijinal: r.label, resim: r.image, kaynak: r.source, url: r.url,
-      malzemeler: malz, cevrildi: !!ceviriler, sure: r.totalTime || 0, porsiyon: r.yield || 0,
+      baslik: (basliklar && basliklar[i]) || r.label, baslikOrijinal: r.label, resim: r.image, kaynak: r.source, url: r.url,
+      malzemeler: malz, adimlar: adim, sure: r.totalTime || 0, porsiyon: r.yield || 0,
       yag: tarifYagi(tumMetin, en)
     };
   });
@@ -1520,6 +1516,20 @@ const sunucu = http.createServer(async (req, res) => {
       res.writeHead(204); return res.end();
     }
 
+    // Tarif detayı çevirisi (malzeme + yapılış → Türkçe). Kişi başı dakikada 12, istek başına ≤ 50 satır / 9000 karakter
+    if (req.method === 'POST' && yol === '/api/tarif-cevir') {
+      const ip = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
+      const n = (tarifCeviriSayac.get(ip) || 0) + 1; tarifCeviriSayac.set(ip, n);
+      if (n > 12) return json(res, 429, { hata: 'yogun' });
+      const ayar = tarifAyar();
+      if (!ayar || !ayar.deepl) return json(res, 503, { hata: 'kapali' });
+      const g = await govde(req, 0.05);
+      const satirlar = Array.isArray(g.satirlar) ? g.satirlar.slice(0, 50).map(x => String(x || '').slice(0, 600)) : [];
+      if (!satirlar.length || satirlar.join('').length > 9000) return json(res, 400, { hata: 'gecersiz' });
+      const c = await deeplCevir(satirlar, 'TR', 'EN', ayar.deepl).catch(() => null);
+      if (!c) return json(res, 502, { hata: 'ceviri' });
+      return json(res, 200, { tamam: true, satirlar: c });
+    }
     // Tarif asistanı (Edamam). Rate-limit: kişi başı dakikada 6, toplam dakikada 9
     if (req.method === 'POST' && yol === '/api/tarif-ara') {
       const ip = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');

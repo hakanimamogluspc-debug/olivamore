@@ -2430,3 +2430,28 @@ body[data-page="home"] .fig-manset .fm-icerik{padding-top:calc(96px + var(--hdr-
 .ta-not{max-width:1140px;margin:0 auto 50px;padding:0 24px;font-size:12px;color:#999;text-align:center}
 @media(max-width:960px){.ta-grid{grid-template-columns:repeat(2,1fr)}.ta-sonuc{margin-top:-20px}}
 @media(max-width:600px){.ta-grid{grid-template-columns:1fr}}
+
+/* ===== Tarif Asistanı: kart butonu + sitede açılan tarif detayı ===== */
+.ta-kart{cursor:pointer;transition:box-shadow .2s,transform .2s}
+.ta-kart:hover{box-shadow:0 14px 34px rgba(30,28,25,.1);transform:translateY(-2px)}
+.ta-ac{align-self:flex-start;background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--gold);cursor:pointer}
+.ta-yag-et{text-transform:uppercase;letter-spacing:.05em;font-size:10px!important;color:var(--gold)!important}
+html.ta-acik{overflow:hidden}
+.ta-pencere{position:fixed;inset:0;z-index:1000;background:rgba(20,18,15,.55);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+.ta-pencere[hidden]{display:none}
+.ta-detay{position:relative;background:#fbfaf6;max-width:980px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.ta-kapat{position:absolute;top:10px;right:12px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:26px;line-height:1;cursor:pointer;color:#222}
+.ta-d-resim{aspect-ratio:21/9;overflow:hidden;background:#eee}
+.ta-d-resim img{width:100%;height:100%;object-fit:cover;display:block}
+.ta-d-ic{padding:30px 40px 26px}
+.ta-d-ic h2{font-family:var(--font-serif,serif);font-size:32px;line-height:1.2;margin:4px 0 6px}
+.ta-d-govde{display:grid;grid-template-columns:1fr 1.4fr;gap:40px;margin-top:24px}
+.ta-d-kolon h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;color:#555}
+.ta-d-malz{margin:0 0 20px;padding-left:18px;line-height:1.6;color:#333}
+.ta-d-adim{margin:0;padding-left:22px;line-height:1.7;color:#333}
+.ta-d-adim li{margin-bottom:10px;padding-left:4px}
+.ta-d-uyari{font-size:12px;color:#999;margin-top:12px}
+.ta-d-alt{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:28px;padding-top:16px;border-top:1px solid rgba(30,28,25,.1);font-size:12px;color:#888}
+.ta-d-alt a{color:inherit}
+.ta-d-alt img{height:18px;width:auto;display:block}
+@media(max-width:760px){.ta-pencere{padding:0}.ta-detay{min-height:100%}.ta-d-ic{padding:22px 20px}.ta-d-ic h2{font-size:25px}.ta-d-govde{grid-template-columns:1fr;gap:24px}.ta-d-resim{aspect-ratio:16/10}}
