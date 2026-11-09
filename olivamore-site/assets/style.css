@@ -2483,3 +2483,13 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
   .omx-rozet-ic .rozet-grup img{height:auto;width:20vw;max-width:84px;transform:none;flex:none}
   .omx-rozet-ic .rozet-grup img:hover{transform:rotate(-30deg)}
 }
+
+/* Kategoriler mobilde: 2'li ızgara (masaüstü değişmez) */
+@media(max-width:560px){
+  .fig-kategori{grid-template-columns:repeat(2,1fr);gap:10px;padding:32px 10px}
+  .fk-kat{height:250px}
+  .fk-serit{top:14px;font-size:.52rem;letter-spacing:.18em;padding:6px 14px 6px 16px}
+  .fk-altyazi{padding:56px 12px 14px}
+  .fk-altyazi b{font-size:1.35rem}
+  .fk-altyazi i{font-size:.62rem;letter-spacing:.12em;margin-top:4px}
+}
