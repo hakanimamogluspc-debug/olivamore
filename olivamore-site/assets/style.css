@@ -2388,3 +2388,12 @@ body[data-page="home"] .fig-manset .fm-icerik{padding-top:calc(96px + var(--hdr-
 .icon-btn{display:inline-flex;align-items:center;justify-content:center}
 #cart-btn .cart-count{top:4px;right:2px}
 @media(max-width:960px){#cart-btn .cart-count{top:4px;right:2px}}
+
+/* Üretim rozetleri: kayan şerit yerine sabit, ortalı dizi; üzerine gelince rozet sola 30° döner */
+.omx-rozet-ic{animation:none;width:100%;justify-content:center}
+.omx-rozet-ic .rozet-grup[aria-hidden="true"]{display:none}
+.rozet-grup{gap:clamp(40px,8vw,130px);padding-right:0;justify-content:center;flex-wrap:wrap;width:100%}
+.omx-rozet-ic img{transform:scale(1.3) rotate(0deg);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.omx-rozet-ic img:hover{transform:scale(1.3) rotate(-30deg)}
+@media(prefers-reduced-motion:reduce){.omx-rozet-ic img{transition:none}}
+@media(max-width:700px){.rozet-grup{gap:34px 46px}.omx-rozet-ic img{height:84px}}
