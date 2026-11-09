@@ -2475,3 +2475,11 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
   .nav-wrap.nav3 .logo-link img.logo-amblem{height:28px!important;width:auto!important}
   .nav-wrap.nav3 .logo-link img.logo-yazi{height:auto!important;width:min(112px,30vw)!important}
 }
+
+/* Üretim rozetleri mobilde: 4'ü tek satırda yan yana (alt satıra kaymaz) */
+@media(max-width:700px){
+  .omx-rozetler{padding:26px 0}
+  .omx-rozet-ic .rozet-grup{flex-wrap:nowrap;justify-content:space-evenly;width:100%;gap:0;padding:0 8px;box-sizing:border-box}
+  .omx-rozet-ic .rozet-grup img{height:auto;width:20vw;max-width:84px;transform:none;flex:none}
+  .omx-rozet-ic .rozet-grup img:hover{transform:rotate(-30deg)}
+}
