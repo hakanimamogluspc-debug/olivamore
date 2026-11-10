@@ -833,12 +833,13 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ AYARLAR ============ -->
     <section class="view" id="view-settings">
-      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(5,1fr);">
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(6,1fr);">
         <button type="button" class="sg-tab aktif" data-sg="duyuru"><b>Duyuru Şeridi</b><span>Sayfanın en üstündeki şerit</span></button>
         <button type="button" class="sg-tab" data-sg="hero"><b>Ana Sayfa Hero</b><span>Başlık, metin ve hero görseli/videosu</span></button>
         <button type="button" class="sg-tab" data-sg="hediye"><b>Hediye Kutusu</b><span>Kutu oluşturucu fiyatları</span></button>
         <button type="button" class="sg-tab" data-sg="odeme"><b>Ödeme ve Banka</b><span>Havale/EFT IBAN bilgileri</span></button>
         <button type="button" class="sg-tab" data-sg="izleme"><b>Reklam İzleme</b><span>Meta Pixel ve dönüşüm ölçümü</span></button>
+        <button type="button" class="sg-tab" data-sg="greenops"><b>Green Ops</b><span>Sipariş aktarımı ve kargo barkodu</span></button>
       </div>
       <div class="sg-pane" data-sg="duyuru">
         <div class="panel">
@@ -897,6 +898,20 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           <div class="desc">Ziyaretçi çerez onayı verdiğinde Pixel yüklenir; ürün görüntüleme, sepete ekleme, ödemeye başlama ve satın alma olayları Meta'ya gider. Sunucu tarafı (Conversions API) için erişim anahtarı panelden değil, sunucuda <code>env.json</code> içindeki <code>metaCapiToken</code> alanından girilir.</div>
           <div class="field"><label>Pixel (Veri Kümesi) ID</label><input type="text" id="f-metaPixel" placeholder="1511481262832458" style="font-family:'Poppins',sans-serif;"></div>
           <label class="chk"><input type="checkbox" id="f-metaAktif"> Pixel'i sitede çalıştır</label>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="greenops" hidden>
+        <div class="panel">
+          <h2>Green Ops entegrasyonu</h2>
+          <div class="desc">Yeni ve güncellenen web siparişleri otomatik olarak Green Ops'a gider (imzalı webhook; ulaşamazsa 12 saate kadar yeniden dener). Depo ekibi Green Ops'ta <b>Barkod</b>'a basınca site Yurtiçi gönderisini açar ve termal etiketi yazdırır; aynı sipariş için ikinci gönderi açılmaz. Adres ve anahtarlar sunucuda <code>env.json</code>'a girilir: <code>greenOpsWebhookUrl</code>, <code>greenOpsSecret</code>, <code>greenOpsApiKey</code>, isteğe bağlı <code>greenOpsEtiket</code> (100x75 / 100x100 / 100x150).</div>
+          <div id="go-durum" style="font-size:.9rem;">Yükleniyor…</div>
+          <div class="row-actions">
+            <button type="button" class="btn btn-dark btn-sm" id="go-test">Bağlantıyı test et</button>
+            <button type="button" class="btn btn-outline btn-sm" id="go-yeniden">Bekleyen/başarısızları yeniden gönder</button>
+            <button type="button" class="btn btn-outline btn-sm" id="go-gecmis">Son 7 günün siparişlerini gönder</button>
+            <span id="go-sonuc" style="font-size:.85rem;color:var(--soft);"></span>
+          </div>
+          <div id="go-gunluk" style="margin-top:14px;font-size:.82rem;"></div>
         </div>
       </div>
     </section>
@@ -1982,6 +1997,40 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     document.getElementById('st-blogs').textContent = C.blogs.filter(function (b) { return b.visible !== false; }).length;
     document.getElementById('st-mods').textContent = Object.keys(C.modules).filter(function (k) { return C.modules[k] !== false; }).length + '/' + Object.keys(MOD_NAMES).length;
   }
+
+  /* ================== GREEN OPS ================== */
+  function goYukle() {
+    var el = document.getElementById('go-durum'); if (!el) return;
+    fetch('/api/admin/greenops').then(function (r) { return r.json(); }).then(function (d) {
+      var sat = function (a, b, ok) { return '<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);"><b style="min-width:190px;">' + a + '</b><span' + (ok === false ? ' style="color:#b04a3a;"' : '') + '>' + b + '</span></div>'; };
+      el.innerHTML = sat('Webhook adresi', d.webhook ? esc(d.host) : 'girilmedi (greenOpsWebhookUrl)', d.webhook) +
+        sat('İmza anahtarı', d.imza ? '✓ var' : 'yok (greenOpsSecret) — Green Ops gelen isteği doğrulayamaz', d.imza) +
+        sat('Green Ops → site anahtarı', d.apiAnahtar ? '✓ var' : 'yok (greenOpsApiKey) — barkod butonu çalışmaz', d.apiAnahtar) +
+        sat('Etiket boyutu', esc(d.etiket) + ' mm') +
+        sat('Aktarım başlangıcı', d.baslangic ? new Date(d.baslangic).toLocaleString('tr-TR') + ' (öncesi gönderilmez)' : 'ilk siparişte başlar') +
+        sat('Kuyrukta bekleyen', d.bekleyen + (d.sonHata ? ' · son hata: ' + esc(d.sonHata) : ''), !d.sonHata) +
+        sat('Gönderilemeyen', d.basarisiz.length ? d.basarisiz.map(function (x) { return esc(x.no) + ' (' + esc(x.hata || '') + ')'; }).join(', ') : 'yok', !d.basarisiz.length);
+      document.getElementById('go-gunluk').innerHTML = d.gecmis.length ? '<b>Son aktarımlar</b>' + d.gecmis.map(function (g) { return '<div style="padding:3px 0;">' + (g.ok ? '✓' : '✗') + ' ' + new Date(g.t).toLocaleString('tr-TR') + ' · ' + esc(g.no) + ' · ' + esc(g.olay) + (g.hata ? ' · <span style="color:#b04a3a;">' + esc(g.hata) + '</span>' : '') + '</div>'; }).join('') : '';
+    }).catch(function () { el.textContent = 'Durum alınamadı.'; });
+  }
+  function goIslem(islem, ek) {
+    var sn = document.getElementById('go-sonuc'); sn.textContent = 'Çalışıyor…';
+    fetch('/api/admin/greenops', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ islem: islem }, ek || {})) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.hata && !('tamam' in d)) sn.textContent = '⚠ ' + d.hata;
+        else if (islem === 'test') sn.textContent = d.tamam ? '✓ Green Ops yanıt verdi (HTTP ' + d.kod + ')' : '⚠ Bağlanamadı: ' + (d.hata || ('HTTP ' + d.kod + ' ' + (d.yanit || '')));
+        else sn.textContent = '✓ ' + (d.adet || 0) + ' kayıt kuyruğa alındı';
+        setTimeout(goYukle, 1500);
+      }).catch(function () { sn.textContent = '⚠ Sunucuya ulaşılamadı'; });
+  }
+  (function () {
+    var t = document.getElementById('go-test'); if (!t) return;
+    t.addEventListener('click', function () { goIslem('test'); });
+    document.getElementById('go-yeniden').addEventListener('click', function () { goIslem('yeniden'); });
+    document.getElementById('go-gecmis').addEventListener('click', function () { if (confirm('Son 7 günün siparişleri Green Ops\'a yeniden gönderilsin mi? Green Ops aynı sipariş numarasını tekrar oluşturmamalı (güncelleme olarak işlemeli).')) goIslem('gecmis-gonder', { gun: 7 }); });
+    document.querySelector('.sg-tab[data-sg="greenops"]').addEventListener('click', goYukle);
+  })();
 
   /* ================== KAYDET / SIFIRLA / YEDEK ================== */
   document.getElementById('btn-save').addEventListener('click', function () {

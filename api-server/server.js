@@ -42,6 +42,7 @@ function yaz(ad, veri) {
   const tmp = dosya(ad + '.tmp');
   fs.writeFileSync(tmp, JSON.stringify(veri, null, 1));
   fs.renameSync(tmp, dosya(ad));
+  if (ad === 'siparisler.json') greenOpsZamanla();
 }
 
 
@@ -480,6 +481,223 @@ async function tarifAra(malzemeMetni, en, istemciKimligi) {
     };
   });
   return { durum: 200, veri: { tamam: true, sorgu: q, sonuclar: sonuclar } };
+}
+
+/* =====================================================================
+   GREEN OPS ENTEGRASYONU
+   Site → Green Ops : sipariş olayları (webhook, HMAC-SHA256 imzalı, kuyruklu + yeniden denemeli)
+   Green Ops → Site : /api/entegre/*  (Authorization: Bearer <greenOpsApiKey>)
+     GET  /api/entegre/siparisler?sonra=ISO&durum=   sipariş listesi (kaçan olay/yedek senkron)
+     GET  /api/entegre/siparis?no=                     tek sipariş
+     POST /api/entegre/kargo-barkod {no, zorla?}       Yurtiçi gönderisini açar (bir kez) + etiket linki döner
+     GET  /api/entegre/etiket?no=&exp=&t=              termal etiket (HTML, açılınca yazdırır) — imzalı link
+     POST /api/entegre/durum {no, durum, not?}         Green Ops'tan durum bildirimi (hazırlanıyor / tamamlandı)
+   env.json: greenOpsWebhookUrl, greenOpsSecret (imza), greenOpsApiKey (gelen istekler), greenOpsEtiket ("100x75" | "100x100" | "100x150")
+   ===================================================================== */
+var goZamanlayici = null, goCalisiyor = false;
+function greenOpsZamanla() {
+  if (goZamanlayici) return;
+  goZamanlayici = setTimeout(() => { goZamanlayici = null; try { greenOpsTara(); } catch (e) { console.error('[greenops]', e.message); } greenOpsGonder().catch(e => console.error('[greenops]', e.message)); }, 1500);
+}
+function goAyar() {
+  const e = oku('env.json', {});
+  return { url: e.greenOpsWebhookUrl || '', sir: e.greenOpsSecret || '', anahtar: e.greenOpsApiKey || '', etiket: e.greenOpsEtiket || '100x75' };
+}
+const GO_DISARIDA = ['odeme-bekliyor', 'odeme-basarisiz'];
+function goOdemeAlindi(s) { return !!s.odendi || ['hazırlanıyor', 'kargolandı', 'tamamlandı'].indexOf(s.durum) !== -1; }
+function goSku(katalog, k) {
+  let siteKod = k.kod || k.pid || k.id || '';
+  if (!siteKod) { const kayit = urunKaydi(katalog, k.ad); if (kayit && kayit.id) siteKod = kayit.id; }
+  const kat = (katalog.products || []).find(x => x.id === siteKod);
+  return { siteKodu: siteKod, sku: (kat && kat.stokKodu) ? kat.stokKodu : greenOpsKodu(siteKod) };
+}
+function goSiparisVeri(s, katalog) {
+  const m = s.musteri || {};
+  return {
+    no: s.no, tarih: s.tarih, kanal: s.kanal || (s.odeme === 'pazaryeri' ? 'pazaryeri' : 'web'),
+    durum: s.durum, odeme: { yontem: s.odeme, alindi: goOdemeAlindi(s) },
+    musteri: { ad: m.ad || '', eposta: m.eposta || '', telefon: m.telefon || '' },
+    teslimat: { adres: m.adres || '', ilce: m.ilce || '', il: m.il || '', postaKodu: m.postaKodu || '', not: m.not || '' },
+    fatura: s.faturaBilgi || { tip: 'bireysel' },
+    kalemler: (s.kalemler || []).map(k => Object.assign(goSku(katalog, k), { ad: k.ad, adet: k.adet || 1, birimFiyat: k.fiyat, kdvOrani: typeof k.kdv === 'number' ? k.kdv : 1, paket: k.paket || undefined })),
+    tutar: { araToplam: s.araToplam, indirim: s.indirim || 0, kargo: s.kargo || 0, kdv: s.kdvToplam || 0, toplam: s.toplam, paraBirimi: 'TRY' },
+    kupon: s.kupon ? (s.kupon.kod || s.kupon) : null,
+    kargo: { firma: s.kargoFirma || '', takipNo: s.kargoNo || '', etiketHazir: !!s.kargoNo },
+    iade: s.iade || null, partiKod: s.partiKod || '', adminNot: s.adminNot || ''
+  };
+}
+function goParmak(v) { return crypto.createHash('sha1').update(JSON.stringify(v)).digest('hex').slice(0, 16); }
+function goDurumOku() { return oku('greenops-durum.json', { baslangic: null, izler: {}, gecmis: [] }); }
+function greenOpsTara() {
+  const a = goAyar();
+  if (!a.url) return;
+  const durum = goDurumOku();
+  const katalog = oku('cms.json', {});
+  const liste = oku('siparisler.json', []).filter(s => s.kaynak !== 'wordpress' && GO_DISARIDA.indexOf(s.durum) === -1);
+  // İlk açılışta mevcut siparişleri geçmiş say (taşkın olmasın); panelden "geçmişi gönder" ile istenirse gönderilir
+  if (!durum.baslangic) {
+    durum.baslangic = new Date().toISOString();
+    liste.forEach(s => { durum.izler[s.no] = goParmak(goSiparisVeri(s, katalog)); });
+    yaz('greenops-durum.json', durum);
+    return;
+  }
+  const kuyruk = oku('greenops-kuyruk.json', []);
+  let degisti = false;
+  liste.forEach(s => {
+    const veri = goSiparisVeri(s, katalog), p = goParmak(veri), onceki = durum.izler[s.no];
+    if (onceki === p) return;
+    durum.izler[s.no] = p; degisti = true;
+    const olay = onceki ? 'siparis.guncellendi' : 'siparis.yeni';
+    const bekleyen = kuyruk.find(x => x.no === s.no && !x.basarisiz);
+    if (bekleyen) { bekleyen.veri = veri; bekleyen.sonraki = Date.now(); }
+    else kuyruk.push({ id: crypto.randomBytes(8).toString('hex'), olay: olay, no: s.no, veri: veri, deneme: 0, sonraki: Date.now(), olusturma: new Date().toISOString() });
+  });
+  if (degisti) { yaz('greenops-durum.json', durum); yaz('greenops-kuyruk.json', kuyruk.slice(-2000)); }
+}
+function goPost(urlStr, govdeStr, basliklar) {
+  return new Promise((cozul, red) => {
+    let u; try { u = new URL(urlStr); } catch (e) { return red(new Error('Geçersiz webhook adresi')); }
+    const mod = u.protocol === 'http:' ? require('http') : require('https');
+    const istek = mod.request({ hostname: u.hostname, port: u.port || undefined, path: u.pathname + u.search, method: 'POST', timeout: 15000,
+      headers: Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': Buffer.byteLength(govdeStr), 'User-Agent': 'Olivamore-Webhook/1' }, basliklar) }, r => {
+      let p = ''; r.setEncoding('utf8'); r.on('data', d => { if (p.length < 2000) p += d; }); r.on('end', () => cozul({ kod: r.statusCode, govde: p }));
+    });
+    istek.on('timeout', () => istek.destroy(new Error('zaman aşımı')));
+    istek.on('error', red);
+    istek.end(govdeStr);
+  });
+}
+const GO_BEKLEME_DK = [1, 2, 5, 15, 30, 60, 120, 240, 480, 720];
+async function goTekGonder(olay, veri, teslimId) {
+  const a = goAyar();
+  const govdeStr = JSON.stringify({ olay: olay, id: teslimId, zaman: new Date().toISOString(), siparis: veri });
+  const zaman = String(Math.floor(Date.now() / 1000));
+  const imza = a.sir ? crypto.createHmac('sha256', a.sir).update(zaman + '.' + govdeStr).digest('hex') : '';
+  return goPost(a.url, govdeStr, { 'X-Olivamore-Olay': olay, 'X-Olivamore-Teslim': teslimId, 'X-Olivamore-Zaman': zaman, 'X-Olivamore-Imza': 'sha256=' + imza });
+}
+async function greenOpsGonder() {
+  const a = goAyar();
+  if (!a.url || goCalisiyor) return;
+  goCalisiyor = true;
+  try {
+    const kuyruk = oku('greenops-kuyruk.json', []);
+    const simdi = Date.now();
+    const sirada = kuyruk.filter(x => !x.basarisiz && x.sonraki <= simdi).slice(0, 20);
+    if (!sirada.length) return;
+    const durum = goDurumOku();
+    const gonderilen = new Set();
+    for (const x of sirada) {
+      let sonuc = null, hata = '';
+      try { sonuc = await goTekGonder(x.olay, x.veri, x.id); if (sonuc.kod < 200 || sonuc.kod >= 300) hata = 'HTTP ' + sonuc.kod + ' ' + String(sonuc.govde || '').slice(0, 160); }
+      catch (e) { hata = e.message; }
+      if (!hata) { gonderilen.add(x.id); durum.gecmis.unshift({ t: new Date().toISOString(), no: x.no, olay: x.olay, ok: true }); }
+      else {
+        x.deneme++; x.sonHata = hata;
+        if (x.deneme >= GO_BEKLEME_DK.length) { x.basarisiz = true; console.error('[greenops] vazgeçildi', x.no, hata); }
+        else x.sonraki = Date.now() + GO_BEKLEME_DK[x.deneme] * 60000;
+        durum.gecmis.unshift({ t: new Date().toISOString(), no: x.no, olay: x.olay, ok: false, hata: hata.slice(0, 160) });
+      }
+    }
+    durum.gecmis = durum.gecmis.slice(0, 60);
+    // Gönderim sürerken eklenen kayıtlar kaybolmasın: taze kuyruğu oku, yalnız gönderilenleri çıkar, denemeleri işle
+    const taze = oku('greenops-kuyruk.json', []);
+    const isle = new Map(sirada.map(x => [x.id, x]));
+    yaz('greenops-kuyruk.json', taze.filter(x => !gonderilen.has(x.id)).map(x => isle.has(x.id) ? Object.assign(x, { deneme: isle.get(x.id).deneme, sonHata: isle.get(x.id).sonHata, sonraki: goParmak(x.veri) === goParmak(isle.get(x.id).veri) ? isle.get(x.id).sonraki : x.sonraki, basarisiz: isle.get(x.id).basarisiz }) : x));
+    yaz('greenops-durum.json', durum);
+  } finally { goCalisiyor = false; }
+}
+setInterval(() => { try { greenOpsTara(); } catch (e) { console.error('[greenops]', e.message); } greenOpsGonder().catch(e => console.error('[greenops]', e.message)); }, 60000);
+
+function goYetkili(req) {
+  const a = goAyar();
+  if (!a.anahtar) return false;
+  const h = String(req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+  const x = Buffer.from(h), y = Buffer.from(a.anahtar);
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+function goEtiketImza(no, exp) { const a = goAyar(); return crypto.createHmac('sha256', (a.sir || a.anahtar) + '|etiket').update(no + '.' + exp).digest('hex').slice(0, 32); }
+function goEtiketLinki(no) {
+  const exp = Math.floor(Date.now() / 1000) + 30 * 60; // 30 dk geçerli
+  return SITE() + '/api/entegre/etiket?no=' + encodeURIComponent(no) + '&exp=' + exp + '&t=' + goEtiketImza(no, exp);
+}
+/* Code128-B (bağımlılıksız) — YK şubesi cargoKey'i (sipariş no) bu barkoddan okutur */
+function code128Svg(metin, genislik, yukseklik) {
+  const P = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+  const kodlar = [104];
+  for (const ch of String(metin)) { let v = ch.charCodeAt(0) - 32; if (v < 0 || v > 94) v = 0; kodlar.push(v); }
+  let toplam = 104; for (let j = 1; j < kodlar.length; j++) toplam += kodlar[j] * j;
+  kodlar.push(toplam % 103); kodlar.push(106);
+  const desen = kodlar.map(k => P[k]).join('');
+  let modul = 0; for (const c of desen) modul += +c;
+  const mw = genislik / (modul + 20); let x = mw * 10, cub = '';
+  for (let d = 0; d < desen.length; d++) { const w = (+desen[d]) * mw; if (d % 2 === 0) cub += '<rect x="' + x.toFixed(2) + '" y="0" width="' + w.toFixed(2) + '" height="' + yukseklik + '" fill="#000"/>'; x += w; }
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + genislik + '" height="' + yukseklik + '" viewBox="0 0 ' + genislik + ' ' + yukseklik + '">' + cub + '</svg>';
+}
+function htmlKacir(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+function kargoEtiketHtml(s, boyut) {
+  const m = s.musteri || {};
+  const [gw, gh] = (/^\d{2,3}x\d{2,3}$/.test(boyut || '') ? boyut : '100x75').split('x').map(Number);
+  const urunler = (s.kalemler || []).map(k => (k.adet || 1) + '× ' + k.ad).join(', ');
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kargo Etiketi ' + htmlKacir(s.no) + '</title>' +
+    '<style>@page{size:' + gw + 'mm ' + gh + 'mm;margin:0}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;margin:0;color:#000}' +
+    '.etiket{width:' + gw + 'mm;height:' + gh + 'mm;padding:4mm 5mm;display:flex;flex-direction:column}' +
+    '.ust{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:1.5mm}' +
+    '.marka{font-weight:700;font-size:13pt;letter-spacing:.12em}.firma{font-size:7pt;font-weight:700;letter-spacing:.06em}' +
+    '.barkod{text-align:center;margin:2.5mm 0 .5mm}.barkod svg{width:100%;height:' + Math.round(gh * 0.22) + 'mm}' +
+    '.kod{text-align:center;font-size:12pt;font-weight:700;letter-spacing:.18em;margin-bottom:2mm}' +
+    '.alici{font-size:9pt;line-height:1.4;border-top:1px solid #000;padding-top:1.8mm}.alici b{font-size:10.5pt}' +
+    '.icerik{font-size:7pt;margin-top:1.5mm;color:#222;max-height:' + (gh > 90 ? 18 : 7) + 'mm;overflow:hidden}' +
+    '.alt{margin-top:auto;display:flex;justify-content:space-between;font-size:6.5pt;border-top:1px solid #000;padding-top:1.2mm}' +
+    '@media screen{body{background:#eee;padding:10px}.etiket{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}}' +
+    '@media print{body{padding:0;background:#fff}}</style></head><body>' +
+    '<div class="etiket"><div class="ust"><span class="marka">OLIVAMORE</span><span class="firma">' + htmlKacir((s.kargoFirma || 'Yurtiçi').toLocaleUpperCase('tr')) + ' KARGO · GÖNDERİCİ ÖDEMELİ</span></div>' +
+    '<div class="barkod">' + code128Svg(s.kargoNo || s.no, 380, 80) + '</div>' +
+    '<div class="kod">' + htmlKacir(s.kargoNo || s.no) + '</div>' +
+    '<div class="alici"><b>ALICI: ' + htmlKacir(m.ad) + '</b><br>' + htmlKacir(m.adres) + '<br>' + htmlKacir((m.ilce ? m.ilce + ' / ' : '') + (m.il || '')) + ' · Tel: ' + htmlKacir(m.telefon) + '</div>' +
+    (gh > 80 ? '<div class="icerik">İçerik: ' + htmlKacir(urunler) + '</div>' : '') +
+    '<div class="alt"><span>Gönderici: Pektaş Tarım Gıda ve Tic. Ltd. Şti. · Ayvalık / Balıkesir</span><span>Sipariş: ' + htmlKacir(s.no) + ' · Koli: 1</span></div>' +
+    '</div><script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script></body></html>';
+}
+// Tek tuş: gönderiyi (bir kez) aç → etiket linki. Aynı sipariş için eşzamanlı ikinci istek beklemeye alınır, çift gönderi açılmaz.
+const goKargoKilit = new Map();
+async function kargoBarkodOlustur(no, secenek) {
+  if (goKargoKilit.has(no)) return goKargoKilit.get(no);
+  const is = (async () => {
+    const liste = oku('siparisler.json', []);
+    const s = liste.find(x => x.no === no);
+    if (!s) return { kod: 404, veri: { hata: 'Sipariş bulunamadı.' } };
+    if (s.kaynak === 'wordpress') return { kod: 409, veri: { hata: 'Eski site siparişi; kargo bu sistemden açılmaz.' } };
+    if (['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) !== -1) return { kod: 409, veri: { hata: 'Sipariş durumu "' + s.durum + '": kargo açılamaz.' } };
+    if (!goOdemeAlindi(s) && !secenek.zorla) return { kod: 409, veri: { hata: 'Ödeme henüz onaylanmadı (havale bekleniyor). Yine de göndermek için zorla:true.', kod: 'odeme-bekliyor' } };
+    if (!s.kargoNo) {
+      const firma = 'Yurtiçi';
+      if (!kargoAktif().yurtici) return { kod: 503, veri: { hata: 'Yurtiçi WS bilgileri girilmemiş.' } };
+      const sonuc = await yurticiGonderiOlustur(s);
+      if (sonuc.hata) return { kod: 502, veri: { hata: 'Yurtiçi: ' + sonuc.hata } };
+      const taze = oku('siparisler.json', []);
+      const t = taze.find(x => x.no === no);
+      const eskiDurum = t.durum;
+      t.kargoFirma = firma; t.kargoNo = sonuc.kargoNo; t.durum = 'kargolandı';
+      t.gecmis = t.gecmis || [];
+      t.gecmis.unshift({ tarih: new Date().toISOString(), islem: firma + ' gönderisi oluşturuldu (' + sonuc.kargoNo + ')' + (secenek.kaynak ? ' · ' + secenek.kaynak : '') });
+      yaz('siparisler.json', taze);
+      if (eskiDurum !== 'kargolandı' && t.musteri && t.musteri.eposta) {
+        epostaGonder(t.musteri.eposta, 'Siparişiniz kargoya verildi · ' + t.no,
+          'Merhaba ' + t.musteri.ad + ',\n\n' + t.no + ' numaralı siparişiniz kargoya verildi.\nKargo: ' + firma + ' · Takip No: ' + sonuc.kargoNo + '\n\nAfiyet olsun,\nOlivamore');
+      }
+      return { kod: 200, veri: { tamam: true, yeni: true, no: no, kargoFirma: firma, kargoNo: sonuc.kargoNo, etiketUrl: goEtiketLinki(no) } };
+    }
+    return { kod: 200, veri: { tamam: true, yeni: false, no: no, kargoFirma: s.kargoFirma, kargoNo: s.kargoNo, etiketUrl: goEtiketLinki(no) } };
+  })();
+  goKargoKilit.set(no, is);
+  try { return await is; } finally { goKargoKilit.delete(no); }
+}
+function greenOpsOzet() {
+  const a = goAyar(), d = goDurumOku(), k = oku('greenops-kuyruk.json', []);
+  let host = ''; try { host = a.url ? new URL(a.url).host : ''; } catch (e) { host = 'geçersiz adres'; }
+  return { webhook: !!a.url, host: host, imza: !!a.sir, apiAnahtar: !!a.anahtar, etiket: a.etiket, baslangic: d.baslangic,
+    bekleyen: k.filter(x => !x.basarisiz).length, basarisiz: k.filter(x => x.basarisiz).map(x => ({ no: x.no, olay: x.olay, hata: x.sonHata, deneme: x.deneme })),
+    sonHata: (k.filter(x => !x.basarisiz && x.sonHata)[0] || {}).sonHata || '', gecmis: d.gecmis.slice(0, 25) };
 }
 /* ---------- Havale / EFT ---------- */
 function bankaBilgi() {
@@ -1496,6 +1714,7 @@ function saglikRaporu() {
       trendyol: !!(env.trendyolSaticiId && env.trendyolApiKey), hepsiburada: !!(env.hbMerchantId && env.hbKullanici),
       panelSifre: !!(env.adminKullanici && env.adminHash),
       tarifAsistani: !!(env.edamamAppId && env.edamamAppKey), ceviri: !!env.deeplKey,
+      greenOps: greenOpsOzet(),
       metaCapi: !!env.metaCapiToken, metaTest: !!env.metaTestKodu, siteAdresi: SITE(),
       banka: !!(bankaBilgi().iban)
     },
@@ -1540,6 +1759,60 @@ const sunucu = http.createServer(async (req, res) => {
       res.writeHead(204); return res.end();
     }
 
+    // ======== Green Ops → Site (Bearer greenOpsApiKey) ========
+    if (yol === '/api/entegre/etiket' && req.method === 'GET') {
+      const u = new URL(req.url, 'http://x');
+      const no = String(u.searchParams.get('no') || '').replace(/[^A-Za-z0-9-]/g, '');
+      const exp = parseInt(u.searchParams.get('exp'), 10) || 0, t = String(u.searchParams.get('t') || '');
+      const imzaOk = exp > Date.now() / 1000 && t.length === 32 && crypto.timingSafeEqual(Buffer.from(t), Buffer.from(goEtiketImza(no, exp)));
+      if (!imzaOk && !goYetkili(req) && !adminYetkili(req)) { res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Etiket linkinin süresi dolmuş. Green Ops\'ta "Barkod" butonuna tekrar bas.'); }
+      const s = oku('siparisler.json', []).find(x => x.no === no);
+      if (!s) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Sipariş bulunamadı.'); }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+      return res.end(kargoEtiketHtml(s, u.searchParams.get('boyut') || goAyar().etiket));
+    }
+    if (yol.indexOf('/api/entegre/') === 0) {
+      if (!goYetkili(req)) return json(res, 401, { hata: 'Yetkisiz. Authorization: Bearer <greenOpsApiKey> gerekli.' });
+      const katalog = oku('cms.json', {});
+      if (req.method === 'GET' && yol === '/api/entegre/siparisler') {
+        const u = new URL(req.url, 'http://x');
+        const sonra = u.searchParams.get('sonra') || '', durumF = u.searchParams.get('durum') || '';
+        const liste = oku('siparisler.json', []).filter(s => s.kaynak !== 'wordpress' && GO_DISARIDA.indexOf(s.durum) === -1)
+          .filter(s => !sonra || String(s.tarih) > sonra).filter(s => !durumF || s.durum === durumF).slice(0, 500);
+        return json(res, 200, { tamam: true, adet: liste.length, siparisler: liste.map(s => goSiparisVeri(s, katalog)) });
+      }
+      if (req.method === 'GET' && yol === '/api/entegre/siparis') {
+        const no = new URL(req.url, 'http://x').searchParams.get('no');
+        const s = oku('siparisler.json', []).find(x => x.no === no);
+        if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+        return json(res, 200, { tamam: true, siparis: goSiparisVeri(s, katalog), etiketUrl: s.kargoNo ? goEtiketLinki(s.no) : null });
+      }
+      if (req.method === 'POST' && yol === '/api/entegre/kargo-barkod') {
+        const g = await govde(req, 0.05);
+        const no = temiz(g.no, 30);
+        if (!no) return json(res, 400, { hata: 'no gerekli' });
+        try { const r = await kargoBarkodOlustur(no, { zorla: g.zorla === true, kaynak: 'Green Ops' + (g.kullanici ? ' · ' + temiz(g.kullanici, 60) : '') }); return json(res, r.kod, r.veri); }
+        catch (e) { return json(res, 502, { hata: 'Kargo servisine ulaşılamadı: ' + e.message }); }
+      }
+      if (req.method === 'POST' && yol === '/api/entegre/durum') {
+        const g = await govde(req, 0.05);
+        const izinli = ['hazırlanıyor', 'kargolandı', 'tamamlandı'];
+        const yeni = temiz(g.durum, 30);
+        if (izinli.indexOf(yeni) === -1) return json(res, 400, { hata: 'durum şunlardan biri olmalı: ' + izinli.join(', ') });
+        const liste = oku('siparisler.json', []);
+        const s = liste.find(x => x.no === temiz(g.no, 30));
+        if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+        if (['iptal', 'iade'].indexOf(s.durum) !== -1) return json(res, 409, { hata: 'Sipariş ' + s.durum + ' durumunda.' });
+        if (s.durum !== yeni) {
+          s.gecmis = s.gecmis || [];
+          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Green Ops: ' + s.durum + ' → ' + yeni + (g.not ? ' · ' + temiz(g.not, 200) : '') });
+          s.durum = yeni;
+          yaz('siparisler.json', liste);
+        }
+        return json(res, 200, { tamam: true, no: s.no, durum: s.durum });
+      }
+      return json(res, 404, { hata: 'Bilinmeyen uç nokta' });
+    }
     // Tarif detayı çevirisi (malzeme + yapılış → Türkçe). Kişi başı dakikada 12, istek başına ≤ 50 satır / 9000 karakter
     if (req.method === 'POST' && yol === '/api/tarif-cevir') {
       const ip = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
@@ -2224,6 +2497,39 @@ const sunucu = http.createServer(async (req, res) => {
         return json(res, 200, { tamam: true, il: p.ilAd || '', ilce: p.ilceAd || '', mahalle: p.mahalleAd || '', ada: String(p.adaNo || ''), parsel: String(p.parselNo || ''),
           alan: p.alan ? String(p.alan) + ' m²' : '', mevkii: p.mevkii || '', nitelik: p.nitelik || '', sinir: JSON.stringify(ft.geometry) });
       } catch (e) { return json(res, 502, { hata: 'TKGM bağlantı hatası: ' + e.message + '. Sınırı elle yapıştırabilirsin.' }); }
+    }
+    if (req.method === 'GET' && yol === '/api/admin/greenops') return json(res, 200, greenOpsOzet());
+    if (req.method === 'POST' && yol === '/api/admin/greenops') {
+      const g = await govde(req, 0.05);
+      const a = goAyar();
+      if (!a.url) return json(res, 400, { hata: 'env.json → greenOpsWebhookUrl girilmemiş.' });
+      if (g.islem === 'test') {
+        try {
+          const r = await goTekGonder('test', { mesaj: 'Olivamore bağlantı testi', site: SITE() }, 'test-' + Date.now());
+          return json(res, 200, { tamam: r.kod >= 200 && r.kod < 300, kod: r.kod, yanit: String(r.govde || '').slice(0, 300) });
+        } catch (e) { return json(res, 200, { tamam: false, hata: e.message }); }
+      }
+      if (g.islem === 'yeniden') {
+        const k = oku('greenops-kuyruk.json', []); k.forEach(x => { x.basarisiz = false; x.deneme = 0; x.sonraki = Date.now(); });
+        yaz('greenops-kuyruk.json', k); greenOpsGonder().catch(() => {});
+        return json(res, 200, { tamam: true, adet: k.length });
+      }
+      if (g.islem === 'gecmis-gonder') {
+        // Son N gündeki siparişleri (açık olanlar) Green Ops'a yeniden gönder
+        const gun = Math.min(90, Math.max(1, parseInt(g.gun, 10) || 7));
+        const sinir = new Date(Date.now() - gun * 86400000).toISOString();
+        const d = goDurumOku(); let adet = 0;
+        oku('siparisler.json', []).forEach(s => { if (s.kaynak !== 'wordpress' && s.tarih > sinir && d.izler[s.no]) { delete d.izler[s.no]; adet++; } });
+        d.baslangic = d.baslangic && d.baslangic < sinir ? d.baslangic : sinir;
+        yaz('greenops-durum.json', d); greenOpsTara(); greenOpsGonder().catch(() => {});
+        return json(res, 200, { tamam: true, adet: adet });
+      }
+      return json(res, 400, { hata: 'Bilinmeyen işlem' });
+    }
+    if (req.method === 'POST' && yol === '/api/admin/kargo-barkod') {
+      const g = await govde(req, 0.05);
+      try { const r = await kargoBarkodOlustur(temiz(g.no, 30), { zorla: g.zorla === true, kaynak: 'Panel' }); return json(res, r.kod, r.veri); }
+      catch (e) { return json(res, 502, { hata: 'Kargo servisine ulaşılamadı: ' + e.message }); }
     }
     if (req.method === 'GET' && yol === '/api/admin/web-analiz') {
       const q = new URLSearchParams((req.url || '').split('?')[1] || '');
