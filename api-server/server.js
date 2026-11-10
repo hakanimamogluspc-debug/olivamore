@@ -1494,7 +1494,7 @@ function kartAktif() { return paratikaAktif() || iyzicoAktif(); }
 function paratikaAdres() {
   const e = oku('env.json', {});
   const kok = e.paratikaTest ? 'https://entegrasyon.paratika.com.tr' : 'https://vpos.paratika.com.tr';
-  return { api: kok + '/paratika/api/v2', odeme: (e.paratikaOdemeSayfasi || (kok + '/merchant/payment/')) };
+  return { api: kok + '/paratika/api/v2', odeme: (e.paratikaOdemeSayfasi || (kok + '/payment/')) };
 }
 function paratikaIstek(alanlar) {
   const e = oku('env.json', {});
