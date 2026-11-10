@@ -35,7 +35,7 @@ Rastgele anahtar üretmek için: `openssl rand -hex 32`
   "siparis": {
     "no": "OM-261110-1234",
     "tarih": "2026-11-10T09:41:58.000Z",
-    "kanal": "web",
+    "kanal": "web",          // web | whatsapp | telefon | instagram | magaza | e-posta | diger | pazaryeri
     "durum": "yeni",
     "odeme": { "yontem": "havale", "alindi": false },
     "musteri": { "ad": "Ad Soyad", "eposta": "x@y.com", "telefon": "05551112233" },
@@ -66,6 +66,7 @@ Rastgele anahtar üretmek için: `openssl rand -hex 32`
 - **Yanıt:** 2xx dönerseniz teslim edilmiş sayılır. Başka bir kod ya da zaman aşımında site 1, 2, 5, 15, 30, 60, 120, 240, 480 ve 720 dakika arayla yeniden dener. Yanıtı 15 saniye içinde verin.
 - **Sevkiyat kuralı:** `odeme.alindi === false` ise (havale henüz gelmediyse) siparişi "ödeme bekleniyor" olarak tutun. Lot düşümü ve sevkiyat `alindi: true` olduğunda yapılmalı.
 - **Stok kodu:** `sku`, Green Ops stok kodudur ve sitede ürüne girilen kod öncelikli kullanılır. Green Ops'ta karşılığı yoksa eşleştirme uyarısı verin.
+- Panelden elle girilen siparişler (WhatsApp, telefon, mağaza vb.) da aynı biçimde gelir; `kanal` alanı nereden geldiğini söyler. Ödeme yöntemi `havale`, `kart-pos`, `nakit`, `kapida` ya da `diger` olabilir.
 - Ödeme sayfasında yarıda kalan kart denemeleri (`odeme-bekliyor` / `odeme-basarisiz`) ve eski WordPress siparişleri **gönderilmez**.
 
 **İmza doğrulama (zorunlu)**

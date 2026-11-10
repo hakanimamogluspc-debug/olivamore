@@ -453,7 +453,49 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           <input type="text" id="ord-ara" placeholder="Sipariş no, ad, e-posta ara..." style="max-width:260px;">
           <button class="btn btn-ghost btn-sm" id="ord-yenile" type="button">↻ Yenile</button>
           <button class="btn btn-outline btn-sm" id="ord-csv" type="button">⬇ Excel'e Aktar (CSV)</button>
+          <button class="btn btn-dark btn-sm" id="ms-ac" type="button" style="margin-left:auto;">+ Manuel Sipariş</button>
         </div>
+      </div>
+      <div class="panel" id="ms-panel" style="display:none;margin-bottom:16px;border:1px solid var(--gold);">
+        <h2>Manuel sipariş</h2>
+        <div class="desc">WhatsApp, telefon, Instagram ya da mağazadan alınan siparişler. Kaydedince sipariş listesine düşer, <b>Green Ops'a otomatik gider</b>; ödeme alındıysa Green Ops'tan (veya buradan) tek tuşla kargo barkodu basılabilir.</div>
+        <div class="grid3">
+          <div class="field"><label>Kanal</label><select id="ms-kanal"><option value="whatsapp">WhatsApp</option><option value="telefon">Telefon</option><option value="instagram">Instagram</option><option value="magaza">Mağaza / elden</option><option value="e-posta">E-posta</option><option value="diger">Diğer</option></select></div>
+          <div class="field"><label>Müşteri adı soyadı *</label><input type="text" id="ms-ad" maxlength="120"></div>
+          <div class="field"><label>Telefon *</label><input type="tel" id="ms-tel" placeholder="05XX XXX XX XX"></div>
+          <div class="field"><label>E-posta</label><input type="email" id="ms-eposta" placeholder="isteğe bağlı"></div>
+          <div class="field"><label>Mahalle *</label><input type="text" id="ms-mahalle" maxlength="80"></div>
+          <div class="field"><label>Cadde / sokak *</label><input type="text" id="ms-cadde" maxlength="120"></div>
+          <div class="field"><label>Bina no, daire, tarif *</label><input type="text" id="ms-detay" maxlength="600"></div>
+          <div class="field"><label>İl *</label><input type="text" id="ms-il" maxlength="60"></div>
+          <div class="field"><label>İlçe *</label><input type="text" id="ms-ilce" maxlength="60"></div>
+          <div class="field"><label>Posta kodu</label><input type="text" id="ms-posta" maxlength="5" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label>Hızlı doldur (WhatsApp'tan gelen adresi yapıştır; mahalle, cadde, il/ilçe ve telefonu ayıklar)</label><textarea id="ms-yapistir" rows="2" placeholder="Ayşe Yılmaz 0532 111 22 33 Kazım Karabekir Mah. Atatürk Cad. No:5 D:2 Ayvalık / Balıkesir"></textarea><button type="button" class="btn btn-ghost btn-sm" id="ms-ayikla" style="margin-top:6px;">Ayıkla ve doldur</button></div>
+        <h3 style="margin:18px 0 8px;font-size:1rem;">Ürünler</h3>
+        <div id="ms-kalemler"></div>
+        <button type="button" class="btn btn-outline btn-sm" id="ms-kalem-ekle">+ Ürün ekle</button>
+        <div class="grid3" style="margin-top:14px;">
+          <div class="field"><label>İndirim (₺)</label><input type="number" id="ms-indirim" min="0" step="0.01" value="0"></div>
+          <div class="field"><label>Kargo ücreti (₺)</label><input type="number" id="ms-kargo" min="0" step="0.01" value="0"></div>
+          <div class="field"><label>Ödeme</label><select id="ms-odeme"><option value="havale">Havale / EFT</option><option value="kart-pos">Kart (POS / link)</option><option value="nakit">Nakit</option><option value="kapida">Kapıda ödeme</option><option value="diger">Diğer</option></select></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:18px;margin:6px 0 10px;font-size:.88rem;">
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ms-odendi" style="width:auto;"> Ödeme alındı (sipariş "hazırlanıyor" olur, barkod basılabilir)</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ms-stok" checked style="width:auto;"> Stoktan düş</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ms-mail" style="width:auto;"> Müşteriye onay e-postası gönder</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ms-fatura" style="width:auto;"> Paraşüt faturasını hemen kes (ödeme alındıysa)</label>
+          <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" id="ms-kurumsal" style="width:auto;"> Kurumsal fatura</label>
+        </div>
+        <div class="grid3" id="ms-kurumsal-alan" style="display:none;">
+          <div class="field"><label>Şirket unvanı</label><input type="text" id="ms-unvan"></div>
+          <div class="field"><label>Vergi / TC no</label><input type="text" id="ms-vkn" maxlength="11" inputmode="numeric"></div>
+          <div class="field"><label>Vergi dairesi</label><input type="text" id="ms-vd"></div>
+        </div>
+        <div class="field"><label>Müşteri notu (pakete / kargoya)</label><input type="text" id="ms-not" maxlength="500"></div>
+        <div class="field"><label>İç not (yalnız panelde)</label><input type="text" id="ms-adminnot" maxlength="1000"></div>
+        <div id="ms-ozet" style="font-size:.95rem;margin:8px 0 12px;"></div>
+        <div class="row-actions"><button type="button" class="btn btn-gold" id="ms-kaydet">Siparişi oluştur</button><button type="button" class="btn btn-ghost" id="ms-kapat">Vazgeç</button><span id="ms-durum" style="font-size:.88rem;"></span></div>
       </div>
       <div id="orders-list"><p style="color:var(--soft);font-size:.9rem;">Yükleniyor... (yalnız canlı sunucuda çalışır)</p></div>
     </section>
@@ -1998,6 +2040,113 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     document.getElementById('st-mods').textContent = Object.keys(C.modules).filter(function (k) { return C.modules[k] !== false; }).length + '/' + Object.keys(MOD_NAMES).length;
   }
 
+  /* ================== MANUEL SİPARİŞ ================== */
+  (function () {
+    var panelEl = document.getElementById('ms-panel'); if (!panelEl) return;
+    function urunler() { return (C.products || []).filter(function (p) { return p.visible !== false && (p.type === 'product' || !p.type); }); }
+    function tl(n) { return '₺' + Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+    function kalemSatir() {
+      var secenek = urunler().map(function (p) { return '<option value="' + esc(p.id) + '" data-fiyat="' + (Number(p.price) || 0) + '">' + esc(p.nameTR + (p.unitTR ? ' ' + p.unitTR : '')) + ' — ' + tl(p.price) + (typeof p.stok === 'number' ? ' (stok ' + p.stok + ')' : '') + '</option>'; }).join('');
+      var d = document.createElement('div');
+      d.className = 'ms-kalem'; d.style.cssText = 'display:grid;grid-template-columns:3fr 90px 130px 36px;gap:8px;margin-bottom:8px;align-items:center;';
+      d.innerHTML = '<select class="ms-urun"><option value="">— ürün seç —</option>' + secenek + '</select>' +
+        '<input type="number" class="ms-adet" min="1" value="1" title="Adet">' +
+        '<input type="number" class="ms-fiyat" min="0" step="0.01" placeholder="Birim fiyat" title="Birim fiyat (KDV dahil)">' +
+        '<button type="button" class="btn btn-ghost btn-sm ms-sil" title="Kaldır">×</button>';
+      document.getElementById('ms-kalemler').appendChild(d);
+    }
+    function ozet() {
+      var ara = 0, adet = 0;
+      document.querySelectorAll('#ms-kalemler .ms-kalem').forEach(function (k) {
+        if (!k.querySelector('.ms-urun').value) return;
+        var a = +k.querySelector('.ms-adet').value || 0, f = parseFloat(k.querySelector('.ms-fiyat').value) || 0;
+        ara += a * f; adet += a;
+      });
+      var ind = Math.min(ara, parseFloat(document.getElementById('ms-indirim').value) || 0), kg = parseFloat(document.getElementById('ms-kargo').value) || 0;
+      document.getElementById('ms-ozet').innerHTML = adet ? adet + ' ürün · ara toplam ' + tl(ara) + (ind ? ' · indirim −' + tl(ind) : '') + (kg ? ' · kargo ' + tl(kg) : ' · kargo ücretsiz') + ' · <b>Toplam ' + tl(ara - ind + kg) + '</b> (KDV dahil)' : '';
+    }
+    function temizle() {
+      panelEl.querySelectorAll('input[type=text],input[type=tel],input[type=email],textarea').forEach(function (el) { el.value = ''; });
+      document.getElementById('ms-indirim').value = 0; document.getElementById('ms-kargo').value = 0;
+      ['ms-odendi', 'ms-mail', 'ms-fatura', 'ms-kurumsal'].forEach(function (id) { document.getElementById(id).checked = false; });
+      document.getElementById('ms-stok').checked = true;
+      document.getElementById('ms-kurumsal-alan').style.display = 'none';
+      document.getElementById('ms-kalemler').innerHTML = ''; kalemSatir(); ozet();
+      document.getElementById('ms-durum').textContent = '';
+    }
+    document.getElementById('ms-ac').addEventListener('click', function () {
+      var acik = panelEl.style.display !== 'none';
+      panelEl.style.display = acik ? 'none' : 'block';
+      if (!acik) { if (!document.querySelector('#ms-kalemler .ms-kalem')) temizle(); document.getElementById('ms-ad').focus(); }
+    });
+    document.getElementById('ms-kapat').addEventListener('click', function () { panelEl.style.display = 'none'; });
+    document.getElementById('ms-kalem-ekle').addEventListener('click', function () { kalemSatir(); });
+    document.getElementById('ms-kurumsal').addEventListener('change', function () { document.getElementById('ms-kurumsal-alan').style.display = this.checked ? '' : 'none'; });
+    panelEl.addEventListener('input', ozet);
+    panelEl.addEventListener('change', function (e) {
+      if (e.target.classList.contains('ms-urun')) {
+        var op = e.target.selectedOptions[0], fi = e.target.closest('.ms-kalem').querySelector('.ms-fiyat');
+        if (op && op.dataset.fiyat) fi.value = op.dataset.fiyat;
+      }
+      ozet();
+    });
+    panelEl.addEventListener('click', function (e) { if (e.target.classList.contains('ms-sil')) { e.target.closest('.ms-kalem').remove(); ozet(); } });
+    // WhatsApp metninden ayıkla
+    document.getElementById('ms-ayikla').addEventListener('click', function () {
+      var m = document.getElementById('ms-yapistir').value.replace(/\s+/g, ' ').trim(); if (!m) return;
+      var tel = m.match(/(\+?90[\s-]?)?0?\s?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/);
+      if (tel) { document.getElementById('ms-tel').value = tel[0].trim(); m = m.replace(tel[0], ' '); }
+      var ep = m.match(/[\w.+-]+@[\w-]+\.[\w.]+/); if (ep) { document.getElementById('ms-eposta').value = ep[0]; m = m.replace(ep[0], ' '); }
+      var ilil = m.match(/([A-ZÇĞİÖŞÜa-zçğıöşü]+)\s*[\/,-]\s*([A-ZÇĞİÖŞÜa-zçğıöşü]+)\s*$/);
+      if (ilil) { document.getElementById('ms-ilce').value = ilil[1]; document.getElementById('ms-il').value = ilil[2]; m = m.slice(0, ilil.index); }
+      var mh = m.match(/([A-Za-zÇĞİÖŞÜçğıöşü0-9.' ]+?)\s+(mahallesi|mah\.?|mh\.?)(?=[\s,]|$)/i);
+      var once = m;
+      if (mh) { once = m.slice(0, mh.index); document.getElementById('ms-mahalle').value = mh[1].trim(); m = m.slice(mh.index + mh[0].length); }
+      var cd = m.match(/([A-Za-zÇĞİÖŞÜçğıöşü0-9.' ]+?\s+(caddesi|cad\.?|cd\.?|sokağı|sokak|sok\.?|sk\.?|bulvarı|bulvar|blv\.?))(?=[\s,]|$)/i);
+      if (cd) { document.getElementById('ms-cadde').value = cd[1].trim(); m = m.replace(cd[0], ' '); }
+      document.getElementById('ms-detay').value = m.replace(/^[\s,]+|[\s,]+$/g, '').replace(/\s{2,}/g, ' ');
+      // Mahalleden önceki kısım genelde ad soyad
+      var ad = once.replace(/[\d,:]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      if (mh && ad && ad.split(' ').length <= 4 && !document.getElementById('ms-ad').value) {
+        // mahalle adının ilk kelimeleri ada karışmasın: ad = mahalle öncesindeki son 2-3 kelime değil, tamamı
+        document.getElementById('ms-ad').value = ad;
+      }
+    });
+    document.getElementById('ms-kaydet').addEventListener('click', function () {
+      var btn = this, durum = document.getElementById('ms-durum');
+      var g = function (id) { return document.getElementById(id).value.trim(); };
+      var kalemler = [].map.call(document.querySelectorAll('#ms-kalemler .ms-kalem'), function (k) {
+        return { id: k.querySelector('.ms-urun').value, adet: +k.querySelector('.ms-adet').value || 1, fiyat: k.querySelector('.ms-fiyat').value === '' ? undefined : parseFloat(k.querySelector('.ms-fiyat').value) };
+      }).filter(function (k) { return k.id; });
+      if (!kalemler.length) { durum.innerHTML = '<span style="color:#b04a3a;">En az bir ürün seç.</span>'; return; }
+      var odendi = document.getElementById('ms-odendi').checked;
+      var veri = {
+        kanal: g('ms-kanal'), odeme: g('ms-odeme'), odendi: odendi,
+        musteri: { ad: g('ms-ad'), telefon: g('ms-tel'), eposta: g('ms-eposta'), mahalle: g('ms-mahalle'), cadde: g('ms-cadde'), adresDetay: g('ms-detay'), il: g('ms-il'), ilce: g('ms-ilce'), postaKodu: g('ms-posta'), not: g('ms-not') },
+        kalemler: kalemler, indirim: parseFloat(g('ms-indirim')) || 0, kargo: parseFloat(g('ms-kargo')) || 0,
+        stokDus: document.getElementById('ms-stok').checked, epostaGonder: document.getElementById('ms-mail').checked,
+        faturaKes: document.getElementById('ms-fatura').checked, adminNot: g('ms-adminnot'),
+        fatura: document.getElementById('ms-kurumsal').checked ? { tip: 'kurumsal', unvan: g('ms-unvan'), vkn: g('ms-vkn'), vergiDairesi: g('ms-vd') } : null
+      };
+      btn.disabled = true; durum.textContent = 'Kaydediliyor…';
+      fetch('/api/admin/manuel-siparis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(veri) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          btn.disabled = false;
+          if (!j.tamam) { durum.innerHTML = '<span style="color:#b04a3a;">⚠ ' + esc(j.hata || 'Kaydedilemedi') + '</span>'; return; }
+          durum.innerHTML = '<span style="color:#2f7a4a;">✓ ' + esc(j.no) + ' oluşturuldu · ' + tl(j.toplam) + (j.fatura ? ' · ' + esc(j.fatura) : '') + ' · Green Ops\'a gönderiliyor</span>';
+          var no = j.no;
+          setTimeout(function () { temizle(); panelEl.style.display = 'none'; renderOrders(); }, 1800);
+          if (odendi && confirm(no + ' oluşturuldu. Kargo barkodunu şimdi basmak ister misin? (Yurtiçi gönderisi açılır, müşteriye takip SMS/e-postası gider.)')) {
+            fetch('/api/admin/kargo-barkod', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no }) })
+              .then(function (r) { return r.json(); })
+              .then(function (k) { if (k.tamam) window.open(k.etiketUrl, '_blank'); else alert(k.hata || 'Barkod oluşturulamadı'); });
+          }
+        })
+        .catch(function () { btn.disabled = false; durum.innerHTML = '<span style="color:#b04a3a;">⚠ Sunucuya ulaşılamadı</span>'; });
+    });
+  })();
+
   /* ================== GREEN OPS ================== */
   function goYukle() {
     var el = document.getElementById('go-durum'); if (!el) return;
@@ -2310,7 +2459,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     });
     if (!liste.length) { host.innerHTML = '<p style="color:var(--soft);">Bu filtreye uyan sipariş yok.</p>'; return; }
     host.innerHTML = liste.map(function (s) {
-      return '<details class="item"' + (ORD_ACIK === s.no ? ' open' : '') + '><summary><div class="t" style="margin-left:4px;"><b>' + (s.kaynak === 'wordpress' ? '<span title="Eski siteden (WordPress) aktarıldı" style="font-size:.62rem;letter-spacing:.08em;background:#eef0f4;color:#5b6577;padding:2px 6px;margin-right:6px;vertical-align:2px;">ESKİ SİTE</span>' : '') + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
+      return '<details class="item"' + (ORD_ACIK === s.no ? ' open' : '') + '><summary><div class="t" style="margin-left:4px;"><b>' + (s.kaynak === 'wordpress' ? '<span title="Eski siteden (WordPress) aktarıldı" style="font-size:.62rem;letter-spacing:.08em;background:#eef0f4;color:#5b6577;padding:2px 6px;margin-right:6px;vertical-align:2px;">ESKİ SİTE</span>' : '') + (s.kaynak === 'manuel' ? '<span title="Panelden manuel girildi" style="font-size:.62rem;letter-spacing:.08em;background:#e8f4ec;color:#2f7a4a;padding:2px 6px;margin-right:6px;vertical-align:2px;">' + esc(({ whatsapp: 'WHATSAPP', telefon: 'TELEFON', instagram: 'INSTAGRAM', magaza: 'MAĞAZA', 'e-posta': 'E-POSTA' })[s.kanal] || 'MANUEL') + '</span>' : '') + s.no + ' · ' + tl(s.toplam) + ' · ' + esc(s.musteri.ad) + '</b>' +
         '<span>' + fmtTarih(s.tarih) + ' · ' + esc(s.odeme) + (s.kargoNo ? ' · ' + esc(s.kargoFirma || '') + ' ' + esc(s.kargoNo) : '') + '</span></div>' + ordPill(s) + '</summary>' +
         '<div class="body">' + ordDetay(s) +
         '<div class="od-baslik">İşlemler</div>' +

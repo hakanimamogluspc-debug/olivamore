@@ -2505,6 +2505,74 @@ const sunucu = http.createServer(async (req, res) => {
           alan: p.alan ? String(p.alan) + ' m²' : '', mevkii: p.mevkii || '', nitelik: p.nitelik || '', sinir: JSON.stringify(ft.geometry) });
       } catch (e) { return json(res, 502, { hata: 'TKGM bağlantı hatası: ' + e.message + '. Sınırı elle yapıştırabilirsin.' }); }
     }
+    // Manuel sipariş (WhatsApp, telefon, Instagram, mağaza…): fiyat panelden gelebilir; stok düşer; Green Ops'a otomatik gider
+    if (req.method === 'POST' && yol === '/api/admin/manuel-siparis') {
+      const g = await govde(req, 1);
+      const m = g.musteri || {};
+      const KANALLAR = ['whatsapp', 'telefon', 'instagram', 'magaza', 'e-posta', 'diger'];
+      const kanal = KANALLAR.indexOf(g.kanal) !== -1 ? g.kanal : 'diger';
+      const tel = String(m.telefon || '').replace(/\D/g, '').replace(/^(90|0)/, '');
+      if (!temiz(m.ad, 120)) return json(res, 400, { hata: 'Müşteri adı zorunlu.' });
+      if (tel.length !== 10) return json(res, 400, { hata: 'Telefon alan koduyla 10 hane olmalı.' });
+      if (m.eposta && !epostaMi(m.eposta)) return json(res, 400, { hata: 'E-posta adresi geçersiz.' });
+      if (!temiz(m.mahalle, 80) || !temiz(m.cadde, 120) || !temiz(m.adresDetay, 600) || !temiz(m.il, 60) || !temiz(m.ilce, 60)) return json(res, 400, { hata: 'Mahalle, cadde/sokak, bina no/daire, il ve ilçe zorunlu.' });
+      if (!Array.isArray(g.kalemler) || !g.kalemler.length || g.kalemler.length > 50) return json(res, 400, { hata: 'En az bir ürün ekle.' });
+      const katalog = oku('cms.json', {});
+      const kalemler = [];
+      for (const k of g.kalemler) {
+        const p = (katalog.products || []).find(x => x.id === k.id);
+        if (!p) return json(res, 400, { hata: 'Ürün bulunamadı: ' + temiz(k.id, 40) });
+        const birim = String(p.unitTR || '').replace(/^\s*\/\s*/, '').trim();
+        const fiyat = Math.round((parseFloat(k.fiyat) >= 0 ? parseFloat(k.fiyat) : Number(p.price) || 0) * 100) / 100;
+        kalemler.push({ ad: temiz((p.nameTR || p.id) + (birim && String(p.nameTR || '').indexOf(birim) === -1 ? ' · ' + birim : ''), 200), fiyat: fiyat,
+          adet: Math.min(999, Math.max(1, parseInt(k.adet, 10) || 1)), img: p.img || '', kdv: typeof p.kdv === 'number' ? p.kdv : 1, kod: p.id, pid: p.id, hacim: birim });
+      }
+      if (g.stokDus !== false) { const st = stokDus(kalemler); if (st.hata) return json(res, 400, { hata: st.hata + ' (Stoğu düşmeden kaydetmek için "Stoktan düş" seçimini kaldır.)' }); }
+      const araToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0) * 100) / 100;
+      const indirim = Math.min(araToplam, Math.max(0, Math.round((parseFloat(g.indirim) || 0) * 100) / 100));
+      const indirimliAra = Math.round((araToplam - indirim) * 100) / 100;
+      const oran = araToplam > 0 ? indirimliAra / araToplam : 1;
+      const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * oran * (k.kdv / (100 + k.kdv)), 0) * 100) / 100;
+      const kargo = Math.max(0, Math.round((parseFloat(g.kargo) || 0) * 100) / 100);
+      const toplam = Math.round((indirimliAra + kargo) * 100) / 100;
+      const sayacD = oku('sayac.json', { son: 1000 }); sayacD.son++; yaz('sayac.json', sayacD);
+      const no = 'OM-' + sayacD.son;
+      const odeme = ['havale', 'kart-pos', 'nakit', 'kapida', 'diger'].indexOf(g.odeme) !== -1 ? g.odeme : 'havale';
+      const odendi = g.odendi === true;
+      const mh = temiz(m.mahalle, 80), cd = temiz(m.cadde, 120), dt = temiz(m.adresDetay, 600);
+      const s = {
+        no: no, tarih: new Date().toISOString(), durum: odendi ? 'hazırlanıyor' : 'yeni', odeme: odeme, odendi: odendi, dil: 'tr',
+        kanal: kanal, kaynak: 'manuel',
+        musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40),
+          adres: [/\b(mah\.?|mahallesi|mh\.?)$/i.test(mh) ? mh : mh + ' Mah.', cd, dt].join(' '), mahalle: mh, cadde: cd, adresDetay: dt,
+          il: temiz(m.il, 60), ilce: temiz(m.ilce, 60), postaKodu: temiz(m.postaKodu, 10), not: temiz(m.not, 500) },
+        faturaBilgi: (g.fatura && g.fatura.tip === 'kurumsal' && /^[0-9]{10,11}$/.test(String(g.fatura.vkn || '')) && temiz(g.fatura.unvan, 200))
+          ? { tip: 'kurumsal', unvan: temiz(g.fatura.unvan, 200), vkn: temiz(g.fatura.vkn, 11), vergiDairesi: temiz(g.fatura.vergiDairesi, 60) } : null,
+        kalemler: kalemler, araToplam: araToplam, kupon: null, indirim: indirim, kdvToplam: kdvToplam, kargo: kargo, toplam: toplam,
+        adminNot: temiz(g.adminNot, 1000), stokDusuldu: g.stokDus !== false,
+        gecmis: [{ tarih: new Date().toISOString(), islem: 'Panelden manuel oluşturuldu (' + kanal + ')' + (odendi ? ' · ödeme alındı' : '') }]
+      };
+      const liste = oku('siparisler.json', []);
+      liste.unshift(s);
+      yaz('siparisler.json', liste.slice(0, 5000));
+      // İsteğe bağlı: müşteriye sipariş onayı / havale bilgisi
+      if (g.epostaGonder && s.musteri.eposta) {
+        if (!odendi && odeme === 'havale') havaleOnayEpostasi(s);
+        else epostaGonder(s.musteri.eposta, 'Siparişiniz alındı · ' + s.no, 'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişiniz alındı.\n\n' + siparisOzetMetni(s) + '\n\nAfiyet olsun,\nOlivamore');
+      }
+      // İsteğe bağlı: ödeme alındıysa Paraşüt e-Arşiv faturası
+      let faturaMesaj = '';
+      if (g.faturaKes && odendi && parasutAktif()) {
+        try {
+          const taze = oku('siparisler.json', []); const t = taze.find(x => x.no === no);
+          await parasutFaturaKes(t);
+          t.gecmis.unshift({ tarih: new Date().toISOString(), islem: t.fatura && t.fatura.durum === 'kesildi' ? 'Paraşüt e-Arşiv faturası kesildi · ' + (t.fatura.no || '') : 'Paraşüt fatura uyarısı' });
+          yaz('siparisler.json', taze);
+          faturaMesaj = t.fatura && t.fatura.no ? 'Fatura: ' + t.fatura.no : 'Fatura işlemi başlatıldı';
+        } catch (e) { faturaMesaj = 'Fatura kesilemedi: ' + e.message; }
+      }
+      return json(res, 200, { tamam: true, no: no, toplam: toplam, fatura: faturaMesaj });
+    }
     if (req.method === 'GET' && yol === '/api/admin/greenops') return json(res, 200, greenOpsOzet());
     if (req.method === 'POST' && yol === '/api/admin/greenops') {
       const g = await govde(req, 0.05);
