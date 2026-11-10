@@ -59,6 +59,7 @@
 
 <meta property="og:site_name" content="Olivamore">
 <style>@media(max-width:520px){.co-iki{grid-template-columns:1fr!important}}</style>
+<style>.kf-alan{display:block;font-size:.8rem;font-weight:500;margin-bottom:10px}.kf-alan input{display:block;width:100%;margin-top:5px;padding:11px 12px;border:1px solid #d9d3c5;font:inherit;font-size:.95rem;letter-spacing:.04em;background:#fff;box-sizing:border-box}.kf-alan input:focus{outline:none;border-color:var(--gold)}.kf-alan input.kf-yanlis{border-color:#b04a3a}.kf-hata{color:#a33;font-size:.8rem;margin:0 0 6px}</style>
 </head>
 <body data-page="shop">
 <div id="om-header"></div>
@@ -152,7 +153,17 @@
 
         <div style="margin-bottom:6px;font-weight:700;font-size:.9rem;">Ödeme</div>
         <label class="pay-opt"><input type="radio" name="odeme" value="havale" checked><span><b>Havale / EFT</b><small>Sipariş sonrası IBAN bilgisi e-postana gelir; ödeme onayıyla kargolanır.</small></span></label>
-        <label class="pay-opt" id="pay-kart" style="display:none;"><input type="radio" name="odeme" value="kart"><span><b>Kredi / Banka Kartı</b><small>Paratika güvencesiyle 3D Secure ödeme; kart bilgilerin bankanın güvenli sayfasında girilir. Kart bilgilerin bizde tutulmaz.</small></span></label>
+        <label class="pay-opt" id="pay-kart" style="display:none;"><input type="radio" name="odeme" value="kart"><span><b>Kredi / Banka Kartı</b><small>Visa, Mastercard ve Troy ile 3D Secure ödeme. Kart bilgilerin doğrudan ödeme kuruluşumuz Paratika'ya iletilir, bizde saklanmaz.</small></span></label>
+        <div id="kart-form" style="display:none;border:1px solid var(--line,#e5e0d4);padding:16px 16px 10px;margin:2px 0 12px;background:#fff;">
+          <label class="kf-alan">Kart üzerindeki isim<input type="text" id="kf-sahip" autocomplete="cc-name" maxlength="32" spellcheck="false"></label>
+          <label class="kf-alan">Kart numarası<input type="text" id="kf-no" autocomplete="cc-number" inputmode="numeric" maxlength="23" placeholder="0000 0000 0000 0000"></label>
+          <div style="display:grid;grid-template-columns:1fr 110px;gap:12px;">
+            <label class="kf-alan">Son kullanma (AA / YY)<input type="text" id="kf-skt" autocomplete="cc-exp" inputmode="numeric" maxlength="7" placeholder="AA / YY"></label>
+            <label class="kf-alan">CVV<input type="password" id="kf-cvv" autocomplete="cc-csc" inputmode="numeric" maxlength="4" placeholder="•••"></label>
+          </div>
+          <p class="kf-hata" id="kf-hata" style="display:none;"></p>
+          <p style="font-size:.72rem;color:var(--ink-soft);margin:6px 0 0;">🔒 256-bit SSL · 3D Secure · Kart bilgilerin doğrudan Paratika'ya iletilir.</p>
+        </div>
 
         <label style="display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--ink-soft);line-height:1.5;margin:12px 0 4px;cursor:pointer;">
           <input type="checkbox" id="co-onay" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);">
@@ -446,6 +457,41 @@ omSepetHazir(function () {
     return required.find(function (el) { return !el.checkValidity(); });
   }
 
+
+  /* ---- Kart formu (Direct Post 3D): kart bilgisi yalnız tarayıcıdan Paratika'ya gider ---- */
+  var KF = {
+    goster: function () { var k = (document.querySelector('input[name="odeme"]:checked') || {}).value === 'kart'; document.getElementById('kart-form').style.display = k ? '' : 'none'; },
+    rakam: function (v) { return String(v || '').replace(/\D/g, ''); },
+    luhn: function (n) { var t = 0, c = false; for (var i = n.length - 1; i >= 0; i--) { var d = +n[i]; if (c) { d *= 2; if (d > 9) d -= 9; } t += d; c = !c; } return n.length >= 15 && n.length <= 19 && t % 10 === 0; },
+    oku: function () {
+      var no = KF.rakam(document.getElementById('kf-no').value), skt = KF.rakam(document.getElementById('kf-skt').value);
+      return { sahip: document.getElementById('kf-sahip').value.trim(), no: no, ay: skt.slice(0, 2), yil: skt.length >= 4 ? '20' + skt.slice(2, 4) : '', cvv: KF.rakam(document.getElementById('kf-cvv').value) };
+    },
+    dogrula: function () {
+      var k = KF.oku(), h = null, el = null, simdi = new Date();
+      ['kf-sahip', 'kf-no', 'kf-skt', 'kf-cvv'].forEach(function (id) { document.getElementById(id).classList.remove('kf-yanlis'); });
+      if (k.sahip.length < 3) { h = 'Kart üzerindeki ismi yaz'; el = 'kf-sahip'; }
+      else if (!KF.luhn(k.no)) { h = 'Kart numarası hatalı görünüyor'; el = 'kf-no'; }
+      else if (!(+k.ay >= 1 && +k.ay <= 12) || !k.yil || new Date(+k.yil, +k.ay, 0, 23, 59) < simdi) { h = 'Son kullanma tarihini kontrol et'; el = 'kf-skt'; }
+      else if (!/^\d{3,4}$/.test(k.cvv)) { h = 'Kartın arkasındaki 3–4 haneli kodu yaz'; el = 'kf-cvv'; }
+      var he = document.getElementById('kf-hata');
+      if (h) { he.textContent = h; he.style.display = 'block'; document.getElementById(el).classList.add('kf-yanlis'); document.getElementById(el).focus(); return null; }
+      he.style.display = 'none'; return k;
+    },
+    gonder: function (url, k) {
+      // Ayrı, gizli bir form: kart alanları yalnız Paratika'ya POST edilir
+      var f = document.createElement('form'); f.method = 'POST'; f.action = url; f.style.display = 'none';
+      var ek = function (n, v) { var i = document.createElement('input'); i.type = 'hidden'; i.name = n; i.value = v; f.appendChild(i); };
+      ek('cardOwner', k.sahip.slice(0, 32)); ek('pan', k.no); ek('expiryMonth', k.ay); ek('expiryYear', k.yil); ek('cvv', k.cvv); ek('installmentCount', '1');
+      document.body.appendChild(f);
+      ['kf-no', 'kf-cvv'].forEach(function (id) { document.getElementById(id).value = ''; });
+      f.submit();
+    }
+  };
+  document.querySelectorAll('input[name="odeme"]').forEach(function (r) { r.addEventListener('change', KF.goster); });
+  document.getElementById('kf-no').addEventListener('input', function () { var d = KF.rakam(this.value).slice(0, 19); this.value = d.replace(/(\d{4})(?=\d)/g, '$1 '); });
+  document.getElementById('kf-skt').addEventListener('input', function () { var d = KF.rakam(this.value).slice(0, 4); this.value = d.length > 2 ? d.slice(0, 2) + ' / ' + d.slice(2) : d; });
+  document.getElementById('kf-cvv').addEventListener('input', function () { this.value = KF.rakam(this.value).slice(0, 4); });
   document.getElementById('co-btn').addEventListener('click', function () {
     var btn = this, hata = document.getElementById('co-err');
     hata.style.display = 'none';
@@ -493,6 +539,8 @@ omSepetHazir(function () {
     btn.disabled = true;
     btn.textContent = 'Gönderiliyor...';
     var odemeYolu = (document.querySelector('input[name="odeme"]:checked') || {}).value || 'havale';
+    var KART = null;
+    if (odemeYolu === 'kart') { KART = KF.dogrula(); if (!KART) { btn.disabled = false; btn.textContent = 'Siparişi Tamamla'; return; } }
     var uyeToken = localStorage.getItem('om-uye-token');
     fetch('/api/siparis', {
       method: 'POST',
@@ -503,9 +551,13 @@ omSepetHazir(function () {
       .then(function (s) {
         if (!s.ok) throw new Error(s.j.hata || 'Sipariş alınamadı');
         adresiDefteriKaydet();
+        if (s.j.kartPost && KART) {
+          btn.textContent = 'Bankanın 3D Secure doğrulamasına yönlendiriliyorsun…';
+          KF.gonder(s.j.kartPost, KART);
+          return;
+        }
         if (s.j.odemeUrl) {
-          // Kart: iyzico ödeme sayfasına git; sepet, ödeme onaylanana dek korunur
-          btn.textContent = 'Ödeme sayfasına yönlendiriliyorsun...';
+          btn.textContent = 'Bankanın 3D Secure doğrulamasına yönlendiriliyorsun…';
           window.location.href = s.j.odemeUrl;
           return;
         }
@@ -642,7 +694,9 @@ omSepetHazir(function () {
       history.replaceState(null, '', location.pathname);
     } else if (location.hash === '#odeme-hata') {
       var h = document.getElementById('co-err');
-      if (h) { h.textContent = 'Ödeme tamamlanamadı; kartından ücret çekilmedi. Tekrar deneyebilir veya Havale/EFT seçebilirsin.'; h.style.display = 'block'; }
+      var bankaMsj = new URLSearchParams(location.search).get('odeme');
+      if (h && bankaMsj) { h.textContent = 'Ödeme tamamlanamadı; kartından ücret çekilmedi. ' + bankaMsj; h.style.display = 'block'; }
+      else if (h) { h.textContent = 'Ödeme tamamlanamadı; kartından ücret çekilmedi. Tekrar deneyebilir veya Havale/EFT seçebilirsin.'; h.style.display = 'block'; }
       history.replaceState(null, '', location.pathname);
     }
   })();

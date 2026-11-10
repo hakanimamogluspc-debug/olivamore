@@ -1525,7 +1525,7 @@ async function paratikaOturum(s, req) {
     // Kalem tutarları toplamı = AMOUNT olmalı → tek satır (indirim/kargo dahil sipariş toplamı)
     ORDERITEMS: JSON.stringify([{ code: s.no, name: 'Olivamore siparişi ' + s.no, description: (s.kalemler || []).map(k => k.adet + 'x ' + k.ad).join(', ').slice(0, 250), quantity: 1, amount: Number(tutar) }])
   });
-  if (y && y.responseCode === '00' && y.sessionToken) return { token: y.sessionToken, url: paratikaAdres().odeme + y.sessionToken };
+  if (y && y.responseCode === '00' && y.sessionToken) return { token: y.sessionToken, url: paratikaAdres().odeme + y.sessionToken, post: paratikaAdres().api + '/post/sale3d/' + y.sessionToken };
   throw new Error((y && (y.errorMsg || y.responseMsg)) || 'oturum açılamadı');
 }
 function paratikaImzaDogru(p) {
@@ -2270,7 +2270,9 @@ const sunucu = http.createServer(async (req, res) => {
           const o = await paratikaOturum(sip, req);
           const taze = oku('siparisler.json', []); const t = taze.find(x => x.no === no);
           if (t) { t.odemeSaglayici = 'paratika'; t.paratikaToken = o.token; yaz('siparisler.json', taze); }
-          return json(res, 200, { tamam: true, no: no, toplam: toplam, odemeUrl: o.url });
+          // Kart formu bizim sayfamızda: tarayıcı kart bilgisini DOĞRUDAN Paratika'ya gönderir (Direct Post 3D) — sunucumuza kart verisi gelmez
+          const yerinde = oku('env.json', {}).paratikaYerinde !== false;
+          return json(res, 200, { tamam: true, no: no, toplam: toplam, odemeUrl: o.url, kartPost: yerinde ? o.post : undefined });
         } catch (e) { console.error('[paratika]', e.message); }
         const tazeListe = oku('siparisler.json', []);
         const s = tazeListe.find(x => x.no === no);
@@ -2541,7 +2543,8 @@ const sunucu = http.createServer(async (req, res) => {
         s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Paratika ödeme başarısız: ' + String(p.errorMsg || p.pgTranErrorText || p.responseMsg || p.responseCode || '').slice(0, 160) });
         yaz('siparisler.json', liste);
       }
-      return yonlendir(sepetYolu + '#odeme-hata');
+      const neden = String(p.pgTranErrorText || p.errorMsg || p.mdErrorMsg || '').replace(/[^\p{L}\p{N} .,:;()\/-]/gu, '').slice(0, 140);
+      return yonlendir(sepetYolu + (neden ? '?odeme=' + encodeURIComponent(neden) : '') + '#odeme-hata');
     }
 
     /* iyzico ödeme sonucu (callback) — token doğrulanır, sipariş güncellenir */
