@@ -1482,6 +1482,85 @@ function iyzicoAktif() {
   const env = oku('env.json', {});
   return !!(env.iyzicoApiKey && env.iyzicoSecret);
 }
+/* ---------- Paratika (Payten altyapısı) — Ortak Ödeme Sayfası (HPP) + 3D Secure ----------
+   env.json: paratikaMerchant, paratikaKullanici, paratikaSifre, paratikaGizli (hash anahtarı), paratikaTest (true → entegrasyon ortamı)
+   Akış: SESSIONTOKEN → müşteri Paratika ödeme sayfasında öder → tarayıcı /api/paratika-donus'a POST eder
+   Doğrulama: sdSha512 = SHA512(merchantPaymentId|customerId|sessionToken|responseCode|random|hashAnahtarı) + oturum/tutar eşleşmesi */
+function paratikaAktif() {
+  const e = oku('env.json', {});
+  return !!(e.paratikaMerchant && e.paratikaKullanici && e.paratikaSifre && e.paratikaGizli);
+}
+function kartAktif() { return paratikaAktif() || iyzicoAktif(); }
+function paratikaAdres() {
+  const e = oku('env.json', {});
+  const kok = e.paratikaTest ? 'https://entegrasyon.paratika.com.tr' : 'https://vpos.paratika.com.tr';
+  return { api: kok + '/paratika/api/v2', odeme: (e.paratikaOdemeSayfasi || (kok + '/merchant/payment/')) };
+}
+function paratikaIstek(alanlar) {
+  const e = oku('env.json', {});
+  const govdeStr = new URLSearchParams(Object.assign({ MERCHANT: e.paratikaMerchant, MERCHANTUSER: e.paratikaKullanici, MERCHANTPASSWORD: e.paratikaSifre }, alanlar)).toString();
+  const u = new URL(paratikaAdres().api);
+  return new Promise((cozul, red) => {
+    const istek = require('https').request({ hostname: u.hostname, path: u.pathname, method: 'POST', timeout: 20000,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(govdeStr) } }, rr => {
+      let p = ''; rr.setEncoding('utf8'); rr.on('data', d => p += d);
+      rr.on('end', () => { try { cozul(JSON.parse(p)); } catch (x) { red(new Error('Paratika yanıtı okunamadı (HTTP ' + rr.statusCode + ')')); } });
+    });
+    istek.on('timeout', () => istek.destroy(new Error('Paratika zaman aşımı')));
+    istek.on('error', red);
+    istek.end(govdeStr);
+  });
+}
+async function paratikaOturum(s, req) {
+  const m = s.musteri || {};
+  const tutar = Number(s.toplam).toFixed(2);
+  const y = await paratikaIstek({
+    ACTION: 'SESSIONTOKEN', SESSIONTYPE: 'PAYMENTSESSION',
+    MERCHANTPAYMENTID: s.no, AMOUNT: tutar, CURRENCY: 'TRY',
+    RETURNURL: SITE() + '/api/paratika-donus',
+    CUSTOMER: s.no, CUSTOMERNAME: String(m.ad || '').slice(0, 100), CUSTOMEREMAIL: String(m.eposta || '').slice(0, 100),
+    CUSTOMERPHONE: String(m.telefon || '').replace(/\D/g, '').replace(/^(90|0)/, '').slice(0, 10),
+    CUSTOMERIP: String(req.headers['x-real-ip'] || req.socket.remoteAddress || '0.0.0.0').split(',')[0].trim(),
+    CUSTOMERUSERAGENT: String(req.headers['user-agent'] || '-').slice(0, 250),
+    // Kalem tutarları toplamı = AMOUNT olmalı → tek satır (indirim/kargo dahil sipariş toplamı)
+    ORDERITEMS: JSON.stringify([{ code: s.no, name: 'Olivamore siparişi ' + s.no, description: (s.kalemler || []).map(k => k.adet + 'x ' + k.ad).join(', ').slice(0, 250), quantity: 1, amount: Number(tutar) }])
+  });
+  if (y && y.responseCode === '00' && y.sessionToken) return { token: y.sessionToken, url: paratikaAdres().odeme + y.sessionToken };
+  throw new Error((y && (y.errorMsg || y.responseMsg)) || 'oturum açılamadı');
+}
+function paratikaImzaDogru(p) {
+  const e = oku('env.json', {});
+  if (!e.paratikaGizli || !p.sdSha512) return false;
+  const beklenen = crypto.createHash('sha512').update([p.merchantPaymentId, p.customerId, p.sessionToken, p.responseCode, p.random, e.paratikaGizli].join('|'), 'utf8').digest('hex');
+  const a = Buffer.from(String(p.sdSha512).toLowerCase()), b = Buffer.from(beklenen);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+// Kart ödemesi onaylandı (iyzico / Paratika ortak): sipariş + abonelik + bildirimler
+function kartOdemesiTamam(s, liste, odemeId, saglayici, ek) {
+  if (s.durum !== 'odeme-bekliyor') return;
+  s.durum = 'yeni'; s.odendi = true; s.odemeId = odemeId || ''; s.odemeSaglayici = saglayici;
+  if (ek) Object.assign(s, ek);
+  s.gecmis = s.gecmis || [];
+  s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'kart ödemesi alındı · ' + saglayici + (odemeId ? ' (' + odemeId + ')' : '') });
+  if (s.abonelikId) {
+    const abListe = oku('abonelikler.json', []);
+    const ab = abListe.find(a => a.id === s.abonelikId);
+    if (ab && ab.durum !== 'aktif') {
+      ab.durum = 'aktif';
+      ab.sonrakiTarih = new Date(Date.now() + (ab.periyotGun || 30) * 86400000).toISOString().slice(0, 10);
+      ab.sonSiparis = s.no;
+      yaz('abonelikler.json', abListe);
+      epostaBildir('Abonelik AKTİFLEŞTİ: ' + ab.id, ab.eposta + ' · ' + ab.urun + '\nSonraki teslim: ' + ab.sonrakiTarih);
+    }
+  }
+  yaz('siparisler.json', liste);
+  metaSatinAlma(s);
+  epostaBildir('Yeni sipariş ' + s.no + ' · ₺' + s.toplam.toLocaleString('tr-TR') + ' (KART İLE ÖDENDİ · ' + saglayici + ')',
+    s.kalemler.map(k => k.adet + ' × ' + k.ad).join('\n') +
+    '\n\nMüşteri: ' + s.musteri.ad + ' / ' + s.musteri.telefon + ' / ' + s.musteri.eposta + '\nAdres: ' + s.musteri.adres);
+  epostaGonder(s.musteri.eposta, 'Siparişin alındı · ' + s.no,
+    'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişin ödemesi alındı (₺' + s.toplam.toLocaleString('tr-TR') + '). Hazırlanıp kargoya verildiğinde tekrar haber vereceğiz.\n\nAfiyet olsun,\nOlivamore');
+}
 function iyziIstek(uri, veriObj) {
   return new Promise((cozul, hataVer) => {
     const env = oku('env.json', {});
@@ -1715,7 +1794,7 @@ function saglikRaporu() {
     disk: disk, yedek: yedek, cmsOk: cmsOk,
     dosyalar: { cms: boyut('cms.json'), siparisler: boyut('siparisler.json'), uyeler: boyut('uyeler.json') },
     entegrasyon: {
-      kartOdeme: !!(env.iyzicoApiKey && env.iyzicoSecret), iyzicoCanli: !!env.iyzicoCanli,
+      kartOdeme: kartAktif(), iyzicoCanli: !!env.iyzicoCanli, paratika: paratikaAktif(), paratikaTest: !!env.paratikaTest,
       eposta: !!(env.resendKey || env.brevoKey), bildirimEposta: !!env.bildirimEposta,
       parasut: parasutAktif(), parasutTaslak: !!env.parasutTaslak,
       yurtici: !!(env.yurticiWsUser && env.yurticiWsSifre), yurticiTest: !!env.yurticiTest,
@@ -2164,7 +2243,7 @@ const sunucu = http.createServer(async (req, res) => {
       yaz('sayac.json', durum);
       const no = 'OM-' + durum.son;
       const odemeYolu = temiz(g.odeme, 40) || 'havale';
-      if (odemeYolu === 'kart' && !iyzicoAktif()) {
+      if (odemeYolu === 'kart' && !kartAktif()) {
         return json(res, 400, { hata: 'Kartla ödeme şu anda aktif değil; lütfen Havale/EFT seç.' });
       }
       const siparisler = oku('siparisler.json', []);
@@ -2185,6 +2264,19 @@ const sunucu = http.createServer(async (req, res) => {
       // Sipariş tamamlandı → terk edilmiş sepet kaydı silinir
       const spListe = oku('sepetler.json', []).filter(x => x.eposta !== temiz(m.eposta, 200).toLowerCase());
       yaz('sepetler.json', spListe);
+      if (odemeYolu === 'kart' && paratikaAktif()) {
+        try {
+          const sip = oku('siparisler.json', []).find(x => x.no === no);
+          const o = await paratikaOturum(sip, req);
+          const taze = oku('siparisler.json', []); const t = taze.find(x => x.no === no);
+          if (t) { t.odemeSaglayici = 'paratika'; t.paratikaToken = o.token; yaz('siparisler.json', taze); }
+          return json(res, 200, { tamam: true, no: no, toplam: toplam, odemeUrl: o.url });
+        } catch (e) { console.error('[paratika]', e.message); }
+        const tazeListe = oku('siparisler.json', []);
+        const s = tazeListe.find(x => x.no === no);
+        if (s) { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', tazeListe); }
+        return json(res, 502, { hata: g.dil === 'en' ? 'The payment page could not be opened; please try again or choose bank transfer.' : 'Ödeme sayfası açılamadı; lütfen tekrar dene veya Havale/EFT seç.' });
+      }
       if (odemeYolu === 'kart') {
         // iyzico Checkout Form başlat; müşteri ödeme sayfasına yönlendirilir
         const parcalar = temiz(m.ad, 120).split(/\s+/);
@@ -2413,7 +2505,43 @@ const sunucu = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && yol === '/api/odeme-durum') {
-      return json(res, 200, { kart: iyzicoAktif() });
+      return json(res, 200, { kart: kartAktif(), saglayici: paratikaAktif() ? 'paratika' : (iyzicoAktif() ? 'iyzico' : '') });
+    }
+
+    /* Paratika ödeme sonucu: tarayıcı POST eder; imza (sdSha512) + oturum + tutar doğrulanır */
+    if (yol === '/api/paratika-donus') {
+      const yonlendir = hedef => { res.writeHead(303, { Location: hedef }); res.end(); };
+      if (req.method !== 'POST') return yonlendir('/sepet');
+      const ham = await new Promise((cozul, hataVer) => {
+        let p = ''; req.on('data', d => { p += d; if (p.length > 100000) req.destroy(); });
+        req.on('end', () => cozul(p)); req.on('error', hataVer);
+      });
+      const p = Object.fromEntries(new URLSearchParams(ham));
+      const liste = oku('siparisler.json', []);
+      const s = liste.find(x => x.no === p.merchantPaymentId);
+      const sepetYolu = s && s.dil === 'en' ? '/sepet-en' : '/sepet';
+      const imzaOk = paratikaImzaDogru(p);
+      const oturumOk = !!(s && s.paratikaToken && s.paratikaToken === p.sessionToken);
+      const tutarOk = !!(s && (p.amount === undefined || Math.abs(parseFloat(p.amount) - Number(s.toplam)) < 0.01));
+      if (s && p.responseCode === '00' && imzaOk && oturumOk && tutarOk) {
+        kartOdemesiTamam(s, liste, p.pgTranId || '', 'paratika', { odemeTaksit: parseInt(p.installment, 10) || 1, odemeKart: p.paymentSystem || '' });
+        return yonlendir(sepetYolu + '#odeme-ok-' + s.no);
+      }
+      if (s && p.responseCode === '00' && !(imzaOk && oturumOk && tutarOk)) {
+        // Onay geldi ama doğrulanamadı: sipariş açık bırakılır, elle kontrol için bildirilir (para alınmış olabilir)
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Paratika onayı DOĞRULANAMADI (imza:' + imzaOk + ' oturum:' + oturumOk + ' tutar:' + tutarOk + ') — Paratika panelinden kontrol et' });
+        s.odemeKontrol = true; yaz('siparisler.json', liste);
+        epostaBildir('DİKKAT: Paratika ödemesi doğrulanamadı · ' + s.no, 'Paratika "onaylandı" döndü ama imza/tutar doğrulaması geçmedi. Paratika panelinden ' + s.no + ' işlemini kontrol et; ödeme gerçekten alındıysa siparişi panelden onayla.');
+        return yonlendir(sepetYolu + '#odeme-hata');
+      }
+      if (s && s.durum === 'odeme-bekliyor') {
+        s.durum = 'odeme-basarisiz'; stokGeriEkle(s);
+        s.gecmis = s.gecmis || [];
+        s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Paratika ödeme başarısız: ' + String(p.errorMsg || p.pgTranErrorText || p.responseMsg || p.responseCode || '').slice(0, 160) });
+        yaz('siparisler.json', liste);
+      }
+      return yonlendir(sepetYolu + '#odeme-hata');
     }
 
     /* iyzico ödeme sonucu (callback) — token doğrulanır, sipariş güncellenir */
@@ -2432,30 +2560,7 @@ const sunucu = http.createServer(async (req, res) => {
       const s = liste.find(x => x.no === d.conversationId || x.no === d.basketId);
       const sepetYolu = s && s.dil === 'en' ? '/sepet-en' : '/sepet';
       if (d.status === 'success' && d.paymentStatus === 'SUCCESS' && s) {
-        if (s.durum === 'odeme-bekliyor') {
-          s.durum = 'yeni'; s.odendi = true; s.odemeId = d.paymentId || '';
-          s.gecmis = s.gecmis || [];
-          s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'kart ödemesi alındı' + (d.paymentId ? ' (' + d.paymentId + ')' : '') });
-          // Abonelik ilk ödemesi → abonelik aktifleşir, sonraki vade kurulur
-          if (s.abonelikId) {
-            const abListe = oku('abonelikler.json', []);
-            const ab = abListe.find(a => a.id === s.abonelikId);
-            if (ab && ab.durum !== 'aktif') {
-              ab.durum = 'aktif';
-              ab.sonrakiTarih = new Date(Date.now() + (ab.periyotGun || 30) * 86400000).toISOString().slice(0, 10);
-              ab.sonSiparis = s.no;
-              yaz('abonelikler.json', abListe);
-              epostaBildir('Abonelik AKTİFLEŞTİ: ' + ab.id, ab.eposta + ' · ' + ab.urun + '\nSonraki teslim: ' + ab.sonrakiTarih);
-            }
-          }
-          yaz('siparisler.json', liste);
-          metaSatinAlma(s);
-          epostaBildir('Yeni sipariş ' + s.no + ' · ₺' + s.toplam.toLocaleString('tr-TR') + ' (KART İLE ÖDENDİ)',
-            s.kalemler.map(k => k.adet + ' × ' + k.ad).join('\n') +
-            '\n\nMüşteri: ' + s.musteri.ad + ' / ' + s.musteri.telefon + ' / ' + s.musteri.eposta + '\nAdres: ' + s.musteri.adres);
-          epostaGonder(s.musteri.eposta, 'Siparişin alındı · ' + s.no,
-            'Merhaba ' + s.musteri.ad + ',\n\n' + s.no + ' numaralı siparişin ödemesi alındı (₺' + s.toplam.toLocaleString('tr-TR') + '). Hazırlanıp kargoya verildiğinde tekrar haber vereceğiz.\n\nAfiyet olsun,\nOlivamore');
-        }
+        kartOdemesiTamam(s, liste, d.paymentId || '', 'iyzico');
         const okHedef = s.abonelikId ? (s.dil === 'en' ? '/abonelik-en' : '/abonelik') : sepetYolu;
         return yonlendir(okHedef + '#odeme-ok-' + s.no);
       }
@@ -2764,7 +2869,7 @@ const sunucu = http.createServer(async (req, res) => {
         }
       }
       // İade onayı + kartla ödenmiş sipariş → iyzico'dan otomatik para iadesi
-      if (g.iade && g.iade.islem === 'onay' && s.odendi && s.odemeId && iyzicoAktif()) {
+      if (g.iade && g.iade.islem === 'onay' && s.odendi && s.odemeId && s.odemeSaglayici !== 'paratika' && iyzicoAktif()) {
         try {
           const pi = await iyziParaIade(s, s.iade.tutar || s.toplam);
           s.iade.parasal = pi;
