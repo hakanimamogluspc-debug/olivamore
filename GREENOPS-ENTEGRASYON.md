@@ -105,7 +105,7 @@ Taban adres `https://olivamore.com` (geçişe kadar `https://olivamore.de`). Her
 
 ```
 POST /api/entegre/kargo-barkod
-{ "no": "OM-261110-1234", "kullanici": "depo-ayse" }
+{ "no": "OM-261110-1234", "koli": 2, "kullanici": "depo-ayse" }
 ```
 
 Başarılı yanıt (200):
@@ -115,6 +115,7 @@ Başarılı yanıt (200):
   "etiketUrl": "https://olivamore.com/api/entegre/etiket?no=…&exp=…&t=…" }
 ```
 
+- `koli`: Paket kaç koliden oluşuyor (1–50, varsayılan 1). Yurtiçi'ye bu sayı bildirilir ve etiket koli sayısı kadar sayfa basılır ("Koli 1 / 2", "Koli 2 / 2"). Barkod butonundan önce depo çalışanına koli sayısını soran küçük bir kutu gösterin (varsayılan 1). Gönderi açıldıktan sonra koli sayısı değiştirilemez; farklı bir sayı gönderilirse `409` + `"kod": "koli-degismez"` döner.
 - `yeni: false` ise gönderi daha önce açılmıştır; aynı etiket yeniden basılır. Butona iki kez basmak ya da iki kişinin aynı anda basması ikinci gönderi açmaz.
 - `409` + `"kod": "odeme-bekliyor"` ödemenin henüz alınmadığını gösterir. Yetkili kişi yine de göndermek isterse `"zorla": true` ile tekrar çağrılır.
 - `409` iptal ya da iade edilmiş siparişi gösterir. `502` Yurtiçi hatasıdır; mesajı kullanıcıya gösterin.

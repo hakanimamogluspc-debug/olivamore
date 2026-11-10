@@ -478,6 +478,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <div class="grid3" style="margin-top:14px;">
           <div class="field"><label>İndirim (₺)</label><input type="number" id="ms-indirim" min="0" step="0.01" value="0"></div>
           <div class="field"><label>Kargo ücreti (₺)</label><input type="number" id="ms-kargo" min="0" step="0.01" value="0"></div>
+          <div class="field"><label>Koli adedi</label><input type="number" id="ms-koli" min="1" max="50" value="1"></div>
           <div class="field"><label>Ödeme</label><select id="ms-odeme"><option value="havale">Havale / EFT</option><option value="kart-pos">Kart (POS / link)</option><option value="nakit">Nakit</option><option value="kapida">Kapıda ödeme</option><option value="diger">Diğer</option></select></div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:18px;margin:6px 0 10px;font-size:.88rem;">
@@ -2067,7 +2068,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     }
     function temizle() {
       panelEl.querySelectorAll('input[type=text],input[type=tel],input[type=email],textarea').forEach(function (el) { el.value = ''; });
-      document.getElementById('ms-indirim').value = 0; document.getElementById('ms-kargo').value = 0;
+      document.getElementById('ms-indirim').value = 0; document.getElementById('ms-kargo').value = 0; document.getElementById('ms-koli').value = 1;
       ['ms-odendi', 'ms-mail', 'ms-fatura', 'ms-kurumsal'].forEach(function (id) { document.getElementById(id).checked = false; });
       document.getElementById('ms-stok').checked = true;
       document.getElementById('ms-kurumsal-alan').style.display = 'none';
@@ -2124,7 +2125,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         kanal: g('ms-kanal'), odeme: g('ms-odeme'), odendi: odendi,
         musteri: { ad: g('ms-ad'), telefon: g('ms-tel'), eposta: g('ms-eposta'), mahalle: g('ms-mahalle'), cadde: g('ms-cadde'), adresDetay: g('ms-detay'), il: g('ms-il'), ilce: g('ms-ilce'), postaKodu: g('ms-posta'), not: g('ms-not') },
         kalemler: kalemler, indirim: parseFloat(g('ms-indirim')) || 0, kargo: parseFloat(g('ms-kargo')) || 0,
-        stokDus: document.getElementById('ms-stok').checked, epostaGonder: document.getElementById('ms-mail').checked,
+        koli: +document.getElementById('ms-koli').value || 1, stokDus: document.getElementById('ms-stok').checked, epostaGonder: document.getElementById('ms-mail').checked,
         faturaKes: document.getElementById('ms-fatura').checked, adminNot: g('ms-adminnot'),
         fatura: document.getElementById('ms-kurumsal').checked ? { tip: 'kurumsal', unvan: g('ms-unvan'), vkn: g('ms-vkn'), vergiDairesi: g('ms-vd') } : null
       };
@@ -2138,7 +2139,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           var no = j.no;
           setTimeout(function () { temizle(); panelEl.style.display = 'none'; renderOrders(); }, 1800);
           if (odendi && confirm(no + ' oluşturuldu. Kargo barkodunu şimdi basmak ister misin? (Yurtiçi gönderisi açılır, müşteriye takip SMS/e-postası gider.)')) {
-            fetch('/api/admin/kargo-barkod', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no }) })
+            fetch('/api/admin/kargo-barkod', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, koli: +document.getElementById('ms-koli').value || 1 }) })
               .then(function (r) { return r.json(); })
               .then(function (k) { if (k.tamam) window.open(k.etiketUrl, '_blank'); else alert(k.hata || 'Barkod oluşturulamadı'); });
           }
@@ -2510,21 +2511,25 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     } else if (e.target.classList.contains('ord-iade-red')) {
       ordGonder({ no: no, iade: { islem: 'red' } });
     } else if (e.target.classList.contains('ord-barkod')) {
-      var sipB = ORD_LISTE.find(function (x) { return x.no === no; });
-      if (sipB) barkodYazdir(sipB);
+      // Sunucudaki etiket: koli sayısı kadar sayfa (Koli 1/N), 100x80 mm
+      window.open('/api/entegre/etiket?no=' + encodeURIComponent(no) + (localStorage.getItem('om-admin-jeton') ? '&jeton=' + localStorage.getItem('om-admin-jeton') : ''), '_blank');
     } else if (e.target.classList.contains('ord-fis')) {
       var sip = ORD_LISTE.find(function (x) { return x.no === no; });
       if (sip) fisYazdir(sip);
     } else if (e.target.classList.contains('ord-kargo-gonder')) {
       var firma = e.target.dataset.firma;
-      if (!confirm(no + ' siparişi ' + firma + ' sistemine bildirilsin mi? Gönderi oluşturulur, sipariş "kargolandı" olur ve müşteriye takip maili gider.')) return;
+      var koliCevap = prompt(no + ' kaç koli olarak gönderilecek?', '1');
+      if (koliCevap === null) return;
+      var koliAdet = Math.min(50, Math.max(1, parseInt(koliCevap, 10) || 1));
+      if (!confirm(no + ' siparişi ' + firma + ' sistemine ' + koliAdet + ' koli olarak bildirilsin mi? Gönderi oluşturulur, sipariş "kargolandı" olur ve müşteriye takip maili gider.')) return;
       e.target.disabled = true;
       e.target.textContent = 'Bildiriliyor...';
-      fetch('/api/admin/kargo-gonder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, firma: firma }) })
+      fetch('/api/admin/kargo-gonder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no, firma: firma, koli: koliAdet }) })
         .then(function (r) { return r.json(); })
         .then(function (c) {
           if (c.hata) { alert(c.hata); renderOrders(); return; }
-          if (c.etiket) window.open('/api/admin/etiket?no=' + encodeURIComponent(no) + (localStorage.getItem('om-admin-jeton') ? '&jeton=' + localStorage.getItem('om-admin-jeton') : ''), '_blank');
+          if (firma === 'Yurtiçi') window.open('/api/entegre/etiket?no=' + encodeURIComponent(no) + (localStorage.getItem('om-admin-jeton') ? '&jeton=' + localStorage.getItem('om-admin-jeton') : ''), '_blank');
+          else if (c.etiket) window.open('/api/admin/etiket?no=' + encodeURIComponent(no) + (localStorage.getItem('om-admin-jeton') ? '&jeton=' + localStorage.getItem('om-admin-jeton') : ''), '_blank');
           renderOrders();
         })
         .catch(function () { alert('Sunucuya ulaşılamadı.'); renderOrders(); });

@@ -195,7 +195,7 @@ async function yurticiGonderiOlustur(s) {
     '<receiverPhone1>' + xmlKacir(ykTelefon(m.telefon)) + '</receiverPhone1>' +
     (m.il ? '<cityName>' + xmlKacir(m.il) + '</cityName>' : '') +
     (m.ilce ? '<townName>' + xmlKacir(m.ilce) + '</townName>' : '') +
-    '<cargoCount>1</cargoCount>' +
+    '<cargoCount>' + Math.min(50, Math.max(1, parseInt(s.koliAdet, 10) || 1)) + '</cargoCount>' +
     '<description>Olivamore siparişi ' + xmlKacir(s.no) + '</description>' +
     (m.eposta ? '<emailAddress>' + xmlKacir(m.eposta) + '</emailAddress>' : '') +
     '</ShippingOrderVO>';
@@ -522,7 +522,7 @@ function goSiparisVeri(s, katalog) {
     kalemler: (s.kalemler || []).map(k => Object.assign(goSku(katalog, k), { ad: k.ad, adet: k.adet || 1, birimFiyat: k.fiyat, kdvOrani: typeof k.kdv === 'number' ? k.kdv : 1, paket: k.paket || undefined })),
     tutar: { araToplam: s.araToplam, indirim: s.indirim || 0, kargo: s.kargo || 0, kdv: s.kdvToplam || 0, toplam: s.toplam, paraBirimi: 'TRY' },
     kupon: s.kupon ? (s.kupon.kod || s.kupon) : null,
-    kargo: { firma: s.kargoFirma || '', takipNo: s.kargoNo || '', etiketHazir: !!s.kargoNo },
+    kargo: { firma: s.kargoFirma || '', takipNo: s.kargoNo || '', koliAdet: parseInt(s.koliAdet, 10) || 1, etiketHazir: !!s.kargoNo },
     iade: s.iade || null, partiKod: s.partiKod || '', adminNot: s.adminNot || ''
   };
 }
@@ -636,11 +636,13 @@ function code128Svg(metin, genislik, yukseklik) {
 function htmlKacir(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 function kargoEtiketHtml(s, boyut) {
   const m = s.musteri || {};
+  const koliN = Math.min(50, Math.max(1, parseInt(s.koliAdet, 10) || 1));
   const [gw, gh] = (/^\d{2,3}x\d{2,3}$/.test(boyut || '') ? boyut : '100x80').split('x').map(Number);
   const urunler = (s.kalemler || []).map(k => (k.adet || 1) + '× ' + k.ad).join(', ');
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kargo Etiketi ' + htmlKacir(s.no) + '</title>' +
     '<style>@page{size:' + gw + 'mm ' + gh + 'mm;margin:0}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;margin:0;color:#000}' +
-    '.etiket{width:' + gw + 'mm;height:' + gh + 'mm;padding:4mm 5mm;display:flex;flex-direction:column}' +
+    '.etiket{width:' + gw + 'mm;height:' + gh + 'mm;padding:4mm 5mm;display:flex;flex-direction:column;page-break-after:always;break-after:page}.etiket:last-child{page-break-after:auto;break-after:auto}' +
+    '.koli{font-weight:700;font-size:11pt}' +
     '.ust{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:1.5mm}' +
     '.marka{font-weight:700;font-size:13pt;letter-spacing:.12em}.firma{font-size:7pt;font-weight:700;letter-spacing:.06em}' +
     '.barkod{text-align:center;margin:2.5mm 0 .5mm}.barkod svg{width:100%;height:' + Math.round(gh * 0.22) + 'mm}' +
@@ -648,15 +650,16 @@ function kargoEtiketHtml(s, boyut) {
     '.alici{font-size:9pt;line-height:1.4;border-top:1px solid #000;padding-top:1.8mm}.alici b{font-size:10.5pt}' +
     '.icerik{font-size:7pt;margin-top:1.5mm;color:#222;max-height:' + (gh > 90 ? 18 : 6) + 'mm;overflow:hidden}' +
     '.alt{margin-top:auto;display:flex;justify-content:space-between;font-size:6.5pt;border-top:1px solid #000;padding-top:1.2mm}' +
-    '@media screen{body{background:#eee;padding:10px}.etiket{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}}' +
+    '@media screen{body{background:#eee;padding:10px}.etiket{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);margin-bottom:10px}}' +
     '@media print{body{padding:0;background:#fff}}</style></head><body>' +
+    Array.from({ length: koliN }, (_, j) => j + 1).map(i => '' +
     '<div class="etiket"><div class="ust"><span class="marka">OLIVAMORE</span><span class="firma">' + htmlKacir((s.kargoFirma || 'Yurtiçi').toLocaleUpperCase('tr')) + ' KARGO · GÖNDERİCİ ÖDEMELİ</span></div>' +
     '<div class="barkod">' + code128Svg(s.kargoNo || s.no, 380, 80) + '</div>' +
     '<div class="kod">' + htmlKacir(s.kargoNo || s.no) + '</div>' +
     '<div class="alici"><b>ALICI: ' + htmlKacir(m.ad) + '</b><br>' + htmlKacir(m.adres) + '<br>' + htmlKacir((m.ilce ? m.ilce + ' / ' : '') + (m.il || '')) + ' · Tel: ' + htmlKacir(m.telefon) + '</div>' +
     (gh >= 80 ? '<div class="icerik">İçerik: ' + htmlKacir(urunler) + '</div>' : '') +
-    '<div class="alt"><span>Gönderici: Pektaş Tarım Gıda ve Tic. Ltd. Şti. · Ayvalık / Balıkesir</span><span>Sipariş: ' + htmlKacir(s.no) + ' · Koli: 1</span></div>' +
-    '</div><script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script></body></html>';
+    '<div class="alt"><span>Gönderici: Pektaş Tarım Gıda ve Tic. Ltd. Şti. · Ayvalık / Balıkesir</span><span>Sipariş: ' + htmlKacir(s.no) + ' · Koli: <span class="koli">' + i + ' / ' + koliN + '</span></span></div>' + '</div>').join('') +
+    '<script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script></body></html>';
 }
 // Tek tuş: gönderiyi (bir kez) aç → etiket linki. Aynı sipariş için eşzamanlı ikinci istek beklemeye alınır, çift gönderi açılmaz.
 const goKargoKilit = new Map();
@@ -669,7 +672,12 @@ async function kargoBarkodOlustur(no, secenek) {
     if (s.kaynak === 'wordpress') return { kod: 409, veri: { hata: 'Eski site siparişi; kargo bu sistemden açılmaz.' } };
     if (['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) !== -1) return { kod: 409, veri: { hata: 'Sipariş durumu "' + s.durum + '": kargo açılamaz.' } };
     if (!goOdemeAlindi(s) && !secenek.zorla) return { kod: 409, veri: { hata: 'Ödeme henüz onaylanmadı (havale bekleniyor). Yine de göndermek için zorla:true.', kod: 'odeme-bekliyor' } };
+    const koli = Math.min(50, Math.max(1, parseInt(secenek.koli, 10) || parseInt(s.koliAdet, 10) || 1));
+    if (s.kargoNo && secenek.koli && koli !== (parseInt(s.koliAdet, 10) || 1)) {
+      return { kod: 409, veri: { hata: 'Gönderi ' + (parseInt(s.koliAdet, 10) || 1) + ' koli olarak açılmış; koli sayısı değiştirilemez. Değiştirmek için gönderiyi iptal edip yeniden aç.', kod: 'koli-degismez', koliAdet: parseInt(s.koliAdet, 10) || 1, etiketUrl: goEtiketLinki(no) } };
+    }
     if (!s.kargoNo) {
+      s.koliAdet = koli;
       const firma = 'Yurtiçi';
       if (!kargoAktif().yurtici) return { kod: 503, veri: { hata: 'Yurtiçi WS bilgileri girilmemiş.' } };
       const sonuc = await yurticiGonderiOlustur(s);
@@ -677,17 +685,17 @@ async function kargoBarkodOlustur(no, secenek) {
       const taze = oku('siparisler.json', []);
       const t = taze.find(x => x.no === no);
       const eskiDurum = t.durum;
-      t.kargoFirma = firma; t.kargoNo = sonuc.kargoNo; t.durum = 'kargolandı';
+      t.kargoFirma = firma; t.kargoNo = sonuc.kargoNo; t.durum = 'kargolandı'; t.koliAdet = koli;
       t.gecmis = t.gecmis || [];
-      t.gecmis.unshift({ tarih: new Date().toISOString(), islem: firma + ' gönderisi oluşturuldu (' + sonuc.kargoNo + ')' + (secenek.kaynak ? ' · ' + secenek.kaynak : '') });
+      t.gecmis.unshift({ tarih: new Date().toISOString(), islem: firma + ' gönderisi oluşturuldu (' + sonuc.kargoNo + ')' +  + ' · ' + koli + ' koli' + (secenek.kaynak ? ' · ' + secenek.kaynak : '') });
       yaz('siparisler.json', taze);
       if (eskiDurum !== 'kargolandı' && t.musteri && t.musteri.eposta) {
         epostaGonder(t.musteri.eposta, 'Siparişiniz kargoya verildi · ' + t.no,
           'Merhaba ' + t.musteri.ad + ',\n\n' + t.no + ' numaralı siparişiniz kargoya verildi.\nKargo: ' + firma + ' · Takip No: ' + sonuc.kargoNo + '\n\nAfiyet olsun,\nOlivamore');
       }
-      return { kod: 200, veri: { tamam: true, yeni: true, no: no, kargoFirma: firma, kargoNo: sonuc.kargoNo, etiketUrl: goEtiketLinki(no) } };
+      return { kod: 200, veri: { tamam: true, yeni: true, no: no, kargoFirma: firma, kargoNo: sonuc.kargoNo, koliAdet: koli, etiketUrl: goEtiketLinki(no) } };
     }
-    return { kod: 200, veri: { tamam: true, yeni: false, no: no, kargoFirma: s.kargoFirma, kargoNo: s.kargoNo, etiketUrl: goEtiketLinki(no) } };
+    return { kod: 200, veri: { tamam: true, yeni: false, no: no, kargoFirma: s.kargoFirma, kargoNo: s.kargoNo, koliAdet: parseInt(s.koliAdet, 10) || 1, etiketUrl: goEtiketLinki(no) } };
   })();
   goKargoKilit.set(no, is);
   try { return await is; } finally { goKargoKilit.delete(no); }
@@ -1791,7 +1799,7 @@ const sunucu = http.createServer(async (req, res) => {
         const g = await govde(req, 0.05);
         const no = temiz(g.no, 30);
         if (!no) return json(res, 400, { hata: 'no gerekli' });
-        try { const r = await kargoBarkodOlustur(no, { zorla: g.zorla === true, kaynak: 'Green Ops' + (g.kullanici ? ' · ' + temiz(g.kullanici, 60) : '') }); return json(res, r.kod, r.veri); }
+        try { const r = await kargoBarkodOlustur(no, { zorla: g.zorla === true, koli: g.koli, kaynak: 'Green Ops' + (g.kullanici ? ' · ' + temiz(g.kullanici, 60) : '') }); return json(res, r.kod, r.veri); }
         catch (e) { return json(res, 502, { hata: 'Kargo servisine ulaşılamadı: ' + e.message }); }
       }
       if (req.method === 'POST' && yol === '/api/entegre/durum') {
@@ -2549,7 +2557,7 @@ const sunucu = http.createServer(async (req, res) => {
         faturaBilgi: (g.fatura && g.fatura.tip === 'kurumsal' && /^[0-9]{10,11}$/.test(String(g.fatura.vkn || '')) && temiz(g.fatura.unvan, 200))
           ? { tip: 'kurumsal', unvan: temiz(g.fatura.unvan, 200), vkn: temiz(g.fatura.vkn, 11), vergiDairesi: temiz(g.fatura.vergiDairesi, 60) } : null,
         kalemler: kalemler, araToplam: araToplam, kupon: null, indirim: indirim, kdvToplam: kdvToplam, kargo: kargo, toplam: toplam,
-        adminNot: temiz(g.adminNot, 1000), stokDusuldu: g.stokDus !== false,
+        adminNot: temiz(g.adminNot, 1000), stokDusuldu: g.stokDus !== false, koliAdet: Math.min(50, Math.max(1, parseInt(g.koli, 10) || 1)),
         gecmis: [{ tarih: new Date().toISOString(), islem: 'Panelden manuel oluşturuldu (' + kanal + ')' + (odendi ? ' · ödeme alındı' : '') }]
       };
       const liste = oku('siparisler.json', []);
@@ -2603,7 +2611,7 @@ const sunucu = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && yol === '/api/admin/kargo-barkod') {
       const g = await govde(req, 0.05);
-      try { const r = await kargoBarkodOlustur(temiz(g.no, 30), { zorla: g.zorla === true, kaynak: 'Panel' }); return json(res, r.kod, r.veri); }
+      try { const r = await kargoBarkodOlustur(temiz(g.no, 30), { zorla: g.zorla === true, koli: g.koli, kaynak: 'Panel' }); return json(res, r.kod, r.veri); }
       catch (e) { return json(res, 502, { hata: 'Kargo servisine ulaşılamadı: ' + e.message }); }
     }
     if (req.method === 'GET' && yol === '/api/admin/web-analiz') {
@@ -2979,6 +2987,7 @@ const sunucu = http.createServer(async (req, res) => {
       const s = liste.find(x => x.no === temiz(g.no, 20));
       if (!s) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
       const firma = temiz(g.firma, 20);
+      if (g.koli) s.koliAdet = Math.min(50, Math.max(1, parseInt(g.koli, 10) || 1));
       const aktif = kargoAktif();
       if (firma === 'Yurtiçi' && !aktif.yurtici) return json(res, 400, { hata: 'Yurtiçi WS bilgileri girilmemiş (env.json → yurticiWsUser / yurticiWsSifre).' });
       if (firma === 'DHL' && !aktif.dhl) return json(res, 400, { hata: 'DHL API bilgileri girilmemiş (env.json → dhlApiKey / dhlApiSecret / dhlHesapNo).' });
