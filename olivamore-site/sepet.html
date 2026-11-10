@@ -78,7 +78,7 @@
     <div id="co-ok">
       <div class="kicker">Teşekkürler</div>
       <h2>Siparişin alındı: <span id="co-no" style="color:var(--gold);"></span></h2>
-      <p class="lead" style="margin:0 auto 10px;">Havale bilgilerini ve sipariş özetini e-postana gönderdik. Ödeme onaylandıktan sonra siparişini kargoya vereceğiz.</p>
+      <p class="lead" id="co-ok-msj" style="margin:0 auto 10px;">Havale bilgilerini ve sipariş özetini e-postana gönderdik. Ödeme onaylandıktan sonra siparişini kargoya vereceğiz.</p>
       <div id="co-iban" style="display:none;max-width:560px;margin:6px auto 22px;text-align:left;background:#FBF7EC;border:1px solid #E8DBB5;padding:20px 22px;"></div>
       <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:26px;">Sorun olursa sipariş numaranla <a class="link-arrow" href="iletisim.html">bize yaz</a>.</p>
       <a class="btn btn-dark" href="koleksiyon.html">Alışverişe Devam Et</a>
@@ -685,6 +685,7 @@ omSepetHazir(function () {
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = mOk[1];
+        document.getElementById('co-ok-msj').textContent = 'Kart ödemen alındı; sipariş onayını e-postana gönderdik. Siparişin hazırlanıp kargoya verildiğinde sana haber vereceğiz.';
         if (window.omMetaSatin) window.omMetaSatin(mOk[1]);
         if (window.omIz) window.omIz('satin_al', { no: mOk[1] });
         document.getElementById('cart-wrap').style.display = 'none';
