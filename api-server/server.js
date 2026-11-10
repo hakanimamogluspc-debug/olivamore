@@ -990,6 +990,9 @@ function segmentUyeleri(ad) {
 }
 
 /* ---------- Abonelik motoru: vadesi gelen abonelikten otomatik sipariş ---------- */
+/* Abonelik indirimi: varsayılan %15 (cms.json → abonelikIndirim ile değiştirilebilir) */
+function aboneOran(cfg) { const o = Number((cfg || oku('cms.json', {})).abonelikIndirim); return o >= 0 && o <= 50 ? o : 15; }
+function aboneFiyat(fiyat, oran) { return Math.round(Number(fiyat) * (1 - oran / 100) * 100) / 100; }
 async function abonelikTur() {
   const abonelikler = oku('abonelikler.json', []);
   const bugun = new Date().toISOString().slice(0, 10);
@@ -1006,9 +1009,10 @@ async function abonelikTur() {
     let eksik = '';
     for (const k of istekler) {
       const p = (cfg.products || []).find(x => x.id === k.pid) || (cfg.products || []).find(x => x.nameTR && k.urun && k.urun.indexOf(x.nameTR) === 0);
-      const fiyat = (istekler.length === 1 && Number(a.fiyat)) || (p ? Number(p.price) : 0);
-      if (!fiyat) { eksik = k.urun; break; }
-      kalemler.push({ ad: k.urun, adet: k.adet || 1, fiyat: fiyat, kdv: p && typeof p.kdv === 'number' ? p.kdv : 1, img: p ? p.img : '' });
+      const liste = (istekler.length === 1 && Number(a.fiyat)) || (p ? Number(p.price) : 0);
+      if (!liste) { eksik = k.urun; break; }
+      const oranA = typeof a.indirimOran === 'number' ? a.indirimOran : aboneOran(cfg);
+      kalemler.push({ ad: k.urun, adet: k.adet || 1, fiyat: aboneFiyat(liste, oranA), listeFiyat: liste, kdv: p && typeof p.kdv === 'number' ? p.kdv : 1, img: p ? p.img : '', pid: k.pid });
     }
     if (eksik) { a.sonHata = 'Fiyat bulunamadı (' + eksik + '); sipariş oluşturulamadı.'; continue; }
     const toplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0) * 100) / 100;
@@ -1017,13 +1021,19 @@ async function abonelikTur() {
     const siparis = {
       no: no, tarih: new Date().toISOString(),
       durum: 'yeni', odeme: 'abonelik', abonelikId: a.id,
-      musteri: { ad: a.ad || a.eposta, eposta: a.eposta, telefon: a.telefon || '', adres: a.adres || '', il: a.il || '', ilce: a.ilce || '' },
+      musteri: { ad: a.ad || a.eposta, eposta: a.eposta, telefon: a.telefon || '', adres: a.adres || '', mahalle: a.mahalle || '', cadde: a.cadde || '', adresDetay: a.adresDetay || '', il: a.il || '', ilce: a.ilce || '' },
       kalemler: kalemler,
       araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: kdvToplam, toplam: toplam,
       gecmis: [{ tarih: new Date().toISOString(), islem: 'abonelikten otomatik oluşturuldu (' + a.id + ')' }]
     };
     let odemeUrl = '';
-    if (iyzicoAktif() && a.adres) {
+    if (paratikaAktif() && a.adres) {
+      try {
+        const o = await paratikaOturum(siparis, { headers: {}, socket: {} });
+        siparis.durum = 'odeme-bekliyor'; siparis.odeme = 'kart'; siparis.odemeSaglayici = 'paratika'; siparis.paratikaToken = o.token;
+        odemeUrl = o.url;
+      } catch (e) { console.error('[abonelik-paratika]', e.message); }
+    } else if (iyzicoAktif() && a.adres) {
       try {
         const parcalar = String(a.ad || 'Abone').split(/\s+/);
         const soyad = parcalar.length > 1 ? parcalar.pop() : '-';
@@ -1520,8 +1530,8 @@ async function paratikaOturum(s, req) {
     RETURNURL: SITE() + '/api/paratika-donus',
     CUSTOMER: s.no, CUSTOMERNAME: String(m.ad || '').slice(0, 100), CUSTOMEREMAIL: String(m.eposta || '').slice(0, 100),
     CUSTOMERPHONE: String(m.telefon || '').replace(/\D/g, '').replace(/^(90|0)/, '').slice(0, 10),
-    CUSTOMERIP: String(req.headers['x-real-ip'] || req.socket.remoteAddress || '0.0.0.0').split(',')[0].trim(),
-    CUSTOMERUSERAGENT: String(req.headers['user-agent'] || '-').slice(0, 250),
+    CUSTOMERIP: String((req.headers || {})['x-real-ip'] || (req.socket || {}).remoteAddress || '46.225.219.32').split(',')[0].trim(),
+    CUSTOMERUSERAGENT: String((req.headers || {})['user-agent'] || 'Olivamore-Abonelik').slice(0, 250),
     // Kalem tutarları toplamı = AMOUNT olmalı → tek satır (indirim/kargo dahil sipariş toplamı)
     ORDERITEMS: JSON.stringify([{ code: s.no, name: 'Olivamore siparişi ' + s.no, description: (s.kalemler || []).map(k => k.adet + 'x ' + k.ad).join(', ').slice(0, 250), quantity: 1, amount: Number(tutar) }])
   });
@@ -1976,10 +1986,14 @@ const sunucu = http.createServer(async (req, res) => {
       const g = await govde(req, 1);
       const cfg = oku('cms.json', {});
       const ad = temiz(g.ad, 80), eposta = temiz(g.eposta, 120).toLowerCase();
-      const telefon = temiz(g.telefon, 40), adres = temiz(g.adres, 1000), il = temiz(g.il, 60);
-      if (!ad || !epostaMi(eposta) || !telefon || !adres) {
-        return json(res, 400, { hata: 'Ad, e-posta, telefon ve teslimat adresi zorunlu.' });
-      }
+      const telefon = temiz(g.telefon, 40), il = temiz(g.il, 60), ilce = temiz(g.ilce, 60);
+      const mahalle = temiz(g.mahalle, 80), cadde = temiz(g.cadde, 120), adresDetay = temiz(g.adresDetay, 600);
+      const en = g.dil === 'en';
+      if (!ad || !epostaMi(eposta) || !telefon) return json(res, 400, { hata: en ? 'Name, email and phone are required.' : 'Ad, e-posta ve telefon zorunlu.' });
+      if (!mahalle || !cadde || !adresDetay || !il || !ilce) return json(res, 400, { hata: en ? 'Neighbourhood, street, building no, province and district are required.' : 'Mahalle, cadde/sokak, bina no, il ve ilçe zorunlu.' });
+      if (String(telefon).replace(/\D/g, '').replace(/^(90|0)/, '').length !== 10) return json(res, 400, { hata: en ? 'Please enter a valid 10-digit phone number.' : 'Geçerli bir telefon numarası gir (alan koduyla 10 hane).' });
+      const adres = [/\b(mah\.?|mahallesi|mh\.?)$/i.test(mahalle) ? mahalle : mahalle + ' Mah.', cadde, adresDetay].join(' ');
+      const oran = aboneOran(cfg);
       const istekler = (Array.isArray(g.kalemler) ? g.kalemler.slice(0, 10) : [])
         .map(k => ({ pid: temiz(k.pid, 40), adet: Math.max(1, Math.min(20, parseInt(k.adet, 10) || 1)) }))
         .filter(k => k.pid);
@@ -1990,7 +2004,7 @@ const sunucu = http.createServer(async (req, res) => {
         const p = (cfg.products || []).find(x => x.id === k.pid);
         if (!p || !(Number(p.price) > 0)) return json(res, 400, { hata: 'Ürün bulunamadı: ' + k.pid });
         const birim = String(p.unitTR || '').replace(/^\//, '').trim();
-        kalemler.push({ ad: p.nameTR + (birim ? ' · ' + birim : ''), pid: p.id, adet: k.adet, fiyat: Number(p.price), kdv: typeof p.kdv === 'number' ? p.kdv : 1, img: p.img || '' });
+        kalemler.push({ ad: p.nameTR + (birim ? ' · ' + birim : ''), pid: p.id, adet: k.adet, fiyat: aboneFiyat(p.price, oran), listeFiyat: Number(p.price), kdv: typeof p.kdv === 'number' ? p.kdv : 1, img: p.img || '' });
       }
       const periyotGun = Math.max(7, Math.min(120, parseInt(g.periyotGun, 10) || 30));
       const ozet = kalemler.map(k => k.adet + ' × ' + k.ad).join(', ');
@@ -2000,12 +2014,12 @@ const sunucu = http.createServer(async (req, res) => {
         eposta: eposta, ad: ad,
         kalemler: kalemler.map(k => ({ urun: k.ad, pid: k.pid, adet: k.adet })),
         urun: ozet.slice(0, 300), pid: kalemler[0].pid, adet: 1,
-        telefon: telefon, adres: adres, il: il, not: temiz(g.not, 500),
+        telefon: telefon, adres: adres, mahalle: mahalle, cadde: cadde, adresDetay: adresDetay, il: il, ilce: ilce, not: temiz(g.not, 500), indirimOran: oran,
         periyotGun: periyotGun, sonrakiTarih: '', durum: 'odeme-bekliyor',
         olusturma: new Date().toISOString()
       };
       // iyzico kapalıysa talep akışına düş (site çalışmaya devam etsin)
-      if (!iyzicoAktif()) {
+      if (!kartAktif()) {
         ab.durum = 'talep';
         abonelikler.push(ab);
         yaz('abonelikler.json', abonelikler.slice(0, 5000));
@@ -2024,11 +2038,23 @@ const sunucu = http.createServer(async (req, res) => {
       const siparis = {
         no: no, tarih: new Date().toISOString(),
         durum: 'odeme-bekliyor', odeme: 'kart', abonelikId: ab.id, dil: g.dil === 'en' ? 'en' : 'tr',
-        musteri: { ad: ad, eposta: eposta, telefon: telefon, adres: adres, il: il, not: ab.not },
-        kalemler: kalemler.map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, kdv: k.kdv, img: k.img })),
+        musteri: { ad: ad, eposta: eposta, telefon: telefon, adres: adres, mahalle: mahalle, cadde: cadde, adresDetay: adresDetay, il: il, ilce: ilce, not: ab.not },
+        kalemler: kalemler.map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, listeFiyat: k.listeFiyat, kdv: k.kdv, img: k.img, pid: k.pid })),
         araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: kdvToplam, toplam: toplam,
+        abonelikIndirim: { oran: oran, tutar: Math.round(kalemler.reduce((t, k) => t + (k.listeFiyat - k.fiyat) * k.adet, 0) * 100) / 100 },
         gecmis: [{ tarih: new Date().toISOString(), islem: 'abonelik ilk siparişi (' + ab.id + ') — ödeme bekleniyor' }]
       };
+      if (paratikaAktif()) {
+        try {
+          const o = await paratikaOturum(siparis, req);
+          siparis.odemeSaglayici = 'paratika'; siparis.paratikaToken = o.token;
+          abonelikler.push(ab); yaz('abonelikler.json', abonelikler.slice(0, 5000));
+          siparisler.unshift(siparis); yaz('siparisler.json', siparisler.slice(0, 5000));
+          return json(res, 200, { tamam: true, odemeUrl: o.url, toplam: toplam });
+        } catch (e) { console.error('[abonelik-paratika]', e.message); }
+        stokGeriEkle(siparis);
+        return json(res, 502, { hata: en ? 'The payment page could not be opened; please try again shortly.' : 'Ödeme sayfası açılamadı; lütfen biraz sonra tekrar dene.' });
+      }
       try {
         const parcalar = ad.split(/\s+/);
         const soyad = parcalar.length > 1 ? parcalar.pop() : '-';
@@ -2521,7 +2547,7 @@ const sunucu = http.createServer(async (req, res) => {
       const p = Object.fromEntries(new URLSearchParams(ham));
       const liste = oku('siparisler.json', []);
       const s = liste.find(x => x.no === p.merchantPaymentId);
-      const sepetYolu = s && s.dil === 'en' ? '/sepet-en' : '/sepet';
+      const sepetYolu = s && s.abonelikId ? (s.dil === 'en' ? '/abonelik-en' : '/abonelik') : (s && s.dil === 'en' ? '/sepet-en' : '/sepet');
       const imzaOk = paratikaImzaDogru(p);
       const oturumOk = !!(s && s.paratikaToken && s.paratikaToken === p.sessionToken);
       const tutarOk = !!(s && (p.amount === undefined || Math.abs(parseFloat(p.amount) - Number(s.toplam)) < 0.01));

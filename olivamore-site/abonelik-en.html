@@ -43,6 +43,15 @@
 .abk-sil{border:1px solid #D8C69C;background:#fff;color:#8f2f24;cursor:pointer;font-size:.9rem}
 .ab-ekle{width:100%;background:none;border:1px dashed #BFA25D;color:#8a6f3c;padding:10px;font-family:'Poppins',sans-serif;font-size:.84rem;letter-spacing:.06em;cursor:pointer;margin-bottom:16px}
 .ab-ekle:hover{background:rgba(191,162,93,.08)}
+.ab-toplam{display:block!important;font-family:var(--font-sans);font-size:.95rem;font-weight:400;padding:14px 18px}
+.ab-toplam[style*="none"]{display:none!important}
+.abt-satir{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0;color:#4D5358}
+.abt-rakam{font-family:var(--font-sans);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:#1D1F1C}
+s.abt-rakam{font-weight:400;color:#8a8377}
+.abt-ind span:first-child{color:#8a6f3c;font-weight:500}
+.abt-ind .abt-rakam{color:#8a6f3c}
+.abt-toplam{border-top:1px solid #D8C69C;margin-top:6px;padding-top:9px;color:#1D1F1C;font-weight:500}
+.abt-toplam .abt-rakam{font-size:1.35rem}
 @media(max-width:760px){.ab-adimlar{grid-template-columns:1fr}.ab-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -66,7 +75,7 @@
 
   <form class="ab-form" id="ab-form">
     <h2>Start your subscription</h2>
-    <div class="alt">Pick your products and pay for the first delivery — your subscription starts instantly. Shipping is on us for subscription deliveries.</div>
+    <div class="alt">Pick your products and pay for the first delivery — your subscription starts instantly. Every delivery comes with a <b><span class="ab-oran">15%</span> subscriber discount</b> and free shipping.</div>
     <div class="ab-grid">
       <div class="ab-alan"><label for="abf-ad">Full name *</label><input id="abf-ad" type="text" required autocomplete="name"></div>
       <div class="ab-alan"><label for="abf-eposta">Email *</label><input id="abf-eposta" type="email" required autocomplete="email"></div>
@@ -109,13 +118,18 @@
           <option value="60">Every 2 months</option>
         </select>
       </div>
-      <div class="ab-alan"><label for="abf-telefon">Phone *</label><input id="abf-telefon" type="tel" autocomplete="tel" required></div>
+      <div class="ab-alan"><label for="abf-telefon">Phone *</label><input id="abf-telefon" type="tel" autocomplete="tel" required pattern="[+]?[0-9 ()-]{10,17}" placeholder="05XX XXX XX XX"></div>
     </div>
-    <div class="ab-alan"><label for="abf-adres">Delivery address *</label><input id="abf-adres" type="text" autocomplete="street-address" placeholder="Street, no, district" required></div>
     <div class="ab-grid">
-      <div class="ab-alan"><label for="abf-il">City *</label><input id="abf-il" type="text" autocomplete="address-level1" required></div>
-      <div class="ab-alan"><label for="abf-not">Note (optional)</label><input id="abf-not" type="text" maxlength="200"></div>
+      <div class="ab-alan"><label for="abf-mahalle">Neighbourhood (Mahalle) *</label><input id="abf-mahalle" type="text" maxlength="80" required></div>
+      <div class="ab-alan"><label for="abf-cadde">Street / avenue *</label><input id="abf-cadde" type="text" maxlength="120" required></div>
     </div>
+    <div class="ab-alan"><label for="abf-adres">Building no, flat and directions *</label><input id="abf-adres" type="text" autocomplete="street-address" maxlength="600" placeholder="e.g. No: 12 Flat: 4" required></div>
+    <div class="ab-grid">
+      <div class="ab-alan"><label for="abf-il">Province *</label><input id="abf-il" type="text" autocomplete="address-level1" required></div>
+      <div class="ab-alan"><label for="abf-ilce">District *</label><input id="abf-ilce" type="text" autocomplete="address-level2" required></div>
+    </div>
+    <div class="ab-alan"><label for="abf-not">Note (optional)</label><input id="abf-not" type="text" maxlength="200"></div>
     <div class="ab-toplam" id="abf-toplam" style="display:none;"></div>
     <button class="ab-gonder" id="abf-gonder" type="submit">Proceed to Payment</button>
     <div class="ab-mesaj" id="abf-mesaj"></div>
@@ -131,6 +145,7 @@ var abfKalemler = document.getElementById('abf-kalemler');
 function abfSatirEkle() {
   if (abfKalemler.querySelectorAll('.ab-kalem').length >= 10) return;
   abfKalemler.appendChild(document.getElementById('abf-sablon').content.cloneNode(true));
+  if (typeof secenekFiyatla === 'function' && window.FIYAT_HAZIR) secenekFiyatla(abfKalemler);
 }
 abfSatirEkle();
 document.getElementById('abf-ekle').addEventListener('click', abfSatirEkle);
@@ -156,8 +171,11 @@ document.getElementById('ab-form').addEventListener('submit', function (e) {
       ad: document.getElementById('abf-ad').value.trim(),
       eposta: document.getElementById('abf-eposta').value.trim(),
       telefon: document.getElementById('abf-telefon').value.trim(),
-      adres: document.getElementById('abf-adres').value.trim(),
+      mahalle: document.getElementById('abf-mahalle').value.trim(),
+      cadde: document.getElementById('abf-cadde').value.trim(),
+      adresDetay: document.getElementById('abf-adres').value.trim(),
       il: document.getElementById('abf-il').value.trim(),
+      ilce: document.getElementById('abf-ilce').value.trim(),
       not: document.getElementById('abf-not').value.trim(),
       periyotGun: document.getElementById('abf-periyot').value,
       kalemler: kalemler,
@@ -186,24 +204,43 @@ document.getElementById('ab-form').addEventListener('submit', function (e) {
 });
 
 /* Canli toplam (fiyatlar sunucudan) */
-var FIYAT = {};
+var FIYAT = {}, ORAN = 15;
+function tl(n) { return '₺' + Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+function abFiyat(f) { return Math.round(f * (1 - ORAN / 100) * 100) / 100; }
+function oranYaz() { document.querySelectorAll('.ab-oran').forEach(function (el) { el.textContent = ORAN + '%'; }); }
+// Ürün seçeneklerine abone fiyatını yaz: "… — ₺553 (₺650)"
+function secenekFiyatla(kok) {
+  kok.querySelectorAll('.abk-urun option[data-pid]').forEach(function (op) {
+    var f = FIYAT[op.dataset.pid]; if (!f) return;
+    if (!op.dataset.ad) op.dataset.ad = op.textContent;
+    op.textContent = op.dataset.ad + ' — ' + tl(abFiyat(f)) + ' (' + tl(f) + ')';
+  });
+}
 fetch('/api/config').then(function (r) { return r.json(); }).then(function (cfg) {
   (cfg.products || []).forEach(function (p) { if (p.id && Number(p.price) > 0) FIYAT[p.id] = Number(p.price); });
+  var o = Number(cfg.abonelikIndirim); if (o >= 0 && o <= 50) ORAN = o;
+  oranYaz();
+  window.FIYAT_HAZIR = true; secenekFiyatla(document);
   toplamYenile();
 }).catch(function () {});
 function toplamYenile() {
-  var t = 0, eksik = false;
+  var liste = 0, eksik = false;
   abfKalemler.querySelectorAll('.ab-kalem').forEach(function (sat) {
     var sec = sat.querySelector('.abk-urun');
     var o = sec.options[sec.selectedIndex];
     var pid = o && o.dataset ? o.dataset.pid : '';
     var adet = parseInt(sat.querySelector('.abk-adet').value, 10) || 1;
-    if (pid && FIYAT[pid]) t += FIYAT[pid] * adet; else if (pid) eksik = true;
+    if (pid && FIYAT[pid]) liste += FIYAT[pid] * adet; else if (pid) eksik = true;
   });
   var kutu = document.getElementById('abf-toplam');
-  if (t > 0 && !eksik) {
-    kutu.style.display = 'flex';
-    kutu.innerHTML = '<span>First delivery total: \u20BA' + t.toLocaleString('tr-TR') + '</span><small>Free shipping</small>';
+  if (liste > 0 && !eksik) {
+    var abone = Math.round(liste * (1 - ORAN / 100) * 100) / 100, fark = Math.round((liste - abone) * 100) / 100;
+    kutu.style.display = 'block';
+    kutu.innerHTML =
+      '<div class="abt-satir"><span>Regular price</span><s class="abt-rakam">' + tl(liste) + '</s></div>' +
+      '<div class="abt-satir abt-ind"><span>' + ORAN + '% subscriber discount</span><span class="abt-rakam">−' + tl(fark) + '</span></div>' +
+      '<div class="abt-satir"><span>Free shipping</span><span class="abt-rakam">' + tl(0) + '</span></div>' +
+      '<div class="abt-satir abt-toplam"><span>First delivery · Subscriber price</span><b class="abt-rakam">' + tl(abone) + '</b></div>';
   } else { kutu.style.display = 'none'; }
 }
 abfKalemler.addEventListener('change', toplamYenile);
