@@ -19,7 +19,7 @@ Bu belge Green Ops tarafında yazılacak kodu tarif eder. Site tarafı hazırdı
 | `greenOpsWebhookUrl` | Green Ops'un webhook alacağı adres, örn. `https://ops.ornek.com/api/webhooks/olivamore` |
 | `greenOpsSecret` | Webhook imza anahtarı. Uzun ve rastgele olmalı; aynısı Green Ops'ta da tanımlanır. |
 | `greenOpsApiKey` | Green Ops'un siteye istek atarken kullandığı anahtar (Bearer). Uzun ve rastgele olmalı. |
-| `greenOpsEtiket` | İsteğe bağlı etiket boyutu: `100x75` (varsayılan), `100x100` veya `100x150` |
+| `greenOpsEtiket` | İsteğe bağlı etiket boyutu: `100x80` (varsayılan; Zebra ZD220), `100x75`, `100x100` veya `100x150` |
 
 Rastgele anahtar üretmek için: `openssl rand -hex 32`
 
@@ -145,7 +145,7 @@ if (d.tamam) window.open(d.etiketUrl, '_blank'); else alert(d.hata);
 
 ## Termal yazıcı ayarı
 
-- Etiket HTML'dir ve `@page` boyutu (`100mm × 75mm` vb.) tanımlıdır. Chrome'da ilk seferde şunları seçin: yazdırma penceresinde yazıcı = termal yazıcı, kenar boşluğu = **Yok**, ölçek = **%100**. Chrome bu ayarları hatırlar.
+- Etiket HTML'dir ve `@page` boyutu (varsayılan `100mm × 80mm`) tanımlıdır. Chrome'da ilk seferde şunları seçin: yazdırma penceresinde yazıcı = termal yazıcı, kenar boşluğu = **Yok**, ölçek = **%100**. Chrome bu ayarları hatırlar.
 - Yazıcı sürücüsünde kâğıt boyutu etiket boyutuyla aynı olmalı. Boyut farklıysa sunucuda `greenOpsEtiket` değerini değiştirin.
 - Yazdırma penceresi hiç çıkmadan basmak için depo bilgisayarında Chrome'u `--kiosk-printing` parametresiyle açın; varsayılan yazıcı termal yazıcı olmalı.
 - Barkod Code128 biçimindedir ve sipariş numarasını (Yurtiçi `cargoKey`) taşır. Yurtiçi şubesi bunu okutup irsaliyeyi kendisi basar.

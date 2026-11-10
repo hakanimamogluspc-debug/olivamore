@@ -58,6 +58,7 @@
 <meta property="og:locale:alternate" content="en_GB">
 
 <meta property="og:site_name" content="Olivamore">
+<style>@media(max-width:520px){.co-iki{grid-template-columns:1fr!important}}</style>
 </head>
 <body data-page="shop">
 <div id="om-header"></div>
@@ -121,8 +122,8 @@
         <div id="adres-secim" style="display:none;margin-bottom:14px;"></div>
         <label class="checkout-field" for="co-ad">Ad soyad<input type="text" id="co-ad" name="name" autocomplete="name" required></label>
         <label class="checkout-field" for="co-eposta">E-posta<input type="email" id="co-eposta" name="email" autocomplete="email" inputmode="email" required></label>
-        <label class="checkout-field" for="co-tel">Telefon<input type="tel" id="co-tel" name="tel" autocomplete="tel" inputmode="tel" required minlength="10"></label>
-        <label class="checkout-field" for="co-adres">Açık adres<textarea id="co-adres" name="street-address" rows="3" autocomplete="street-address" required></textarea></label>
+        <label class="checkout-field" for="co-tel">Telefon<input type="tel" id="co-tel" name="tel" autocomplete="tel" inputmode="tel" required minlength="10" pattern="[+]?[0-9 ()-]{10,17}" placeholder="05XX XXX XX XX"></label>
+        <div class="co-iki" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><label class="checkout-field" for="co-mahalle">Mahalle<input type="text" id="co-mahalle" maxlength="80" required placeholder="örn. Kazım Karabekir"></label><label class="checkout-field" for="co-cadde">Cadde / sokak<input type="text" id="co-cadde" maxlength="120" required placeholder="örn. Atatürk Blv."></label></div><label class="checkout-field" for="co-adres">Bina no, daire ve adres tarifi<textarea id="co-adres" name="street-address" rows="2" autocomplete="street-address" required placeholder="örn. No: 12 Daire: 4, eczanenin yanı"></textarea></label>
         <div class="checkout-grid">
           <label class="checkout-field" for="co-il">İl<input type="text" id="co-il" name="address-level1" autocomplete="address-level1" required></label>
           <label class="checkout-field" for="co-ilce">İlçe<input type="text" id="co-ilce" name="address-level2" autocomplete="address-level2" required></label>
@@ -433,7 +434,13 @@ omSepetHazir(function () {
     msj.textContent = alanHatasi(el);
     el.insertAdjacentElement('afterend', msj);
   }
+  function telefonGecerli() {
+    var el = document.getElementById('co-tel');
+    var n = el.value.replace(/\D/g, '').replace(/^(90|0)/, '');
+    el.setCustomValidity(n.length === 10 ? '' : 'Alan koduyla 10 haneli telefon gir');
+  }
   function alanlariDogrula() {
+    telefonGecerli();
     var required = Array.from(document.querySelectorAll('.checkout-field [required]'));
     required.forEach(function (el) { if (el.checkValidity()) hataTemizle(el); else hataGoster(el); });
     return required.find(function (el) { return !el.checkValidity(); });
@@ -448,7 +455,10 @@ omSepetHazir(function () {
       ad: document.getElementById('co-ad').value.trim(),
       eposta: document.getElementById('co-eposta').value.trim(),
       telefon: document.getElementById('co-tel').value.trim(),
-      adres: document.getElementById('co-adres').value.trim(),
+      adres: omTamAdres(),
+      mahalle: document.getElementById('co-mahalle').value.trim(),
+      cadde: document.getElementById('co-cadde').value.trim(),
+      adresDetay: document.getElementById('co-adres').value.trim(),
       il: document.getElementById('co-il').value.trim(),
       ilce: document.getElementById('co-ilce').value.trim(),
       postaKodu: document.getElementById('co-posta').value.trim(),
@@ -520,10 +530,29 @@ omSepetHazir(function () {
   // Üye bilgileri (giriş yapılmışsa): indirim oranı + kayıtlı adres seçimi
   window.OM_UYE_ORAN = 0;
   var OM_UYE = null;
+  // "Kazım Karabekir" → "Kazım Karabekir Mah." ; kullanıcı "Mah./Mahallesi" yazdıysa tekrar eklenmez
+  function omTamAdres() {
+    var mh = document.getElementById('co-mahalle').value.trim(), cd = document.getElementById('co-cadde').value.trim(), dt = document.getElementById('co-adres').value.trim();
+    if (mh && !/\b(mah\.?|mahallesi|mh\.?)$/i.test(mh)) mh += ' Mah.';
+    return [mh, cd, dt].filter(Boolean).join(' ');
+  }
+  // Eski kayıtlı adreslerde mahalle/cadde ayrı tutulmuyordu: metinden tahmin et (müşteri düzeltebilir)
+  function adresAyir(a) {
+    if (a.mahalle || a.cadde) return { mahalle: a.mahalle || '', cadde: a.cadde || '', detay: a.adresDetay || '' };
+    var metin = String(a.adres || ''), mh = '', cd = '';
+    var m1 = metin.match(/([A-Za-zÇĞİÖŞÜçğıöşü0-9.' ]+?)\s+(mahallesi|mah\.?|mh\.?)(?=[\s,]|$)/i);
+    if (m1) { mh = m1[1].trim(); metin = metin.replace(m1[0], ''); }
+    var m2 = metin.match(/([A-Za-zÇĞİÖŞÜçğıöşü0-9.' ]+?\s+(caddesi|cad\.?|cd\.?|sokağı|sokak|sok\.?|sk\.?|bulvarı|bulvar|blv\.?|meydanı))(?=[\s,]|$)/i);
+    if (m2) { cd = m2[1].trim(); metin = metin.replace(m2[0], ''); }
+    return { mahalle: mh, cadde: cd, detay: metin.replace(/^[\s,]+|[\s,]+$/g, '').replace(/\s{2,}/g, ' ') };
+  }
   function adresDoldur(a) {
+    var ay = adresAyir(a);
+    document.getElementById('co-mahalle').value = ay.mahalle;
+    document.getElementById('co-cadde').value = ay.cadde;
     document.getElementById('co-ad').value = a.ad || '';
     document.getElementById('co-tel').value = a.telefon || '';
-    document.getElementById('co-adres').value = a.adres || '';
+    document.getElementById('co-adres').value = ay.detay;
     document.getElementById('co-il').value = a.il || '';
     document.getElementById('co-ilce').value = a.ilce || '';
     document.getElementById('co-posta').value = a.postaKodu || '';
@@ -545,7 +574,7 @@ omSepetHazir(function () {
       if (e.target.name !== 'kayitli-adres') return;
       var kaydetSatir = document.getElementById('adres-kaydet-satir');
       if (e.target.value === 'yeni') {
-        ['co-adres', 'co-il', 'co-ilce', 'co-posta'].forEach(function (id) { document.getElementById(id).value = ''; });
+        ['co-mahalle', 'co-cadde', 'co-adres', 'co-il', 'co-ilce', 'co-posta'].forEach(function (id) { document.getElementById(id).value = ''; });
         kaydetSatir.style.display = 'flex';
         document.getElementById('co-adres').focus();
       } else {
@@ -580,7 +609,10 @@ omSepetHazir(function () {
         baslik: ilce || 'Sipariş Adresim',
         ad: document.getElementById('co-ad').value.trim(),
         telefon: document.getElementById('co-tel').value.trim(),
-        adres: document.getElementById('co-adres').value.trim(),
+        adres: omTamAdres(),
+        mahalle: document.getElementById('co-mahalle').value.trim(),
+        cadde: document.getElementById('co-cadde').value.trim(),
+        adresDetay: document.getElementById('co-adres').value.trim(),
         il: document.getElementById('co-il').value.trim(),
         ilce: ilce,
         postaKodu: document.getElementById('co-posta').value.trim()

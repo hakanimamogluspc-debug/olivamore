@@ -501,7 +501,7 @@ function greenOpsZamanla() {
 }
 function goAyar() {
   const e = oku('env.json', {});
-  return { url: e.greenOpsWebhookUrl || '', sir: e.greenOpsSecret || '', anahtar: e.greenOpsApiKey || '', etiket: e.greenOpsEtiket || '100x75' };
+  return { url: e.greenOpsWebhookUrl || '', sir: e.greenOpsSecret || '', anahtar: e.greenOpsApiKey || '', etiket: e.greenOpsEtiket || '100x80' };
 }
 const GO_DISARIDA = ['odeme-bekliyor', 'odeme-basarisiz'];
 function goOdemeAlindi(s) { return !!s.odendi || ['hazırlanıyor', 'kargolandı', 'tamamlandı'].indexOf(s.durum) !== -1; }
@@ -517,7 +517,7 @@ function goSiparisVeri(s, katalog) {
     no: s.no, tarih: s.tarih, kanal: s.kanal || (s.odeme === 'pazaryeri' ? 'pazaryeri' : 'web'),
     durum: s.durum, odeme: { yontem: s.odeme, alindi: goOdemeAlindi(s) },
     musteri: { ad: m.ad || '', eposta: m.eposta || '', telefon: m.telefon || '' },
-    teslimat: { adres: m.adres || '', ilce: m.ilce || '', il: m.il || '', postaKodu: m.postaKodu || '', not: m.not || '' },
+    teslimat: { adres: m.adres || '', mahalle: m.mahalle || '', cadde: m.cadde || '', adresDetay: m.adresDetay || '', ilce: m.ilce || '', il: m.il || '', postaKodu: m.postaKodu || '', not: m.not || '' },
     fatura: s.faturaBilgi || { tip: 'bireysel' },
     kalemler: (s.kalemler || []).map(k => Object.assign(goSku(katalog, k), { ad: k.ad, adet: k.adet || 1, birimFiyat: k.fiyat, kdvOrani: typeof k.kdv === 'number' ? k.kdv : 1, paket: k.paket || undefined })),
     tutar: { araToplam: s.araToplam, indirim: s.indirim || 0, kargo: s.kargo || 0, kdv: s.kdvToplam || 0, toplam: s.toplam, paraBirimi: 'TRY' },
@@ -636,7 +636,7 @@ function code128Svg(metin, genislik, yukseklik) {
 function htmlKacir(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 function kargoEtiketHtml(s, boyut) {
   const m = s.musteri || {};
-  const [gw, gh] = (/^\d{2,3}x\d{2,3}$/.test(boyut || '') ? boyut : '100x75').split('x').map(Number);
+  const [gw, gh] = (/^\d{2,3}x\d{2,3}$/.test(boyut || '') ? boyut : '100x80').split('x').map(Number);
   const urunler = (s.kalemler || []).map(k => (k.adet || 1) + '× ' + k.ad).join(', ');
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kargo Etiketi ' + htmlKacir(s.no) + '</title>' +
     '<style>@page{size:' + gw + 'mm ' + gh + 'mm;margin:0}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;margin:0;color:#000}' +
@@ -646,7 +646,7 @@ function kargoEtiketHtml(s, boyut) {
     '.barkod{text-align:center;margin:2.5mm 0 .5mm}.barkod svg{width:100%;height:' + Math.round(gh * 0.22) + 'mm}' +
     '.kod{text-align:center;font-size:12pt;font-weight:700;letter-spacing:.18em;margin-bottom:2mm}' +
     '.alici{font-size:9pt;line-height:1.4;border-top:1px solid #000;padding-top:1.8mm}.alici b{font-size:10.5pt}' +
-    '.icerik{font-size:7pt;margin-top:1.5mm;color:#222;max-height:' + (gh > 90 ? 18 : 7) + 'mm;overflow:hidden}' +
+    '.icerik{font-size:7pt;margin-top:1.5mm;color:#222;max-height:' + (gh > 90 ? 18 : 6) + 'mm;overflow:hidden}' +
     '.alt{margin-top:auto;display:flex;justify-content:space-between;font-size:6.5pt;border-top:1px solid #000;padding-top:1.2mm}' +
     '@media screen{body{background:#eee;padding:10px}.etiket{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}}' +
     '@media print{body{padding:0;background:#fff}}</style></head><body>' +
@@ -654,7 +654,7 @@ function kargoEtiketHtml(s, boyut) {
     '<div class="barkod">' + code128Svg(s.kargoNo || s.no, 380, 80) + '</div>' +
     '<div class="kod">' + htmlKacir(s.kargoNo || s.no) + '</div>' +
     '<div class="alici"><b>ALICI: ' + htmlKacir(m.ad) + '</b><br>' + htmlKacir(m.adres) + '<br>' + htmlKacir((m.ilce ? m.ilce + ' / ' : '') + (m.il || '')) + ' · Tel: ' + htmlKacir(m.telefon) + '</div>' +
-    (gh > 80 ? '<div class="icerik">İçerik: ' + htmlKacir(urunler) + '</div>' : '') +
+    (gh >= 80 ? '<div class="icerik">İçerik: ' + htmlKacir(urunler) + '</div>' : '') +
     '<div class="alt"><span>Gönderici: Pektaş Tarım Gıda ve Tic. Ltd. Şti. · Ayvalık / Balıkesir</span><span>Sipariş: ' + htmlKacir(s.no) + ' · Koli: 1</span></div>' +
     '</div><script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script></body></html>';
 }
@@ -2074,6 +2074,13 @@ const sunucu = http.createServer(async (req, res) => {
       if (!temiz(m.ad, 120) || !epostaMi(m.eposta) || !temiz(m.telefon, 40) || !temiz(m.adres, 1000)) {
         return json(res, 400, { hata: 'Ad, e-posta, telefon ve adres zorunlu.' });
       }
+      // Kargo için eksiksiz adres: mahalle, cadde/sokak, il, ilçe + geçerli telefon
+      if (!temiz(m.mahalle, 80) || !temiz(m.cadde, 120) || !temiz(m.il, 60) || !temiz(m.ilce, 60)) {
+        return json(res, 400, { hata: g.dil === 'en' ? 'Neighbourhood, street, province and district are required.' : 'Mahalle, cadde/sokak, il ve ilçe zorunlu.' });
+      }
+      if (String(m.telefon).replace(/\D/g, '').replace(/^(90|0)/, '').length !== 10) {
+        return json(res, 400, { hata: g.dil === 'en' ? 'Please enter a valid 10-digit phone number.' : 'Geçerli bir telefon numarası gir (alan koduyla 10 hane).' });
+      }
       if (!Array.isArray(g.kalemler) || !g.kalemler.length || g.kalemler.length > 50) {
         return json(res, 400, { hata: 'Sepet boş.' });
       }
@@ -2157,7 +2164,7 @@ const sunucu = http.createServer(async (req, res) => {
         no: no, tarih: new Date().toISOString(),
         durum: odemeYolu === 'kart' ? 'odeme-bekliyor' : 'yeni',
         odeme: odemeYolu, dil: g.dil === 'en' ? 'en' : 'tr',
-        musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40), adres: temiz(m.adres, 1000), il: temiz(m.il, 60), ilce: temiz(m.ilce, 60), postaKodu: temiz(m.postaKodu, 10), not: temiz(m.not, 500) },
+        musteri: { ad: temiz(m.ad, 120), eposta: temiz(m.eposta, 200), telefon: temiz(m.telefon, 40), adres: temiz(m.adres, 1000), mahalle: temiz(m.mahalle, 80), cadde: temiz(m.cadde, 120), adresDetay: temiz(m.adresDetay, 600), il: temiz(m.il, 60), ilce: temiz(m.ilce, 60), postaKodu: temiz(m.postaKodu, 10), not: temiz(m.not, 500) },
         faturaBilgi: (g.fatura && g.fatura.tip === 'kurumsal' && /^[0-9]{10,11}$/.test(String(g.fatura.vkn || '')))
           ? { tip: 'kurumsal', unvan: temiz(g.fatura.unvan, 200), vkn: temiz(g.fatura.vkn, 11), vergiDairesi: temiz(g.fatura.vergiDairesi, 60) }
           : null,
@@ -2377,7 +2384,7 @@ const sunucu = http.createServer(async (req, res) => {
         id: temiz(g.id, 30) || 'A-' + Date.now(),
         baslik: temiz(g.baslik, 40) || 'Adresim',
         ad: temiz(g.ad, 120), telefon: temiz(g.telefon, 40),
-        adres: temiz(g.adres, 1000), il: temiz(g.il, 60), ilce: temiz(g.ilce, 60), postaKodu: temiz(g.postaKodu, 10)
+        adres: temiz(g.adres, 1000), mahalle: temiz(g.mahalle, 80), cadde: temiz(g.cadde, 120), adresDetay: temiz(g.adresDetay, 600), il: temiz(g.il, 60), ilce: temiz(g.ilce, 60), postaKodu: temiz(g.postaKodu, 10)
       };
       const i = b.u.adresler.findIndex(a => a.id === yeni.id);
       if (i !== -1) b.u.adresler[i] = yeni;

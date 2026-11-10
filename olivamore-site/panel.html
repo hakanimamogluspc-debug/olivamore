@@ -903,7 +903,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div class="sg-pane" data-sg="greenops" hidden>
         <div class="panel">
           <h2>Green Ops entegrasyonu</h2>
-          <div class="desc">Yeni ve güncellenen web siparişleri otomatik olarak Green Ops'a gider (imzalı webhook; ulaşamazsa 12 saate kadar yeniden dener). Depo ekibi Green Ops'ta <b>Barkod</b>'a basınca site Yurtiçi gönderisini açar ve termal etiketi yazdırır; aynı sipariş için ikinci gönderi açılmaz. Adres ve anahtarlar sunucuda <code>env.json</code>'a girilir: <code>greenOpsWebhookUrl</code>, <code>greenOpsSecret</code>, <code>greenOpsApiKey</code>, isteğe bağlı <code>greenOpsEtiket</code> (100x75 / 100x100 / 100x150).</div>
+          <div class="desc">Yeni ve güncellenen web siparişleri otomatik olarak Green Ops'a gider (imzalı webhook; ulaşamazsa 12 saate kadar yeniden dener). Depo ekibi Green Ops'ta <b>Barkod</b>'a basınca site Yurtiçi gönderisini açar ve termal etiketi yazdırır; aynı sipariş için ikinci gönderi açılmaz. Adres ve anahtarlar sunucuda <code>env.json</code>'a girilir: <code>greenOpsWebhookUrl</code>, <code>greenOpsSecret</code>, <code>greenOpsApiKey</code>, isteğe bağlı <code>greenOpsEtiket</code> (varsayılan 100x80).</div>
           <div id="go-durum" style="font-size:.9rem;">Yükleniyor…</div>
           <div class="row-actions">
             <button type="button" class="btn btn-dark btn-sm" id="go-test">Bağlantıyı test et</button>
@@ -2412,8 +2412,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var w = window.open('', '_blank', 'width=460,height=640');
     w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kargo Etiketi ' + esc(s.no) + '</title>' +
       '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">' +
-      '<style>@page{size:100mm 75mm;margin:0}body{font-family:Poppins,sans-serif;margin:0;color:#111}' +
-      '.etiket{width:100mm;height:75mm;box-sizing:border-box;padding:5mm 6mm;display:flex;flex-direction:column}' +
+      '<style>@page{size:100mm 80mm;margin:0}body{font-family:Poppins,sans-serif;margin:0;color:#111}' +
+      '.etiket{width:100mm;height:80mm;box-sizing:border-box;padding:5mm 6mm;display:flex;flex-direction:column}' +
       '.ust{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #111;padding-bottom:2mm}' +
       '.marka{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:14pt;letter-spacing:.08em}' +
       '.firma{font-size:7pt;font-weight:600;letter-spacing:.1em}' +
