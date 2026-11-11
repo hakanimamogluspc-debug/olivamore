@@ -260,7 +260,7 @@ async function dhlGonderiOlustur(s) {
     customerDetails: {
       shipperDetails: {
         postalAddress: { postalCode: g.postaKodu || '10400', cityName: g.il || 'Balıkesir', countryCode: 'TR', addressLine1: (g.adres || 'Olivamore').slice(0, 45) },
-        contactInformation: { phone: g.telefon || '', companyName: 'Olivamore', fullName: g.ad || 'Olivamore', email: g.eposta || 'site@olivamore.de' }
+        contactInformation: { phone: g.telefon || '', companyName: 'Olivamore', fullName: g.ad || 'Olivamore', email: g.eposta || 'info@olivamore.com' }
       },
       receiverDetails: {
         postalAddress: { postalCode: m.postaKodu || '34000', cityName: m.il || 'Istanbul', countryCode: 'TR', addressLine1: String(m.adres).slice(0, 45) },
@@ -890,6 +890,7 @@ function urunSatinAldiMi(eposta, urun) {
 }
 /* Çok satanlar: son 90 günün ödenmiş siparişlerinden adet bazında (10 dk önbellek) */
 let cokSatanOnbellek = { t: 0, liste: [] };
+const takipSayac = new Map(); setInterval(() => takipSayac.clear(), 5 * 60000);
 function cokSatanlar() {
   if (Date.now() - cokSatanOnbellek.t < 600000) return cokSatanOnbellek.liste;
   const cfg = oku('cms.json', {}), urunler = (cfg.products || []).filter(p => p.visible !== false && (p.type === 'product' || !p.type));
@@ -2530,6 +2531,25 @@ const sunucu = http.createServer(async (req, res) => {
       const out = {}; Object.keys(top).forEach(id => { out[id] = { ort: Math.round(top[id].t / top[id].n * 10) / 10, say: top[id].n }; });
       return json(res, 200, out);
     }
+    /* Sipariş takibi (üye olmadan): sipariş no + e-posta YA DA telefonun son 4 hanesi eşleşmeli */
+    if (req.method === 'POST' && yol === '/api/siparis-takip') {
+      const ip = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
+      const n = (takipSayac.get(ip) || 0) + 1; takipSayac.set(ip, n);
+      if (n > 10) return json(res, 429, { hata: 'Çok fazla deneme; birkaç dakika sonra tekrar dene.' });
+      const g = await govde(req, 0.02);
+      const no = temiz(g.no, 30).toUpperCase().replace(/\s/g, '');
+      const kimlik = temiz(g.kimlik, 120).toLowerCase();
+      if (!no || !kimlik) return json(res, 400, { hata: 'Sipariş numarası ve e-posta (ya da telefonun son 4 hanesi) gerekli.' });
+      const sp = oku('siparisler.json', []).find(x => String(x.no).toUpperCase() === no || ('OM-' + no) === String(x.no).toUpperCase());
+      const m = (sp && sp.musteri) || {};
+      const telSon4 = String(m.telefon || '').replace(/\D/g, '').slice(-4);
+      const eslesti = sp && ((kimlik.indexOf('@') !== -1 && kimlik === String(m.eposta || '').toLowerCase()) || (/^\d{4}$/.test(kimlik) && kimlik === telSon4));
+      if (!eslesti) return json(res, 404, { hata: 'Bu bilgilerle bir sipariş bulamadık. Sipariş numarasını ve e-postanı kontrol et.' });
+      const URL_K = { 'Yurtiçi': 'https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=', 'Aras': 'https://kargotakip.araskargo.com.tr/mainpage.aspx?code=', 'MNG': 'https://kargotakip.mngkargo.com.tr/?takipNo=', 'PTT': 'https://gonderitakip.ptt.gov.tr/Track/Verify?q=', 'DHL': 'https://www.dhl.com/tr-tr/home/tracking.html?tracking-id=' };
+      return json(res, 200, { tamam: true, no: sp.no, tarih: sp.tarih, durum: sp.durum, odendi: goOdemeAlindi(sp), odeme: sp.odeme,
+        urunSayisi: (sp.kalemler || []).reduce((t, k) => t + (k.adet || 1), 0), toplam: sp.toplam,
+        kargo: sp.kargoNo ? { firma: sp.kargoFirma || '', no: sp.kargoNo, link: URL_K[sp.kargoFirma] ? URL_K[sp.kargoFirma] + encodeURIComponent(sp.kargoNo) : '' } : null });
+    }
     if (req.method === 'GET' && yol === '/api/cok-satanlar') return json(res, 200, { urunler: cokSatanlar() });
     /* Bu üye bu ürünü değerlendirebilir mi? (ürün sayfasındaki yorum formu için) */
     if (req.method === 'GET' && yol === '/api/yorum-hak') {
@@ -3445,7 +3465,7 @@ function epostaGonder(kime, konu, metin) {
     veri = JSON.stringify({
       from: 'Olivamore <' + gonderen + '>',
       to: [kime], subject: konu, text: metin, html: html,
-      reply_to: env.yanitAdresi || undefined
+      reply_to: env.yanitAdresi || 'info@olivamore.com'
     });
     secenek = {
       hostname: 'api.resend.com', path: '/emails', method: 'POST',

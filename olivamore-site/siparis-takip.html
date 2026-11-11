@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sipariş Takibi | Olivamore</title>
+<meta name="description" content="Olivamore siparişinin durumunu ve kargo takip numarasını öğren.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Poppins:wght@300;400;500;600&family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sipariş Takibi | Olivamore">
+<meta property="og:description" content="Olivamore siparişinin durumunu ve kargo takip numarasını öğren.">
+<meta property="og:image" content="https://olivamore.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sipariş Takibi | Olivamore">
+<meta name="twitter:description" content="Olivamore siparişinin durumunu ve kargo takip numarasını öğren.">
+<meta name="twitter:image" content="https://olivamore.com/og.png">
+
+<link rel="canonical" href="https://olivamore.com/siparis-takip.html">
+<link rel="alternate" hreflang="tr" href="https://olivamore.com/siparis-takip.html">
+<link rel="alternate" hreflang="en" href="https://olivamore.com/siparis-takip-en.html">
+<link rel="alternate" hreflang="x-default" href="https://olivamore.com/siparis-takip.html">
+<meta property="og:url" content="https://olivamore.com/siparis-takip.html">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:locale:alternate" content="en_GB">
+
+<meta property="og:site_name" content="Olivamore">
+</head>
+<body data-page="takip">
+<div id="om-header"></div>
+<section class="block st-sayfa">
+  <div class="container" style="max-width:640px;">
+    <div class="kicker" style="text-align:center;">Sipariş Takibi</div>
+    <h1 class="st-h1">Siparişim nerede?</h1>
+    <p class="st-lead">Sipariş numaranı ve siparişte kullandığın e-postayı (ya da telefonunun son 4 hanesini) yaz; siparişinin durumunu ve kargo takip numarasını gösterelim.</p>
+    <form class="st-form" id="st-form" autocomplete="on">
+      <label>Sipariş numarası<input type="text" id="st-no" placeholder="örn. OM-1042" required maxlength="30" autocapitalize="characters"></label>
+      <label>E-posta ya da telefonun son 4 hanesi<input type="text" id="st-kim" placeholder="ornek@mail.com ya da 8638" required maxlength="120" autocomplete="email"></label>
+      <button class="btn btn-gold" type="submit" id="st-btn" style="width:100%;">Siparişi Sorgula</button>
+      <p class="st-hata" id="st-hata"></p>
+    </form>
+    <div id="st-sonuc"></div>
+    <p class="st-yardim">Bulamadın mı? Sipariş numaranla <a href="iletisim.html">bize yaz</a>: info@olivamore.com</p>
+  </div>
+</section>
+<style>
+.st-sayfa{font-family:'Poppins',sans-serif;font-weight:300}
+.st-h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(2rem,5vw,2.8rem);text-align:center;margin:8px 0 10px}
+.st-lead{text-align:center;color:#4D5358;line-height:1.7;margin:0 auto 26px;max-width:520px}
+.st-form{background:#fff;border:1px solid #D8C69C;padding:24px}
+.st-form label{display:block;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#4D5358;margin-bottom:14px}
+.st-form input{display:block;width:100%;margin-top:6px;padding:13px 14px;border:1px solid #D8C69C;font:inherit;font-size:.95rem;text-transform:none;letter-spacing:0;box-sizing:border-box}
+.st-form input:focus{outline:none;border-color:#BFA25D}
+.st-hata{color:#a33;font-size:.85rem;margin:10px 0 0;display:none}
+.st-kart{background:#FBF8F1;border:1px solid #D8C69C;padding:24px;margin-top:22px}
+.st-kart h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.6rem;margin:0 0 4px}
+.st-meta{font-size:.82rem;color:#4D5358;margin-bottom:18px}
+.st-adim{display:flex;margin:6px 0 18px}
+.st-adim span{flex:1;text-align:center;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:#b6b0a5;position:relative;padding-top:20px}
+.st-adim span::before{content:'';position:absolute;top:4px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:#E4E1DA;z-index:2}
+.st-adim span::after{content:'';position:absolute;top:9px;left:-50%;width:100%;height:2px;background:#E4E1DA}
+.st-adim span:first-child::after{display:none}
+.st-adim span.ok{color:#1D1F1C}
+.st-adim span.ok::before,.st-adim span.ok::after{background:#BFA25D}
+.st-durum{display:inline-block;background:#1D1F1C;color:#fff;font-size:.7rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;margin-bottom:12px}
+.st-kargo{background:#fff;border:1px solid #E5DCC6;padding:14px 16px;font-size:.9rem;line-height:1.7}
+.st-kargo b{font-weight:600;font-variant-numeric:tabular-nums}
+.st-kargo a{color:#8a6f3c;text-decoration:underline}
+.st-not{font-size:.85rem;color:#8a6f3c;margin:8px 0 0}
+.st-yardim{text-align:center;font-size:.85rem;color:#4D5358;margin-top:26px}
+.st-yardim a{color:#8a6f3c;text-decoration:underline}
+</style>
+<script>
+(function () {
+  var D = {"yeni": "Sipariş alındı", "hazırlanıyor": "Hazırlanıyor", "kargolandı": "Kargoya verildi", "tamamlandı": "Teslim edildi", "iptal": "İptal edildi", "iade": "İade edildi", "odeme-bekliyor": "Ödeme bekleniyor", "odeme-basarisiz": "Ödeme başarısız"}, A = ["Alındı", "Hazırlanıyor", "Kargoda", "Teslim"], IDX = { 'yeni': 0, 'hazırlanıyor': 1, 'kargolandı': 2, 'tamamlandı': 3 };
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var q = new URLSearchParams(location.search); if (q.get('no')) document.getElementById('st-no').value = q.get('no');
+  document.getElementById('st-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('st-btn'), hata = document.getElementById('st-hata'), sonuc = document.getElementById('st-sonuc'), eski = btn.textContent;
+    hata.style.display = 'none'; sonuc.innerHTML = ''; btn.disabled = true; btn.textContent = 'Sorgulanıyor…';
+    fetch('/api/siparis-takip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: document.getElementById('st-no').value.trim(), kimlik: document.getElementById('st-kim').value.trim() }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        btn.disabled = false; btn.textContent = eski;
+        if (!j.tamam) { hata.textContent = j.hata || '—'; hata.style.display = 'block'; return; }
+        var i = IDX[j.durum], adim = i === undefined ? '' : '<div class="st-adim">' + A.map(function (a, n) { return '<span class="' + (n <= i ? 'ok' : '') + '">' + a + '</span>'; }).join('') + '</div>';
+        var kargo = j.kargo ? '<div class="st-kargo">Kargo firması: <b>' + esc(j.kargo.firma || '—') + '</b><br>Takip numarası: <b>' + esc(j.kargo.no) + '</b>' + (j.kargo.link ? '<br><a href="' + esc(j.kargo.link) + '" target="_blank" rel="noopener">Kargo sitesinde takip et →</a>' : '') + '</div>' : '';
+        var havale = (j.durum === 'yeni' && j.odeme === 'havale' && !j.odendi) ? '<p class="st-not">Havale/EFT ödemen bekleniyor; ödeme ulaşınca siparişin hazırlanır.</p>' : '';
+        sonuc.innerHTML = '<div class="st-kart"><span class="st-durum">' + esc(D[j.durum] || j.durum) + '</span><h2>' + esc(j.no) + '</h2>' +
+          '<div class="st-meta">Sipariş tarihi: ' + new Date(j.tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · ' + j.urunSayisi + ' ürün · ₺' + Number(j.toplam).toLocaleString('tr-TR') + '</div>' + adim + kargo + havale + '</div>';
+      })
+      .catch(function () { btn.disabled = false; btn.textContent = eski; });
+  });
+})();
+</script>
+<div id="om-footer"></div>
+</body>
+</html>

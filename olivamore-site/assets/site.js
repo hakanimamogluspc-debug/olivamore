@@ -372,7 +372,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
             <li><a href="${P('sss.html')}">${T.fFaq}</a></li>
             <li><a href="${P('sss.html#kargo')}">${T.fShipping}</a></li>
             <li><a href="${P('iletisim.html')}">${T.fContact}</a></li>
-            <li><a href="${P('iletisim.html')}">${T.fTrack}</a></li>
+            <li><a href="${P('siparis-takip.html')}">${T.fTrack}</a></li>
           </ul>
         </div>
       </div>
