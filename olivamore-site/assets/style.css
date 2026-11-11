@@ -2583,3 +2583,22 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
   .cert-row .cert{flex:1 1 0;max-width:none;min-width:0;font-size:.64rem}
   .cert-row .cert img{height:40px;width:auto}
 }
+
+/* Ürün kartları (telefon): ana sayfa sıraları + koleksiyon 2'li ızgara */
+@media(max-width:560px){
+  .prod-grid,.prod-grid.three,.fig-sira .fs-kartlar{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+  .fig-kart{padding:10px 8px 14px}
+  .fig-kart .fk-img,.prod-grid .fig-kart .fk-img{height:170px!important;margin-bottom:8px}
+  .fig-kart h3{font-size:.86rem;line-height:1.3;min-height:2.6em;margin-bottom:6px}
+  .fig-kart .fk-not{display:none}
+  .fig-kart .fk-fiyat{font-size:.95rem;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .fig-kart .fk-fiyat small{font-size:.66rem}
+  .fig-kart .fk-fiyat s{font-size:.78rem}
+  .fig-kart .btn,.fig-kart button{font-size:.78rem;padding:10px 8px;width:100%;letter-spacing:.02em}
+  .fig-kart .fk-rozet{font-size:.52rem;padding:3px 7px;top:6px;left:6px}
+  .om-puan-kart{font-size:.7rem}
+}
+@media(max-width:360px){
+  .fig-kart .fk-img,.prod-grid .fig-kart .fk-img{height:140px!important}
+  .fig-kart h3{font-size:.8rem}
+}
