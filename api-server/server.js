@@ -1488,6 +1488,19 @@ async function iyziParaIade(s, tutar) {
    env.json → iyzicoApiKey, iyzicoSecret, iyzicoCanli (true = api.iyzipay.com)
    Akış: sepette "kart" seçilir → sipariş 'odeme-bekliyor' kaydedilir →
    iyzico ödeme sayfasına yönlendirilir → callback /api/odeme-sonuc doğrular. */
+/* Kargo ücreti (panel > Ayarlar > Kargo): cms.kargo = { ucret, esik, esikAktif, kampanyaBitis } */
+function kargoAyar(cfg) {
+  const k = (cfg && cfg.kargo) || {};
+  return { ucret: Number.isFinite(+k.ucret) && +k.ucret >= 0 ? +k.ucret : 80, esik: Number.isFinite(+k.esik) && +k.esik >= 0 ? +k.esik : 500,
+    esikAktif: k.esikAktif !== false, kampanyaBitis: /^\d{4}-\d{2}-\d{2}$/.test(k.kampanyaBitis || '') ? k.kampanyaBitis : '' };
+}
+function kargoUcreti(cfg, ara, kuponBedava) {
+  const k = kargoAyar(cfg);
+  if (kuponBedava) return 0;
+  if (k.kampanyaBitis && new Date().toISOString().slice(0, 10) <= k.kampanyaBitis) return 0; // herkese ücretsiz kargo kampanyası
+  if (k.esikAktif && ara >= k.esik) return 0;
+  return k.ucret;
+}
 function iyzicoAktif() {
   const env = oku('env.json', {});
   return !!(env.iyzicoApiKey && env.iyzicoSecret);
@@ -2262,7 +2275,7 @@ const sunucu = http.createServer(async (req, res) => {
       const indirimliAra = Math.max(0, Math.round((araToplam - indirim - uyeIndirimTutar) * 100) / 100);
       const oran = araToplam > 0 ? indirimliAra / araToplam : 1;
       const kdvToplam = Math.round(kalemler.reduce((t, k) => t + k.fiyat * k.adet * oran * (k.kdv / (100 + k.kdv)), 0) * 100) / 100;
-      const kargo = (kargoBedava || indirimliAra >= 500) ? 0 : 80; // [KARGO AYARI]
+      const kargo = kargoUcreti(oku('cms.json', {}), indirimliAra, kargoBedava); // panel > Ayarlar > Kargo
       const toplam = Math.round((indirimliAra + kargo) * 100) / 100; // KDV fiyatın içinde
       const durum = oku('sayac.json', { son: 1000 });
       durum.son++;

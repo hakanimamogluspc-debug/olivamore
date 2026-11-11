@@ -224,6 +224,21 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     });
   };
 
+  /* ---------- Kargo ayarı (panel > Ayarlar > Kargo) → sepet hesabı + sayfalardaki "X TL üzeri ücretsiz" metinleri ---------- */
+  window.omKargoUygula = function (k) {
+    k = k || {};
+    const ayar = { ucret: +k.ucret >= 0 && k.ucret !== '' && k.ucret != null ? +k.ucret : 80, esik: +k.esik >= 0 && k.esik !== '' && k.esik != null ? +k.esik : 500, esikAktif: k.esikAktif !== false, kampanyaBitis: k.kampanyaBitis || '' };
+    ayar.kampanya = !!(ayar.kampanyaBitis && new Date().toISOString().slice(0, 10) <= ayar.kampanyaBitis);
+    window.OM_KARGO = ayar;
+    const en = document.body.dataset.lang === 'en';
+    const tl = n => Number(n).toLocaleString('tr-TR') + ' TL';
+    const metin = ayar.kampanya ? (en ? 'Free shipping on all orders' : 'Tüm siparişlerde kargo ücretsiz')
+      : ayar.esikAktif ? (en ? 'Free shipping over ' + tl(ayar.esik) : tl(ayar.esik) + ' üzerindeki siparişlerde kargo ücretsiz')
+      : (en ? 'Shipping: ' + tl(ayar.ucret) : 'Kargo ücreti: ' + tl(ayar.ucret));
+    document.querySelectorAll('.om-kargo-metin').forEach(el => { el.textContent = metin; });
+    document.dispatchEvent(new CustomEvent('om-kargo', { detail: ayar }));
+  };
+
   /* ---------- Header ---------- */
   const header = `
   <div class="announce">${T.announce}</div>
@@ -705,7 +720,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
             if (EN && href.indexOf('-en.') === -1) href = href.replace(/\.html/, '-en.html');
             return `<a class="fk-kat" href="${href}">` +
               (k.img ? `<img class="fk-foto" src="${k.img}" alt="${ad}" loading="lazy">` : '') +
-              `<span class="fk-serit">Olivamore</span>` +
+              `<span class="fk-serit">${String((EN ? (k.seritEN || k.seritTR) : (k.seritTR || k.seritEN)) || 'Olivamore').replace(/[<>&"]/g, '')}</span>` +
               `<span class="fk-altyazi"><b>${ad}</b><i>${EN ? 'Discover' : 'Keşfet'} →</i></span></a>`;
           }).join('');
         }
@@ -992,6 +1007,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       .then(cfg => {
         if (cfg && Object.keys(cfg).length) { AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(cfg)))); MODS = mkMods(); }
         try { applyAdminOverrides(); } catch (e) { console.error('[olivamore] içerik uygulanamadı', e); }
+        try { window.omKargoUygula((AC || cfg || {}).kargo); } catch (e) { }
         statikAc();
         window.omPixelKur(AC || cfg || {});
         markSweep();

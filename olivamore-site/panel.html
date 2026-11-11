@@ -876,10 +876,11 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
     <!-- ============ AYARLAR ============ -->
     <section class="view" id="view-settings">
-      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(6,1fr);">
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(7,1fr);">
         <button type="button" class="sg-tab aktif" data-sg="duyuru"><b>Duyuru Şeridi</b><span>Sayfanın en üstündeki şerit</span></button>
         <button type="button" class="sg-tab" data-sg="hero"><b>Ana Sayfa Hero</b><span>Başlık, metin ve hero görseli/videosu</span></button>
         <button type="button" class="sg-tab" data-sg="hediye"><b>Hediye Kutusu</b><span>Kutu oluşturucu fiyatları</span></button>
+        <button type="button" class="sg-tab" data-sg="kargo"><b>Kargo</b><span>Ücret ve ücretsiz kargo limiti</span></button>
         <button type="button" class="sg-tab" data-sg="odeme"><b>Ödeme ve Banka</b><span>Havale/EFT IBAN bilgileri</span></button>
         <button type="button" class="sg-tab" data-sg="izleme"><b>Reklam İzleme</b><span>Meta Pixel ve dönüşüm ölçümü</span></button>
         <button type="button" class="sg-tab" data-sg="greenops"><b>Green Ops</b><span>Sipariş aktarımı ve kargo barkodu</span></button>
@@ -934,6 +935,21 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
             <div class="field"><label>Ödeme süresi (gün)</label><input type="number" id="f-bankaSure" min="1" placeholder="3"><small style="color:var(--soft);">Müşteriye "X gün içinde ödeme" diye yazılır.</small></div>
           </div>
           <div id="iban-uyari" style="font-size:.8rem;margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="sg-pane" data-sg="kargo" hidden>
+        <div class="panel">
+          <h2>Kargo ücreti ve ücretsiz kargo</h2>
+          <div class="desc">Sepetteki kargo hesabı, "X TL üzeri kargo ücretsiz" ilerleme çubuğu, ürün sayfalarındaki kargo bilgisi ve sunucudaki sipariş tutarı bu ayarlardan hesaplanır. Tutarlar KDV dahil, indirimler düşüldükten sonraki sepet tutarına göredir. Abonelik teslimatlarında kargo her zaman ücretsizdir.</div>
+          <div class="grid3">
+            <div class="field"><label>Kargo ücreti (₺)</label><input type="number" id="f-kargoUcret" min="0" step="1"></div>
+            <div class="field"><label>Ücretsiz kargo limiti (₺)</label><input type="number" id="f-kargoEsik" min="0" step="1"></div>
+            <div class="field"><label>&nbsp;</label><label class="chk" style="margin-top:10px;"><input type="checkbox" id="f-kargoEsikAktif"> Limitin üzerinde kargo ücretsiz</label></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Tüm siparişlerde ücretsiz kargo kampanyası — son gün</label><input type="date" id="f-kargoKampanya"><small style="display:block;margin-top:4px;color:var(--soft);">Bu tarihe kadar (dahil) tutar fark etmeksizin kargo ücretsiz. Boş = kampanya yok. Tarih geçince kendiliğinden normale döner.</small></div>
+            <div class="field"><label>Önizleme</label><div id="f-kargoOnizle" style="padding:10px 12px;background:#FBF7EC;border:1px solid #E8DBB5;font-size:.9rem;"></div></div>
+          </div>
         </div>
       </div>
       <div class="sg-pane" data-sg="izleme" hidden>
@@ -2003,6 +2019,12 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   function fillSettings() {
     document.getElementById('f-announceTR').value = C.announceTR;
     document.getElementById('f-announceEN').value = C.announceEN;
+    (function () { var k = C.kargo || {};
+      document.getElementById('f-kargoUcret').value = k.ucret != null ? k.ucret : 80;
+      document.getElementById('f-kargoEsik').value = k.esik != null ? k.esik : 500;
+      document.getElementById('f-kargoEsikAktif').checked = k.esikAktif !== false;
+      document.getElementById('f-kargoKampanya').value = k.kampanyaBitis || '';
+      kargoOnizle(); })();
     document.getElementById('f-announceHiz').value = C.announceHiz || 'normal';
     document.getElementById('f-heroTitleTR').value = C.heroTitleTR;
     document.getElementById('f-heroTitleEN').value = C.heroTitleEN;
@@ -2042,6 +2064,18 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     document.getElementById('st-blogs').textContent = C.blogs.filter(function (b) { return b.visible !== false; }).length;
     document.getElementById('st-mods').textContent = Object.keys(C.modules).filter(function (k) { return C.modules[k] !== false; }).length + '/' + Object.keys(MOD_NAMES).length;
   }
+
+  /* ================== KARGO AYARI ÖNİZLEME ================== */
+  function kargoOnizle() {
+    var u = +document.getElementById('f-kargoUcret').value || 0, e = +document.getElementById('f-kargoEsik').value || 0;
+    var ak = document.getElementById('f-kargoEsikAktif').checked, kb = document.getElementById('f-kargoKampanya').value;
+    var bugun = new Date().toISOString().slice(0, 10), tl = function (n) { return '₺' + Number(n).toLocaleString('tr-TR'); };
+    var m = (kb && bugun <= kb) ? '<b>Kampanya aktif:</b> ' + kb + ' tarihine kadar tüm siparişlerde kargo ücretsiz.'
+      : (ak ? tl(e) + ' ve üzeri siparişte kargo <b>ücretsiz</b>; altında ' + tl(u) + '. Örn. ' + tl(Math.max(0, e - 100)) + ' sepet → kargo ' + tl(u) + '.'
+        : 'Her siparişte kargo ' + tl(u) + ' (ücretsiz kargo limiti kapalı).') + (kb && bugun > kb ? ' <span style="color:#b04a3a;">Kampanya tarihi geçmiş.</span>' : '');
+    document.getElementById('f-kargoOnizle').innerHTML = m;
+  }
+  ['f-kargoUcret', 'f-kargoEsik', 'f-kargoEsikAktif', 'f-kargoKampanya'].forEach(function (id) { var el = document.getElementById(id); if (el) { el.addEventListener('input', function () { kargoOnizle(); dirty(); }); el.addEventListener('change', function () { kargoOnizle(); dirty(); }); } });
 
   /* ================== MANUEL SİPARİŞ ================== */
   (function () {
@@ -2202,6 +2236,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       p.lTR = d.querySelector('.pg-lTR').value; p.lEN = d.querySelector('.pg-lEN').value;
     });
     C.announceTR = document.getElementById('f-announceTR').value;
+    C.kargo = { ucret: Math.max(0, +document.getElementById('f-kargoUcret').value || 0), esik: Math.max(0, +document.getElementById('f-kargoEsik').value || 0),
+      esikAktif: document.getElementById('f-kargoEsikAktif').checked, kampanyaBitis: document.getElementById('f-kargoKampanya').value || '' };
     C.announceHiz = document.getElementById('f-announceHiz').value;
     C.announceEN = document.getElementById('f-announceEN').value;
     C.heroTitleTR = document.getElementById('f-heroTitleTR').value;
@@ -3720,6 +3756,10 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field" style="margin:0;"><label>Ad (EN)</label><input type="text" class="kat-adEN" value="' + esc(k.adEN || '') + '"></div>' +
       '</div>' +
       '<div class="grid2" style="margin-top:10px;align-items:end;">' +
+      '<div class="field" style="margin:0;"><label>Şerit yazısı (TR) — kartın sol üstündeki altın bant</label><input type="text" class="kat-seritTR" maxlength="24" value="' + esc(k.seritTR || '') + '" placeholder="Olivamore"></div>' +
+      '<div class="field" style="margin:0;"><label>Şerit yazısı (EN)</label><input type="text" class="kat-seritEN" maxlength="24" value="' + esc(k.seritEN || '') + '" placeholder="Olivamore"></div>' +
+      '</div>' +
+      '<div class="grid2" style="margin-top:10px;align-items:end;">' +
       '<div class="field" style="margin:0;"><label>Bağlantı</label><input type="text" class="kat-link" list="kat-linkler" value="' + esc(k.link || '') + '" placeholder="koleksiyon.html#serin"></div>' +
       '<div class="row-actions" style="margin:0;justify-content:flex-end;">' +
       '<label class="chk"><input type="checkbox" class="kat-gorunur"' + (k.visible !== false ? ' checked' : '') + '>Görünür</label>' +
@@ -3746,6 +3786,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       k.adTR = d.querySelector('.kat-adTR').value.trim();
       k.adEN = d.querySelector('.kat-adEN').value.trim();
       k.link = d.querySelector('.kat-link').value.trim();
+      k.seritTR = d.querySelector('.kat-seritTR').value.trim();
+      k.seritEN = d.querySelector('.kat-seritEN').value.trim();
       k.visible = d.querySelector('.kat-gorunur').checked;
     });
   }

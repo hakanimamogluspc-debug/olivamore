@@ -171,7 +171,7 @@
         </label>
         <button class="btn btn-gold" id="co-btn" type="button" style="width:100%;margin-top:10px;">Siparişi Tamamla</button>
         <p id="co-err" style="color:#a33;font-size:.82rem;margin-top:10px;display:none;"></p>
-        <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;">500 TL üzerindeki siparişlerde kargo ücretsizdir. Açılmamış ürünleri 14 gün içinde koşulsuz olarak iade edebilirsin.</p>
+        <p style="font-size:.75rem;color:var(--ink-soft);margin-top:12px;"><span class="om-kargo-metin">500 TL üzerindeki siparişlerde kargo ücretsiz</span>. Açılmamış ürünleri 14 gün içinde koşulsuz olarak iade edebilirsin.</p>
         </div>
       </div>
     </div>
@@ -199,7 +199,11 @@ function omSepetHazir(fn) {
   else setTimeout(basla, 0);
 }
 omSepetHazir(function () {
-  var KARGO = 80, KARGO_ESIK = 500; // [KARGO AYARI]
+  // Kargo ayarı panelden gelir (Ayarlar > Kargo); gelene kadar varsayılan
+  var KARGO = 80, KARGO_ESIK = 500, KARGO_ESIK_AKTIF = true, KARGO_KAMPANYA = false;
+  function kargoAyarAl() { var k = window.OM_KARGO; if (!k) return; KARGO = k.ucret; KARGO_ESIK = k.esik; KARGO_ESIK_AKTIF = k.esikAktif; KARGO_KAMPANYA = k.kampanya; }
+  kargoAyarAl();
+  document.addEventListener('om-kargo', function () { kargoAyarAl(); try { render(); } catch (e) { } });
   function fmt(n) { return '₺' + Number(n).toLocaleString('tr-TR'); }
 
   function render() {
@@ -233,7 +237,7 @@ omSepetHazir(function () {
     // Üye indirimi (giriş yapmış üyeye sadakat/özel oran — sunucu siparişte yeniden hesaplar)
     var uyeInd = (window.OM_UYE_ORAN > 0) ? Math.round((ara - indirim) * window.OM_UYE_ORAN) / 100 : 0;
     var indAra = Math.max(0, ara - indirim - uyeInd);
-    var kargo = ((kp && kp.ucretsizKargo) || indAra >= KARGO_ESIK) ? 0 : KARGO;
+    var kargo = ((kp && kp.ucretsizKargo) || KARGO_KAMPANYA || (KARGO_ESIK_AKTIF && indAra >= KARGO_ESIK)) ? 0 : KARGO;
     document.getElementById('sum-ara').textContent = fmt(ara);
     document.getElementById('row-kupon').style.display = indirim > 0 ? 'flex' : 'none';
     if (indirim > 0) {
@@ -251,7 +255,7 @@ omSepetHazir(function () {
     document.getElementById('sum-toplam').textContent = fmt(Math.round((indAra + kargo) * 100) / 100);
     // Kargo eşiği dürtmesi
     var kt = document.getElementById('kargo-tesvik');
-    if (c.length && kargo > 0 && indAra < KARGO_ESIK) {
+    if (c.length && kargo > 0 && KARGO_ESIK_AKTIF && indAra < KARGO_ESIK) {
       kt.style.display = 'block';
       document.getElementById('kargo-tesvik-msj').innerHTML = '<b>' + fmt(KARGO_ESIK - indAra) + '</b> daha ekle, <b>kargo bedava</b> olsun 🚚';
       document.getElementById('kargo-tesvik-bar').style.width = Math.min(100, Math.round(indAra / KARGO_ESIK * 100)) + '%';
