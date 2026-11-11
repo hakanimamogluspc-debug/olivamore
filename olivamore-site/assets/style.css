@@ -2576,3 +2576,10 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 }
 /* Mobil sabit satın alma çubuğu: indirimde eski fiyat üstü çizili */
 .pdp-sticky .t span .pdp-eski{opacity:.55;font-weight:400;font-size:.85em;margin-right:6px;text-decoration:line-through}
+
+/* Ürün sayfası rozetleri (telefon): tek satırda yan yana */
+@media(max-width:960px){
+  .cert-row{display:flex!important;flex-wrap:nowrap;justify-content:space-between;align-items:flex-start;gap:8px;margin:20px 0}
+  .cert-row .cert{flex:1 1 0;max-width:none;min-width:0;font-size:.64rem}
+  .cert-row .cert img{height:40px;width:auto}
+}

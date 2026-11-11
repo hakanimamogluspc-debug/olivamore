@@ -375,7 +375,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function kargoBlok(s) {
     if (!s.kargoNo) return '';
-    var url = (KARGO_URL[s.kargoFirma] || 'https://www.google.com/search?q=') + encodeURIComponent(s.kargoNo);
+    var kt = s.kargoTakip || null;
+    if (kt && kt.bekliyor) return '<div class="sp-kargo"><div class="b">Your parcel is being handed to the carrier; the tracking number will appear once it\'s picked up.<small>' + esc(kt.firma) + '</small></div></div>';
+    if (kt && kt.no) { s = Object.assign({}, s, { kargoNo: kt.no }); }
+    var url = (kt && kt.link) || ((KARGO_URL[s.kargoFirma] || 'https://www.google.com/search?q=') + encodeURIComponent(s.kargoNo));
     return '<div class="sp-kargo"><div class="b">Your parcel is on its way 📦<small>' + esc(s.kargoFirma || 'Courier') + ' · Tracking no: ' + esc(s.kargoNo) + '</small></div>' +
       '<a class="btn btn-gold btn-sm" style="padding:9px 20px;font-size:.8rem;" href="' + url + '" target="_blank" rel="noopener">Track Shipment →</a></div>';
   }

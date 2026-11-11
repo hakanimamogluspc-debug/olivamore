@@ -386,7 +386,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function kargoBlok(s) {
     if (!s.kargoNo) return '';
-    var url = (KARGO_URL[s.kargoFirma] || 'https://www.google.com/search?q=') + encodeURIComponent(s.kargoNo);
+    var kt = s.kargoTakip || null;
+    if (kt && kt.bekliyor) return '<div class="sp-kargo"><div class="b">Paketin kargoya teslim ediliyor; takip numarası kargo teslim alınca burada görünecek.<small>' + esc(kt.firma) + '</small></div></div>';
+    if (kt && kt.no) { s = Object.assign({}, s, { kargoNo: kt.no }); }
+    var url = (kt && kt.link) || ((KARGO_URL[s.kargoFirma] || 'https://www.google.com/search?q=') + encodeURIComponent(s.kargoNo));
     return '<div class="sp-kargo"><div class="b">Kargon yolda 📦<small>' + esc(s.kargoFirma || 'Kargo') + ' · Takip no: ' + esc(s.kargoNo) + '</small></div>' +
       '<a class="btn btn-gold btn-sm" style="padding:9px 20px;font-size:.8rem;" href="' + url + '" target="_blank" rel="noopener">Kargoyu Takip Et →</a></div>';
   }

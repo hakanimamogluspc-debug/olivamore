@@ -223,9 +223,25 @@ async function yurticiDurumSorgula(s) {
   // queryShipment: keyType 0 = cargoKey; dil alanı wsLanguage
   const icerik = '<keys>' + xmlKacir(s.kargoNo || s.no) + '</keys><keyType>0</keyType><addHistoricalData>false</addHistoricalData><onlyTracking>false</onlyTracking>';
   const y = await yurticiSoap('queryShipment', icerik, 'wsLanguage');
+  // Gönderi şubeye teslim edilince YK kendi gönderi kodunu (docId) ve takip linkini üretir
+  const al = ad => ((y.govde.match(new RegExp('<' + ad + '>\\s*([^<]+?)\\s*</' + ad + '>')) || [])[1] || '').trim();
+  const docId = al('docId'), url = al('trackingUrl');
+  if (docId && docId !== '0' && (s.kargoTakipNo !== docId || (url && s.kargoTakipUrl !== url))) {
+    s.kargoTakipNo = docId; if (url) s.kargoTakipUrl = url; s.__takipYeni = true;
+  }
   // DLV = Kargo Teslim Edilmiştir (YK operationStatus tablosu)
   if (/<operationStatus>\s*DLV\s*</i.test(y.govde) || /TESLİM ED|TESLIM ED/i.test(y.govde)) return 'teslim';
   return '';
+}
+/* Müşteriye gösterilecek takip bilgisi: YK'da kendi gönderi kodu; yoksa (henüz şubeye verilmedi) link yok */
+function kargoTakipBilgi(s) {
+  if (!s || !s.kargoNo) return null;
+  const URL_K = { 'Aras': 'https://kargotakip.araskargo.com.tr/mainpage.aspx?code=', 'MNG': 'https://kargotakip.mngkargo.com.tr/?takipNo=', 'PTT': 'https://gonderitakip.ptt.gov.tr/Track/Verify?q=', 'DHL': 'https://www.dhl.com/tr-tr/home/tracking.html?tracking-id=' };
+  if (s.kargoFirma === 'Yurtiçi' || !s.kargoFirma) {
+    if (!s.kargoTakipNo) return { firma: 'Yurtiçi', no: '', link: '', bekliyor: true };
+    return { firma: 'Yurtiçi', no: s.kargoTakipNo, link: s.kargoTakipUrl || ('https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=' + encodeURIComponent(s.kargoTakipNo)) };
+  }
+  return { firma: s.kargoFirma, no: s.kargoNo, link: URL_K[s.kargoFirma] ? URL_K[s.kargoFirma] + encodeURIComponent(s.kargoNo) : '' };
 }
 async function yurticiGonderiIptal(s) {
   const icerik = '<cargoKeys>' + xmlKacir(s.kargoNo || s.no) + '</cargoKeys>';
@@ -301,10 +317,22 @@ async function kargoTakipTur() {
   let degisti = false;
   for (const s of siparisler) {
     if (s.durum !== 'kargolandı' || !s.kargoNo || s.kaynak === 'wordpress') continue;
+    // Takip kodu henüz yoksa daha sık sor (en çok 3 günlük siparişler); saatlik tur zaten var
     if (Date.now() - Date.parse(s.tarih) > 60 * 86400000) continue; // eski siparişleri sorgulamayı bırak
     try {
       let sonuc = '';
-      if (s.kargoFirma === 'Yurtiçi' && aktif.yurtici) sonuc = await yurticiDurumSorgula(s);
+      if (s.kargoFirma === 'Yurtiçi' && aktif.yurtici) {
+        sonuc = await yurticiDurumSorgula(s);
+        if (s.__takipYeni) {
+          delete s.__takipYeni; degisti = true;
+          s.gecmis = s.gecmis || []; s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'Yurtiçi gönderi kodu: ' + s.kargoTakipNo });
+          if (!s.takipEpostasi && s.musteri && s.musteri.eposta) {
+            s.takipEpostasi = true;
+            const tb = kargoTakipBilgi(s);
+            epostaGonder(s.musteri.eposta, 'Kargo takip numaran · ' + s.no, 'Merhaba ' + (s.musteri.ad || '') + ',\n\n' + s.no + ' numaralı siparişin Yurtiçi Kargo şubesine teslim edildi.\nTakip numarası: ' + tb.no + '\nTakip: ' + tb.link + '\n\nAfiyet olsun,\nOlivamore');
+          }
+        }
+      }
       else if (s.kargoFirma === 'DHL' && aktif.dhl) sonuc = await dhlDurumSorgula(s);
       if (sonuc === 'teslim') {
         s.durum = 'tamamlandı';
@@ -532,7 +560,7 @@ function goSiparisVeri(s, katalog) {
     kalemler: (s.kalemler || []).map(k => Object.assign(goSku(katalog, k), { ad: k.ad, adet: k.adet || 1, birimFiyat: k.fiyat, kdvOrani: typeof k.kdv === 'number' ? k.kdv : 1, paket: k.paket || undefined })),
     tutar: { araToplam: s.araToplam, indirim: s.indirim || 0, kargo: s.kargo || 0, kdv: s.kdvToplam || 0, toplam: s.toplam, paraBirimi: 'TRY' },
     kupon: s.kupon ? (s.kupon.kod || s.kupon) : null,
-    kargo: { firma: s.kargoFirma || '', takipNo: s.kargoNo || '', koliAdet: parseInt(s.koliAdet, 10) || 1, etiketHazir: !!s.kargoNo },
+    kargo: { firma: s.kargoFirma || '', gonderiAnahtari: s.kargoNo || '', takipNo: s.kargoTakipNo || '', takipLink: (kargoTakipBilgi(s) || {}).link || '', koliAdet: parseInt(s.koliAdet, 10) || 1, etiketHazir: !!s.kargoNo },
     iade: s.iade || null, partiKod: s.partiKod || '', adminNot: s.adminNot || ''
   };
 }
@@ -2496,7 +2524,7 @@ const sunucu = http.createServer(async (req, res) => {
           no: s.no, tarih: s.tarih, durum: s.durum, odeme: s.odeme,
           araToplam: s.araToplam, indirim: s.indirim || 0, kuponKod: (s.kupon && s.kupon.kod) || '',
           kdvToplam: s.kdvToplam, kargo: s.kargo, toplam: s.toplam,
-          kargoFirma: s.kargoFirma || '', kargoNo: s.kargoNo || '',
+          kargoFirma: s.kargoFirma || '', kargoNo: s.kargoNo || '', kargoTakip: kargoTakipBilgi(s),
           partiKod: s.partiKod || '',
           iadeDurum: s.iade ? s.iade.durum : '',
           kalemler: (s.kalemler || []).map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, img: k.img || '' }))
@@ -2545,10 +2573,12 @@ const sunucu = http.createServer(async (req, res) => {
       const telSon4 = String(m.telefon || '').replace(/\D/g, '').slice(-4);
       const eslesti = sp && ((kimlik.indexOf('@') !== -1 && kimlik === String(m.eposta || '').toLowerCase()) || (/^\d{4}$/.test(kimlik) && kimlik === telSon4));
       if (!eslesti) return json(res, 404, { hata: 'Bu bilgilerle bir sipariş bulamadık. Sipariş numarasını ve e-postanı kontrol et.' });
-      const URL_K = { 'Yurtiçi': 'https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=', 'Aras': 'https://kargotakip.araskargo.com.tr/mainpage.aspx?code=', 'MNG': 'https://kargotakip.mngkargo.com.tr/?takipNo=', 'PTT': 'https://gonderitakip.ptt.gov.tr/Track/Verify?q=', 'DHL': 'https://www.dhl.com/tr-tr/home/tracking.html?tracking-id=' };
+      if (sp.kargoNo && (sp.kargoFirma === 'Yurtiçi' || !sp.kargoFirma) && !sp.kargoTakipNo && sp.durum === 'kargolandı' && kargoAktif().yurtici) {
+        try { await yurticiDurumSorgula(sp); if (sp.__takipYeni) { delete sp.__takipYeni; const l = oku('siparisler.json', []); const t = l.find(x => x.no === sp.no); if (t) { t.kargoTakipNo = sp.kargoTakipNo; if (sp.kargoTakipUrl) t.kargoTakipUrl = sp.kargoTakipUrl; yaz('siparisler.json', l); } } } catch (e) { }
+      }
       return json(res, 200, { tamam: true, no: sp.no, tarih: sp.tarih, durum: sp.durum, odendi: goOdemeAlindi(sp), odeme: sp.odeme,
         urunSayisi: (sp.kalemler || []).reduce((t, k) => t + (k.adet || 1), 0), toplam: sp.toplam,
-        kargo: sp.kargoNo ? { firma: sp.kargoFirma || '', no: sp.kargoNo, link: URL_K[sp.kargoFirma] ? URL_K[sp.kargoFirma] + encodeURIComponent(sp.kargoNo) : '' } : null });
+        kargo: kargoTakipBilgi(sp) });
     }
     if (req.method === 'GET' && yol === '/api/cok-satanlar') return json(res, 200, { urunler: cokSatanlar() });
     /* Bu üye bu ürünü değerlendirebilir mi? (ürün sayfasındaki yorum formu için) */
@@ -2840,6 +2870,14 @@ const sunucu = http.createServer(async (req, res) => {
         return json(res, 200, { tamam: true, adet: adet });
       }
       return json(res, 400, { hata: 'Bilinmeyen işlem' });
+    }
+    // Teşhis: Yurtiçi queryShipment ham yanıtı (yalnız panel girişliyle)
+    if (req.method === 'GET' && yol === '/api/admin/kargo-ham') {
+      const no = String(new URL(req.url, 'http://x').searchParams.get('no') || '').replace(/[^A-Za-z0-9-]/g, '');
+      const sp = oku('siparisler.json', []).find(x => x.no === no);
+      if (!sp || !sp.kargoNo) return json(res, 404, { hata: 'Kargolu sipariş bulunamadı.' });
+      const y = await yurticiSoap('queryShipment', '<keys>' + xmlKacir(sp.kargoNo) + '</keys><keyType>0</keyType><addHistoricalData>true</addHistoricalData><onlyTracking>false</onlyTracking>', 'wsLanguage');
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end(String(y.govde || '').replace(/<wsPassword>[^<]*<\/wsPassword>/g, ''));
     }
     if (req.method === 'POST' && yol === '/api/admin/kargo-barkod') {
       const g = await govde(req, 0.05);
