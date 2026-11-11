@@ -167,7 +167,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     tagline: 'Traceable extra virgin olive oil shaped by Olivamore’s Ayvalık grove and carefully selected harvests.',
     fShop: 'Shop', fBrand: 'Brand', fHelp: 'Help',
     fAll: 'All Products', fEvoo: 'Early Harvest Oils', fGift: 'Gift Sets',
-    fStory: 'Our Story', fProducers: 'Producers', fTrace: 'Traceability', fPassport: 'Harvest Passport', fQuality: 'Quality & Lab Reports', fAwards: 'Awards',
+    fStory: 'Our Story', fProducers: 'Producers', fTrace: 'Traceability', fPassport: 'Harvest Passport', fQuality: 'Quality, Analyses & Awards', fAwards: 'Awards',
     fFaq: 'FAQ', fShipping: 'Shipping & Returns', fContact: 'Contact', fTrack: 'Order Tracking',
     rights: '© 2026 Olivamore. All rights reserved.',
     privacy: 'Privacy', terms: 'Terms of Use', kvkk: 'KVKK',
@@ -186,7 +186,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
 
     fShop: 'Alışveriş', fBrand: 'Marka', fHelp: 'Yardım',
     fAll: 'Tüm Ürünler', fEvoo: 'Serin Sofra', fGift: 'Hediyelik Setler',
-    fStory: 'Hikâyemiz', fProducers: 'Üreticiler', fTrace: 'İzlenebilirlik', fPassport: 'Hasat Pasaportu', fQuality: 'Kalite ve Analizler', fAwards: 'Ödüller',
+    fStory: 'Hikâyemiz', fProducers: 'Üreticiler', fTrace: 'İzlenebilirlik', fPassport: 'Hasat Pasaportu', fQuality: 'Kalite, Analizler ve Ödüller', fAwards: 'Ödüller',
     fFaq: 'SSS', fShipping: 'Kargo & İade', fContact: 'İletişim', fTrack: 'Sipariş Takibi',
     rights: '© 2026 Olivamore. Tüm hakları saklıdır.',
     privacy: 'Gizlilik', terms: 'Kullanım Şartları', kvkk: 'KVKK',
@@ -360,10 +360,8 @@ window.omMetaSatin = function (no, toplam, kalemler) {
           <ul>
             <li><a href="${P('hikayemiz.html')}">${T.fStory}</a></li>
             <li><a href="${P('ureticiler.html')}">${T.fProducers}</a></li>
-            <li><a href="${P('ureticiler.html#izlenebilirlik')}">${T.fTrace}</a></li>
             <li><a href="${P('pasaport.html')}">${T.fPassport}</a></li>
             <li><a href="${P('kalite.html')}">${T.fQuality}</a></li>
-            <li><a href="${P('ureticiler.html#oduller')}">${T.fAwards}</a></li>
           </ul>
         </div>
         <div>
