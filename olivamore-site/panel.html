@@ -3253,8 +3253,12 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   /* ================== KUPONLAR ================== */
   var ROLLER = { serin: 'Erken Hasat Zeytinyağı', ocak: 'Olgun Hasat Zeytinyağı', zeytin: 'Doğal Zeytinler', eksi: 'Ekşiler', hediye: 'Setler' };
   function couponItem(c, i) {
-    var rolCb = Object.keys(ROLLER).map(function (r) {
-      return '<label style="margin-right:12px;font-size:.85rem;"><input type="checkbox" class="c-rol" value="' + r + '"' + ((c.roller || []).indexOf(r) !== -1 ? ' checked' : '') + '> ' + ROLLER[r] + '</label>';
+    // Kategoriler: panelde tanımlı tüm ürün kategorileri + ürünlerde kullanılan diğer roller (Ürünler > Kategoriler ile eşzamanlı)
+    var katListe = {};
+    urunKategorileri().forEach(function (k) { if (k && k.id) katListe[k.id] = k.adTR || k.id; });
+    (C.products || []).forEach(function (p) { if (p.role && !katListe[p.role]) katListe[p.role] = ROLLER[p.role] || p.role; });
+    var rolCb = Object.keys(katListe).map(function (r) {
+      return '<label style="margin-right:12px;font-size:.85rem;"><input type="checkbox" class="c-rol" value="' + esc(r) + '"' + ((c.roller || []).indexOf(r) !== -1 ? ' checked' : '') + '> ' + esc(katListe[r]) + '</label>';
     }).join('');
     var urunOpts = (C.products || []).filter(function (p) { return p.type === 'product'; }).map(function (p) {
       return '<option value="' + p.id + '"' + ((c.urunler || []).indexOf(p.id) !== -1 ? ' selected' : '') + '>' + p.nameTR + '</option>';

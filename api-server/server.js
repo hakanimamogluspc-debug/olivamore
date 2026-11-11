@@ -99,14 +99,15 @@ function kuponUygula(kupon, kalemler, cfg) {
   const limit = parseInt(kupon.limit, 10) || 0;
   if (limit > 0 && (kupon.kullanildi || 0) >= limit) return { hata: 'Kupon kullanım limitine ulaştı.' };
   const urunler = (cfg && cfg.products) || [];
+  const bulK = k => urunler.find(p => p.id && (p.id === k.pid || p.id === k.kod || p.id === k.id)) || bul(k.ad || '');
   const bul = ad => urunler.find(p => (p.nameTR && ad.indexOf(p.nameTR) === 0) || (p.nameEN && ad.indexOf(p.nameEN) === 0));
   let uygunNet = 0, toplamNet = 0;
   (kalemler || []).forEach(k => {
     const net = k.fiyat * k.adet;
     toplamNet += net;
     let uygun = true;
-    if (kupon.kapsam === 'rol') { const p = bul(k.ad); uygun = !!(p && (kupon.roller || []).indexOf(p.role) !== -1); }
-    else if (kupon.kapsam === 'urun') { const p = bul(k.ad); uygun = !!(p && (kupon.urunler || []).indexOf(p.id) !== -1); }
+    if (kupon.kapsam === 'rol') { const p = bulK(k); uygun = !!(p && (kupon.roller || []).indexOf(p.role) !== -1); }
+    else if (kupon.kapsam === 'urun') { const p = bulK(k); uygun = !!(p && (kupon.urunler || []).indexOf(p.id) !== -1); }
     if (uygun) uygunNet += net;
   });
   if (uygunNet <= 0) return { hata: 'Kupon sepetteki ürünlerde geçerli değil.' };
