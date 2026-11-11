@@ -2544,3 +2544,13 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 .quality-award-grid a.odul-madalya span{font-family:'Poppins',sans-serif;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#8a6f3c;text-align:center;line-height:1.7}
 .quality-award-grid a.odul-madalya span b{font-family:var(--font-serif,serif);font-size:1.15rem;letter-spacing:0;text-transform:none;color:#1e1c19;font-weight:400}
 @media(max-width:900px){.quality-award-grid{grid-template-columns:repeat(2,1fr)}.quality-award-grid a.odul-madalya img{height:120px}}
+
+/* ===== Duyuru şeridi: tek bant, sola kayar ===== */
+.announce.ann-kayan{overflow:hidden;white-space:nowrap;padding:10px 0;text-align:left;background:#1D1F1C;color:#fff;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:500;letter-spacing:.02em}
+.ann-iz{display:inline-flex;align-items:center;width:max-content;animation:annKay 40s linear infinite;will-change:transform}
+.announce.ann-kayan:hover .ann-iz{animation-play-state:paused}
+.ann-parca{padding:0 28px}
+.ann-ayrac{color:#BFA25D;font-size:.7rem}
+@keyframes annKay{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ann-iz{animation:none}.announce.ann-kayan{text-align:center}}
+@media(max-width:960px){.announce.ann-kayan{font-size:.72rem;padding:8px 0}}

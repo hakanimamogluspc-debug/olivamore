@@ -890,6 +890,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           <div class="desc">Tüm sayfaların en üstündeki bant. &lt;b&gt; etiketi kullanılabilir.</div>
           <div class="field"><label>Türkçe</label><input type="text" id="f-announceTR"></div>
           <div class="field"><label>İngilizce</label><input type="text" id="f-announceEN"></div>
+          <div class="field"><label>Kayma hızı</label><select id="f-announceHiz" style="max-width:220px;"><option value="yavas">Yavaş</option><option value="normal">Normal</option><option value="hizli">Hızlı</option></select><small style="display:block;margin-top:4px;color:var(--soft);">Şerit sağdan sola sürekli kayar; fareyle üzerine gelince durur. Şeridi tamamen kapatmak için Modüller → Duyuru Şeridi.</small></div>
         </div>
       </div>
       <div class="sg-pane" data-sg="hero" hidden>
@@ -1002,8 +1003,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
 
   /* ================== VARSAYILAN İÇERİK ================== */
   var DEFAULTS = {
-    announceTR: '2025 hasadı · Ayvalık ve Trilye · Her şişeyi Hasat Pasaportu ile izle',
-    announceEN: '2025 harvest · Ayvalık and Trilye · Trace every bottle through its Harvest Passport',
+    announceTR: "Londra Uluslararası Zeytinyağı Yarışması'ndan (London IOOC 2026) Altın Ödüllü Ayvalık ve Trilye Erken Hasat",
+    announceEN: "Gold Award-Winning Ayvalık and Trilye Early Harvest from the London International Olive Oil Competition (London IOOC 2026)",
 
     heroTitleTR: 'Doğanın Dengesi', heroTitleEN: "Nature's Balance",
     heroLeadTR: "Ayvalık bahçemizden; tadı, hasadı ve hangi yemeğe yakıştığı belli zeytinyağları.",
@@ -2002,6 +2003,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   function fillSettings() {
     document.getElementById('f-announceTR').value = C.announceTR;
     document.getElementById('f-announceEN').value = C.announceEN;
+    document.getElementById('f-announceHiz').value = C.announceHiz || 'normal';
     document.getElementById('f-heroTitleTR').value = C.heroTitleTR;
     document.getElementById('f-heroTitleEN').value = C.heroTitleEN;
     document.getElementById('f-heroLeadTR').value = C.heroLeadTR;
@@ -2200,6 +2202,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       p.lTR = d.querySelector('.pg-lTR').value; p.lEN = d.querySelector('.pg-lEN').value;
     });
     C.announceTR = document.getElementById('f-announceTR').value;
+    C.announceHiz = document.getElementById('f-announceHiz').value;
     C.announceEN = document.getElementById('f-announceEN').value;
     C.heroTitleTR = document.getElementById('f-heroTitleTR').value;
     C.heroTitleEN = document.getElementById('f-heroTitleEN').value;

@@ -157,7 +157,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
 
   /* ---------- Metinler ---------- */
   const T = EN ? {
-    announce: '2025 harvest · Ayvalık and Trilye · Check published batch records in the Harvest Passport',
+    announce: "Gold Award-Winning Ayvalık and Trilye Early Harvest from the London International Olive Oil Competition (London IOOC 2026)",
     shop: 'Shop', club: 'Club', producers: 'Producers', abonelik: 'Subscription', learn: 'Learn', quality: 'Quality', story: 'Our Story',
     megaCat: 'Category', megaAll: 'All Products', megaBest: 'Bestsellers', megaEvoo: 'Early Harvest Oils', megaEarly: 'Ripe Harvest Oils',
     megaPurpose: 'Purpose', megaGift: 'Gift Sets', megaBuild: 'Build Your Own Set', megaJoin: 'Join the Club', megaAcc: 'Accessories',
@@ -175,7 +175,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     cookieText: 'We use necessary cookies to run the site. With your consent we also use measurement and advertising cookies (Meta Pixel) to improve the site and show you relevant ads.',
     cookieOk: 'Accept all', cookieMore: 'Privacy'
   } : {
-    announce: '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et',
+    announce: "Londra Uluslararası Zeytinyağı Yarışması\'ndan (London IOOC 2026) Altın Ödüllü Ayvalık ve Trilye Erken Hasat",
     shop: 'Alışveriş', club: 'Club', producers: 'Üreticiler', abonelik: 'Abonelik', learn: 'Öğren', quality: 'Kalite', story: 'Hikâyemiz',
     megaCat: 'Kategori', megaAll: 'Tüm Ürünler', megaBest: 'Çok Satanlar', megaEvoo: 'Erken Hasat Zeytinyağları', megaEarly: 'Olgun Hasat Zeytinyağları',
     megaPurpose: 'Amaç', megaGift: 'Hediyelik Setler', megaBuild: 'Kendi Setini Oluştur', megaJoin: "Club'a Katıl", megaAcc: 'Aksesuarlar',
@@ -204,6 +204,25 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       if (!el.querySelector('img')) el.innerHTML = mark(el.dataset.mark || 60, el.dataset.color || GOLD);
     });
   }
+
+  /* ---------- Duyuru şeridi: sola kayan tek bant ----------
+     Metin iki kez yan yana konur, iz %50 kaydırılır → kesintisiz döngü. Hız: panel (yavas/normal/hizli). */
+  window.omDuyuruKur = function (el, html, hiz) {
+    if (!el) return;
+    const tmp = document.createElement('div'); tmp.innerHTML = html;
+    const metin = (tmp.textContent || '').trim();
+    if (!metin) { el.style.display = 'none'; return; }
+    const parca = '<span class="ann-parca">' + html + '</span><span class="ann-ayrac" aria-hidden="true">✦</span>';
+    el.classList.add('ann-kayan');
+    el.setAttribute('role', 'marquee'); el.setAttribute('aria-label', metin);
+    el.innerHTML = '<div class="ann-iz" aria-hidden="true">' + parca.repeat(4) + parca.repeat(4) + '</div>';
+    // piksel başına süre: normal ≈ 60 px/sn
+    const pxSn = { yavas: 40, normal: 60, hizli: 95 }[hiz] || 60;
+    requestAnimationFrame(() => {
+      const iz = el.querySelector('.ann-iz');
+      if (iz) iz.style.animationDuration = Math.max(12, (iz.scrollWidth / 2) / pxSn) + 's';
+    });
+  };
 
   /* ---------- Header ---------- */
   const header = `
@@ -375,8 +394,9 @@ window.omMetaSatin = function (no, toplam, kalemler) {
   const TRUST_BASELINE_REV = 'prelaunch-truth@2026-08-22';
   function syncTrustBaseline(config) {
     const C = config || {};
-    C.announceTR = '2025 hasadı · Ayvalık ve Trilye · Yayımlanan parti kayıtlarını Hasat Pasaportunda kontrol et';
-    C.announceEN = '2025 harvest · Ayvalık and Trilye · Check published batch records in the Harvest Passport';
+    // Duyuru şeridi panelden yönetilir (Ayarlar → Duyuru Şeridi); yalnız boşsa varsayılan
+    if (!C.announceTR) C.announceTR = "Londra Uluslararası Zeytinyağı Yarışması'ndan (London IOOC 2026) Altın Ödüllü Ayvalık ve Trilye Erken Hasat";
+    if (!C.announceEN) C.announceEN = "Gold Award-Winning Ayvalık and Trilye Early Harvest from the London International Olive Oil Competition (London IOOC 2026)";
     C.heroLeadTR = "Ayvalık bahçemizden; tadı, hasadı ve hangi yemeğe yakıştığı belli zeytinyağları.";
     C.heroLeadEN = 'From our Ayvalık grove: olive oils with a clear taste, harvest and place at the table.';
     C.modules = Object.assign({}, C.modules, { club:false, reviews:false });
@@ -564,7 +584,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     const ann = EN ? C.announceEN : C.announceTR;
     if (ann) {
       const el = document.querySelector('.announce');
-      if (el) el.innerHTML = ann;
+      if (el) window.omDuyuruKur(el, ann, C.announceHiz);
     }
 
     // ---- 2) Ana sayfa hero ----
@@ -944,6 +964,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     const h = document.getElementById('om-header');
     const f = document.getElementById('om-footer');
     if (h) h.innerHTML = header;
+    if (h) window.omDuyuruKur(h.querySelector('.announce'), T.announce);
     if (f) f.innerHTML = footer;
     // Statik yedek kartlar da CMS kartlarıyla aynı varyant kimliğini taşır.
     hydrateProductCards(document);

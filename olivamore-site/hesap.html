@@ -181,6 +181,17 @@ details[open] .sp-ok{transform:rotate(180deg)}
 .ad-form .uc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}
 @media(max-width:560px){.ad-form .uc{grid-template-columns:1fr}}
 .hs-sayfa .btn{border-radius:0}
+
+/* Üyelik kartı arka planı: seviyeye göre görsel (Fidan → Dal → Ağaç → Bahçe); sol tarafta okunurluk için koyu geçiş */
+.uk{background-color:#1f1c18;background-size:cover;background-position:right center;background-repeat:no-repeat}
+.uk[data-seviye]{background-image:linear-gradient(90deg,rgba(24,21,18,.94) 0%,rgba(24,21,18,.86) 38%,rgba(24,21,18,.45) 62%,rgba(24,21,18,.12) 100%),var(--uk-gorsel)}
+.uk[data-seviye="0"]{--uk-gorsel:url('assets/img/uyelik/seviye-1-fidan.jpg')}
+.uk[data-seviye="1"]{--uk-gorsel:url('assets/img/uyelik/seviye-2-dal.jpg')}
+.uk[data-seviye="2"]{--uk-gorsel:url('assets/img/uyelik/seviye-3-agac.jpg')}
+.uk[data-seviye="3"]{--uk-gorsel:url('assets/img/uyelik/seviye-4-bahce.jpg')}
+.uk[data-seviye] .uk-dal{display:none}
+.uk h1,.uk-v .n{text-shadow:0 2px 14px rgba(0,0,0,.45)}
+@media(max-width:680px){.uk[data-seviye]{background-position:72% center;background-image:linear-gradient(180deg,rgba(24,21,18,.82) 0%,rgba(24,21,18,.9) 100%),var(--uk-gorsel)}}
 </style>
 </head>
 <body data-page="hesap">
@@ -390,6 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var sevler = (v.seviyeler || []).slice().sort(function (a, b) { return a.puan - b.puan; });
     var aktifIdx = -1;
     sevler.forEach(function (s, i) { if (v.puan >= s.puan) aktifIdx = i; });
+    (function () { var uk = document.querySelector('.uk'); if (uk) uk.dataset.seviye = String(Math.max(0, Math.min(3, aktifIdx))); })();
     document.getElementById('hs-seviyeler').innerHTML = sevler.map(function (s, i) {
       var cls = i < aktifIdx ? ' gecti' : (i === aktifIdx ? ' gecti aktif' : '');
       return '<div class="sv' + cls + '">' +
