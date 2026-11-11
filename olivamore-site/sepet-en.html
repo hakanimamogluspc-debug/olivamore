@@ -539,8 +539,11 @@ omSepetHazir(function () {
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {
+        if (!s.ok && s.j && s.j.kod === 'kupon') { localStorage.removeItem('om-kupon'); try { render(); } catch (e) { } }
         if (!s.ok) throw new Error(s.j.hata || 'Order failed');
         adresiDefteriKaydet();
+        // Kupon bu siparişte kullanıldı: bir sonraki siparişe taşınmasın
+        localStorage.removeItem('om-kupon');
         if (s.j.kartPost && KART) {
           btn.textContent = 'Taking you to your bank’s 3D Secure step…';
           KF.gonder(s.j.kartPost, KART);

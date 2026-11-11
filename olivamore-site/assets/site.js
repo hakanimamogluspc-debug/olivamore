@@ -239,6 +239,33 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     document.dispatchEvent(new CustomEvent('om-kargo', { detail: ayar }));
   };
 
+  /* ---------- Yorum puanı (yıldız) gösterimi: panel > Modüller > "Puan – ürün sayfası" / "Puan – ürün kartları" ---------- */
+  window.omPuanUygula = function (mods) {
+    window.OM_PUAN_MODS = mods || window.OM_PUAN_MODS || {};
+    const m = window.OM_PUAN_MODS;
+    if (!m.puanUrun && !m.puanKart) return;
+    const ciz = P => {
+      const yildiz = ort => { let s = ''; for (let i = 1; i <= 5; i++) s += '<span class="om-y' + (ort >= i - 0.25 ? ' dolu' : (ort >= i - 0.75 ? ' yarim' : '')) + '">★</span>'; return s; };
+      const en = document.body.dataset.lang === 'en';
+      if (m.puanKart) document.querySelectorAll('.fig-kart[data-pid]').forEach(k => {
+        const v = P[k.dataset.pid]; if (!v || k.querySelector('.om-puan')) return;
+        const yer = k.querySelector('.fk-fiyat') || k.querySelector('h3');
+        if (yer) yer.insertAdjacentHTML('beforebegin', '<div class="om-puan om-puan-kart" title="' + v.ort + ' / 5">' + yildiz(v.ort) + '<b>' + v.ort.toLocaleString('tr-TR') + '</b><small>(' + v.say + ')</small></div>');
+      });
+      const dp = document.getElementById('dp-puan');
+      if (m.puanUrun && dp) {
+        const id = new URLSearchParams(location.search).get('id'); const v = P[id];
+        if (v) { dp.innerHTML = yildiz(v.ort) + '<b>' + v.ort.toLocaleString('tr-TR') + '</b><a href="#yorum-bolum">' + v.say + ' ' + (en ? 'reviews' : 'değerlendirme') + '</a>'; dp.style.display = ''; }
+      }
+    };
+    if (window.OM_PUANLAR) return ciz(window.OM_PUANLAR);
+    if (window.OM_PUAN_ISTENDI) return; window.OM_PUAN_ISTENDI = true;
+    fetch('/api/puanlar').then(r => r.json()).then(P => { window.OM_PUANLAR = P || {}; ciz(window.OM_PUANLAR); }).catch(() => {});
+  };
+  // Kartlar sonradan yeniden çizilirse (filtre, sıra) puanları tekrar ekle
+  new MutationObserver(() => { if (window.OM_PUANLAR && window.OM_PUAN_MODS && window.OM_PUAN_MODS.puanKart) { clearTimeout(window.__puanT); window.__puanT = setTimeout(() => window.omPuanUygula(), 120); } })
+    .observe(document.documentElement, { childList: true, subtree: true });
+
   /* ---------- Header ---------- */
   const header = `
   <div class="announce">${T.announce}</div>
@@ -583,7 +610,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
   let MODS = mkMods();
   function mkMods() {
     const mods = Object.assign(
-      { announce: true, trust: true, club: false, reviews: false, newsletter: true, hediyelik: true, blogPreview: true, hediye: true, tarif: true },
+      { announce: true, trust: true, club: false, reviews: false, newsletter: true, hediyelik: true, blogPreview: true, hediye: true, tarif: true, puanUrun: false, puanKart: false },
       AC.modules || {}
     );
     mods.club = false;
@@ -1014,6 +1041,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         if (cfg && Object.keys(cfg).length) { AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(cfg)))); MODS = mkMods(); }
         try { applyAdminOverrides(); } catch (e) { console.error('[olivamore] içerik uygulanamadı', e); }
         try { window.omKargoUygula((AC || cfg || {}).kargo); } catch (e) { }
+        try { window.omPuanUygula(MODS); } catch (e) { }
         statikAc();
         window.omPixelKur(AC || cfg || {});
         markSweep();

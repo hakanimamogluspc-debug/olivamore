@@ -81,6 +81,15 @@ function govde(req, limitMB) {
 }
 function temiz(s, max) { return String(s || '').slice(0, max || 500).trim(); }
 
+function kuponNorm(k) { return String(k || '').replace(/\s/g, '').replace(/[İIı]/g, 'I').replace(/[iİ]/g, 'I').toLocaleUpperCase('en').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C'); }
+function kuponBul(cfg, kod) { const n = kuponNorm(kod); return n ? (cfg.coupons || []).find(c => kuponNorm(c.kod) === n) : null; }
+/* Kişi başı kullanım: aynı e-postayla (iptal/başarısız hariç) bu kuponla verilmiş sipariş sayısı */
+function kuponKisiKullanim(kod, eposta) {
+  const n = kuponNorm(kod), e = String(eposta || '').toLowerCase();
+  if (!e) return 0;
+  return oku('siparisler.json', []).filter(s => s.kupon && kuponNorm(s.kupon.kod) === n && String((s.musteri || {}).eposta || '').toLowerCase() === e &&
+    ['iptal', 'odeme-basarisiz'].indexOf(s.durum) === -1).length;
+}
 /* Kupon doğrulama + indirim hesabı (fiyatlar KDV hariç net üzerinden) */
 function kuponUygula(kupon, kalemler, cfg) {
   if (!kupon || kupon.aktif === false) return { hata: 'Kupon kodu geçersiz.' };
@@ -2210,13 +2219,16 @@ const sunucu = http.createServer(async (req, res) => {
       const g = await govde(req, 1);
       const kod = temiz(g.kod, 40).toUpperCase();
       const cfg = oku('cms.json', {});
-      const kp = (cfg.coupons || []).find(c => (c.kod || '').toUpperCase() === kod);
+      const kp = kuponBul(cfg, kod);
       const kal = Array.isArray(g.kalemler) ? g.kalemler.slice(0, 50).map(k => ({
         ad: temiz(k.ad, 200), fiyat: Math.max(0, parseFloat(k.fiyat) || 0),
         adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1))
       })) : [];
       const s = kuponUygula(kp, kal, cfg);
       if (s.hata) return json(res, 200, { gecerli: false, mesaj: s.hata });
+      // E-posta biliniyorsa (üye) kişi başı limit önceden kontrol edilir
+      { const ub = uyeBul(req); const kb = kp && kp.kisiBasi !== undefined ? (parseInt(kp.kisiBasi, 10) || 0) : 1;
+        if (ub && kb > 0 && kuponKisiKullanim(kp.kod, ub.u.eposta) >= kb) return json(res, 200, { gecerli: false, mesaj: kb === 1 ? 'Bu kuponu daha önce kullandın.' : 'Bu kupon için kullanım hakkın doldu.' }); }
       return json(res, 200, { gecerli: true, indirim: s.indirim, ucretsizKargo: s.ucretsizKargo, mesaj: 'Kupon uygulandı.' });
     }
 
@@ -2279,11 +2291,15 @@ const sunucu = http.createServer(async (req, res) => {
       const kuponKod = temiz(g.kupon, 40).toUpperCase();
       if (kuponKod) {
         const cfg = oku('cms.json', {});
-        const kp = (cfg.coupons || []).find(c => (c.kod || '').toUpperCase() === kuponKod);
+        const kp = kuponBul(cfg, kuponKod);
         const s = kuponUygula(kp, kalemler, cfg);
+        const kisiBasi = kp && kp.kisiBasi !== undefined ? (parseInt(kp.kisiBasi, 10) || 0) : 1;
+        if (!s.hata && kisiBasi > 0 && kuponKisiKullanim(kp.kod, m.eposta) >= kisiBasi) s.hata = kisiBasi === 1 ? 'Bu kuponu daha önce kullandın.' : 'Bu kupon için kullanım hakkın doldu.';
+        // Geçersiz kupon sessizce yok sayılmaz: müşteri gördüğü tutarla öder ya da uyarılır
+        if (s.hata) { stokGeriEkle({ kalemler: kalemler }); return json(res, 400, { hata: s.hata, kod: 'kupon' }); }
         if (!s.hata) {
           indirim = s.indirim; kargoBedava = s.ucretsizKargo;
-          kuponBilgi = { kod: kuponKod, indirim: indirim };
+          kuponBilgi = { kod: kp.kod, indirim: indirim };
           kp.kullanildi = (kp.kullanildi || 0) + 1;
           yaz('cms.json', cfg);
         }
@@ -2506,6 +2522,12 @@ const sunucu = http.createServer(async (req, res) => {
         });
       const ort = liste.length ? Math.round(liste.reduce((t, y) => t + y.yildiz, 0) / liste.length * 10) / 10 : 0;
       return json(res, 200, { yorumlar: liste, ortalama: ort, say: liste.length });
+    }
+    if (req.method === 'GET' && yol === '/api/puanlar') {
+      const top = {};
+      oku('yorumlar.json', []).forEach(y => { if (y.durum !== 'onaylandı') return; const t = top[y.urunId] || (top[y.urunId] = { t: 0, n: 0 }); t.t += y.yildiz; t.n++; });
+      const out = {}; Object.keys(top).forEach(id => { out[id] = { ort: Math.round(top[id].t / top[id].n * 10) / 10, say: top[id].n }; });
+      return json(res, 200, out);
     }
     if (req.method === 'GET' && yol === '/api/cok-satanlar') return json(res, 200, { urunler: cokSatanlar() });
     /* Bu üye bu ürünü değerlendirebilir mi? (ürün sayfasındaki yorum formu için) */

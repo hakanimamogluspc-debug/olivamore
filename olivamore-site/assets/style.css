@@ -2554,3 +2554,14 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 @keyframes annKay{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.ann-iz{animation:none}.announce.ann-kayan{text-align:center}}
 @media(max-width:960px){.announce.ann-kayan{font-size:.72rem;padding:8px 0}}
+
+/* Yorum puanı (yıldız) */
+.om-puan{display:flex;align-items:center;gap:3px;font-family:'Poppins',sans-serif;font-size:.8rem;color:#4D5358}
+.om-puan .om-y{color:#E4E1DA;font-size:.95rem;line-height:1}
+.om-puan .om-y.dolu{color:#BFA25D}
+.om-puan .om-y.yarim{background:linear-gradient(90deg,#BFA25D 50%,#E4E1DA 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.om-puan b{font-weight:600;color:#1D1F1C;margin-left:5px;font-variant-numeric:tabular-nums}
+.om-puan small{color:#8a8377}
+.om-puan a{color:#8a6f3c;margin-left:8px;text-decoration:underline;font-size:.78rem}
+.om-puan-kart{justify-content:center;margin:0 0 8px}
+#dp-puan{margin:0 0 12px}

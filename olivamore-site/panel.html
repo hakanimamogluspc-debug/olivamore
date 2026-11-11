@@ -1112,7 +1112,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     hediyelik: ['Hediyelik Bölümü', 'Ana sayfa: hediye seti tanıtımı'],
     blogPreview: ['Blog Önizleme', 'Ana sayfa: son yazılar'],
     hediye: ['Hediye Kutusu Oluşturucu', 'Araç + tüm giriş linkleri'],
-    tarif: ['Tarif Asistanı', 'Araç + tüm giriş linkleri']
+    tarif: ['Tarif Asistanı', 'Araç + tüm giriş linkleri'],
+    puanUrun: ['Puan – ürün sayfası', 'Ürün adının üstünde yıldız + ortalama + değerlendirme sayısı'],
+    puanKart: ['Puan – ürün kartları', 'Ana sayfa ve koleksiyondaki kartlarda yıldız']
   };
 
   /* ================== YÜKLE / KAYDET ================== */
@@ -1991,7 +1993,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   function renderMods() {
     document.getElementById('mods-list').innerHTML = Object.keys(MOD_NAMES).map(function (k) {
       return '<div class="mod"><div class="t"><b>' + MOD_NAMES[k][0] + '</b><span>' + MOD_NAMES[k][1] + '</span></div>' +
-        '<label class="sw"><input type="checkbox" data-mod="' + k + '"' + (C.modules[k] !== false ? ' checked' : '') + '><i></i></label></div>';
+        '<label class="sw"><input type="checkbox" data-mod="' + k + '"' + ((/^puan/.test(k) ? C.modules[k] === true : C.modules[k] !== false) ? ' checked' : '') + '><i></i></label></div>';
     }).join('');
     refreshStats();
   }
@@ -3267,7 +3269,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Başlangıç</label><input type="date" class="c-bas" value="' + (c.baslangic || '') + '"></div>' +
       '<div class="field"><label>Bitiş</label><input type="date" class="c-bit" value="' + (c.bitis || '') + '"></div>' +
       '</div><div class="grid3">' +
-      '<div class="field"><label>Kullanım Limiti (0=sınırsız)</label><input type="number" class="c-limit" value="' + (c.limit || 0) + '" min="0"></div>' +
+      '<div class="field"><label>Toplam kullanım limiti (0=sınırsız)</label><input type="number" class="c-limit" value="' + (c.limit || 0) + '" min="0"></div>' +
+      '<div class="field"><label>Kişi başı kullanım (0=sınırsız)</label><input type="number" class="c-kisi" value="' + (c.kisiBasi !== undefined ? c.kisiBasi : 1) + '" min="0"></div>' +
       '<div class="field"><label>Kapsam</label><select class="c-kapsam"><option value="hepsi"' + (!c.kapsam || c.kapsam === 'hepsi' ? ' selected' : '') + '>Tüm Ürünler</option><option value="rol"' + (c.kapsam === 'rol' ? ' selected' : '') + '>Kategoriler</option><option value="urun"' + (c.kapsam === 'urun' ? ' selected' : '') + '>Seçili Ürünler</option></select></div>' +
       '<div class="field"><label>Durum</label><div style="padding-top:8px;"><label style="margin-right:14px;"><input type="checkbox" class="c-aktif"' + (c.aktif !== false ? ' checked' : '') + '> Aktif</label><label><input type="checkbox" class="c-kargo"' + (c.ucretsizKargo ? ' checked' : '') + '> Ücretsiz kargo</label></div></div>' +
       '</div>' +
@@ -3293,6 +3296,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       c.min = parseFloat(g('c-min')) || 0;
       c.baslangic = g('c-bas'); c.bitis = g('c-bit');
       c.limit = parseInt(g('c-limit'), 10) || 0;
+      c.kisiBasi = Math.max(0, parseInt(g('c-kisi'), 10) || 0);
       c.kapsam = g('c-kapsam');
       c.aktif = d.querySelector('.c-aktif').checked;
       c.ucretsizKargo = d.querySelector('.c-kargo').checked;
@@ -3303,7 +3307,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   document.getElementById('btn-add-coupon').addEventListener('click', function () {
     syncCouponsFromDOM();
     C.coupons = C.coupons || [];
-    C.coupons.push({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
+    C.coupons.push({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kisiBasi: 1, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
     renderCoupons(); dirty();
   });
   document.getElementById('coupons-list').addEventListener('click', function (e) {
