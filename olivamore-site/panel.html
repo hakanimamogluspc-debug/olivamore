@@ -325,7 +325,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div class="sg-pane" data-sg="siralar" hidden>
       <div class="panel">
         <h2>Ana Sayfa Ürün Sıraları</h2>
-        <div class="desc">Ana sayfadaki "Sağlık, Doğallık ve Lezzet" mağaza bölümündeki sıralar. Her sıranın başlığını ve göstereceği ürünleri (en fazla 4) seç; fiyat, ad, görsel ve stok ürün kaydından otomatik gelir. Gizli ürünler görünmez.</div>
+        <div class="desc">Ana sayfadaki mağaza bölümündeki sıralar ("Çok Satan Ürünler" dahil). Her sıranın başlığını ve göstereceği ürünleri (en fazla 4) seç; fiyat, ad, görsel ve stok ürün kaydından otomatik gelir. Gizli ürünler görünmez.</div>
         <div id="sira-list"></div>
         <button class="btn btn-outline btn-sm" id="btn-add-sira" type="button" style="margin-top:10px;">+ Yeni Sıra</button>
       </div>
@@ -3655,6 +3655,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         '<div class="field" style="margin:0;"><label>Sıra başlığı (TR)</label><input type="text" class="sr-bTR" value="' + esc(sr.baslikTR || '') + '"></div>' +
         '<div class="field" style="margin:0;"><label>Sıra başlığı (EN)</label><input type="text" class="sr-bEN" value="' + esc(sr.baslikEN || '') + '"></div>' +
         '</div>' +
+        '<label class="chk" style="margin-top:10px;"><input type="checkbox" class="sr-oto"' + (sr.otomatik ? ' checked' : '') + '> Otomatik doldur: son 90 günde en çok satan 4 ürün (satış verisi yoksa aşağıdaki seçim gösterilir)</label>' +
         '<div class="grid2" style="margin-top:10px;">' + u.map(function (id, j) { return '<div class="field" style="margin:0;"><label>Ürün ' + (j + 1) + '</label>' + urunSecici(id) + '</div>'; }).join('') + '</div>' +
         '<div class="row-actions" style="justify-content:flex-end;">' +
         (i > 0 ? '<button class="btn btn-ghost btn-sm sr-yukari" type="button">↑</button>' : '') +
@@ -3666,6 +3667,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var el = document.getElementById('sira-list'); if (!el) return;
     var liste = siralar();
     el.querySelectorAll('.sr-item').forEach(function (d) {
+      var srx = liste[+d.dataset.idx]; if (srx) srx.otomatik = !!(d.querySelector('.sr-oto') || {}).checked;
       var sr = liste[+d.dataset.idx]; if (!sr) return;
       sr.baslikTR = d.querySelector('.sr-bTR').value.trim();
       sr.baslikEN = d.querySelector('.sr-bEN').value.trim();

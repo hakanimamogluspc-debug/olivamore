@@ -103,34 +103,73 @@
   </div>
 </section>
 
-<section class="block tight" id="yorum-bolum" style="display:none;">
-  <div class="container" style="max-width:720px;">
+<section class="block tight yb" id="yorum-bolum">
+  <div class="container" style="max-width:760px;">
     <div class="sec-head"><div class="kicker">Değerlendirmeler</div><h2 id="yb-baslik"></h2></div>
     <div id="yb-liste"></div>
-    <p style="font-size:.8rem;color:var(--ink-soft);margin-top:14px;">Bu ürünü satın aldıysan <a class="link-arrow" href="hesap.html">hesabından değerlendirip puan kazanabilirsin →</a></p>
+    <div id="yb-form-alan"></div>
   </div>
 </section>
+<style>
+.yb h2{font-family:'Cormorant Garamond',serif;font-weight:600}
+.yb-kart{background:#fff;border:1px solid #E5DCC6;padding:18px 20px;margin-bottom:12px}
+.yb-ust{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;font-family:'Poppins',sans-serif}
+.yb-ust b{font-weight:500;font-size:.9rem}
+.yb-dog{color:#2f7a4a;font-size:.7rem;font-weight:500;margin-left:6px;letter-spacing:.04em}
+.yb-kart p{font-size:.9rem;line-height:1.65;margin:0;white-space:pre-wrap;font-family:'Poppins',sans-serif;font-weight:300;color:#2a2a2a}
+.yb-not{font-size:.85rem;color:var(--ink-soft);margin-top:14px;font-family:'Poppins',sans-serif}
+.yb-not a{color:#8a6f3c;text-decoration:underline}
+.yb-form{background:#FBF8F1;border:1px solid #D8C69C;padding:20px 22px;margin-top:18px}
+.yb-form h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.35rem;margin:0 0 10px}
+.yb-yildiz{display:flex;gap:4px;margin-bottom:12px}
+.yb-yildiz button{border:0;background:none;font-size:1.7rem;line-height:1;cursor:pointer;color:#E4E1DA;padding:0 2px}
+.yb-yildiz button.on{color:#BFA25D}
+.yb-form textarea{width:100%;min-height:96px;border:1px solid #D8C69C;padding:12px;font:inherit;font-size:.92rem;box-sizing:border-box;background:#fff}
+.yb-form textarea:focus{outline:none;border-color:#BFA25D}
+.yb-msj{font-size:.85rem;margin-top:10px}
+</style>
 <script>
 (function () {
-  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   var id = new URLSearchParams(location.search).get('id');
-  if (!id) return;
-  fetch('/api/yorumlar?urun=' + encodeURIComponent(id))
-    .then(function (r) { return r.json(); })
-    .then(function (v) {
-      if (!v.say) return;
-      document.getElementById('yorum-bolum').style.display = '';
-      document.getElementById('yb-baslik').innerHTML = '★ ' + v.ortalama + ' <small style="font-size:.95rem;color:var(--ink-soft);font-weight:400;">/ 5 · ' + v.say + ' değerlendirme</small>';
-      document.getElementById('yb-liste').innerHTML = v.yorumlar.map(function (y) {
-        var yl = '';
-        for (var i = 1; i <= 5; i++) yl += '<span style="color:' + (i <= y.yildiz ? '#BFA25D' : '#E4E1DA') + ';">★</span>';
-        return '<div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:12px;">' +
-          '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;"><b style="font-size:.9rem;">' + esc(y.ad) +
-          (y.dogrulanmis ? ' <span style="color:#16a34a;font-size:.72rem;font-weight:600;">✓ doğrulanmış alışveriş</span>' : '') + '</b><span>' + yl + '</span></div>' +
-          '<p style="font-size:.88rem;line-height:1.6;margin:0;white-space:pre-wrap;">' + esc(y.metin) + '</p></div>';
-      }).join('');
-    })
-    .catch(function () {});
+  if (!id) { document.getElementById('yorum-bolum').style.display = 'none'; return; }
+  function yildizlar(n) { var s = ''; for (var i = 1; i <= 5; i++) s += '<span style="color:' + (i <= n ? '#BFA25D' : '#E4E1DA') + ';">★</span>'; return s; }
+  function listeYukle() {
+    fetch('/api/yorumlar?urun=' + encodeURIComponent(id)).then(function (r) { return r.json(); }).then(function (v) {
+      document.getElementById('yb-baslik').innerHTML = v.say ? '★ ' + v.ortalama + ' <small style="font-size:.95rem;color:var(--ink-soft);font-weight:400;">/ 5 · ' + v.say + ' değerlendirme</small>' : 'Değerlendirmeler';
+      document.getElementById('yb-liste').innerHTML = v.say ? v.yorumlar.map(function (y) {
+        return '<div class="yb-kart"><div class="yb-ust"><b>' + esc(y.ad) + (y.dogrulanmis ? '<span class="yb-dog">✓ doğrulanmış alışveriş</span>' : '') + '</b><span>' + yildizlar(y.yildiz) + '</span></div><p>' + esc(y.metin) + '</p></div>';
+      }).join('') : '<p class="yb-not" style="margin-top:0;">Henüz değerlendirme yok.</p>';
+    }).catch(function () {});
+  }
+  function formKur() {
+    var alan = document.getElementById('yb-form-alan');
+    var t = localStorage.getItem('om-uye-token');
+    if (!t) { alan.innerHTML = '<p class="yb-not">Bu ürünü satın aldıysan değerlendirmek için <a href="hesap.html">giriş yap</a>.</p>'; return; }
+    fetch('/api/yorum-hak?urun=' + encodeURIComponent(id), { headers: { 'Authorization': 'Bearer ' + t } }).then(function (r) { return r.json(); }).then(function (h) {
+      if (!h.giris) { alan.innerHTML = '<p class="yb-not">Bu ürünü satın aldıysan değerlendirmek için <a href="hesap.html">giriş yap</a>.</p>'; return; }
+      if (!h.hak) { alan.innerHTML = '<p class="yb-not">Bu ürünü yalnızca satın alan müşteriler değerlendirebilir.</p>'; return; }
+      var puan = h.mevcut ? h.mevcut.yildiz : 0;
+      alan.innerHTML = '<div class="yb-form"><h3>Senin değerlendirmen</h3>' + (h.mevcut && h.mevcut.durum === 'bekliyor' ? '<p class="yb-not" style="margin:0 0 10px;">Değerlendirmen onay bekliyor; aşağıdan güncelleyebilirsin.</p>' : '') +
+        '<div class="yb-yildiz">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-n="' + n + '" aria-label="' + n + '">★</button>'; }).join('') + '</div>' +
+        '<textarea id="yb-metin" maxlength="1000" placeholder="Nasıl buldun? Tat, aroma, nerede kullandın…">' + esc(h.mevcut ? h.mevcut.metin : '') + '</textarea>' +
+        '<button type="button" class="btn btn-gold" id="yb-gonder" style="margin-top:12px;">Değerlendirmeyi gönder</button><div class="yb-msj" id="yb-msj"></div></div>';
+      var boya = function () { alan.querySelectorAll('.yb-yildiz button').forEach(function (b) { b.classList.toggle('on', +b.dataset.n <= puan); }); };
+      boya();
+      alan.querySelector('.yb-yildiz').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { puan = +b.dataset.n; boya(); } });
+      document.getElementById('yb-gonder').addEventListener('click', function () {
+        var metin = document.getElementById('yb-metin').value.trim(), msj = document.getElementById('yb-msj');
+        if (!puan || metin.length < 3) { msj.style.color = '#a33'; msj.textContent = 'Lütfen yıldız seç ve birkaç kelime yaz.'; return; }
+        this.disabled = true;
+        fetch('/api/yorum', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t }, body: JSON.stringify({ urunId: id, yildiz: puan, metin: metin, dil: 'tr' }) })
+          .then(function (r) { return r.json(); }).then(function (c) {
+            document.getElementById('yb-gonder').disabled = false;
+            msj.style.color = c.hata ? '#a33' : '#2f7a4a'; msj.textContent = c.hata || 'Teşekkürler! Değerlendirmen onaylandığında yayınlanır.';
+          }).catch(function () { document.getElementById('yb-gonder').disabled = false; });
+      });
+    }).catch(function () {});
+  }
+  listeYukle(); formKur();
 })();
 </script>
 <div id="om-footer"></div>

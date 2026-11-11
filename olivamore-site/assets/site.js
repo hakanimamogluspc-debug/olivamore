@@ -692,8 +692,14 @@ window.omMetaSatin = function (no, toplam, kalemler) {
           return C.products.find(p => gor(p) && (p.id === kod || p.stokKodu === kod))
             || C.products.find(p => gor(p) && (p.id === id || p.stokKodu === id || (eski && p.id === eski)));
         };
+        const otoCiz = sr => sr.otomatik && Array.isArray(window.OM_COKSATAN) && window.OM_COKSATAN.length
+          ? window.OM_COKSATAN.map(bul).filter(Boolean).slice(0, 4) : null;
+        if (siralar.some(sr => sr.otomatik) && !window.OM_COKSATAN_ISTENDI) {
+          window.OM_COKSATAN_ISTENDI = true;
+          fetch('/api/cok-satanlar').then(r => r.json()).then(j => { window.OM_COKSATAN = j.urunler || []; if (window.OM_COKSATAN.length) { try { applyAdminOverrides(); } catch (e) { } } }).catch(() => {});
+        }
         const html = siralar.map(sr => {
-          const kartlar = (sr.urunler || []).map(bul).filter(Boolean);
+          const kartlar = otoCiz(sr) || (sr.urunler || []).map(bul).filter(Boolean);
           if (!kartlar.length) return '';
           const baslik = EN ? (sr.baslikEN || sr.baslikTR) : (sr.baslikTR || sr.baslikEN);
           return `<div class="fig-sira"><div class="fs-baslik">${baslik || ''}</div><div class="fs-kartlar">${kartlar.map(p => productCard(p, C)).join('')}</div></div>`;

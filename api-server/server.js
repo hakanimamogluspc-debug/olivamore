@@ -868,6 +868,32 @@ function stokGeriEkle(s) {
 
 /* ---------- üye sistemi (uyeler.json) ---------- */
 function sifreHashle(sifre, tuz) { return crypto.scryptSync(String(sifre), tuz, 64).toString('hex'); }
+/* Üye bu ürünü gerçekten satın aldı mı? (ödemesi alınmış / kargolanmış / teslim edilmiş sipariş) */
+function urunSatinAldiMi(eposta, urun) {
+  const e = String(eposta || '').toLowerCase();
+  return oku('siparisler.json', []).some(s =>
+    (s.musteri && String(s.musteri.eposta || '').toLowerCase()) === e &&
+    ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1 &&
+    (goOdemeAlindi(s) || s.kaynak === 'wordpress') &&
+    (s.kalemler || []).some(k => k.pid === urun.id || k.kod === urun.id || (urun.stokKodu && k.kod === urun.stokKodu) ||
+      (urun.nameTR && String(k.ad || '').indexOf(urun.nameTR) === 0) || (urun.nameEN && String(k.ad || '').indexOf(urun.nameEN) === 0)));
+}
+/* Çok satanlar: son 90 günün ödenmiş siparişlerinden adet bazında (10 dk önbellek) */
+let cokSatanOnbellek = { t: 0, liste: [] };
+function cokSatanlar() {
+  if (Date.now() - cokSatanOnbellek.t < 600000) return cokSatanOnbellek.liste;
+  const cfg = oku('cms.json', {}), urunler = (cfg.products || []).filter(p => p.visible !== false && (p.type === 'product' || !p.type));
+  const sinir = new Date(Date.now() - 90 * 86400000).toISOString(), say = {};
+  oku('siparisler.json', []).forEach(sp => {
+    if (String(sp.tarih) < sinir || ['iptal', 'iade', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(sp.durum) !== -1) return;
+    (sp.kalemler || []).forEach(k => {
+      const p = urunler.find(u => u.id === k.pid || u.id === k.kod || (u.stokKodu && u.stokKodu === k.kod)) || urunKaydi(cfg, k.ad);
+      if (p && p.visible !== false) say[p.id] = (say[p.id] || 0) + (k.adet || 1);
+    });
+  });
+  cokSatanOnbellek = { t: Date.now(), liste: Object.keys(say).sort((a, b) => say[b] - say[a]).slice(0, 12) };
+  return cokSatanOnbellek.liste;
+}
 function uyeBul(req) {
   const h = String(req.headers['authorization'] || '');
   const t = h.indexOf('Bearer ') === 0 ? h.slice(7) : '';
@@ -2481,7 +2507,19 @@ const sunucu = http.createServer(async (req, res) => {
       const ort = liste.length ? Math.round(liste.reduce((t, y) => t + y.yildiz, 0) / liste.length * 10) / 10 : 0;
       return json(res, 200, { yorumlar: liste, ortalama: ort, say: liste.length });
     }
-    /* Yorum gönder (üye; ürün adıyla eşleştirilir) */
+    if (req.method === 'GET' && yol === '/api/cok-satanlar') return json(res, 200, { urunler: cokSatanlar() });
+    /* Bu üye bu ürünü değerlendirebilir mi? (ürün sayfasındaki yorum formu için) */
+    if (req.method === 'GET' && yol === '/api/yorum-hak') {
+      const b = uyeBul(req);
+      if (!b) return json(res, 200, { giris: false, hak: false });
+      const cfg = oku('cms.json', {});
+      const uid = String(new URL(req.url, 'http://x').searchParams.get('urun') || '').slice(0, 40);
+      const urun = (cfg.products || []).find(p => p.id === uid);
+      if (!urun) return json(res, 404, { hata: 'Ürün bulunamadı.' });
+      const mevcut = oku('yorumlar.json', []).find(y => y.eposta === b.u.eposta && y.urunId === urun.id);
+      return json(res, 200, { giris: true, ad: b.u.ad, hak: urunSatinAldiMi(b.u.eposta, urun), mevcut: mevcut ? { yildiz: mevcut.yildiz, metin: mevcut.metin, durum: mevcut.durum } : null });
+    }
+    /* Yorum gönder: YALNIZ ürünü satın almış üye */
     if (req.method === 'POST' && yol === '/api/yorum') {
       const b = uyeBul(req);
       if (!b) return json(res, 401, { hata: 'Yorum yapmak için giriş yapmalısın.' });
@@ -2490,13 +2528,11 @@ const sunucu = http.createServer(async (req, res) => {
       const metin = temiz(g.metin, 1000);
       if (!g.yildiz || !metin) return json(res, 400, { hata: 'Yıldız ve yorum metni zorunlu.' });
       const cfg = oku('cms.json', {});
-      const urun = urunKaydi(cfg, temiz(g.urunAd, 200));
+      const urun = (g.urunId && (cfg.products || []).find(p => p.id === temiz(g.urunId, 40))) || urunKaydi(cfg, temiz(g.urunAd, 200));
       if (!urun) return json(res, 400, { hata: 'Ürün bulunamadı.' });
-      // Satın alma doğrulaması
-      const dogrulanmis = oku('siparisler.json', []).some(s =>
-        (s.musteri && (s.musteri.eposta || '').toLowerCase()) === b.u.eposta &&
-        ['iptal', 'odeme-bekliyor', 'odeme-basarisiz'].indexOf(s.durum) === -1 &&
-        (s.kalemler || []).some(k => k.ad.indexOf(urun.nameTR) === 0 || (urun.nameEN && k.ad.indexOf(urun.nameEN) === 0)));
+      // Yalnız satın alanlar yorum yapabilir
+      const dogrulanmis = urunSatinAldiMi(b.u.eposta, urun);
+      if (!dogrulanmis) return json(res, 403, { hata: g.dil === 'en' ? 'Only customers who bought this product can review it.' : 'Bu ürünü yalnızca satın alan müşteriler değerlendirebilir.' });
       const yorumlar = oku('yorumlar.json', []);
       const eski = yorumlar.find(y => y.eposta === b.u.eposta && y.urunId === urun.id);
       if (eski) {
