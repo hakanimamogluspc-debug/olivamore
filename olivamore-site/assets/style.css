@@ -2565,3 +2565,12 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 .om-puan a{color:#8a6f3c;margin-left:8px;text-decoration:underline;font-size:.78rem}
 .om-puan-kart{justify-content:center;margin:0 0 8px}
 #dp-puan{margin:0 0 12px}
+
+/* Koleksiyon kategorileri (telefon): yana kayan şerit yerine alt alta sarılan düğmeler — hepsi görünür */
+@media(max-width:640px){
+  .toolbar .filters{flex-wrap:wrap;overflow:visible;padding:0;gap:8px;scroll-snap-type:none}
+  .toolbar .filters .chip{flex:0 1 auto;font-size:.78rem;padding:9px 13px;white-space:nowrap;letter-spacing:.01em}
+}
+@media(max-width:380px){
+  .toolbar .filters .chip{font-size:.72rem;padding:8px 10px}
+}
