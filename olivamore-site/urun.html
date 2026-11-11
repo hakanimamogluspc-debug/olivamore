@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+<script>
+/* Bu sayfa artık panelden yönetilen ürün sayfasına yönlenir (görseller yalnız panelden) */
+(function () { var q = new URLSearchParams(location.search); var v = q.get('variant') || 'ay500';
+  location.replace('p.html?id=' + encodeURIComponent(v) + location.hash); })();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ayvalık Erken Hasat Sızma Zeytinyağı 500 ml | Olivamore</title>
@@ -18,7 +24,7 @@
 <meta name="twitter:title" content="Ayvalık Erken Hasat Sızma Zeytinyağı 500 ml | Olivamore">
 <meta name="twitter:description" content="Yumuşak ve meyvemsi Ayvalık erken hasat naturel sızma zeytinyağı. KDV dahil fiyat, kullanım önerileri ve parti bazlı Hasat Pasaportu.">
 <meta name="twitter:image" content="https://olivamore.com/assets/img/ayvalik-500.jpg">
-<link rel="canonical" href="https://olivamore.com/urun.html">
+<link rel="canonical" href="https://olivamore.com/p.html?id=ay500">
 <link rel="alternate" hreflang="tr" href="https://olivamore.com/urun.html">
 <link rel="alternate" hreflang="en" href="https://olivamore.com/urun-en.html">
 <link rel="alternate" hreflang="x-default" href="https://olivamore.com/urun.html">

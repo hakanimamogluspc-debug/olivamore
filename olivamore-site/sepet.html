@@ -286,6 +286,7 @@ omSepetHazir(function () {
         if (!p) return true; // sunucu son kontrolü yapar
         if (p.visible === false) { var ad = k.ad || p.nameTR; notlar.push('"' + ad + '" artık satışta değil, sepetinden çıkarıldı.'); degisti = true; return false; }
         var beklenen = k.paket === 'damak10' ? Math.round(Number(p.price) * 0.9) : Number(p.price);
+        if (p.img && k.img !== p.img) { k.img = p.img; degisti = true; } // görsel yalnız panelden
         if (Number(p.price) > 0 && Number(k.fiyat) !== beklenen) { k.fiyat = beklenen; degisti = true; if (notlar.indexOf('Sepetindeki fiyatlar güncel fiyatlarla yenilendi.') === -1) notlar.push('Sepetindeki fiyatlar güncel fiyatlarla yenilendi.'); }
         if (k.kod !== p.id) { k.kod = p.id; k.id = p.id; degisti = true; }
         return true;

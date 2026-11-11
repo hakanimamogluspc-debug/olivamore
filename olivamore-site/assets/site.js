@@ -266,6 +266,33 @@ window.omMetaSatin = function (no, toplam, kalemler) {
   new MutationObserver(() => { if (window.OM_PUANLAR && window.OM_PUAN_MODS && window.OM_PUAN_MODS.puanKart) { clearTimeout(window.__puanT); window.__puanT = setTimeout(() => window.omPuanUygula(), 120); } })
     .observe(document.documentElement, { childList: true, subtree: true });
 
+  /* ---------- Ürün görselleri YALNIZ panelden (Ürünler > ürün görseli / galeri) ----------
+     • data-pid taşıyan her kart/öğe: görseli panel kaydındaki görselle değiştirilir; panelde olmayan ürün kartı gizlenir
+     • Menüdeki kategori küçük resimleri ve tanıtım görseli: o kategorideki ilk ürünün panel görseli */
+  window.omPanelGorselleri = function (cfg) {
+    const urunler = (cfg.products || []).filter(p => p.visible !== false && p.img);
+    if (!urunler.length) return;
+    const byId = {}; urunler.forEach(p => { byId[p.id] = p; if (p.stokKodu) byId[p.stokKodu] = p; });
+    const rolGorsel = rol => { const p = urunler.find(x => (x.type === 'product' || !x.type) && x.role === rol); return p ? p.img : ''; };
+    const uygula = () => {
+      document.querySelectorAll('[data-pid]').forEach(el => {
+        const pid = el.dataset.pid; if (!pid) return;
+        const p = byId[pid];
+        if (!p) { if (el.matches('.fig-kart, .card')) el.style.display = 'none'; return; }
+        el.querySelectorAll('.fk-img img, img.fk-foto, .card-img img').forEach(im => { if (im.getAttribute('src') !== p.img) { im.removeAttribute('onerror'); im.src = p.img; } });
+        if (el.dataset.img !== undefined && el.dataset.img !== p.img) el.dataset.img = p.img;
+      });
+      const menu = { serin: 'kat-bitirme', ocak: 'kat-pisirme', zeytin: 'kat-zeytin', eksi: 'kat-sirke', hediye: 'kat-set' };
+      Object.keys(menu).forEach(rol => { const g = rolGorsel(rol); if (!g) return; document.querySelectorAll('img[src*="' + menu[rol] + '"]').forEach(im => { im.src = g; }); });
+      const tum = byId['ay500'] || urunler[0];
+      document.querySelectorAll('img[src*="kat-tum"]').forEach(im => { im.src = tum.img; });
+      const set = rolGorsel('hediye');
+      if (set) document.querySelectorAll('.mega-promo img').forEach(im => { im.src = set; });
+    };
+    uygula();
+    window.omPanelGorselUygula = uygula;
+  };
+
   /* ---------- Header ---------- */
   const header = `
   <div class="announce">${T.announce}</div>
@@ -1039,6 +1066,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         if (cfg && Object.keys(cfg).length) { AC = syncPairingCopy(syncTrustBaseline(syncBrandCopy(syncLivePrices(cfg)))); MODS = mkMods(); }
         try { applyAdminOverrides(); } catch (e) { console.error('[olivamore] içerik uygulanamadı', e); }
         try { window.omKargoUygula((AC || cfg || {}).kargo); } catch (e) { }
+        try { window.omPanelGorselleri(AC || cfg || {}); } catch (e) { }
         try { window.omPuanUygula(MODS); } catch (e) { }
         statikAc();
         window.omPixelKur(AC || cfg || {});
@@ -1204,7 +1232,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
             : (EN ? ('Custom Gift Set (' + (sec ? sec.dataset.cap : '?') + ' bottles)') : ('Kendi Hediye Setin (' + (sec ? sec.dataset.cap : '?') + "'li)")),
           hacim: sec ? ((sec.dataset.cap || '?') + (EN ? ' bottles' : "'li")) : '',
           fiyat: fiyatCoz((document.getElementById('gb-price') || {}).textContent),
-          img: (document.getElementById('gb-img') || {}).src || 'assets/img/hediye-seti-5li.jpg'
+          img: (document.getElementById('gb-img') || {}).src || 'assets/img/_dsc2992ek.jpg'
         };
       }
       // 3) Ürün kartları
