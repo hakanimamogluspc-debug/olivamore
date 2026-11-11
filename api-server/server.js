@@ -2507,6 +2507,12 @@ const sunucu = http.createServer(async (req, res) => {
       if (!temiz(g.ad, 120) || !temiz(g.telefon, 40) || !temiz(g.adres, 1000)) {
         return json(res, 400, { hata: 'Ad, telefon ve adres zorunlu.' });
       }
+      if (!temiz(g.mahalle, 80) || !temiz(g.cadde, 120) || !temiz(g.il, 60) || !temiz(g.ilce, 60)) {
+        return json(res, 400, { hata: g.dil === 'en' ? 'Neighbourhood, street, province and district are required.' : 'Mahalle, cadde/sokak, il ve ilçe zorunlu.' });
+      }
+      if (String(g.telefon).replace(/\D/g, '').replace(/^(90|0)/, '').length !== 10) {
+        return json(res, 400, { hata: g.dil === 'en' ? 'Please enter a valid 10-digit phone number.' : 'Geçerli bir telefon numarası gir (alan koduyla 10 hane).' });
+      }
       b.u.adresler = b.u.adresler || [];
       const yeni = {
         id: temiz(g.id, 30) || 'A-' + Date.now(),

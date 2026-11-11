@@ -7,7 +7,7 @@
 <meta name="description" content="Olivamore hesabın: siparişlerin, kargo takibi ve puanların tek ekranda.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js" defer></script>
 <style>
@@ -130,12 +130,63 @@ details[open] .sp-ok{transform:rotate(180deg)}
 .ad-form{background:#fff;border:1px solid var(--gold);border-radius:15px;padding:22px;margin-top:14px;display:none}
 .ad-form .satir{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 @media(max-width:560px){.ad-form .satir{grid-template-columns:1fr}}
+
+/* ============ YENİ TASARIM DİLİ (ana sayfa / abonelik ile aynı) ============ */
+.hs-sayfa{font-family:'Poppins',sans-serif;font-weight:300;color:#1D1F1C}
+.hs-sayfa b,.hs-sayfa strong{font-weight:500}
+.gr-sahne,.uk,.uk::before,.sp,.sp-dokum,.sp-kargo,.sp-bos,.sv,.sv-ozel,.ad-kart,.ad-yeni,.ad-form,.sp-uyari,.hs-alan input,.sp-kalem img{border-radius:0!important}
+.gr-sahne{box-shadow:0 20px 50px rgba(30,28,25,.12);border:1px solid #D8C69C}
+.gr-form h1,.sp-baslik h2,.sv-baslik h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:2rem;letter-spacing:-.005em;color:#1D1F1C}
+.gr-soz p{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:1.35rem}
+.hs-sekme button{font-family:'Poppins',sans-serif;font-weight:500;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}
+.hs-alan label{font-family:'Poppins',sans-serif;font-weight:500;font-size:.68rem;letter-spacing:.14em;color:#4D5358}
+.hs-alan input{font-family:'Poppins',sans-serif;font-weight:400;border-color:#D8C69C;padding:13px 14px}
+.hs-alan input:focus{outline:none;border-color:#BFA25D;box-shadow:0 0 0 3px rgba(191,162,93,.15)}
+.hs-alan input.kf-yanlis{border-color:#b04a3a}
+/* üyelik kartı */
+.uk{padding:40px 44px;box-shadow:0 24px 50px rgba(30,28,25,.22)}
+.uk .marka{font-family:'Poppins',sans-serif;font-weight:400}
+.uk h1{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:600;font-size:clamp(2rem,4.4vw,2.9rem)}
+.uk .uyelik{font-family:'Poppins',sans-serif;font-weight:300}
+.uk-cikis{border-radius:0;font-family:'Poppins',sans-serif;font-weight:400;letter-spacing:.12em;text-transform:uppercase;font-size:.7rem}
+.uk-v .n{font-family:'Poppins',sans-serif;font-weight:600;font-size:2.1rem;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.uk-v .n small{font-family:'Poppins',sans-serif;font-weight:300;font-size:.85rem;letter-spacing:0}
+.uk-v .l{font-family:'Poppins',sans-serif;font-weight:400;font-size:.66rem;letter-spacing:.18em}
+.uk-bar,.uk-bar i{border-radius:0}
+.uk-v .ipucu{font-family:'Poppins',sans-serif;font-weight:300}
+/* sadakat */
+.sv-aciklama{font-family:'Poppins',sans-serif;font-weight:300;font-size:.86rem;color:#4D5358}
+.sv{border-color:#E5DCC6}
+.sv .ad{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.35rem}
+.sv .oran{font-family:'Poppins',sans-serif;font-weight:600;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.sv .esik{font-family:'Poppins',sans-serif;font-weight:400;font-size:.66rem;letter-spacing:.16em}
+.sv.aktif{box-shadow:0 10px 26px rgba(191,162,93,.18)}
+.sv .rozet{border-radius:0;font-family:'Poppins',sans-serif;font-weight:500}
+/* siparişler */
+.sp{border-color:#E5DCC6}
+.sp-no{font-family:'Poppins',sans-serif;font-weight:600;font-size:.98rem;letter-spacing:.04em}
+.sp-meta{font-family:'Poppins',sans-serif;font-weight:300}
+.sp-tutar,.sp-kalem .f,.sp-dokum .s span:last-child{font-family:'Poppins',sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
+.sp-dokum .s.top b{font-family:'Poppins',sans-serif;font-weight:600;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.sp-pill{border-radius:0;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:.06em;text-transform:uppercase;font-size:.64rem}
+.sp-adim .a{font-family:'Poppins',sans-serif;font-weight:400}
+.sp-kalem .ad{font-family:'Poppins',sans-serif;font-weight:400}
+/* adres defteri */
+.ad-kart{border-color:#E5DCC6;font-family:'Poppins',sans-serif;font-weight:300}
+.ad-kart .b{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;color:#8a6f3c}
+.ad-kart .islem button,.ad-yeni{border-radius:0;font-family:'Poppins',sans-serif;font-weight:400}
+.ad-kart .islem button{letter-spacing:.08em;text-transform:uppercase;font-size:.66rem}
+.ad-yeni{border-color:#BFA25D;color:#8a6f3c;letter-spacing:.06em}
+.ad-form{border-color:#BFA25D}
+.ad-form .uc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}
+@media(max-width:560px){.ad-form .uc{grid-template-columns:1fr}}
+.hs-sayfa .btn{border-radius:0}
 </style>
 </head>
 <body data-page="hesap">
 <div id="om-header"></div>
 
-<section class="block tight">
+<section class="block tight hs-sayfa">
   <div class="container">
 
     <!-- GİRİŞ / KAYIT -->
@@ -220,14 +271,16 @@ details[open] .sp-ok{transform:rotate(180deg)}
           <div class="hs-alan"><label for="af-baslik">Adres başlığı (Ev, İş...)</label><input type="text" id="af-baslik" maxlength="40"></div>
           <div class="hs-alan"><label for="af-ad">Ad soyad</label><input type="text" id="af-ad" autocomplete="name"></div>
           <div class="satir">
-            <div class="hs-alan"><label for="af-tel">Telefon</label><input type="tel" id="af-tel" autocomplete="tel"></div>
-            <div class="hs-alan"><label for="af-posta">Posta kodu</label><input type="text" id="af-posta" maxlength="5"></div>
+            <div class="hs-alan"><label for="af-mahalle">Mahalle *</label><input type="text" id="af-mahalle" maxlength="80"></div>
+            <div class="hs-alan"><label for="af-cadde">Cadde / sokak *</label><input type="text" id="af-cadde" maxlength="120"></div>
           </div>
-          <div class="hs-alan"><label for="af-adres">Açık adres</label><input type="text" id="af-adres"></div>
-          <div class="satir">
-            <div class="hs-alan"><label for="af-il">İl</label><input type="text" id="af-il"></div>
-            <div class="hs-alan"><label for="af-ilce">İlçe</label><input type="text" id="af-ilce"></div>
+          <div class="hs-alan"><label for="af-adres">Bina no, daire ve adres tarifi *</label><input type="text" id="af-adres" maxlength="600" placeholder="örn. No: 12 Daire: 4"></div>
+          <div class="uc">
+            <div class="hs-alan"><label for="af-il">İl *</label><input type="text" id="af-il" autocomplete="address-level1"></div>
+            <div class="hs-alan"><label for="af-ilce">İlçe *</label><input type="text" id="af-ilce" autocomplete="address-level2"></div>
+            <div class="hs-alan"><label for="af-posta">Posta kodu</label><input type="text" id="af-posta" maxlength="5" inputmode="numeric"></div>
           </div>
+          <div class="hs-alan"><label for="af-tel">Telefon *</label><input type="tel" id="af-tel" autocomplete="tel" placeholder="05XX XXX XX XX"></div>
           <input type="hidden" id="af-id">
           <div style="display:flex;gap:10px;margin-top:6px;">
             <button class="btn btn-gold btn-sm" type="button" id="af-kaydet">Adresi Kaydet</button>
@@ -393,12 +446,30 @@ document.addEventListener('DOMContentLoaded', function () {
         '<button type="button" class="ad-sil" data-id="' + esc(a.id) + '">Sil</button></div></div>';
     }).join('') + '<button class="ad-yeni" type="button" id="ad-yeni-btn">+ Yeni Adres Ekle</button>';
   }
+  function adresAyir(a) {
+    if (a.mahalle || a.cadde) return { mahalle: a.mahalle || '', cadde: a.cadde || '', detay: a.adresDetay || '' };
+    var metin = String(a.adres || ''), mh = '', cd = '';
+    var m1 = metin.match(/([A-Za-zÇĞİÖŞÜçğıöşü0-9.' ]+?)\s+(mahallesi|mah\.?|mh\.?)(?=[\s,]|$)/i);
+    if (m1) { mh = m1[1].trim(); metin = metin.replace(m1[0], ''); }
+    var m2 = metin.match(/([A-Za-zÇĞİÖŞÜçğıöşü0-9.' ]+?\s+(caddesi|cad\.?|cd\.?|sokağı|sokak|sok\.?|sk\.?|bulvarı|bulvar|blv\.?|meydanı))(?=[\s,]|$)/i);
+    if (m2) { cd = m2[1].trim(); metin = metin.replace(m2[0], ''); }
+    return { mahalle: mh, cadde: cd, detay: metin.replace(/^[\s,]+|[\s,]+$/g, '').replace(/\s{2,}/g, ' ') };
+  }
+  function tamAdres() {
+    var mh = document.getElementById('af-mahalle').value.trim(), cd = document.getElementById('af-cadde').value.trim(), dt = document.getElementById('af-adres').value.trim();
+    if (mh && !/\b(mah\.?|mahallesi|mh\.?)$/i.test(mh)) mh += ' Mah.';
+    return [mh, cd, dt].filter(Boolean).join(' ');
+  }
   function adresFormAc(a) {
     document.getElementById('af-id').value = a ? a.id : '';
     document.getElementById('af-baslik').value = a ? a.baslik : '';
     document.getElementById('af-ad').value = a ? a.ad : (document.getElementById('hs-isim').textContent || '');
     document.getElementById('af-tel').value = a ? a.telefon : '';
-    document.getElementById('af-adres').value = a ? a.adres : '';
+    var ay = a ? adresAyir(a) : { mahalle: '', cadde: '', detay: '' };
+    document.getElementById('af-mahalle').value = ay.mahalle;
+    document.getElementById('af-cadde').value = ay.cadde;
+    document.getElementById('af-adres').value = ay.detay;
+    ['af-mahalle', 'af-cadde', 'af-adres', 'af-il', 'af-ilce', 'af-tel'].forEach(function (id) { document.getElementById(id).classList.remove('kf-yanlis'); });
     document.getElementById('af-il').value = a ? a.il : '';
     document.getElementById('af-ilce').value = a ? a.ilce : '';
     document.getElementById('af-posta').value = a ? a.postaKodu : '';
@@ -422,6 +493,10 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('af-vazgec').addEventListener('click', function () { document.getElementById('ad-form').style.display = 'none'; });
   document.getElementById('af-kaydet').addEventListener('click', function () {
     var msj = document.getElementById('af-msj');
+    var eksik = ['af-mahalle', 'af-cadde', 'af-adres', 'af-il', 'af-ilce'].filter(function (id) { var el = document.getElementById(id); var bos = !el.value.trim(); el.classList.toggle('kf-yanlis', bos); return bos; });
+    var telEl = document.getElementById('af-tel'), telOk = telEl.value.replace(/\D/g, '').replace(/^(90|0)/, '').length === 10;
+    telEl.classList.toggle('kf-yanlis', !telOk);
+    if (eksik.length || !telOk) { msj.textContent = 'İşaretli alanları doldur (telefon alan koduyla 10 hane).'; return; }
     fetch('/api/uye/adres-kaydet', {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(KEY) },
       body: JSON.stringify({
@@ -429,7 +504,11 @@ document.addEventListener('DOMContentLoaded', function () {
         baslik: document.getElementById('af-baslik').value.trim(),
         ad: document.getElementById('af-ad').value.trim(),
         telefon: document.getElementById('af-tel').value.trim(),
-        adres: document.getElementById('af-adres').value.trim(),
+        adres: tamAdres(),
+        mahalle: document.getElementById('af-mahalle').value.trim(),
+        cadde: document.getElementById('af-cadde').value.trim(),
+        adresDetay: document.getElementById('af-adres').value.trim(),
+        dil: 'tr',
         il: document.getElementById('af-il').value.trim(),
         ilce: document.getElementById('af-ilce').value.trim(),
         postaKodu: document.getElementById('af-posta').value.trim()
