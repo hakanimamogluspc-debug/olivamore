@@ -195,6 +195,18 @@ details[open] .sp-ok{transform:rotate(180deg)}
 .uk[data-seviye] .uk-v .n small,.uk[data-seviye] .uk-v .l,.uk[data-seviye] .uk-v .ipucu{color:#4D5358}
 .uk[data-seviye] .uk-bar{background:rgba(30,28,25,.12)}
 @media(max-width:680px){.uk[data-seviye]{background-image:linear-gradient(180deg,rgba(251,248,241,.9) 0%,rgba(251,248,241,.93) 100%),var(--uk-gorsel)}}
+
+/* Okunurluk: tüm yazı ve rakamlar sol %60'ta (krem zeminde) kalır; görsel sağda serbest */
+@media(min-width:681px){
+  .uk[data-seviye]{background-image:linear-gradient(90deg,rgba(251,248,241,.97) 0%,rgba(251,248,241,.94) 52%,rgba(251,248,241,.6) 66%,rgba(251,248,241,0) 80%),var(--uk-gorsel)}
+  .uk[data-seviye] .uk-ust,.uk[data-seviye] .uk-veriler{max-width:62%}
+  .uk[data-seviye] .uk-ust{display:block}
+  .uk[data-seviye] .uk-cikis{position:absolute;top:30px;right:30px;z-index:3;background:rgba(255,255,255,.9);box-shadow:0 4px 14px rgba(30,28,25,.08)}
+  .uk[data-seviye] .uk-veriler{grid-template-columns:1.25fr .7fr 1fr;gap:28px}
+  .uk[data-seviye] .uk-v .n{font-size:1.9rem}
+}
+.uk[data-seviye] .uk-v .ipucu{color:#3f4448}
+.uk[data-seviye] .uk-v .l{color:#3f4448}
 </style>
 </head>
 <body data-page="hesap" data-lang="en">
