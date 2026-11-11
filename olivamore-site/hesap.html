@@ -184,14 +184,26 @@ details[open] .sp-ok{transform:rotate(180deg)}
 
 /* Üyelik kartı arka planı: seviyeye göre görsel (Fidan → Dal → Ağaç → Bahçe); sol tarafta okunurluk için koyu geçiş */
 .uk{background-color:#1f1c18;background-size:cover;background-position:right center;background-repeat:no-repeat}
-.uk[data-seviye]{background-image:linear-gradient(90deg,rgba(24,21,18,.94) 0%,rgba(24,21,18,.86) 38%,rgba(24,21,18,.45) 62%,rgba(24,21,18,.12) 100%),var(--uk-gorsel)}
-.uk[data-seviye="0"]{--uk-gorsel:url('assets/img/uyelik/seviye-1-fidan.jpg')}
-.uk[data-seviye="1"]{--uk-gorsel:url('assets/img/uyelik/seviye-2-dal.jpg')}
-.uk[data-seviye="2"]{--uk-gorsel:url('assets/img/uyelik/seviye-3-agac.jpg')}
-.uk[data-seviye="3"]{--uk-gorsel:url('assets/img/uyelik/seviye-4-bahce.jpg')}
+.uk[data-seviye="0"]{--uk-gorsel:url('assets/img/uyelik/seviye-1-fidan.jpg?v=2')}
+.uk[data-seviye="1"]{--uk-gorsel:url('assets/img/uyelik/seviye-2-dal.jpg?v=2')}
+.uk[data-seviye="2"]{--uk-gorsel:url('assets/img/uyelik/seviye-3-agac.jpg?v=2')}
+.uk[data-seviye="3"]{--uk-gorsel:url('assets/img/uyelik/seviye-4-bahce.jpg?v=2')}
 .uk[data-seviye] .uk-dal{display:none}
-.uk h1,.uk-v .n{text-shadow:0 2px 14px rgba(0,0,0,.45)}
-@media(max-width:680px){.uk[data-seviye]{background-position:72% center;background-image:linear-gradient(180deg,rgba(24,21,18,.82) 0%,rgba(24,21,18,.9) 100%),var(--uk-gorsel)}}
+@media(max-width:680px){.uk[data-seviye]{background-position:72% center}}
+
+/* Açık (ferah) üyelik kartı: aydınlık görsel + koyu yazı */
+.uk[data-seviye]{color:#1D1F1C;background-image:linear-gradient(90deg,rgba(251,248,241,.95) 0%,rgba(251,248,241,.88) 36%,rgba(251,248,241,.45) 60%,rgba(251,248,241,0) 82%),var(--uk-gorsel);box-shadow:0 18px 44px rgba(30,28,25,.12)}
+.uk[data-seviye]::before{background:linear-gradient(135deg,rgba(191,162,93,.9),rgba(191,162,93,.25) 45%,rgba(191,162,93,.7))}
+.uk[data-seviye] .marka{color:#8a6f3c}
+.uk[data-seviye] h1{color:#1D1F1C;text-shadow:none}
+.uk[data-seviye] .uyelik{color:#4D5358}
+.uk[data-seviye] .uk-cikis{color:#1D1F1C;border-color:#BFA25D;background:rgba(255,255,255,.7)}
+.uk[data-seviye] .uk-cikis:hover{background:#BFA25D;color:#fff}
+.uk[data-seviye] .uk-veriler{border-top-color:rgba(191,162,93,.45)}
+.uk[data-seviye] .uk-v .n{color:#8a6f3c;text-shadow:none}
+.uk[data-seviye] .uk-v .n small,.uk[data-seviye] .uk-v .l,.uk[data-seviye] .uk-v .ipucu{color:#4D5358}
+.uk[data-seviye] .uk-bar{background:rgba(30,28,25,.12)}
+@media(max-width:680px){.uk[data-seviye]{background-image:linear-gradient(180deg,rgba(251,248,241,.9) 0%,rgba(251,248,241,.93) 100%),var(--uk-gorsel)}}
 </style>
 </head>
 <body data-page="hesap">
