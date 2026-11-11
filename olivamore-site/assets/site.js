@@ -282,6 +282,11 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         el.querySelectorAll('.fk-img img, img.fk-foto, .card-img img').forEach(im => { if (im.getAttribute('src') !== p.img) { im.removeAttribute('onerror'); im.src = p.img; } });
         if (el.dataset.img !== undefined && el.dataset.img !== p.img) el.dataset.img = p.img;
       });
+      // Yayında olmayan ürüne giden kart/link gösterilmez (tarif önerileri, eski statik kartlar)
+      document.querySelectorAll('a[href*="p.html?id="], a[href*="p-en.html?id="]').forEach(a => {
+        const m = (a.getAttribute('href') || '').match(/[?&]id=([^&#]+)/); if (!m) return;
+        if (!byId[decodeURIComponent(m[1])]) { const kap = a.closest('.fig-kart, .card, article, li, .pair-card, .dp-pair, .tarif-urun') || a; kap.style.display = 'none'; }
+      });
       const menu = { serin: 'kat-bitirme', ocak: 'kat-pisirme', zeytin: 'kat-zeytin', eksi: 'kat-sirke', hediye: 'kat-set' };
       Object.keys(menu).forEach(rol => { const g = rolGorsel(rol); if (!g) return; document.querySelectorAll('img[src*="' + menu[rol] + '"]').forEach(im => { im.src = g; }); });
       const tum = byId['ay500'] || urunler[0];
@@ -980,6 +985,12 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         C.urunKategorileri.forEach(k => { const n = EN ? k.notEN : k.notTR; if (n) window.OM_KAT_NOT[k.id] = n; });
       }
       if (window.omKoleksiyonUygula) window.omKoleksiyonUygula();
+    }
+    // Hediye kutusu sayfası: alttaki hazır setler = paneldeki yayında hediye ürünleri
+    if (current.indexOf('hediye-olustur') === 0) {
+      const grid = document.querySelector('.prod-grid.three');
+      const setler = vis.filter(p => p.role === 'hediye' && (p.type === 'product' || !p.type)).slice(0, 3);
+      if (grid) { if (setler.length) grid.innerHTML = setler.map(p => productCard(p, C)).join(''); else { const sec = grid.closest('section'); if (sec) sec.style.display = 'none'; } }
     }
     // Ana sayfa: vitrin (featured sırasına göre ilk 4)
     if (document.body.dataset.page === 'home') {
