@@ -2574,3 +2574,5 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 @media(max-width:380px){
   .toolbar .filters .chip{font-size:.72rem;padding:8px 10px}
 }
+/* Mobil sabit satın alma çubuğu: indirimde eski fiyat üstü çizili */
+.pdp-sticky .t span .pdp-eski{opacity:.55;font-weight:400;font-size:.85em;margin-right:6px;text-decoration:line-through}

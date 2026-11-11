@@ -1425,7 +1425,12 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         const selected = document.querySelector('.sizes .size.on');
         const hacim = (selected && selected.dataset.l) || pdpBtn.dataset.volume || '';
         baslikKopya.textContent = pdpAd.textContent.trim() + (hacim ? ' · ' + hacim : '');
-        fiyatKopya.textContent = pdpFiyat.textContent;
+        // İndirimliyse: eski fiyat üstü çizili + yeni fiyat (kopya düz metin olunca iki fiyat bitişik görünüyordu)
+        const eski = pdpFiyat.querySelector('s');
+        const yeni = Array.from(pdpFiyat.childNodes).filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'S')).map(n => n.textContent).join('').trim();
+        fiyatKopya.innerHTML = '';
+        if (eski && eski.textContent.trim()) { const s1 = document.createElement('s'); s1.className = 'pdp-eski'; s1.textContent = eski.textContent.trim(); fiyatKopya.appendChild(s1); }
+        fiyatKopya.appendChild(document.createTextNode(eski ? yeni : pdpFiyat.textContent.trim()));
         stickyButton.textContent = (EN ? 'Add to Bag' : 'Sepete Ekle') + (hacim ? ' · ' + hacim : '');
       };
       window.omStickyVariantSync = esitle;
