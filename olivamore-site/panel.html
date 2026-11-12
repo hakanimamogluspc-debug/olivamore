@@ -789,9 +789,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <button type="button" class="sg-tab" data-sg="toplu"><b>Toplu Kod Üret</b><span>Tek kullanımlık kodlar</span></button>
       </div>
       <div class="sg-pane" data-sg="kuponlar">
-        <div class="row-actions" style="margin:0 0 12px;"><input type="search" id="kupon-ara" placeholder="Kupon kodu ara…" style="max-width:280px;"><span id="kupon-say" style="font-size:.85rem;color:var(--soft);"></span></div>
+        <div class="row-actions" style="margin:0 0 12px;align-items:center;"><button class="btn btn-gold btn-sm" id="btn-add-coupon" type="button">+ Yeni Kupon</button><input type="search" id="kupon-ara" placeholder="Kupon kodu ara…" style="max-width:280px;"><span id="kupon-say" style="font-size:.85rem;color:var(--soft);"></span></div>
         <div id="coupons-list"></div>
-        <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
   
       </div>
       <div class="sg-pane" data-sg="toplu" hidden>
@@ -3417,7 +3416,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       return '<option value="' + p.id + '"' + ((c.urunler || []).indexOf(p.id) !== -1 ? ' selected' : '') + '>' + p.nameTR + '</option>';
     }).join('');
     var bugun = new Date().toISOString().slice(0, 10), bitti = c.bitis && c.bitis < bugun;
-    var ozetY = (c.tip === 'tutar' ? '₺' + (c.deger || 0) : '%' + (c.deger || 0)) + (c.ucretsizKargo ? ' + ücretsiz kargo' : '') +
+    var ozetY = (c.tip === 'tutar' ? '₺' + (c.deger || 0) : '%' + (c.deger || 0)) + (c.ucretsizKargo ? ' + ücretsiz kargo' : '') + (c.tekBasina ? ' · birleştirilemez' : '') +
       ' · kişi başı ' + ((c.kisiBasi !== undefined ? c.kisiBasi : 1) || '∞') + ' · ' + (c.kullanildi || 0) + ' kullanım' + (c.bitis ? ' · bitiş ' + c.bitis : '');
     var rozet = c.aktif === false ? '<span class="od-rozet">Pasif</span>' : (bitti ? '<span class="od-rozet kirmizi">Süresi doldu</span>' : '<span class="od-rozet yesil">Aktif</span>');
     return '<details class="item kupon-item" data-idx="' + i + '" data-kod="' + esc((c.kod || '').toLowerCase()) + '" style="margin-bottom:10px;"' + (!c.kod ? ' open' : '') + '>' +
@@ -3436,6 +3435,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field"><label>Kapsam</label><select class="c-kapsam"><option value="hepsi"' + (!c.kapsam || c.kapsam === 'hepsi' ? ' selected' : '') + '>Tüm Ürünler</option><option value="rol"' + (c.kapsam === 'rol' ? ' selected' : '') + '>Kategoriler</option><option value="urun"' + (c.kapsam === 'urun' ? ' selected' : '') + '>Seçili Ürünler</option></select></div>' +
       '<div class="field"><label>Durum</label><div style="padding-top:8px;"><label style="margin-right:14px;"><input type="checkbox" class="c-aktif"' + (c.aktif !== false ? ' checked' : '') + '> Aktif</label><label><input type="checkbox" class="c-kargo"' + (c.ucretsizKargo ? ' checked' : '') + '> Ücretsiz kargo</label></div></div>' +
       '</div>' +
+      '<label class="chk" style="display:block;margin:2px 0 10px;"><input type="checkbox" class="c-tek"' + (c.tekBasina ? ' checked' : '') + '> <b>Başka indirimlerle birlikte kullanılamaz</b> <span style="font-size:.8rem;color:var(--soft);">— indirimli (üstü çizili) ürünlere ve Damak Kutusu indirimine uygulanmaz; kullanılınca üyelik indirimi devre dışı kalır</span></label>' +
       '<div class="field c-rol-alan" style="' + (c.kapsam === 'rol' ? '' : 'display:none;') + '"><label>Geçerli Kategoriler</label><div>' + rolCb + '</div></div>' +
       '<div class="field c-urun-alan" style="' + (c.kapsam === 'urun' ? '' : 'display:none;') + '"><label>Geçerli Ürünler (Ctrl ile çoklu seç)</label><select class="c-urunler" multiple size="5" style="width:100%;">' + urunOpts + '</select></div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><span style="font-size:.8rem;color:#8a8377;">' + (c.kullanildi || 0) + ' kez kullanıldı</span><button type="button" class="btn btn-danger btn-sm c-sil">Kuponu Sil</button></div>' +
@@ -3470,6 +3470,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       c.kapsam = g('c-kapsam');
       c.aktif = d.querySelector('.c-aktif').checked;
       c.ucretsizKargo = d.querySelector('.c-kargo').checked;
+      c.tekBasina = !!(d.querySelector('.c-tek') || {}).checked;
       c.roller = [].map.call(d.querySelectorAll('.c-rol:checked'), function (x) { return x.value; });
       c.urunler = [].map.call(d.querySelectorAll('.c-urunler option:checked'), function (x) { return x.value; });
     });
@@ -3477,8 +3478,10 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   document.getElementById('btn-add-coupon').addEventListener('click', function () {
     syncCouponsFromDOM();
     C.coupons = C.coupons || [];
-    C.coupons.unshift({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kisiBasi: 1, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
+    C.coupons.unshift({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kisiBasi: 1, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, tekBasina: false, kullanildi: 0 });
+    var ara = document.getElementById('kupon-ara'); if (ara) ara.value = '';
     renderCoupons(); dirty();
+    var ilk = document.querySelector('#coupons-list .kupon-item'); if (ilk) { ilk.open = true; ilk.scrollIntoView({ behavior: 'smooth', block: 'center' }); var kk = ilk.querySelector('.c-kod'); if (kk) setTimeout(function () { kk.focus(); }, 250); }
   });
   document.getElementById('coupons-list').addEventListener('click', function (e) {
     if (e.target.classList.contains('c-sil')) {

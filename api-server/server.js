@@ -101,23 +101,25 @@ function kuponUygula(kupon, kalemler, cfg) {
   const urunler = (cfg && cfg.products) || [];
   const bulK = k => urunler.find(p => p.id && (p.id === k.pid || p.id === k.kod || p.id === k.id)) || bul(k.ad || '');
   const bul = ad => urunler.find(p => (p.nameTR && ad.indexOf(p.nameTR) === 0) || (p.nameEN && ad.indexOf(p.nameEN) === 0));
-  let uygunNet = 0, toplamNet = 0;
+  let uygunNet = 0, toplamNet = 0, indirimliHaric = 0;
   (kalemler || []).forEach(k => {
     const net = k.fiyat * k.adet;
     toplamNet += net;
     let uygun = true;
+    // "Başka indirimlerle birleştirilemez": zaten indirimli ürünler (üstü çizili fiyat) ve paket indirimli kalemler kapsam dışı
+    if (kupon.tekBasina) { const p = bulK(k); if (k.paket || (p && Number(p.eskiFiyat) > Number(p.price))) { indirimliHaric++; return; } }
     if (kupon.kapsam === 'rol') { const p = bulK(k); uygun = !!(p && (kupon.roller || []).indexOf(p.role) !== -1); }
     else if (kupon.kapsam === 'urun') { const p = bulK(k); uygun = !!(p && (kupon.urunler || []).indexOf(p.id) !== -1); }
     if (uygun) uygunNet += net;
   });
-  if (uygunNet <= 0) return { hata: 'Kupon sepetteki ürünlerde geçerli değil.' };
+  if (uygunNet <= 0) return { hata: indirimliHaric ? 'Bu kupon indirimli ürünlerde geçerli değil; başka indirimlerle birleştirilemez.' : 'Kupon sepetteki ürünlerde geçerli değil.' };
   const min = parseFloat(kupon.min) || 0;
   if (min > 0 && toplamNet < min) return { hata: 'Bu kupon en az ₺' + min + ' sepette geçerli.' };
   const deger = parseFloat(kupon.deger) || 0;
   let indirim = kupon.tip === 'tutar' ? Math.min(deger, uygunNet) : uygunNet * deger / 100;
   indirim = Math.round(indirim * 100) / 100;
   if (indirim <= 0) return { hata: 'Kupon indirimi hesaplanamadı.' };
-  return { indirim: indirim, ucretsizKargo: !!kupon.ucretsizKargo };
+  return { indirim: indirim, ucretsizKargo: !!kupon.ucretsizKargo, tekBasina: !!kupon.tekBasina, haricKalem: indirimliHaric };
 }
 function epostaMi(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s || ''); }
 
@@ -1027,6 +1029,40 @@ function adminYetkili(req) {
   if (!t) return false;
   const oturumlar = oku('admin-oturum.json', []).filter(o => o.bitis > Date.now());
   return oturumlar.some(o => o.token === t);
+}
+
+/* ---------- İletişim formu spam puanı ----------
+   Rastgele harf dizisi ad/mesaj, noktalarla bölünmüş gmail, tuzak alan, çok hızlı gönderim, doğrudan API çağrısı, IP başına sıklık */
+const iletisimIpGecmis = new Map();
+function rastgeleMi(t) {
+  t = String(t || '').trim();
+  if (t.length < 8 || /\s/.test(t)) {
+    if (t.length < 8) return false;
+  } else {
+    // boşluksuz uzun dizi: içte çok sayıda büyük harf veya sesli harf azlığı
+    const icBuyuk = (t.slice(1).match(/[A-ZÇĞİÖŞÜ]/g) || []).length;
+    const sesli = (t.match(/[aeıioöuüAEIİOÖUÜ]/g) || []).length / t.length;
+    if (icBuyuk >= 3 || sesli < 0.2) return true;
+  }
+  // boşluklu metinde kelimelerin çoğu rastgele ise
+  const k = t.split(/\s+/).filter(w => w.length >= 8);
+  return k.length > 0 && k.filter(w => (w.slice(1).match(/[A-ZÇĞİÖŞÜ]/g) || []).length >= 3).length / k.length > 0.5;
+}
+function iletisimSpamPuan(g, k, ip) {
+  let puan = 0; const n = [];
+  if (String(g.website || '').trim()) { puan += 5; n.push('tuzak-alan'); }
+  if (g.sure === undefined) { puan += 2; n.push('dogrudan-api'); }
+  else if (Number(g.sure) < 3000) { puan += 3; n.push('cok-hizli'); }
+  if (rastgeleMi(k.ad)) { puan += 2; n.push('rastgele-ad'); }
+  if (rastgeleMi(k.mesaj)) { puan += 2; n.push('rastgele-mesaj'); }
+  const yerel = String(k.eposta).split('@')[0] || '';
+  if ((yerel.match(/\./g) || []).length >= 3) { puan += 1; n.push('noktali-eposta'); }
+  if (/https?:\/\//i.test(k.mesaj) && (k.mesaj.match(/https?:\/\//gi) || []).length >= 3) { puan += 2; n.push('cok-link'); }
+  const simdi = Date.now(), gecmis = (iletisimIpGecmis.get(ip) || []).filter(t => simdi - t < 600000);
+  gecmis.push(simdi); iletisimIpGecmis.set(ip, gecmis);
+  if (gecmis.length > 3) { puan += 3; n.push('ip-sik'); }
+  if (iletisimIpGecmis.size > 5000) iletisimIpGecmis.clear();
+  return { puan, nedenler: n };
 }
 
 /* ---------- Üye segmentleri (kampanya hedefleme) ---------- */
@@ -2050,11 +2086,20 @@ const sunucu = http.createServer(async (req, res) => {
       if (!temiz(g.ad, 120) || !epostaMi(g.eposta) || !temiz(g.mesaj, 4000)) {
         return json(res, 400, { hata: 'Ad, geçerli e-posta ve mesaj zorunlu.' });
       }
-      const liste = oku('mesajlar.json', []);
-      liste.unshift({
+      const kayit = {
         tarih: new Date().toISOString(), ad: temiz(g.ad, 120), eposta: temiz(g.eposta, 200),
         konu: temiz(g.konu, 200), mesaj: temiz(g.mesaj, 4000), okundu: false
-      });
+      };
+      // Spam filtresi: bot ise sessizce "alındı" deriz ama bildirim göndermeyiz; ayrı dosyada saklanır
+      const ip = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
+      const sp = iletisimSpamPuan(g, kayit, ip);
+      if (sp.puan >= 3) {
+        kayit.spam = sp.nedenler; kayit.ip = ip;
+        yaz('mesajlar-spam.json', [kayit].concat(oku('mesajlar-spam.json', [])).slice(0, 500));
+        return json(res, 200, { tamam: true });
+      }
+      const liste = oku('mesajlar.json', []);
+      liste.unshift(kayit);
       yaz('mesajlar.json', liste.slice(0, 2000));
       epostaBildir('Yeni iletişim mesajı: ' + temiz(g.konu, 200), temiz(g.ad, 120) + ' <' + g.eposta + '>\n\n' + temiz(g.mesaj, 4000));
       return json(res, 200, { tamam: true });
@@ -2253,14 +2298,16 @@ const sunucu = http.createServer(async (req, res) => {
       const kp = kuponBul(cfg, kod);
       const kal = Array.isArray(g.kalemler) ? g.kalemler.slice(0, 50).map(k => ({
         ad: temiz(k.ad, 200), fiyat: Math.max(0, parseFloat(k.fiyat) || 0),
-        adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1))
+        adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1)),
+        kod: temiz(k.id || k.kod, 40), paket: k.paket === 'damak10' ? 'damak10' : undefined
       })) : [];
       const s = kuponUygula(kp, kal, cfg);
       if (s.hata) return json(res, 200, { gecerli: false, mesaj: s.hata });
       // E-posta biliniyorsa (üye) kişi başı limit önceden kontrol edilir
       { const ub = uyeBul(req); const kb = kp && kp.kisiBasi !== undefined ? (parseInt(kp.kisiBasi, 10) || 0) : 1;
         if (ub && kb > 0 && kuponKisiKullanim(kp.kod, ub.u.eposta) >= kb) return json(res, 200, { gecerli: false, mesaj: kb === 1 ? 'Bu kuponu daha önce kullandın.' : 'Bu kupon için kullanım hakkın doldu.' }); }
-      return json(res, 200, { gecerli: true, indirim: s.indirim, ucretsizKargo: s.ucretsizKargo, mesaj: 'Kupon uygulandı.' });
+      return json(res, 200, { gecerli: true, indirim: s.indirim, ucretsizKargo: s.ucretsizKargo, tekBasina: s.tekBasina,
+        mesaj: s.tekBasina ? ('Kupon uygulandı. Bu kupon başka indirimlerle birleştirilemez' + (s.haricKalem ? '; indirimli ürünler kupon dışında kaldı.' : '.')) : 'Kupon uygulandı.' });
     }
 
     if (req.method === 'POST' && yol === '/api/siparis') {
@@ -2318,7 +2365,7 @@ const sunucu = http.createServer(async (req, res) => {
       // Fiyatlar KDV DAHİLDİR (sitede/sepette görünen fiyat); KDV bu tutarın içinden ayrıştırılır
       const araToplam = kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0);
       // Kupon (sunucu tarafında doğrulanır; kullanım sayacı artar)
-      let indirim = 0, kargoBedava = false, kuponBilgi = null;
+      let indirim = 0, kargoBedava = false, kuponBilgi = null, kuponTekBasina = false;
       const kuponKod = temiz(g.kupon, 40).toUpperCase();
       if (kuponKod) {
         const cfg = oku('cms.json', {});
@@ -2330,7 +2377,8 @@ const sunucu = http.createServer(async (req, res) => {
         if (s.hata) { stokGeriEkle({ kalemler: kalemler }); return json(res, 400, { hata: s.hata, kod: 'kupon' }); }
         if (!s.hata) {
           indirim = s.indirim; kargoBedava = s.ucretsizKargo;
-          kuponBilgi = { kod: kp.kod, indirim: indirim };
+          kuponBilgi = { kod: kp.kod, indirim: indirim }; kuponTekBasina = !!s.tekBasina;
+          if (kuponTekBasina) kuponBilgi.tekBasina = true;
           kp.kullanildi = (kp.kullanildi || 0) + 1;
           yaz('cms.json', cfg);
         }
@@ -2338,7 +2386,7 @@ const sunucu = http.createServer(async (req, res) => {
       // Üye indirimi (giriş yapmış üyeye sadakat seviyesi / özel indirim)
       let uyeIndirimTutar = 0, uyeIndirimOran = 0;
       const uyeB = uyeBul(req);
-      if (uyeB) {
+      if (uyeB && !kuponTekBasina) { // birleştirilemeyen kupon varsa üye indirimi uygulanmaz
         uyeIndirimOran = uyeOran(uyeB.u);
         if (uyeIndirimOran > 0) {
           uyeIndirimTutar = Math.round((araToplam - indirim) * uyeIndirimOran) / 100;

@@ -1664,6 +1664,11 @@ window.omMetaSatin = function (no, toplam, kalemler) {
 
     // Formlar: başarı yalnızca sunucu isteği gerçekten kabul ederse gösterilir.
     document.querySelectorAll('form[data-demo]').forEach(form => {
+      // Spam koruması: insanların görmediği tuzak alan + formun açılış zamanı
+      const acilis = Date.now();
+      if (form.querySelector('textarea') && !form.querySelector('[name=website]')) {
+        form.insertAdjacentHTML('beforeend', '<div aria-hidden="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>');
+      }
       let status = form.querySelector('.form-status');
       if (!status) {
         status = document.createElement('p');
@@ -1696,7 +1701,9 @@ window.omMetaSatin = function (no, toplam, kalemler) {
               ad: (form.querySelector('#name') || {}).value || '',
               eposta: eposta,
               konu: (form.querySelector('#topic') || {}).value || '',
-              mesaj: mesajAlani.value
+              mesaj: mesajAlani.value,
+              website: (form.querySelector('[name=website]') || {}).value || '',
+              sure: Date.now() - acilis
             };
           } else {
             endpoint = '/api/bulten';
