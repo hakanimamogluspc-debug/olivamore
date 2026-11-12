@@ -14,7 +14,7 @@ find /root/yedekler -name 'olivamore-*.tar.gz' -mtime +30 -delete
 ADET=$(ls /root/yedekler/olivamore-veri-*.tar.gz 2>/dev/null | wc -l)
 BOYUT=$(du -sh /root/yedekler 2>/dev/null | cut -f1)
 echo "{\"t\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"ad\":\"olivamore-veri-$T.tar.gz\",\"adet\":$ADET,\"boyut\":\"$BOYUT\"}" > /var/www/olivamore-data/yedek-durum.json
-chmod 644 /var/www/olivamore-data/yedek-durum.json
+chown www-data:www-data /var/www/olivamore-data/yedek-durum.json; chmod 640 /var/www/olivamore-data/yedek-durum.json; chmod 600 /root/yedekler/*.tar.gz
 EOF
 chmod +x /usr/local/bin/olivamore-yedek
 ( crontab -l 2>/dev/null | grep -v olivamore-yedek; echo "30 3 * * * /usr/local/bin/olivamore-yedek" ) | crontab -
