@@ -1045,6 +1045,7 @@ function segmentUyeleri(ad) {
   const doksanGun = Date.now() - 90 * 86400000;
   switch (ad) {
     case 'uyeler': return oku('uyeler.json', []).filter(u => epostaMi(u.eposta)).map(u => ({ eposta: u.eposta }));
+    case 'sifresiz': return oku('uyeler.json', []).filter(u => epostaMi(u.eposta) && u.sifreYok).map(u => ({ eposta: u.eposta })); // eski siteden gelip şifre belirlemeyenler
     case 'musteriler': return liste.map(m => ({ eposta: m.eposta }));
     case 'coklu': return liste.filter(m => m.adet >= 3).map(m => ({ eposta: m.eposta }));
     case 'tek': return liste.filter(m => m.adet === 1).map(m => ({ eposta: m.eposta }));
@@ -3371,7 +3372,7 @@ const sunucu = http.createServer(async (req, res) => {
 
     /* ---- Üye segmentleri: sayılar ---- */
     if (req.method === 'GET' && yol === '/api/admin/segmentler') {
-      const adlar = ['aboneler', 'uyeler', 'musteriler', 'coklu', 'tek', 'sessiz90', 'vip'];
+      const adlar = ['aboneler', 'uyeler', 'sifresiz', 'musteriler', 'coklu', 'tek', 'sessiz90', 'vip'];
       const sonuc = {};
       adlar.forEach(a => { sonuc[a] = segmentUyeleri(a).length; });
       return json(res, 200, sonuc);

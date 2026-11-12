@@ -600,6 +600,8 @@ document.addEventListener('DOMContentLoaded', function () {
     formGoster('unut');
   });
   document.querySelector('.hs-girise-don').addEventListener('click', function (e) { e.preventDefault(); formGoster('giris'); });
+  // E-postadaki bağlantı: /hesap?unuttum=1 → doğrudan "şifremi unuttum" formu açılır
+  (function () { var q = new URLSearchParams(location.search); if (q.has('unuttum') && !q.has('sifirla')) { document.getElementById('hs-unut-eposta').value = q.get('e') || ''; formGoster('unut'); } })();
   document.getElementById('hs-unut-form').addEventListener('submit', function (e) {
     e.preventDefault();
     var msj = document.getElementById('hs-unut-msj'), btn = this.querySelector('button[type=submit]');
