@@ -2879,6 +2879,59 @@ const sunucu = http.createServer(async (req, res) => {
       const y = await yurticiSoap('queryShipment', '<keys>' + xmlKacir(sp.kargoNo) + '</keys><keyType>0</keyType><addHistoricalData>true</addHistoricalData><onlyTracking>false</onlyTracking>', 'wsLanguage');
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end(String(y.govde || '').replace(/<wsPassword>[^<]*<\/wsPassword>/g, ''));
     }
+    /* Sipariş kalemlerini düzelt (adet / birim fiyat / ürün ekle-çıkar / kargo / indirim): stok farkı ve toplamlar yeniden hesaplanır */
+    if (req.method === 'POST' && yol === '/api/admin/siparis-kalem') {
+      const g = await govde(req, 1);
+      const liste = oku('siparisler.json', []);
+      const sp = liste.find(x => x.no === temiz(g.no, 30));
+      if (!sp) return json(res, 404, { hata: 'Sipariş bulunamadı.' });
+      if (sp.kaynak === 'wordpress') return json(res, 409, { hata: 'Eski site siparişi düzenlenemez.' });
+      if (['kargolandı', 'tamamlandı', 'iade', 'iptal'].indexOf(sp.durum) !== -1) return json(res, 409, { hata: 'Sipariş "' + sp.durum + '" durumunda; ürünler değiştirilemez.' });
+      if (sp.fatura && sp.fatura.durum === 'kesildi') return json(res, 409, { hata: 'Faturası kesilmiş sipariş değiştirilemez (önce faturayı iptal et).' });
+      if (sp.odeme === 'kart' && sp.odendi && !g.onayKart) return json(res, 409, { hata: 'Kartla ödenmiş siparişin tutarı değişirse fark Paratika panelinden iade edilmeli. Yine de değiştirmek için onayla.', kod: 'kart' });
+      if (!Array.isArray(g.kalemler) || !g.kalemler.length || g.kalemler.length > 50) return json(res, 400, { hata: 'En az bir ürün olmalı.' });
+      const cfg = oku('cms.json', {});
+      const yeni = [];
+      for (const k of g.kalemler) {
+        const adet = Math.min(999, Math.max(1, parseInt(k.adet, 10) || 1));
+        const fiyat = Math.max(0, Math.round((parseFloat(k.fiyat) || 0) * 100) / 100);
+        const eski = (sp.kalemler || [])[k.i];
+        if (eski && !k.pid) { yeni.push(Object.assign({}, eski, { adet: adet, fiyat: fiyat })); continue; }
+        const p = (cfg.products || []).find(x => x.id === k.pid);
+        if (!p) return json(res, 400, { hata: 'Ürün bulunamadı: ' + temiz(k.pid, 40) });
+        const birim = String(p.unitTR || '').replace(/^\s*\/\s*/, '').trim();
+        yeni.push({ ad: (p.nameTR || p.id) + (birim && String(p.nameTR || '').indexOf(birim) === -1 ? ' · ' + birim : ''), pid: p.id, kod: p.id, hacim: birim, adet: adet,
+          fiyat: k.fiyat === undefined || k.fiyat === '' ? Number(p.price) || 0 : fiyat, kdv: typeof p.kdv === 'number' ? p.kdv : 1, img: p.img || '' });
+      }
+      // Stok: eskiyi geri koy, yeniyi düş (yetersizse hiçbir şey değişmez)
+      const stokVar = sp.stokDusuldu !== false && !sp.stokIade;
+      if (stokVar) {
+        const cfg2 = oku('cms.json', {});
+        (sp.kalemler || []).forEach(k => { const p = urunBulKalem(cfg2, k); if (p && typeof p.stok === 'number') p.stok += k.adet; });
+        yaz('cms.json', cfg2);
+        const st = stokDus(yeni);
+        if (st.hata) {
+          const cfg3 = oku('cms.json', {});
+          (sp.kalemler || []).forEach(k => { const p = urunBulKalem(cfg3, k); if (p && typeof p.stok === 'number') p.stok -= k.adet; });
+          yaz('cms.json', cfg3);
+          return json(res, 400, { hata: st.hata });
+        }
+      }
+      const eskiToplam = sp.toplam;
+      sp.kalemler = yeni;
+      sp.araToplam = Math.round(yeni.reduce((t, k) => t + k.fiyat * k.adet, 0) * 100) / 100;
+      if (g.indirim !== undefined) sp.indirim = Math.min(sp.araToplam, Math.max(0, Math.round((parseFloat(g.indirim) || 0) * 100) / 100));
+      if (g.kargo !== undefined) sp.kargo = Math.max(0, Math.round((parseFloat(g.kargo) || 0) * 100) / 100);
+      const uyeInd = (sp.uyeIndirim && sp.uyeIndirim.tutar) || 0;
+      const indirimliAra = Math.max(0, Math.round((sp.araToplam - (sp.indirim || 0) - uyeInd) * 100) / 100);
+      const oran = sp.araToplam > 0 ? indirimliAra / sp.araToplam : 1;
+      sp.kdvToplam = Math.round(yeni.reduce((t, k) => t + k.fiyat * k.adet * oran * (k.kdv / (100 + k.kdv)), 0) * 100) / 100;
+      sp.toplam = Math.round((indirimliAra + (sp.kargo || 0)) * 100) / 100;
+      sp.gecmis = sp.gecmis || [];
+      sp.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'ürünler düzenlendi: ' + yeni.map(k => k.adet + '× ' + k.ad).join(', ') + ' · toplam ₺' + eskiToplam + ' → ₺' + sp.toplam + (sp.fatura && sp.fatura.durum === 'taslak' ? ' — Paraşüt taslağını yeniden oluştur' : '') });
+      yaz('siparisler.json', liste);
+      return json(res, 200, { tamam: true, toplam: sp.toplam, eskiToplam: eskiToplam });
+    }
     if (req.method === 'POST' && yol === '/api/admin/kargo-barkod') {
       const g = await govde(req, 0.05);
       try { const r = await kargoBarkodOlustur(temiz(g.no, 30), { zorla: g.zorla === true, koli: g.koli, kaynak: 'Panel' }); return json(res, r.kod, r.veri); }

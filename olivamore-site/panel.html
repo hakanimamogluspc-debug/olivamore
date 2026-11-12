@@ -2079,6 +2079,61 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   }
   ['f-kargoUcret', 'f-kargoEsik', 'f-kargoEsikAktif', 'f-kargoKampanya'].forEach(function (id) { var el = document.getElementById(id); if (el) { el.addEventListener('input', function () { kargoOnizle(); dirty(); }); el.addEventListener('change', function () { kargoOnizle(); dirty(); }); } });
 
+  /* ================== SİPARİŞ ÜRÜNLERİNİ DÜZENLE ================== */
+  document.getElementById('orders-list').addEventListener('click', function (e) {
+    var ac = e.target.closest('.od-kalem-duzenle');
+    if (ac) {
+      var no = ac.dataset.no, s = ORD_LISTE.find(function (x) { return x.no === no; }); if (!s) return;
+      var kutu = document.querySelector('.od-kalem-form[data-no="' + no + '"]');
+      if (kutu.style.display === 'block') { kutu.style.display = 'none'; return; }
+      var urunOps = (C.products || []).filter(function (p) { return p.type === 'product' || !p.type; }).map(function (p) { return '<option value="' + esc(p.id) + '" data-f="' + (Number(p.price) || 0) + '">' + esc(p.nameTR + (p.unitTR ? ' ' + p.unitTR : '')) + (p.visible === false ? ' (gizli)' : '') + '</option>'; }).join('');
+      var satir = function (k, i) {
+        return '<div class="okf-satir" data-i="' + (i === undefined ? '' : i) + '" style="display:grid;grid-template-columns:3fr 80px 120px 34px;gap:8px;margin-bottom:8px;align-items:center;">' +
+          (i === undefined ? '<select class="okf-urun"><option value="">— ürün seç —</option>' + urunOps + '</select>' : '<div style="font-size:.88rem;">' + esc(k.ad) + '</div>') +
+          '<input type="number" class="okf-adet" min="1" value="' + (k ? k.adet : 1) + '" title="Adet">' +
+          '<input type="number" class="okf-fiyat" min="0" step="0.01" value="' + (k ? k.fiyat : '') + '" title="Birim fiyat (KDV dahil)">' +
+          '<button type="button" class="btn btn-ghost btn-sm okf-sil" title="Kaldır">×</button></div>';
+      };
+      kutu.innerHTML = '<div style="border:1px solid var(--gold);padding:14px;margin-top:10px;background:#FBF8F1;">' +
+        '<div style="display:grid;grid-template-columns:3fr 80px 120px 34px;gap:8px;font-size:.72rem;color:var(--soft);margin-bottom:6px;"><span>Ürün</span><span>Adet</span><span>Birim ₺ (KDV dahil)</span><span></span></div>' +
+        '<div class="okf-liste">' + s.kalemler.map(satir).join('') + '</div>' +
+        '<button type="button" class="btn btn-outline btn-sm okf-ekle">+ Ürün ekle</button>' +
+        '<div class="grid2" style="margin-top:10px;"><div class="field" style="margin:0;"><label>Kargo ücreti (₺)</label><input type="number" class="okf-kargo" min="0" step="0.01" value="' + (s.kargo || 0) + '"></div>' +
+        '<div class="field" style="margin:0;"><label>İndirim (₺)</label><input type="number" class="okf-indirim" min="0" step="0.01" value="' + (s.indirim || 0) + '"></div></div>' +
+        '<div class="row-actions"><button type="button" class="btn btn-gold btn-sm okf-kaydet">Kaydet ve toplamı yeniden hesapla</button><span class="okf-msj" style="font-size:.85rem;"></span></div>' +
+        '<small style="color:var(--soft);">Stok farkı otomatik düzeltilir. Paraşüt\'te taslak fatura varsa kaydettikten sonra taslağı yeniden oluştur.</small></div>';
+      kutu.style.display = 'block';
+      kutu._satir = satir;
+      return;
+    }
+    var kutu2 = e.target.closest('.od-kalem-form'); if (!kutu2) return;
+    if (e.target.classList.contains('okf-ekle')) { kutu2.querySelector('.okf-liste').insertAdjacentHTML('beforeend', kutu2._satir(null)); return; }
+    if (e.target.classList.contains('okf-sil')) { e.target.closest('.okf-satir').remove(); return; }
+    if (e.target.classList.contains('okf-kaydet')) {
+      var no2 = kutu2.dataset.no, msj = kutu2.querySelector('.okf-msj');
+      var kal = [].map.call(kutu2.querySelectorAll('.okf-satir'), function (r) {
+        var sel = r.querySelector('.okf-urun');
+        return { i: r.dataset.i === '' ? undefined : +r.dataset.i, pid: sel ? sel.value : undefined, adet: +r.querySelector('.okf-adet').value || 1, fiyat: r.querySelector('.okf-fiyat').value };
+      }).filter(function (k) { return k.i !== undefined || k.pid; });
+      if (!kal.length) { msj.textContent = 'En az bir ürün olmalı.'; return; }
+      var gonder = function (onay) {
+        fetch('/api/admin/siparis-kalem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no2, kalemler: kal, kargo: kutu2.querySelector('.okf-kargo').value, indirim: kutu2.querySelector('.okf-indirim').value, onayKart: !!onay }) })
+          .then(function (r) { return r.json(); }).then(function (c) {
+            if (c.kod === 'kart' && !onay) { if (confirm(c.hata)) gonder(true); return; }
+            if (!c.tamam) { msj.style.color = '#b04a3a'; msj.textContent = '⚠ ' + (c.hata || 'Kaydedilemedi'); return; }
+            msj.style.color = '#2f7a4a'; msj.textContent = '✓ Kaydedildi · ' + tl(c.eskiToplam) + ' → ' + tl(c.toplam);
+            setTimeout(function () { ORD_ACIK = no2; renderOrders(); }, 900);
+          }).catch(function () { msj.textContent = '⚠ Sunucuya ulaşılamadı'; });
+      };
+      gonder(false);
+    }
+  });
+  document.getElementById('orders-list').addEventListener('change', function (e) {
+    if (!e.target.classList.contains('okf-urun')) return;
+    var op = e.target.selectedOptions[0], fi = e.target.closest('.okf-satir').querySelector('.okf-fiyat');
+    if (op && op.dataset.f && !fi.value) fi.value = op.dataset.f;
+  });
+
   /* ================== MANUEL SİPARİŞ ================== */
   (function () {
     var panelEl = document.getElementById('ms-panel'); if (!panelEl) return;
@@ -2403,7 +2458,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         return '<tr><td>' + (k.img ? '<img src="' + esc(k.img) + '" alt="">' : '') + '<div><b>' + esc(k.ad) + '</b>' +
           '<small>' + [k.kod ? 'Kod: ' + esc(k.kod) : '', typeof k.kdv === 'number' ? 'KDV %' + k.kdv + ' dahil' : '', k.paket === 'damak10' ? 'Damak Kutusu %10' : ''].filter(Boolean).join(' · ') + '</small></div></td>' +
           '<td class="s">' + k.adet + '</td><td class="s">' + tl(k.fiyat) + '</td><td class="s"><b>' + tl(k.fiyat * k.adet) + '</b></td></tr>';
-      }).join('') + '</tbody></table>';
+      }).join('') + '</tbody></table>' +
+      (['kargolandı', 'tamamlandı', 'iade', 'iptal'].indexOf(s.durum) === -1 && s.kaynak !== 'wordpress' && !(s.fatura && s.fatura.durum === 'kesildi') ? '<button type="button" class="btn btn-ghost btn-sm od-kalem-duzenle" data-no="' + esc(s.no) + '" style="margin-top:8px;">✎ Ürünleri / adetleri düzenle</button><div class="od-kalem-form" data-no="' + esc(s.no) + '" style="display:none;"></div>' : '');
     var ozet = '<div class="od-ozet">' +
       '<div><span>Ara toplam</span>' + tl(s.araToplam) + '</div>' +
       (s.indirim ? '<div class="ind"><span>Kupon' + (s.kupon && s.kupon.kod ? ' (' + esc(s.kupon.kod) + ')' : '') + '</span>-' + tl(s.indirim) + '</div>' : '') +
