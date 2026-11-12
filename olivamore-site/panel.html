@@ -636,18 +636,21 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           <h2>Standart e-posta şablonu</h2>
           <div class="desc">Sipariş, kargo, havale, şifre, kampanya ve otomasyon e-postalarının hepsi bu çerçeveyle gider. Değişiklik "Kaydet ve Yayınla"dan sonra geçerli olur.</div>
           <div class="grid3">
-            <div class="field"><label>Üst bant rengi</label><input type="color" id="es-bant"></div>
+            <div class="field"><label>Alt şerit rengi</label><input type="color" id="es-bant"></div>
             <div class="field"><label>Arka plan rengi</label><input type="color" id="es-zemin"></div>
-            <div class="field"><label>Vurgu / link rengi</label><input type="color" id="es-vurgu"></div>
+            <div class="field"><label>Başlık / slogan / link rengi</label><input type="color" id="es-vurgu"></div>
           </div>
-          <div class="field"><label>Logo (https ile başlayan görsel adresi; Görseller kütüphanesinden kopyalayabilirsin)</label><input type="text" id="es-logo"></div>
+          <div class="grid2">
+            <div class="field"><label>Logo (beyaz zemine uygun; https ile başlayan adres)</label><input type="text" id="es-logo"></div>
+            <div class="field"><label>Hero görseli (680 px genişlik için; boş = gösterme · İngilizce e-postalarda gösterilmez)</label><input type="text" id="es-hero"></div>
+          </div>
           <div class="grid2">
             <div class="field"><label>Alt slogan (boş = gösterme)</label><input type="text" id="es-slogan" maxlength="120"></div>
             <div class="field"><label>Alt bilgi satırı (boş = gösterme)</label><input type="text" id="es-alt" maxlength="160"></div>
           </div>
           <label class="chk"><input type="checkbox" id="es-baslik"> E-posta konusunu metnin üstünde başlık olarak göster</label>
           <div class="row-actions"><button type="button" class="btn btn-ghost btn-sm" id="es-varsayilan">Varsayılana dön</button><button type="button" class="btn btn-outline btn-sm" id="es-onizle">Önizlemeyi yenile</button></div>
-          <iframe id="es-cerceve" title="E-posta önizleme" style="width:100%;height:560px;border:1px solid var(--line);background:#fff;margin-top:10px;"></iframe>
+          <iframe id="es-cerceve" title="E-posta önizleme" style="width:100%;height:900px;border:1px solid var(--line);background:#fff;margin-top:10px;"></iframe>
         </div>
         <div class="panel">
           <h2>Hazır metin şablonları</h2>
@@ -2163,12 +2166,14 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   });
 
   /* ================== E-POSTA ŞABLONU + HAZIR METİNLER ================== */
-  var ES_VARS = { bantRenk: '#000000', zeminRenk: '#F7F6F3', vurguRenk: '#806A36', logo: 'https://olivamore.com/assets/img/logo-eposta.png', slogan: 'Her şişe, tek bir hasadın izini taşır.', altSatir: 'olivamore.com · info@olivamore.com', baslikGoster: true };
-  function esAl() { return { bantRenk: document.getElementById('es-bant').value, zeminRenk: document.getElementById('es-zemin').value, vurguRenk: document.getElementById('es-vurgu').value, logo: document.getElementById('es-logo').value.trim(), slogan: document.getElementById('es-slogan').value.trim(), altSatir: document.getElementById('es-alt').value.trim(), baslikGoster: document.getElementById('es-baslik').checked }; }
+  var ES_VARS = { surum: 2, bantRenk: '#C2A052', zeminRenk: '#F5F4F1', vurguRenk: '#C2A052', logo: 'https://olivamore.com/assets/img/eposta/logo.png', hero: 'https://olivamore.com/assets/img/eposta/hero.jpg', slogan: 'Her şişe, tek bir hasadın izini taşır.', altSatir: 'olivamore.com', baslikGoster: true };
+  /* Sürüm 1 kayıtlarının eski varsayılanları (siyah bant, beyaz logo) yeni tasarıma taşınır — sunucudaki epostaSablonAl ile aynı kural */
+  function esGoc(k) { k = Object.assign({}, k || {}); if (!k.surum) { if (/logo-eposta\.png/.test(k.logo || '')) delete k.logo; if (/^#000000$/i.test(k.bantRenk || '')) delete k.bantRenk; if (/^#806A36$/i.test(k.vurguRenk || '')) delete k.vurguRenk; if (/^#F7F6F3$/i.test(k.zeminRenk || '')) delete k.zeminRenk; if (k.altSatir === 'olivamore.com · info@olivamore.com') delete k.altSatir; } return k; }
+  function esAl() { return { surum: 2, hero: document.getElementById('es-hero').value.trim(), bantRenk: document.getElementById('es-bant').value, zeminRenk: document.getElementById('es-zemin').value, vurguRenk: document.getElementById('es-vurgu').value, logo: document.getElementById('es-logo').value.trim(), slogan: document.getElementById('es-slogan').value.trim(), altSatir: document.getElementById('es-alt').value.trim(), baslikGoster: document.getElementById('es-baslik').checked }; }
   function esDoldur() {
-    var k = Object.assign({}, ES_VARS, C.epostaSablon || {});
+    var k = Object.assign({}, ES_VARS, esGoc(C.epostaSablon));
     document.getElementById('es-bant').value = k.bantRenk; document.getElementById('es-zemin').value = k.zeminRenk; document.getElementById('es-vurgu').value = k.vurguRenk;
-    document.getElementById('es-logo').value = k.logo; document.getElementById('es-slogan').value = k.slogan; document.getElementById('es-alt').value = k.altSatir;
+    document.getElementById('es-logo').value = k.logo; document.getElementById('es-hero').value = k.hero || ''; document.getElementById('es-slogan').value = k.slogan; document.getElementById('es-alt').value = k.altSatir;
     document.getElementById('es-baslik').checked = k.baslikGoster !== false;
     esListe(); mkSablonSecenek(); esOnizle();
   }
@@ -2177,9 +2182,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       .then(function (r) { return r.text(); }).then(function (h) { cerceve.srcdoc = h; }).catch(function () {});
   }
   var esZ = null;
-  function esOnizle() { clearTimeout(esZ); esZ = setTimeout(function () { onizleHtml('Yeni hasat zeytinyağlarımız geldi', 'Merhaba,\n\nEkim hasadının ilk şişeleri hazır. Siparişin için: https://olivamore.com/koleksiyon\n\nAfiyet olsun,\nOlivamore\n—\nBu e-postayı bülten aboneliğin nedeniyle aldın. Listeden çık: https://olivamore.com', esAl(), document.getElementById('es-cerceve')); }, 300); }
+  function esOnizle() { clearTimeout(esZ); esZ = setTimeout(function () { onizleHtml('Yeni hasat zeytinyağlarımız geldi', 'Merhaba Ayşe,\n\nEkim hasadının ilk şişeleri hazır. Siparişin için: https://olivamore.com/koleksiyon\n\nAfiyet olsun,\nOlivamore\n—\nBu e-postayı Olivamore bültenine kayıtlı olduğunuz için aldınız.\nListeden çıkmak için: https://olivamore.com/api/bulten-cik?e=ornek', esAl(), document.getElementById('es-cerceve')); }, 300); }
   function esKaydetC() { C.epostaSablon = esAl(); dirty(); esOnizle(); }
-  ['es-bant', 'es-zemin', 'es-vurgu', 'es-logo', 'es-slogan', 'es-alt', 'es-baslik'].forEach(function (id) { var el = document.getElementById(id); if (el) { el.addEventListener('input', esKaydetC); el.addEventListener('change', esKaydetC); } });
+  ['es-bant', 'es-zemin', 'es-vurgu', 'es-logo', 'es-hero', 'es-slogan', 'es-alt', 'es-baslik'].forEach(function (id) { var el = document.getElementById(id); if (el) { el.addEventListener('input', esKaydetC); el.addEventListener('change', esKaydetC); } });
   document.getElementById('es-varsayilan').addEventListener('click', function () { if (!confirm('Şablon varsayılan görünüme dönsün mü?')) return; C.epostaSablon = Object.assign({}, ES_VARS); esDoldur(); dirty(); });
   document.getElementById('es-onizle').addEventListener('click', esOnizle);
   // Hazır metinler

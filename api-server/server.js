@@ -3520,43 +3520,90 @@ function epostaBildir(konu, metin) {
 /* Markalı HTML e-posta şablonu: düz metni şık bir zarfa koyar.
    Satır sonları korunur, URL'ler tıklanabilir olur, son "—" sonrası dipnot sayılır. */
 /* Standart e-posta şablonu: panel > Pazarlama > E-posta Şablonu (cms.epostaSablon) */
-const EPOSTA_SABLON_VARSAYILAN = { bantRenk: '#000000', zeminRenk: '#F7F6F3', vurguRenk: '#806A36', logo: 'https://olivamore.de/assets/img/logo-eposta.png',
-  slogan: 'Her şişe, tek bir hasadın izini taşır.', altSatir: 'olivamore.com · info@olivamore.com', baslikGoster: true };
+/* Sürüm 2 (Kasım 2026): beyaz zeminde logo + Ayvalık hero görseli (rozet ve şişe görselin içinde) + altın alt şerit */
+const EPOSTA_SABLON_VARSAYILAN = { surum: 2, bantRenk: '#C2A052', zeminRenk: '#F5F4F1', vurguRenk: '#C2A052',
+  logo: 'https://olivamore.com/assets/img/eposta/logo.png', hero: 'https://olivamore.com/assets/img/eposta/hero.jpg',
+  heroAlt: 'Ayvalık’ın Saf Lezzetleri — Coğrafi işaretli, ödüllü Olivamore Ayvalık Erken Hasat',
+  slogan: 'Her şişe, tek bir hasadın izini taşır.', altSatir: 'olivamore.com', baslikGoster: true };
 function epostaSablonAl(ozel) {
-  const k = Object.assign({}, EPOSTA_SABLON_VARSAYILAN, (oku('cms.json', {}).epostaSablon) || {}, ozel || {});
+  const kayit = Object.assign({}, (oku('cms.json', {}).epostaSablon) || {});
+  // Eski (sürüm 1) kayıtların siyah bant / beyaz logo / koyu altın değerleri yeni tasarıma taşınır
+  if (!kayit.surum) {
+    if (/logo-eposta\.png/.test(kayit.logo || '')) delete kayit.logo;
+    if (/^#000000$/i.test(kayit.bantRenk || '')) delete kayit.bantRenk;
+    if (/^#806A36$/i.test(kayit.vurguRenk || '')) delete kayit.vurguRenk;
+    if (/^#F7F6F3$/i.test(kayit.zeminRenk || '')) delete kayit.zeminRenk;
+    if ((kayit.altSatir || '') === 'olivamore.com · info@olivamore.com') delete kayit.altSatir;
+  }
+  const k = Object.assign({}, EPOSTA_SABLON_VARSAYILAN, kayit, ozel || {});
   const renk = v => /^#[0-9a-fA-F]{3,8}$/.test(v || '') ? v : null;
   k.bantRenk = renk(k.bantRenk) || EPOSTA_SABLON_VARSAYILAN.bantRenk; k.zeminRenk = renk(k.zeminRenk) || EPOSTA_SABLON_VARSAYILAN.zeminRenk; k.vurguRenk = renk(k.vurguRenk) || EPOSTA_SABLON_VARSAYILAN.vurguRenk;
   if (!/^https:\/\//.test(k.logo || '')) k.logo = EPOSTA_SABLON_VARSAYILAN.logo;
+  if (k.hero && !/^https:\/\//.test(k.hero)) k.hero = EPOSTA_SABLON_VARSAYILAN.hero;
   return k;
 }
 function epostaHtmlYap(konu, metin, ozelSablon) {
   const S = epostaSablonAl(ozelSablon);
-  const kacir = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const kacir = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const linkle = s => s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:' + S.vurguRenk + ';">$1</a>');
   // Gövde / dipnot ayrımı (çıkış linki vb. "—" ile ayrılıyor)
   const parcalar = String(metin).split(/\n—\n/);
-  const govdeHtml = linkle(kacir(parcalar[0])).replace(/\n/g, '<br>');
-  const dipnotHtml = parcalar[1] ? linkle(kacir(parcalar.slice(1).join('\n'))).replace(/\n/g, '<br>') : '';
-  // Tek parça kart: tüm içerik tek çerçeveli tabloda, satırlar arası boşluk/kenarlık yok
-  return '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+  let govde = parcalar[0].replace(/\s+$/, '');
+  const dipnot = parcalar.slice(1).join('\n');
+  // İlk satır hitapsa ("Merhaba Ayşe," / "Sayın …" / "Hi …,") kalın hitap olarak ayrı gösterilir
+  let hitap = '';
+  const hm = govde.match(/^\s*((?:Merhaba|Sayın|Selam|Değerli|Hi|Hello|Dear)\b[^\n]{0,80})\n+/i);
+  if (hm) { hitap = hm[1].trim(); govde = govde.slice(hm[0].length); }
+  const ingilizce = /^(Hi|Hello|Dear)\b/i.test(hitap) || /^(Hi|Hello|Dear)\b/i.test(govde);
+  // Kapanış: metin zaten "… Olivamore" ile bitmiyorsa standart imza eklenir
+  if (!/Olivamore\s*$/i.test(govde)) govde += ingilizce ? '\n\nKind regards,\nOlivamore' : '\n\nSaygılarımızla,\nOlivamore';
+  const govdeHtml = linkle(kacir(govde)).replace(/\n/g, '<br>');
+  // Dipnot: bülten/otomasyon çıkış linki → kartın altında "Mail listesinden çıkmak için lütfen tıklayınız."
+  let dipnotHtml = '';
+  if (dipnot) {
+    const cik = dipnot.match(/https?:\/\/\S*\/api\/bulten-cik\S*/);
+    if (cik) {
+      const ilk = dipnot.split('\n')[0].trim();
+      dipnotHtml = (ilk && ilk.indexOf('http') < 0 ? kacir(ilk) + '<br>' : '') +
+        (ingilizce ? 'To unsubscribe, <a href="' + kacir(cik[0]) + '" style="color:#555555;text-decoration:underline;">please click here.</a>'
+          : 'Mail listesinden çıkmak için <a href="' + kacir(cik[0]) + '" style="color:#555555;text-decoration:underline;">lütfen tıklayınız.</a>');
+    } else dipnotHtml = linkle(kacir(dipnot)).replace(/\n/g, '<br>');
+  }
+  const onYazi = kacir(govde.replace(/\s+/g, ' ').slice(0, 110));
+  const hero = S.hero && !ingilizce; // hero görselindeki yazı Türkçe; İngilizce e-postalarda yalnız logo
+  const siteUrl = 'https://olivamore.com/';
+  return '<!DOCTYPE html><html lang="' + (ingilizce ? 'en' : 'tr') + '"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting"><style>@media (max-width:520px){.om-g{padding:22px 22px 30px!important}.om-a{padding:0 22px 20px!important}}</style><title>' + kacir(konu) + '</title></head>' +
     '<body style="margin:0;padding:0;background-color:' + S.zeminRenk + ';">' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">' + onYazi + '</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:' + S.zeminRenk + ';"><tr><td align="center" style="padding:28px 12px;">' +
-    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#ffffff;border:1px solid #ECEAE6;border-radius:14px;overflow:hidden;border-collapse:separate;">' +
-    // Başlık bandı
-    '<tr><td style="background-color:' + S.bantRenk + ';padding:28px 20px;text-align:center;border-radius:13px 13px 0 0;">' +
-    '<img src="' + kacir(S.logo) + '" alt="OLIVAMORE" width="180" style="width:180px;height:auto;border:0;display:inline-block;">' +
-    '</td></tr>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:680px;background-color:#ffffff;border-radius:12px;overflow:hidden;">' +
+    // Logo (beyaz zemin)
+    '<tr><td align="center" style="padding:10px 30px 10px;background-color:#ffffff;"><a href="' + siteUrl + '" target="_blank">' +
+    '<img src="' + kacir(S.logo) + '" width="280" alt="Olivamore" style="display:block;width:280px;max-width:85%;height:auto;border:0;"></a></td></tr>' +
+    // Hero (rozetler ve şişe görselin içinde)
+    (hero ? '<tr><td style="padding:0;line-height:0;font-size:0;"><a href="' + siteUrl + '" target="_blank"><img src="' + kacir(S.hero) + '" width="680" alt="' + kacir(S.heroAlt || '') + '" style="display:block;width:100%;max-width:680px;height:auto;border:0;"></a></td></tr>' : '') +
     // Gövde
-    '<tr><td style="padding:32px 34px 24px 34px;">' +
-    (S.baslikGoster !== false ? '<div style="font-family:Georgia,serif;font-size:20px;color:#1E1C19;margin-bottom:16px;">' + kacir(konu) + '</div>' : '') +
-    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4A463F;">' + govdeHtml + '</div>' +
+    '<tr><td class="om-g" style="padding:' + (hero ? '28px' : '20px') + ' 48px 42px;font-family:Arial,Helvetica,sans-serif;color:#24231f;">' +
+    (hitap ? '<p style="margin:0 0 ' + (S.baslikGoster !== false ? '28px' : '16px') + ';font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5;font-weight:bold;color:#24231f;">' + kacir(hitap) + '</p>' : '') +
+    (S.baslikGoster !== false ? '<p style="margin:0 0 14px;font-family:Georgia,serif;font-size:26px;line-height:1.35;color:' + S.vurguRenk + ';">' + kacir(konu) + '</p>' : '') +
+    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.7;color:#292929;">' + govdeHtml + '</div>' +
     '</td></tr>' +
-    // Alt bölüm (aynı kartın içinde, ince ayraçla)
-    '<tr><td style="padding:18px 34px 22px 34px;text-align:center;border-top:1px dashed #ECEAE6;">' +
-    (S.slogan ? '<div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:' + S.vurguRenk + ';margin-bottom:8px;">&ldquo;' + kacir(S.slogan) + '&rdquo;</div>' : '') +
-    (S.altSatir ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8377;">' + linkle(kacir(S.altSatir)) + '</div>' : '') +
-    (dipnotHtml ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0aa9e;margin-top:10px;line-height:1.6;">' + dipnotHtml + '</div>' : '') +
-    '</td></tr></table></td></tr></table></body></html>';
+    // Noktalı ayraç + slogan + site
+    '<tr><td class="om-a" style="padding:0 48px 24px;"><div style="border-top:1px dotted #777777;height:1px;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>' +
+    '<tr><td align="center" style="padding:0 20px 24px;">' +
+    (S.slogan ? '<p style="margin:0 0 8px;font-family:Georgia,serif;font-size:21px;line-height:1.4;color:' + S.vurguRenk + ';">&ldquo;' + kacir(S.slogan) + '&rdquo;</p>' : '') +
+    (S.altSatir ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#222222;">' + String(S.altSatir).split(/\s*·\s*/).map(p => {
+      const a = 'style="color:#222222;text-decoration:none;"';
+      if (/^[\w.+-]+@[\w-]+\.[\w.]+$/.test(p)) return '<a href="mailto:' + kacir(p) + '" ' + a + '>' + kacir(p) + '</a>';
+      if (/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(p)) return '<a href="' + kacir(/^https?:/.test(p) ? p : 'https://' + p) + '" target="_blank" ' + a + '>' + kacir(p.replace(/^https?:\/\//, '')) + '</a>';
+      return kacir(p);
+    }).join(' &middot; ') + '</div>' : '') +
+    '</td></tr>' +
+    // Alt şerit
+    '<tr><td style="height:8px;background-color:' + S.bantRenk + ';font-size:1px;line-height:1px;">&nbsp;</td></tr>' +
+    '</table>' +
+    (dipnotHtml ? '<p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#777777;text-align:center;max-width:680px;">' + dipnotHtml + '</p>' : '') +
+    '</td></tr></table></body></html>';
 }
 
 // Herhangi bir alıcıya e-posta — Resend (öncelikli) veya Brevo (yedek)
