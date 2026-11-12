@@ -51,6 +51,7 @@
         <button class="chip" id="hediyelik" data-role="hediye">Sets</button>
         <button class="chip" data-role="all">All</button>
       </div>
+      <label class="kol-ara"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input type="search" id="kol-ara" placeholder="Search products…" aria-label="Search products" autocomplete="off"><button type="button" id="kol-ara-sil" aria-label="Clear" hidden>&times;</button></label>
       <div class="sort">
         <select aria-label="Sort">
           <option>Featured</option>
@@ -62,6 +63,7 @@
     </div>
 
     <p class="role-note" id="role-note"></p>
+    <p class="kol-ara-bilgi" id="kol-ara-bilgi" hidden></p>
     <div class="eksi-empty" id="kat-bos" style="display:none;"><b>No products in this category yet; coming soon.</b></div>
     <div class="eksi-empty" id="zeytin-empty">
       <b>Our naturally fermented olives are coming soon</b>
@@ -154,10 +156,24 @@
         chip.classList.toggle('on', selected);
         chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
+      var aranan = kelimeler();
+      document.querySelectorAll('.filters .chip').forEach(function (chip) { if (aranan.length) chip.classList.remove('on'); });
+      var bulunan = 0;
       document.querySelectorAll('.prod-grid .card').forEach(function (card) {
-        var r = card.dataset.role;
-        card.style.display = (role === 'all' || r === role || (role === 'indirim' && card.dataset.indirim === '1')) ? '' : 'none';
+        var r = card.dataset.role, gor;
+        if (aranan.length) {
+          var m = norm(card.textContent + ' ' + Array.prototype.map.call(card.querySelectorAll('img[alt],a[aria-label]'), function (x) { return x.getAttribute('alt') || x.getAttribute('aria-label'); }).join(' '));
+          gor = aranan.every(function (k) { return m.indexOf(k) >= 0; });
+          if (gor) bulunan++;
+        } else gor = (role === 'all' || r === role || (role === 'indirim' && card.dataset.indirim === '1'));
+        card.style.display = gor ? '' : 'none';
       });
+      var bilgi = document.getElementById('kol-ara-bilgi');
+      if (bilgi) {
+        bilgi.hidden = !aranan.length;
+        if (aranan.length) bilgi.textContent = bulunan ? bulunan + ' product' + (bulunan > 1 ? 's' : '') + ' found for “' + ARA.value.trim() + '”.' : 'No products found for “' + ARA.value.trim() + '”. Try a different word or browse the categories above.';
+      }
+      if (aranan.length) { if (note) note.textContent = ''; ['eksi-empty', 'zeytin-empty', 'kat-bos'].forEach(function (i) { var e = document.getElementById(i); if (e) e.style.display = 'none'; }); SECILI = role; return; }
       if (note) note.textContent = (window.OM_KAT_NOT && window.OM_KAT_NOT[role]) || NOTES[role] || NOTES.all;
       SECILI = role;
       var gorunenSay = 0;
@@ -170,9 +186,27 @@
       if (kb) kb.style.display = (bosMu && role !== 'eksi' && role !== 'zeytin') ? 'block' : 'none';
     }
     var SECILI = null; // kullanıcı seçene kadar ilk kategori (Erken Hasat)
+    var ARA = document.getElementById('kol-ara'), ARA_SIL = document.getElementById('kol-ara-sil');
+    function norm(t) { return String(t || '').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i'); }
+    function kelimeler() { return ARA ? norm(ARA.value).split(/\s+/).filter(Boolean) : []; }
+    if (ARA) {
+      var ilkQ = new URLSearchParams(location.search).get('q');
+      if (ilkQ) ARA.value = ilkQ;
+      var aZ;
+      var araUygula = function () {
+        ARA_SIL.hidden = !ARA.value;
+        var u = new URL(location.href); if (ARA.value.trim()) u.searchParams.set('q', ARA.value.trim()); else u.searchParams.delete('q');
+        history.replaceState(null, '', u.pathname + u.search + u.hash);
+        apply(SECILI || ilkRol());
+      };
+      ARA.addEventListener('input', function () { clearTimeout(aZ); aZ = setTimeout(araUygula, 150); });
+      ARA_SIL.addEventListener('click', function () { ARA.value = ''; araUygula(); ARA.focus(); });
+      ARA_SIL.hidden = !ARA.value;
+    }
     function ilkRol() { var c = document.querySelector('.filters .chip:not([data-role="all"])'); return c ? c.dataset.role : 'all'; }
     document.querySelector('.filters').addEventListener('click', function (e) {
       var c = e.target.closest('.chip'); if (!c) return;
+      if (ARA && ARA.value) { ARA.value = ''; ARA_SIL.hidden = true; var u = new URL(location.href); u.searchParams.delete('q'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
       apply(c.dataset.role || 'all');
     });
     // CMS kartları/çipleri yüklendikten sonra site.js çağırır: seçili filtreyi (veya #çapa) yeniden uygula

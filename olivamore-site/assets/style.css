@@ -2602,3 +2602,39 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
   .fig-kart .fk-img,.prod-grid .fig-kart .fk-img{height:140px!important}
   .fig-kart h3{font-size:.8rem}
 }
+
+/* ---------- Ürün arama (header) ---------- */
+.om-ara{position:absolute;left:0;right:0;top:100%;background:#fff;border-top:1px solid rgba(30,28,25,.08);box-shadow:0 14px 30px rgba(30,28,25,.10);z-index:120;padding:14px 20px 16px}
+.om-ara[hidden]{display:none}
+.om-ara-ic{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px;border:1px solid #d9d4c8;border-radius:999px;padding:6px 8px 6px 16px;color:#6b665c;background:#fff}
+.om-ara-ic:focus-within{border-color:var(--gold)}
+.om-ara-ic input{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:16px;padding:6px 0;background:transparent;color:var(--ink)}
+.om-ara-ic input::-webkit-search-cancel-button{display:none}
+.om-ara-kapat{border:0;background:none;font-size:24px;line-height:1;color:#8a8377;cursor:pointer;width:36px;height:36px;border-radius:50%}
+.om-ara-kapat:hover{background:#f3f0e9;color:var(--ink)}
+.om-ara-sonuc{max-width:720px;margin:6px auto 0;max-height:min(62vh,520px);overflow:auto}
+.om-ara-oge{display:flex;align-items:center;gap:14px;padding:9px 10px;border-radius:10px;color:var(--ink);text-decoration:none}
+.om-ara-oge:hover,.om-ara-oge:focus{background:#f7f5f0}
+.om-ara-oge img{width:46px;height:56px;object-fit:cover;border-radius:6px;background:#f3f0e9;flex:0 0 auto}
+.om-ara-oge .oa-ad{flex:1;min-width:0;font-size:15px;line-height:1.3}
+.om-ara-oge .oa-ad small{display:block;font-size:12px;color:#8a8377;margin-top:2px}
+.om-ara-oge .oa-fiyat{font-weight:600;white-space:nowrap;font-size:15px}
+.om-ara-oge .oa-fiyat small{font-weight:400;color:#8a8377;font-size:12px}
+.om-ara-tum{display:block;text-align:center;padding:10px;margin-top:4px;color:var(--gold);font-size:14px;text-decoration:none;border-top:1px solid #efece5}
+.om-ara-yok{padding:14px 10px;color:#6b665c;font-size:14px}
+.om-ara-yok a{color:var(--gold)}
+@media (max-width:480px){
+  .nav-wrap.nav3 .nav-right .icon-btn,.nav-wrap.nav3 .nav-right .burger{min-width:38px}
+  .nav-wrap.nav3 .logo-link img.logo-yazi{width:min(104px,28vw)!important}
+  .om-ara{padding:10px 12px 12px}
+  .om-ara-oge{gap:10px;padding:8px 6px}
+}
+/* Koleksiyon: arama kutusu */
+.kol-ara{display:flex;align-items:center;gap:8px;border:1px solid #d9d4c8;border-radius:999px;padding:4px 6px 4px 14px;background:#fff;color:#6b665c;min-width:220px;flex:0 1 280px}
+.kol-ara:focus-within{border-color:var(--gold)}
+.kol-ara input{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:15px;padding:6px 0;background:transparent;color:var(--ink)}
+.kol-ara input::-webkit-search-cancel-button{display:none}
+.kol-ara button{border:0;background:none;font-size:20px;line-height:1;color:#8a8377;cursor:pointer;width:30px;height:30px;border-radius:50%}
+.kol-ara button[hidden]{display:none}
+.kol-ara-bilgi{margin:4px 0 14px;color:#6b665c;font-size:14px}
+@media (max-width:760px){.kol-ara{flex:1 1 100%;order:-1;margin-bottom:6px}}

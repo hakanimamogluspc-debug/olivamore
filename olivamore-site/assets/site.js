@@ -344,6 +344,9 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         <a class="top" data-nav="kalite" href="${P('kalite.html')}">${T.quality}</a>
         <a class="top" data-nav="hikayemiz" href="${P('hikayemiz.html')}">${T.story}</a>
         ${other ? `<a class="top lang-switch" href="${other}" aria-label="${EN ? 'Türkçe' : 'English'}">${EN ? 'TR' : 'EN'}</a>` : ''}
+        <button class="icon-btn" type="button" id="ara-btn" aria-label="${EN ? 'Search products' : 'Ürün ara'}" aria-expanded="false" aria-controls="om-ara">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        </button>
         <a class="icon-btn" aria-label="${EN ? 'My Account' : 'Hesabım'}" href="${P('hesap.html')}">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg>
         </a>
@@ -355,6 +358,14 @@ window.omMetaSatin = function (no, toplam, kalemler) {
           <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
         </button>
       </div>
+    </div>
+    <div class="om-ara" id="om-ara" hidden>
+      <form class="om-ara-ic" role="search" action="${P('koleksiyon.html')}" method="get">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        <input type="search" name="q" id="om-ara-q" autocomplete="off" placeholder="${EN ? 'Search olive oil, tin, gift set…' : 'Zeytinyağı, teneke, hediye seti ara…'}" aria-label="${EN ? 'Search products' : 'Ürün ara'}">
+        <button type="button" class="om-ara-kapat" aria-label="${EN ? 'Close' : 'Kapat'}">&times;</button>
+      </form>
+      <div class="om-ara-sonuc" id="om-ara-sonuc" role="listbox"></div>
     </div>
     <div class="mobile-nav" id="mobile-nav">
       <a href="${P('koleksiyon.html')}">${T.shop}</a>
@@ -1117,6 +1128,46 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     if (burger) burger.addEventListener('click', () => {
       document.getElementById('mobile-nav').classList.toggle('open');
     });
+
+    // ---- Ürün arama (header): panel ürünlerinden anlık sonuç, Enter → koleksiyon?q= ----
+    (function () {
+      const btn = document.getElementById('ara-btn'), kutu = document.getElementById('om-ara');
+      if (!btn || !kutu) return;
+      const q = document.getElementById('om-ara-q'), sonuc = document.getElementById('om-ara-sonuc');
+      const norm = t => String(t || '').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
+      const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const gorunur = p => p && p.visible !== false && p.visible !== 'false' && p.visible !== 'False' && p.type !== 'club';
+      function ara(t) {
+        const kel = norm(t).split(/\s+/).filter(Boolean);
+        if (!kel.length) return [];
+        return ((AC && AC.products) || []).filter(gorunur).map(p => {
+          const ad = norm(EN ? (p.nameEN || p.nameTR) : p.nameTR);
+          const diger = norm([p.nameTR, p.nameEN, p.noteTR, p.noteEN, p.badgeTR, p.badgeEN, p.unitTR, p.unitEN,
+            (ROLE_LABELS[p.role] || {}).tr, (ROLE_LABELS[p.role] || {}).en, p.stokKodu].join(' '));
+          if (!kel.every(k => ad.includes(k) || diger.includes(k))) return null;
+          let puan = 0; kel.forEach(k => { if (ad.startsWith(k)) puan += 3; else if (ad.includes(k)) puan += 2; else puan += 1; });
+          return { p, puan };
+        }).filter(Boolean).sort((a, b) => b.puan - a.puan).slice(0, 8).map(x => x.p);
+      }
+      function ciz() {
+        const t = q.value.trim();
+        if (t.length < 2) { sonuc.innerHTML = ''; return; }
+        const l = ara(t);
+        sonuc.innerHTML = l.length ? l.map(p => {
+          const ad = EN ? (p.nameEN || p.nameTR) : p.nameTR, birim = EN ? (p.unitEN || p.unitTR) : p.unitTR;
+          return `<a class="om-ara-oge" role="option" href="${esc(urunHref(p))}"><img src="${esc(p.img || '')}" alt="" loading="lazy"><span class="oa-ad">${esc(ad)}<small>${esc((ROLE_LABELS[p.role] || {})[EN ? 'en' : 'tr'] || '')}</small></span><span class="oa-fiyat">${p.price ? '₺' + fmtTL(p.price) : ''}${birim ? ' <small>' + esc(birim) + '</small>' : ''}</span></a>`;
+        }).join('') + `<a class="om-ara-tum" href="${P('koleksiyon.html')}?q=${encodeURIComponent(t)}">${EN ? 'See all results' : 'Tüm sonuçları gör'} →</a>`
+          : `<div class="om-ara-yok">${EN ? 'No products found for' : 'Şu arama için ürün bulunamadı:'} “${esc(t)}”. <a href="${P('koleksiyon.html')}?q=">${EN ? 'Browse all products' : 'Tüm ürünlere göz at'}</a></div>`;
+      }
+      function ac() { kutu.hidden = false; btn.setAttribute('aria-expanded', 'true'); document.getElementById('mobile-nav').classList.remove('open'); setTimeout(() => q.focus(), 30); ciz(); }
+      function kapat() { kutu.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+      btn.addEventListener('click', () => kutu.hidden ? ac() : kapat());
+      kutu.querySelector('.om-ara-kapat').addEventListener('click', kapat);
+      let z; q.addEventListener('input', () => { clearTimeout(z); z = setTimeout(ciz, 120); });
+      kutu.querySelector('form').addEventListener('submit', e => { if (!q.value.trim()) { e.preventDefault(); return; } const ilk = ara(q.value); if (ilk.length === 1) { e.preventDefault(); location.href = urunHref(ilk[0]); } });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !kutu.hidden) kapat(); if (e.key === '/' && kutu.hidden && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); ac(); } });
+      document.addEventListener('click', e => { if (!kutu.hidden && !kutu.contains(e.target) && !btn.contains(e.target)) kapat(); });
+    })();
 
     // ---- Belge / ödül görsellerini sayfa içinde büyüt (kalite sayfası ve data-buyut olan bağlantılar) ----
     (function () {
