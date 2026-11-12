@@ -2932,6 +2932,11 @@ const sunucu = http.createServer(async (req, res) => {
       yaz('siparisler.json', liste);
       return json(res, 200, { tamam: true, toplam: sp.toplam, eskiToplam: eskiToplam });
     }
+    if (req.method === 'POST' && yol === '/api/admin/eposta-onizle') {
+      const g = await govde(req, 1);
+      const html = epostaHtmlYap(temiz(g.konu, 200) || 'Konu', String(g.metin || 'Merhaba,\n\nBu bir önizlemedir.\n\nAfiyet olsun,\nOlivamore').slice(0, 20000), g.sablon || null);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return res.end(html);
+    }
     if (req.method === 'POST' && yol === '/api/admin/kargo-barkod') {
       const g = await govde(req, 0.05);
       try { const r = await kargoBarkodOlustur(temiz(g.no, 30), { zorla: g.zorla === true, koli: g.koli, kaynak: 'Panel' }); return json(res, r.kod, r.veri); }
@@ -3514,31 +3519,42 @@ function epostaBildir(konu, metin) {
 }
 /* Markalı HTML e-posta şablonu: düz metni şık bir zarfa koyar.
    Satır sonları korunur, URL'ler tıklanabilir olur, son "—" sonrası dipnot sayılır. */
-function epostaHtmlYap(konu, metin) {
+/* Standart e-posta şablonu: panel > Pazarlama > E-posta Şablonu (cms.epostaSablon) */
+const EPOSTA_SABLON_VARSAYILAN = { bantRenk: '#000000', zeminRenk: '#F7F6F3', vurguRenk: '#806A36', logo: 'https://olivamore.de/assets/img/logo-eposta.png',
+  slogan: 'Her şişe, tek bir hasadın izini taşır.', altSatir: 'olivamore.com · info@olivamore.com', baslikGoster: true };
+function epostaSablonAl(ozel) {
+  const k = Object.assign({}, EPOSTA_SABLON_VARSAYILAN, (oku('cms.json', {}).epostaSablon) || {}, ozel || {});
+  const renk = v => /^#[0-9a-fA-F]{3,8}$/.test(v || '') ? v : null;
+  k.bantRenk = renk(k.bantRenk) || EPOSTA_SABLON_VARSAYILAN.bantRenk; k.zeminRenk = renk(k.zeminRenk) || EPOSTA_SABLON_VARSAYILAN.zeminRenk; k.vurguRenk = renk(k.vurguRenk) || EPOSTA_SABLON_VARSAYILAN.vurguRenk;
+  if (!/^https:\/\//.test(k.logo || '')) k.logo = EPOSTA_SABLON_VARSAYILAN.logo;
+  return k;
+}
+function epostaHtmlYap(konu, metin, ozelSablon) {
+  const S = epostaSablonAl(ozelSablon);
   const kacir = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const linkle = s => s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#806A36;">$1</a>');
+  const linkle = s => s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:' + S.vurguRenk + ';">$1</a>');
   // Gövde / dipnot ayrımı (çıkış linki vb. "—" ile ayrılıyor)
   const parcalar = String(metin).split(/\n—\n/);
   const govdeHtml = linkle(kacir(parcalar[0])).replace(/\n/g, '<br>');
   const dipnotHtml = parcalar[1] ? linkle(kacir(parcalar.slice(1).join('\n'))).replace(/\n/g, '<br>') : '';
   // Tek parça kart: tüm içerik tek çerçeveli tabloda, satırlar arası boşluk/kenarlık yok
   return '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background-color:#F7F6F3;">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F6F3;"><tr><td align="center" style="padding:28px 12px;">' +
+    '<body style="margin:0;padding:0;background-color:' + S.zeminRenk + ';">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:' + S.zeminRenk + ';"><tr><td align="center" style="padding:28px 12px;">' +
     '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#ffffff;border:1px solid #ECEAE6;border-radius:14px;overflow:hidden;border-collapse:separate;">' +
     // Başlık bandı
-    '<tr><td style="background-color:#000000;padding:28px 20px;text-align:center;border-radius:13px 13px 0 0;">' +
-    '<img src="https://olivamore.de/assets/img/logo-eposta.png" alt="OLIVAMORE" width="180" style="width:180px;height:auto;border:0;display:inline-block;">' +
+    '<tr><td style="background-color:' + S.bantRenk + ';padding:28px 20px;text-align:center;border-radius:13px 13px 0 0;">' +
+    '<img src="' + kacir(S.logo) + '" alt="OLIVAMORE" width="180" style="width:180px;height:auto;border:0;display:inline-block;">' +
     '</td></tr>' +
     // Gövde
     '<tr><td style="padding:32px 34px 24px 34px;">' +
-    '<div style="font-family:Georgia,serif;font-size:20px;color:#1E1C19;margin-bottom:16px;">' + kacir(konu) + '</div>' +
+    (S.baslikGoster !== false ? '<div style="font-family:Georgia,serif;font-size:20px;color:#1E1C19;margin-bottom:16px;">' + kacir(konu) + '</div>' : '') +
     '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4A463F;">' + govdeHtml + '</div>' +
     '</td></tr>' +
     // Alt bölüm (aynı kartın içinde, ince ayraçla)
     '<tr><td style="padding:18px 34px 22px 34px;text-align:center;border-top:1px dashed #ECEAE6;">' +
-    '<div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:#806A36;margin-bottom:8px;">&ldquo;Her şişe, tek bir hasadın izini taşır.&rdquo;</div>' +
-    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8377;"><a href="https://olivamore.de" style="color:#8a8377;">olivamore.de</a></div>' +
+    (S.slogan ? '<div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:' + S.vurguRenk + ';margin-bottom:8px;">&ldquo;' + kacir(S.slogan) + '&rdquo;</div>' : '') +
+    (S.altSatir ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8377;">' + linkle(kacir(S.altSatir)) + '</div>' : '') +
     (dipnotHtml ? '<div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0aa9e;margin-top:10px;line-height:1.6;">' + dipnotHtml + '</div>' : '') +
     '</td></tr></table></td></tr></table></body></html>';
 }

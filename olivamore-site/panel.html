@@ -599,8 +599,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div id="mk-brevo-uyari"></div>
       <div class="stats" id="mk-stats"></div>
 
-      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(4,1fr);">
+      <div class="sg-bar" role="tablist" style="grid-template-columns:repeat(5,1fr);">
         <button type="button" class="sg-tab aktif" data-sg="kampanya"><b>Kampanya Gönder</b><span>Segmente e-posta kampanyası</span></button>
+        <button type="button" class="sg-tab" data-sg="sablon"><b>E-posta Şablonu</b><span>Tüm maillerin görünümü + hazır metinler</span></button>
         <button type="button" class="sg-tab" data-sg="otomasyon"><b>Otomasyonlar</b><span>Sepet hatırlatma, teşekkür, yorum isteği</span></button>
         <button type="button" class="sg-tab" data-sg="popup"><b>Hoş Geldin Pop-up'ı</b><span>E-posta toplama ve hoş geldin kuponu</span></button>
         <button type="button" class="sg-tab" data-sg="abone"><b>Aboneler ve Geçmiş</b><span>Bülten listesi · gönderilen kampanyalar</span></button>
@@ -619,6 +620,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
               <option value="vip">VIP (₺5.000+ harcama)</option>
             </select>
           </div>
+          <div class="row-actions" style="margin:0 0 10px;"><select id="mk-sablon-sec" style="max-width:280px;"><option value="">— Hazır şablondan yükle —</option></select><button type="button" class="btn btn-ghost btn-sm" id="mk-sablon-kaydet">Bu metni şablon olarak kaydet</button><button type="button" class="btn btn-ghost btn-sm" id="mk-onizle">Önizle</button></div>
           <div class="field"><label>Konu</label><input type="text" id="mk-konu" placeholder="Örn: Yeni hasat geldi — Club üyelerine %10"></div>
           <div class="field"><label>Metin</label><textarea id="mk-metin" rows="8" placeholder="Merhaba,&#10;&#10;Yeni hasat zeytinyağlarımız..."></textarea></div>
           <div class="row-actions">
@@ -628,6 +630,31 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
           </div>
         </div>
   
+      </div>
+      <div class="sg-pane" data-sg="sablon" hidden>
+        <div class="panel" style="margin-top:14px;">
+          <h2>Standart e-posta şablonu</h2>
+          <div class="desc">Sipariş, kargo, havale, şifre, kampanya ve otomasyon e-postalarının hepsi bu çerçeveyle gider. Değişiklik "Kaydet ve Yayınla"dan sonra geçerli olur.</div>
+          <div class="grid3">
+            <div class="field"><label>Üst bant rengi</label><input type="color" id="es-bant"></div>
+            <div class="field"><label>Arka plan rengi</label><input type="color" id="es-zemin"></div>
+            <div class="field"><label>Vurgu / link rengi</label><input type="color" id="es-vurgu"></div>
+          </div>
+          <div class="field"><label>Logo (https ile başlayan görsel adresi; Görseller kütüphanesinden kopyalayabilirsin)</label><input type="text" id="es-logo"></div>
+          <div class="grid2">
+            <div class="field"><label>Alt slogan (boş = gösterme)</label><input type="text" id="es-slogan" maxlength="120"></div>
+            <div class="field"><label>Alt bilgi satırı (boş = gösterme)</label><input type="text" id="es-alt" maxlength="160"></div>
+          </div>
+          <label class="chk"><input type="checkbox" id="es-baslik"> E-posta konusunu metnin üstünde başlık olarak göster</label>
+          <div class="row-actions"><button type="button" class="btn btn-ghost btn-sm" id="es-varsayilan">Varsayılana dön</button><button type="button" class="btn btn-outline btn-sm" id="es-onizle">Önizlemeyi yenile</button></div>
+          <iframe id="es-cerceve" title="E-posta önizleme" style="width:100%;height:560px;border:1px solid var(--line);background:#fff;margin-top:10px;"></iframe>
+        </div>
+        <div class="panel">
+          <h2>Hazır metin şablonları</h2>
+          <div class="desc">Kampanya Gönder ekranında tek tıkla yüklenen konu + metin şablonları (ör. yeni hasat, bayram, kargo gecikmesi). Kampanya ekranındaki "şablon olarak kaydet" de buraya ekler.</div>
+          <div id="es-liste"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="es-yeni">+ Yeni şablon</button>
+        </div>
       </div>
       <div class="sg-pane" data-sg="otomasyon" hidden>
         <div class="panel" style="margin-top:14px;">
@@ -758,6 +785,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <button type="button" class="sg-tab" data-sg="toplu"><b>Toplu Kod Üret</b><span>Tek kullanımlık kodlar</span></button>
       </div>
       <div class="sg-pane" data-sg="kuponlar">
+        <div class="row-actions" style="margin:0 0 12px;"><input type="search" id="kupon-ara" placeholder="Kupon kodu ara…" style="max-width:280px;"><span id="kupon-say" style="font-size:.85rem;color:var(--soft);"></span></div>
         <div id="coupons-list"></div>
         <button class="btn btn-outline" id="btn-add-coupon" style="margin-top:14px;">+ Yeni Kupon</button>
   
@@ -2134,6 +2162,69 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     if (op && op.dataset.f && !fi.value) fi.value = op.dataset.f;
   });
 
+  /* ================== E-POSTA ŞABLONU + HAZIR METİNLER ================== */
+  var ES_VARS = { bantRenk: '#000000', zeminRenk: '#F7F6F3', vurguRenk: '#806A36', logo: 'https://olivamore.com/assets/img/logo-eposta.png', slogan: 'Her şişe, tek bir hasadın izini taşır.', altSatir: 'olivamore.com · info@olivamore.com', baslikGoster: true };
+  function esAl() { return { bantRenk: document.getElementById('es-bant').value, zeminRenk: document.getElementById('es-zemin').value, vurguRenk: document.getElementById('es-vurgu').value, logo: document.getElementById('es-logo').value.trim(), slogan: document.getElementById('es-slogan').value.trim(), altSatir: document.getElementById('es-alt').value.trim(), baslikGoster: document.getElementById('es-baslik').checked }; }
+  function esDoldur() {
+    var k = Object.assign({}, ES_VARS, C.epostaSablon || {});
+    document.getElementById('es-bant').value = k.bantRenk; document.getElementById('es-zemin').value = k.zeminRenk; document.getElementById('es-vurgu').value = k.vurguRenk;
+    document.getElementById('es-logo').value = k.logo; document.getElementById('es-slogan').value = k.slogan; document.getElementById('es-alt').value = k.altSatir;
+    document.getElementById('es-baslik').checked = k.baslikGoster !== false;
+    esListe(); mkSablonSecenek(); esOnizle();
+  }
+  function onizleHtml(konu, metin, sablon, cerceve) {
+    fetch('/api/admin/eposta-onizle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ konu: konu, metin: metin, sablon: sablon }) })
+      .then(function (r) { return r.text(); }).then(function (h) { cerceve.srcdoc = h; }).catch(function () {});
+  }
+  var esZ = null;
+  function esOnizle() { clearTimeout(esZ); esZ = setTimeout(function () { onizleHtml('Yeni hasat zeytinyağlarımız geldi', 'Merhaba,\n\nEkim hasadının ilk şişeleri hazır. Siparişin için: https://olivamore.com/koleksiyon\n\nAfiyet olsun,\nOlivamore\n—\nBu e-postayı bülten aboneliğin nedeniyle aldın. Listeden çık: https://olivamore.com', esAl(), document.getElementById('es-cerceve')); }, 300); }
+  function esKaydetC() { C.epostaSablon = esAl(); dirty(); esOnizle(); }
+  ['es-bant', 'es-zemin', 'es-vurgu', 'es-logo', 'es-slogan', 'es-alt', 'es-baslik'].forEach(function (id) { var el = document.getElementById(id); if (el) { el.addEventListener('input', esKaydetC); el.addEventListener('change', esKaydetC); } });
+  document.getElementById('es-varsayilan').addEventListener('click', function () { if (!confirm('Şablon varsayılan görünüme dönsün mü?')) return; C.epostaSablon = Object.assign({}, ES_VARS); esDoldur(); dirty(); });
+  document.getElementById('es-onizle').addEventListener('click', esOnizle);
+  // Hazır metinler
+  function esListe() {
+    C.epostaSablonlari = C.epostaSablonlari || [];
+    document.getElementById('es-liste').innerHTML = C.epostaSablonlari.length ? C.epostaSablonlari.map(function (x, i) {
+      return '<details class="item es-item" data-i="' + i + '"' + (!x.ad ? ' open' : '') + '><summary style="cursor:pointer;"><b>' + esc(x.ad || 'Yeni şablon') + '</b> <span style="font-size:.82rem;color:var(--soft);">' + esc(x.konu || '') + '</span></summary>' +
+        '<div class="field" style="margin-top:10px;"><label>Şablon adı (yalnız panelde)</label><input type="text" class="es-ad" value="' + esc(x.ad || '') + '"></div>' +
+        '<div class="field"><label>Konu</label><input type="text" class="es-konu" value="' + esc(x.konu || '') + '"></div>' +
+        '<div class="field"><label>Metin</label><textarea class="es-metin" rows="7">' + esc(x.metin || '') + '</textarea></div>' +
+        '<div class="row-actions"><button type="button" class="btn btn-ghost btn-sm es-on">Önizle</button><button type="button" class="btn btn-danger btn-sm es-sil">Sil</button></div><iframe class="es-on-cerceve" style="display:none;width:100%;height:480px;border:1px solid var(--line);background:#fff;"></iframe></details>';
+    }).join('') : '<p style="color:var(--soft);font-size:.9rem;">Henüz hazır metin yok.</p>';
+  }
+  function esSync() { document.querySelectorAll('#es-liste .es-item').forEach(function (d) { var x = C.epostaSablonlari[+d.dataset.i]; if (!x) return; x.ad = d.querySelector('.es-ad').value.trim(); x.konu = d.querySelector('.es-konu').value; x.metin = d.querySelector('.es-metin').value; }); }
+  document.getElementById('es-liste').addEventListener('input', function () { esSync(); dirty(); mkSablonSecenek(); });
+  document.getElementById('es-liste').addEventListener('click', function (e) {
+    var d = e.target.closest('.es-item'); if (!d) return;
+    if (e.target.classList.contains('es-sil')) { if (!confirm('Şablon silinsin mi?')) return; esSync(); C.epostaSablonlari.splice(+d.dataset.i, 1); esListe(); mkSablonSecenek(); dirty(); }
+    if (e.target.classList.contains('es-on')) { var fr = d.querySelector('.es-on-cerceve'); fr.style.display = 'block'; onizleHtml(d.querySelector('.es-konu').value, d.querySelector('.es-metin').value, esAl(), fr); }
+  });
+  document.getElementById('es-yeni').addEventListener('click', function () { esSync(); C.epostaSablonlari = C.epostaSablonlari || []; C.epostaSablonlari.push({ ad: '', konu: '', metin: 'Merhaba,\n\n\n\nAfiyet olsun,\nOlivamore' }); esListe(); mkSablonSecenek(); dirty(); });
+  function mkSablonSecenek() {
+    var sel = document.getElementById('mk-sablon-sec'); if (!sel) return;
+    sel.innerHTML = '<option value="">— Hazır şablondan yükle —</option>' + (C.epostaSablonlari || []).map(function (x, i) { return '<option value="' + i + '">' + esc(x.ad || x.konu || ('Şablon ' + (i + 1))) + '</option>'; }).join('');
+  }
+  document.getElementById('mk-sablon-sec').addEventListener('change', function () {
+    var x = (C.epostaSablonlari || [])[+this.value]; if (this.value === '' || !x) return;
+    var k = document.getElementById('mk-konu'), m = document.getElementById('mk-metin');
+    if ((k.value || m.value) && !confirm('Mevcut konu ve metin şablonla değiştirilsin mi?')) { this.value = ''; return; }
+    k.value = x.konu || ''; m.value = x.metin || ''; this.value = '';
+  });
+  document.getElementById('mk-sablon-kaydet').addEventListener('click', function () {
+    var konu = document.getElementById('mk-konu').value.trim(), metin = document.getElementById('mk-metin').value;
+    if (!konu && !metin.trim()) { alert('Önce konu ve metin yaz.'); return; }
+    var ad = prompt('Şablon adı:', konu.slice(0, 40)); if (ad === null) return;
+    C.epostaSablonlari = C.epostaSablonlari || []; C.epostaSablonlari.push({ ad: ad.trim() || konu, konu: konu, metin: metin });
+    esListe(); mkSablonSecenek(); dirty(); alert('Şablon eklendi. Kalıcı olması için "Kaydet ve Yayınla"ya bas.');
+  });
+  document.getElementById('mk-onizle').addEventListener('click', function () {
+    var w = window.open('', '_blank'); if (!w) return;
+    fetch('/api/admin/eposta-onizle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ konu: document.getElementById('mk-konu').value, metin: document.getElementById('mk-metin').value, sablon: esAl() }) })
+      .then(function (r) { return r.text(); }).then(function (h) { w.document.open(); w.document.write(h); w.document.close(); });
+  });
+  document.querySelector('.sg-tab[data-sg="sablon"]').addEventListener('click', esDoldur);
+
   /* ================== MANUEL SİPARİŞ ================== */
   (function () {
     var panelEl = document.getElementById('ms-panel'); if (!panelEl) return;
@@ -3319,8 +3410,13 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var urunOpts = (C.products || []).filter(function (p) { return p.type === 'product'; }).map(function (p) {
       return '<option value="' + p.id + '"' + ((c.urunler || []).indexOf(p.id) !== -1 ? ' selected' : '') + '>' + p.nameTR + '</option>';
     }).join('');
-    return '<div class="item" data-idx="' + i + '" style="margin-bottom:16px;">' +
-      '<div class="grid3">' +
+    var bugun = new Date().toISOString().slice(0, 10), bitti = c.bitis && c.bitis < bugun;
+    var ozetY = (c.tip === 'tutar' ? '₺' + (c.deger || 0) : '%' + (c.deger || 0)) + (c.ucretsizKargo ? ' + ücretsiz kargo' : '') +
+      ' · kişi başı ' + ((c.kisiBasi !== undefined ? c.kisiBasi : 1) || '∞') + ' · ' + (c.kullanildi || 0) + ' kullanım' + (c.bitis ? ' · bitiş ' + c.bitis : '');
+    var rozet = c.aktif === false ? '<span class="od-rozet">Pasif</span>' : (bitti ? '<span class="od-rozet kirmizi">Süresi doldu</span>' : '<span class="od-rozet yesil">Aktif</span>');
+    return '<details class="item kupon-item" data-idx="' + i + '" data-kod="' + esc((c.kod || '').toLowerCase()) + '" style="margin-bottom:10px;"' + (!c.kod ? ' open' : '') + '>' +
+      '<summary style="cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0;"><b style="letter-spacing:.04em;">' + esc(c.kod || 'YENİ KUPON') + '</b>' + rozet + '<span style="font-size:.82rem;color:var(--soft);">' + esc(ozetY) + '</span></summary>' +
+      '<div class="grid3" style="margin-top:12px;">' +
       '<div class="field"><label>Kupon Kodu</label><input type="text" class="c-kod" value="' + (c.kod || '') + '" style="text-transform:uppercase;" placeholder="HOSGELDIN10"></div>' +
       '<div class="field"><label>Tip</label><select class="c-tip"><option value="yuzde"' + (c.tip !== 'tutar' ? ' selected' : '') + '>% İndirim</option><option value="tutar"' + (c.tip === 'tutar' ? ' selected' : '') + '>₺ Tutar İndirim</option></select></div>' +
       '<div class="field"><label>Değer</label><input type="number" class="c-deger" value="' + (c.deger || 10) + '" min="0"></div>' +
@@ -3337,18 +3433,26 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       '<div class="field c-rol-alan" style="' + (c.kapsam === 'rol' ? '' : 'display:none;') + '"><label>Geçerli Kategoriler</label><div>' + rolCb + '</div></div>' +
       '<div class="field c-urun-alan" style="' + (c.kapsam === 'urun' ? '' : 'display:none;') + '"><label>Geçerli Ürünler (Ctrl ile çoklu seç)</label><select class="c-urunler" multiple size="5" style="width:100%;">' + urunOpts + '</select></div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><span style="font-size:.8rem;color:#8a8377;">' + (c.kullanildi || 0) + ' kez kullanıldı</span><button type="button" class="btn btn-danger btn-sm c-sil">Kuponu Sil</button></div>' +
-      '</div>';
+      '</details>';
   }
   function renderCoupons() {
     var el = document.getElementById('coupons-list');
     if (!el) return;
     C.coupons = C.coupons || [];
     el.innerHTML = C.coupons.length ? C.coupons.map(couponItem).join('') : '<div class="note">Henüz kupon yok. "+ Yeni Kupon" ile ekle.</div>';
+    kuponFiltrele();
   }
+  function kuponFiltrele() {
+    var q = ((document.getElementById('kupon-ara') || {}).value || '').trim().toLocaleLowerCase('tr');
+    var n = 0, top = 0;
+    document.querySelectorAll('#coupons-list .kupon-item').forEach(function (d) { top++; var ok = !q || d.dataset.kod.indexOf(q) !== -1; d.style.display = ok ? '' : 'none'; if (ok) n++; if (q && ok && n <= 3) d.open = true; });
+    var say = document.getElementById('kupon-say'); if (say) say.textContent = q ? n + ' / ' + top + ' kupon' : top + ' kupon';
+  }
+  (function () { var a = document.getElementById('kupon-ara'); if (a) a.addEventListener('input', kuponFiltrele); })();
   function syncCouponsFromDOM() {
     var el = document.getElementById('coupons-list');
     if (!el || !C.coupons) return;
-    el.querySelectorAll('.item').forEach(function (d) {
+    el.querySelectorAll('.kupon-item').forEach(function (d) {
       var c = C.coupons[+d.dataset.idx]; if (!c) return;
       var g = function (cl) { var x = d.querySelector('.' + cl); return x ? x.value : ''; };
       c.kod = g('c-kod').toUpperCase().replace(/\s/g, '');
@@ -3367,7 +3471,7 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
   document.getElementById('btn-add-coupon').addEventListener('click', function () {
     syncCouponsFromDOM();
     C.coupons = C.coupons || [];
-    C.coupons.push({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kisiBasi: 1, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
+    C.coupons.unshift({ kod: '', tip: 'yuzde', deger: 10, min: 0, baslangic: '', bitis: '', limit: 0, kisiBasi: 1, kapsam: 'hepsi', roller: [], urunler: [], aktif: true, ucretsizKargo: false, kullanildi: 0 });
     renderCoupons(); dirty();
   });
   document.getElementById('coupons-list').addEventListener('click', function (e) {
