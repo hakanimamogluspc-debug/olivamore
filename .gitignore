@@ -22,3 +22,6 @@ ziXeuh1P
 wp-yedek/
 *.sql
 *.sql.gz
+
+# Reklam ekran görüntüleri (yerel)
+reklam-ekran-goruntuleri/

@@ -1,6 +1,14 @@
 /* ---------- Web analizi (birinci taraf; çerez yok, IP saklanmaz) ----------
    Ziyaretçi: tarayıcıda rastgele anonim kimlik. Oturum: 30 dk hareketsizlikte yenilenir.
    Olaylar: sayfa, urun_gor, sepete_ekle, odeme_basla, odeme_adim2, satin_al → /api/olay */
+/* Sunum / ekran görüntüsü modu (?sunum=1|menu|ara|sepet): çerez çubuğu ve açılır pencere gösterilmez,
+   istenen durum (açık menü, arama sonuçları, örnek sepet) hazırlanır. Reklam videosu ekran görüntüleri için. */
+window.OM_SUNUM = (function () { try { return new URLSearchParams(location.search).get('sunum') || ''; } catch (e) { return ''; } })();
+if (window.OM_SUNUM === 'sepet') { try { if (!JSON.parse(localStorage.getItem('om-cart') || '[]').length) localStorage.setItem('om-cart', JSON.stringify([
+  { id: 'ay500', kod: 'ay500', ad: 'Ayvalık Erken Hasat Naturel Sızma Zeytinyağı', hacim: '500 ml', fiyat: 675, adet: 2, img: 'assets/img/ayvalik-500.jpg', kdv: 1 },
+  { id: 'ces-mand', kod: 'ces-mand', ad: 'Bodrum Mandalinası Çeşnili Soğuk Sıkım Zeytinyağı', hacim: '250 ml', fiyat: 600, adet: 1, img: 'assets/img/cesnili-mandalina.jpg', kdv: 1 },
+  { id: 'zey-yesil', kod: 'zey-yesil', ad: 'Ayvalık Doğal Salamura Yeşil Zeytin', hacim: '500 g', fiyat: 260, adet: 2, img: 'assets/img/zeytin-yesil.jpg', kdv: 1 }])); } catch (e) { } }
+if (window.OM_SUNUM) document.documentElement.classList.add('om-sunum' + (window.OM_SUNUM === 'menu' ? ' om-sunum-menu' : ''));
 /* Çerez / ölçüm onayı: 'tum' = ölçüm + reklam (Meta Pixel), 'gerekli' = yalnız zorunlu */
 window.omRiza = function () { try { return localStorage.getItem('om-cookie-ok') === 'tum'; } catch (e) { return false; } };
 window.omCerez = function (ad) { var m = document.cookie.match(new RegExp('(?:^|; )' + ad + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; };
@@ -1119,6 +1127,8 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         if (window.omBoySenkron) window.omBoySenkron();
         urunOdakla();
         omPopupKur();
+        if (window.OM_SUNUM === 'ara' && window.omAraAc) window.omAraAc(new URLSearchParams(location.search).get('q') || 'teneke');
+        if (window.OM_SUNUM && location.hash.length > 1) setTimeout(() => { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -96); } }, 2500);
       })
       .catch(() => { try { applyAdminOverrides(); } catch (e) { console.error('[olivamore]', e); } statikAc(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); omPopupKur(); });
 
@@ -1182,6 +1192,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         }).join('') + `<a class="om-ara-tum" href="${P('koleksiyon.html')}?q=${encodeURIComponent(t)}">${EN ? 'See all results' : 'Tüm sonuçları gör'} →</a>`
           : `<div class="om-ara-yok">${EN ? 'No products found for' : 'Şu arama için ürün bulunamadı:'} “${esc(t)}”. <a href="${P('koleksiyon.html')}?q=">${EN ? 'Browse all products' : 'Tüm ürünlere göz at'}</a></div>`;
       }
+      window.omAraAc = function (t) { q.value = t || ''; ac(); };
       function ac() { kutu.hidden = false; btn.setAttribute('aria-expanded', 'true'); document.getElementById('mobile-nav').classList.remove('open'); setTimeout(() => q.focus(), 30); ciz(); }
       function kapat() { kutu.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
       btn.addEventListener('click', () => kutu.hidden ? ac() : kapat());
@@ -1560,7 +1571,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     // Hoş geldin popup'ı (lead toplama) — panel > Pazarlama'dan yönetilir
     window.omPopupKur = function () {
       const pp = (typeof AC === 'object' && AC && AC.popup) || {};
-      if (!pp.aktif || document.getElementById('om-popup')) return;
+      if (!pp.aktif || document.getElementById('om-popup') || window.OM_SUNUM) return;
       if (/sepet|panel/.test(location.pathname)) return; // ödeme akışını bölme
       try {
         if (localStorage.getItem('om-popup-abone')) return;
@@ -1668,7 +1679,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
 
     // çerez / ölçüm onayı (KVKK) — seçim yapılana kadar gösterilir
     const cerezSecim = localStorage.getItem('om-cookie-ok');
-    if (cerezSecim !== 'tum' && cerezSecim !== 'gerekli') {
+    if (cerezSecim !== 'tum' && cerezSecim !== 'gerekli' && !window.OM_SUNUM) {
       const cb = document.createElement('div');
       cb.className = 'cookie-bar show';
       cb.innerHTML = `<p>${T.cookieText} <a href="${P('cerez-politikasi.html')}" style="text-decoration:underline;">${EN ? 'Cookie Policy' : 'Çerez Politikası'}</a></p>` +

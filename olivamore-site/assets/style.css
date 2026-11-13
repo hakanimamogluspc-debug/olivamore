@@ -2638,3 +2638,8 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 .kol-ara button[hidden]{display:none}
 .kol-ara-bilgi{margin:4px 0 14px;color:#6b665c;font-size:14px}
 @media (max-width:760px){.kol-ara{flex:1 1 100%;order:-1;margin-bottom:6px}}
+
+/* Sunum modu (?sunum=menu): Alışveriş mega menüsü açık görünür — reklam ekran görüntüsü için */
+.om-sunum-menu .has-mega:first-child .mega{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.om-sunum-menu .nav-wrap.nav3 .has-mega:first-child .mega,.om-sunum-menu .has-mega:first-child .mega{transform:translateY(0)}
+.om-sunum .cookie-bar{display:none!important}
