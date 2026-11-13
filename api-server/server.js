@@ -90,6 +90,144 @@ function kuponKisiKullanim(kod, eposta) {
   return oku('siparisler.json', []).filter(s => s.kupon && kuponNorm(s.kupon.kod) === n && String((s.musteri || {}).eposta || '').toLowerCase() === e &&
     ['iptal', 'odeme-basarisiz'].indexOf(s.durum) === -1).length;
 }
+/* ================== İNDİRİM KAMPANYALARI (panel > Kuponlar > Kampanyalar · cms.indirimKampanyalari) ==================
+   Türler: xaly (X al Y öde) · nindirim (N. üründe %) · kademe (adet kademesi) · sepet (tutar eşiği) · kargo (ücretsiz kargo)
+   Kurallar: hesap sunucuda; aynı adete tek kampanya (müşteriye en avantajlısı); bedava/indirimli olan en ucuz adet;
+   indirimli (üstü çizili) ürünler ve paket indirimi varsayılan hariç; kuponla birlikte KULLANILMAZ (daha avantajlı olan
+   uygulanır); kampanya indirimi varsa üyelik indirimi uygulanmaz. Kargo kampanyası fiyat indirimi sayılmaz. */
+function kampanyaAktifMi(k, simdi) {
+  if (!k || k.aktif === false) return false;
+  simdi = simdi || Date.now();
+  const t = v => { if (!v) return NaN; const d = Date.parse(String(v).length <= 10 ? v + 'T00:00:00+03:00' : v + (/[zZ]|[+-]\d\d:?\d\d$/.test(v) ? '' : ':00+03:00')); return d; };
+  const b = t(k.baslangic), e = t(k.bitis);
+  if (!isNaN(b) && simdi < b) return false;
+  if (!isNaN(e) && simdi > e + (String(k.bitis).length <= 10 ? 86399000 : 0)) return false;
+  return true;
+}
+function kampanyaKapsar(k, p) {
+  if (!p) return false;
+  if ((k.haric || []).indexOf(p.id) !== -1) return false;
+  if (k.indirimliHaric !== false && Number(p.eskiFiyat) > Number(p.price)) return false;
+  if (k.kapsam === 'rol') return (k.roller || []).indexOf(p.role) !== -1;
+  if (k.kapsam === 'urun') return (k.urunler || []).indexOf(p.id) !== -1;
+  return true;
+}
+function kampanyaRozetMetni(k, en) {
+  if (k.rozet) return en && k.rozetEN ? k.rozetEN : k.rozet;
+  const tl = n => '₺' + Number(n).toLocaleString('tr-TR');
+  switch (k.tur) {
+    case 'xaly': return en ? 'Buy ' + k.x + ' Pay ' + k.y : k.x + ' Al ' + k.y + ' Öde';
+    case 'nindirim': return en ? (k.n === 2 ? '2nd' : k.n + 'th') + ' item ' + k.oran + '% off' : k.n + '. Ürüne %' + k.oran;
+    case 'kademe': { const l = (k.kademeler || []).slice().sort((a, b) => a.adet - b.adet)[0] || {}; return en ? l.adet + '+ items ' + l.oran + '% off' : l.adet + '+ Adette %' + l.oran; }
+    case 'sepet': return k.tip === 'tutar' ? (en ? tl(k.deger) + ' off over ' + tl(k.esik) : tl(k.esik) + ' Üzeri ' + tl(k.deger) + ' İndirim') : (en ? k.deger + '% off over ' + tl(k.esik) : tl(k.esik) + ' Üzeri %' + k.deger);
+    case 'kargo': return en ? 'Free Shipping' : 'Kargo Bedava';
+  }
+  return '';
+}
+function kampanyaHesapla(kalemler, cfg, secenek) {
+  secenek = secenek || {};
+  const en = !!secenek.en, simdi = secenek.simdi || Date.now();
+  const r2 = n => Math.round(n * 100) / 100;
+  const tl = n => '₺' + Number(r2(n)).toLocaleString('tr-TR');
+  const liste = (cfg.indirimKampanyalari || []).filter(k => kampanyaAktifMi(k, simdi));
+  const sonuc = { indirim: 0, satirlar: [], kalemIndirim: (kalemler || []).map(() => 0), kargoBedava: false, kargoKampanya: null, tesvikler: [] };
+  if (!liste.length || !kalemler || !kalemler.length) return sonuc;
+  // Kalemleri ürüne bağla, adetlere aç
+  const urun = kalemler.map(k => /^(custom-set|palate-box)/.test(k.kod || '') ? null : urunBulKalem(cfg, k));
+  const birimler = [];
+  kalemler.forEach((k, i) => { if (k.paket) return; for (let a = 0; a < k.adet; a++) birimler.push({ i: i, fiyat: Number(k.fiyat) || 0, kod: (urun[i] && urun[i].id) || k.kod || '', bos: true }); });
+  const kapsamda = (k, b) => b.bos && kampanyaKapsar(k, urun[b.i]);
+  const ad = k => (en && k.adEN) ? k.adEN : (k.ad || kampanyaRozetMetni(k, en));
+  // Bir kampanyanın serbest adetler üzerindeki etkisi: { tutar, birimIndirim: Map(birim→tl), kullanilan: [birim] }
+  function dene(k) {
+    const uygun = birimler.filter(b => kapsamda(k, b));
+    const out = { tutar: 0, ind: new Map(), kul: [] };
+    if (!uygun.length) return out;
+    const gruplar = {};
+    uygun.forEach(b => { const g = k.karisik === false ? b.kod : '_'; (gruplar[g] = gruplar[g] || []).push(b); });
+    let kalanSinir = parseInt(k.ustSinir, 10) || 0; // 0 = sınırsız (bedava / indirimli adet sayısı)
+    const sinirli = n => { if (!(parseInt(k.ustSinir, 10) > 0)) return true; if (kalanSinir <= 0) return false; kalanSinir--; return true; };
+    Object.keys(gruplar).forEach(g => {
+      const gb = gruplar[g].slice().sort((a, b) => b.fiyat - a.fiyat);
+      // X al Y öde / N. üründe indirim: tamamlanan her set için kapsamdaki EN UCUZ adetler bedava/indirimli olur
+      const setli = (boy, setBasi, fn) => {
+        const setSay = Math.floor(gb.length / boy); if (!setSay) return;
+        const artan = gb.slice().reverse(); // ucuzdan pahalıya
+        let verilen = 0;
+        artan.slice(0, setSay * setBasi).forEach(b => { if (sinirli()) { out.ind.set(b, fn(b)); verilen++; } });
+        if (!verilen) return;
+        const setGercek = Math.ceil(verilen / setBasi);
+        // kullanılan adetler: indirim alanlar + setleri tamamlayan (indirimsiz) en ucuz adetler
+        const kalanlar = artan.filter(b => !out.ind.has(b));
+        artan.filter(b => out.ind.has(b)).forEach(b => out.kul.push(b));
+        kalanlar.slice(0, setGercek * (boy - setBasi)).forEach(b => out.kul.push(b));
+      };
+      if (k.tur === 'xaly') {
+        const x = parseInt(k.x, 10) || 0, y = parseInt(k.y, 10) || 0; if (x < 2 || y < 1 || y >= x) return;
+        setli(x, x - y, b => b.fiyat);
+      } else if (k.tur === 'nindirim') {
+        const n = parseInt(k.n, 10) || 0, o = Math.min(100, Math.max(0, Number(k.oran) || 0)); if (n < 2 || !o) return;
+        setli(n, 1, b => b.fiyat * o / 100);
+      } else if (k.tur === 'kademe') {
+        const kad = (k.kademeler || []).filter(t => t.adet > 0 && t.oran > 0).sort((a, b) => b.adet - a.adet).find(t => gb.length >= t.adet);
+        if (kad) gb.forEach(b => { out.ind.set(b, b.fiyat * Math.min(100, kad.oran) / 100); out.kul.push(b); });
+      }
+    });
+    if (k.tur === 'sepet') {
+      const top = uygun.reduce((t, b) => t + b.fiyat, 0), esik = Number(k.esik) || 0, deger = Number(k.deger) || 0;
+      if (top > 0 && top >= esik && deger > 0) {
+        const toplamInd = k.tip === 'tutar' ? Math.min(deger, top) : top * Math.min(100, deger) / 100;
+        uygun.forEach(b => { out.ind.set(b, toplamInd * b.fiyat / top); out.kul.push(b); });
+      }
+    }
+    out.ind.forEach(v => { out.tutar += v; });
+    return out;
+  }
+  // Açgözlü seçim: en çok kazandıran kampanya önce, kullandığı adetler kilitlenir
+  const fiyatKamp = liste.filter(k => k.tur !== 'kargo');
+  const kalan = fiyatKamp.slice();
+  for (let tur = 0; tur < 20 && kalan.length; tur++) {
+    let enIyi = null, enIyiK = -1;
+    kalan.forEach((k, j) => { const d = dene(k); if (d.tutar > 0.004 && (!enIyi || d.tutar > enIyi.tutar)) { enIyi = d; enIyiK = j; } });
+    if (!enIyi) break;
+    const k = kalan.splice(enIyiK, 1)[0];
+    enIyi.ind.forEach((v, b) => { sonuc.kalemIndirim[b.i] += v; });
+    enIyi.kul.forEach(b => { b.bos = false; });
+    sonuc.satirlar.push({ id: k.id, ad: ad(k), tutar: r2(enIyi.tutar) });
+  }
+  sonuc.kalemIndirim = sonuc.kalemIndirim.map(r2);
+  sonuc.indirim = r2(sonuc.satirlar.reduce((t, x) => t + x.tutar, 0));
+  // Ücretsiz kargo kampanyası: kapsamdaki ürünlerin (kampanya indirimi sonrası) tutarı eşiği geçerse
+  liste.filter(k => k.tur === 'kargo').forEach(k => {
+    let top = 0, var_ = false;
+    kalemler.forEach((kl, i) => { if (!kl.paket && kampanyaKapsar(k, urun[i])) { var_ = true; top += kl.fiyat * kl.adet - sonuc.kalemIndirim[i]; } });
+    if (!var_) return;
+    const esik = Number(k.esik) || 0;
+    if (top >= esik) { if (!sonuc.kargoBedava) { sonuc.kargoBedava = true; sonuc.kargoKampanya = { id: k.id, ad: ad(k) }; } }
+    else sonuc.tesvikler.push({ id: k.id, mesaj: en ? 'Add ' + tl(esik - top) + ' more for free shipping (' + ad(k) + ')' : ad(k) + ': ' + tl(esik - top) + ' daha ekle, kargo bedava olsun' });
+  });
+  // Teşvik ("1 ürün daha ekle...") — henüz uygulanmamış fiyat kampanyaları için
+  const uygulanan = sonuc.satirlar.map(x => x.id);
+  fiyatKamp.forEach(k => {
+    const say = birimler.filter(b => kampanyaKapsar(k, urun[b.i])).length;
+    if (!say) return;
+    const kalanSay = (n) => n - (say % n);
+    let m = '';
+    if (k.tur === 'xaly' && parseInt(k.x, 10) > 1 && say % k.x) { const e = kalanSay(k.x); m = en ? 'Add ' + e + ' more item' + (e > 1 ? 's' : '') + ', get ' + (k.x - k.y) + ' free' : e + ' ürün daha ekle, ' + (k.x - k.y) + ' tanesi bedava olsun'; }
+    else if (k.tur === 'nindirim' && parseInt(k.n, 10) > 1 && say % k.n) { const e = kalanSay(k.n); m = en ? 'Add ' + e + ' more for ' + k.oran + '% off' : e + ' ürün daha ekle, %' + k.oran + ' indirim kazan'; }
+    else if (k.tur === 'kademe') { const s = (k.kademeler || []).slice().sort((a, b) => a.adet - b.adet).find(t => t.adet > say); if (s) { const e = s.adet - say; m = en ? 'Add ' + e + ' more for ' + s.oran + '% off' : e + ' ürün daha ekle, %' + s.oran + ' indirim kazan'; } }
+    else if (k.tur === 'sepet') { const top = kalemler.reduce((t, kl, i) => t + (!kl.paket && kampanyaKapsar(k, urun[i]) ? kl.fiyat * kl.adet : 0), 0); if (top < Number(k.esik)) m = en ? 'Add ' + tl(k.esik - top) + ' more to unlock ' + ad(k) : tl(k.esik - top) + ' daha ekle, ' + kampanyaRozetMetni(k, false) + ' kazan'; }
+    if (m && !(k.tur === 'sepet' && uygulanan.indexOf(k.id) !== -1)) sonuc.tesvikler.push({ id: k.id, mesaj: (k.tur === 'sepet' || en ? '' : ad(k) + ': ') + m });
+  });
+  return sonuc;
+}
+/* Kampanya ile kupon birlikte kullanılmaz: müşteriye daha avantajlı olanı seçer */
+function indirimSec(kmp, kuponSonuc) {
+  const ki = (kmp && kmp.indirim) || 0, ku = (kuponSonuc && !kuponSonuc.hata && kuponSonuc.indirim) || 0;
+  if (ku > 0 && ku > ki) return 'kupon';
+  if (ki > 0) return 'kampanya';
+  return ku > 0 ? 'kupon' : 'yok';
+}
 /* Kupon doğrulama + indirim hesabı (fiyatlar KDV hariç net üzerinden) */
 function kuponUygula(kupon, kalemler, cfg) {
   if (!kupon || kupon.aktif === false) return { hata: 'Kupon kodu geçersiz.' };
@@ -756,7 +894,8 @@ function tlYaz(n) { return '₺' + Number(n || 0).toLocaleString('tr-TR', { mini
 function siparisOzetMetni(s) {
   const satir = (s.kalemler || []).map(k => '· ' + k.adet + ' × ' + k.ad + (k.hacim && k.ad.indexOf(k.hacim) === -1 ? ' (' + k.hacim + ')' : '') + ' — ' + tlYaz(k.fiyat * k.adet)).join('\n');
   let t = satir + '\n\nAra toplam: ' + tlYaz(s.araToplam);
-  if (s.indirim) t += '\nKupon indirimi' + (s.kupon && s.kupon.kod ? ' (' + s.kupon.kod + ')' : '') + ': -' + tlYaz(s.indirim);
+  if (s.indirim && s.kampanyalar && s.kampanyalar.length) s.kampanyalar.forEach(x => { t += '\nKampanya (' + x.ad + '): -' + tlYaz(x.tutar); });
+  else if (s.indirim) t += '\nKupon indirimi' + (s.kupon && s.kupon.kod ? ' (' + s.kupon.kod + ')' : '') + ': -' + tlYaz(s.indirim);
   if (s.uyeIndirim && s.uyeIndirim.tutar) t += '\nÜyelik indirimi: -' + tlYaz(s.uyeIndirim.tutar);
   t += '\nKargo: ' + (s.kargo ? tlYaz(s.kargo) : 'Ücretsiz') + '\nTOPLAM: ' + tlYaz(s.toplam) + ' (KDV dahil)';
   const m = s.musteri || {};
@@ -1989,8 +2128,12 @@ const sunucu = http.createServer(async (req, res) => {
       // Disk dosyası değişmedikçe aynı yanıt bellekten verilir (yoğun trafikte hızlı)
       try {
         const st = fs.statSync(dosya('cms.json'));
-        if (!cmsOnbellek || cmsOnbellek.mtime !== st.mtimeMs || cmsOnbellek.boyut !== st.size) {
-          cmsOnbellek = { mtime: st.mtimeMs, boyut: st.size, govde: JSON.stringify(oku('cms.json', {})) };
+        if (!cmsOnbellek || cmsOnbellek.mtime !== st.mtimeMs || cmsOnbellek.boyut !== st.size || Date.now() - (cmsOnbellek.zaman || 0) > 60000) {
+          const acik = Object.assign({}, oku('cms.json', {}));
+          delete acik.coupons; delete acik.epostaSablonlari; delete acik.epostaSablon; // gizli: kupon kodları panelde kalır
+          acik.indirimKampanyalari = (acik.indirimKampanyalari || []).filter(k => k && k.aktif !== false && (!k.bitis || kampanyaAktifMi(Object.assign({}, k, { baslangic: '' }))))
+            .map(k => Object.assign({}, k, { rozetMetni: kampanyaRozetMetni(k, false), rozetMetniEN: kampanyaRozetMetni(k, true) }));
+          cmsOnbellek = { mtime: st.mtimeMs, boyut: st.size, govde: JSON.stringify(acik), zaman: Date.now() };
         }
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
         return res.end(cmsOnbellek.govde);
@@ -2330,6 +2473,31 @@ const sunucu = http.createServer(async (req, res) => {
       return res.end(govdeHtml('E-posta listemizden çıkarıldınız. Sizi yeniden aramızda görmek dileğiyle.'));
     }
 
+    /* Sepet özeti: kampanyalar + (varsa) kupon; ikisi birlikte kullanılmaz, avantajlı olan seçilir */
+    if (req.method === 'POST' && yol === '/api/sepet-hesap') {
+      const g = await govde(req, 1);
+      const cfg = oku('cms.json', {}), en = g.dil === 'en';
+      const kal = (Array.isArray(g.kalemler) ? g.kalemler.slice(0, 50) : []).map(k => {
+        const x = { ad: temiz(k.ad, 200), fiyat: Math.max(0, parseFloat(k.fiyat) || 0), adet: Math.min(99, Math.max(1, parseInt(k.adet, 10) || 1)), kod: temiz(k.id || k.kod, 40), paket: k.paket === 'damak10' ? 'damak10' : undefined };
+        const p = /^(custom-set|palate-box)/.test(x.kod) ? null : urunBulKalem(cfg, x);
+        if (p && Number(p.price) > 0) x.fiyat = x.paket ? Math.round(Number(p.price) * 0.9) : Number(p.price); // fiyat sunucudan
+        return x;
+      });
+      const kmp = kampanyaHesapla(kal, cfg, { en: en });
+      let kuponS = null; const kod = temiz(g.kupon, 40).toUpperCase();
+      if (kod) kuponS = kuponUygula(kuponBul(cfg, kod), kal, cfg);
+      const secim = indirimSec(kmp, kuponS);
+      const ikisi = kmp.indirim > 0 && kuponS && !kuponS.hata && kuponS.indirim > 0;
+      return json(res, 200, {
+        secim: secim, kampanyalar: secim === 'kampanya' ? kmp.satirlar : [], kampanyaIndirim: secim === 'kampanya' ? kmp.indirim : 0,
+        kargoBedava: kmp.kargoBedava, kargoKampanya: kmp.kargoKampanya, tesvikler: kmp.tesvikler,
+        kuponGecerli: secim === 'kupon',
+        not: ikisi ? (secim === 'kampanya'
+          ? (en ? 'Your cart campaign gives a better discount, so the coupon is not applied (they can\'t be combined).' : 'Sepetindeki kampanya daha avantajlı; kampanya ve kupon birlikte kullanılamadığı için kupon uygulanmadı.')
+          : (en ? 'Your coupon gives a better discount, so the campaign is not applied (they can\'t be combined).' : 'Kuponun daha avantajlı; kampanya ve kupon birlikte kullanılamadığı için kampanya uygulanmadı.')) : ''
+      });
+    }
+
     if (req.method === 'POST' && yol === '/api/kupon') {
       const g = await govde(req, 1);
       const kod = temiz(g.kod, 40).toUpperCase();
@@ -2408,7 +2576,20 @@ const sunucu = http.createServer(async (req, res) => {
       const araToplam = kalemler.reduce((t, k) => t + k.fiyat * k.adet, 0);
       // Kupon (sunucu tarafında doğrulanır; kullanım sayacı artar)
       let indirim = 0, kargoBedava = false, kuponBilgi = null, kuponTekBasina = false;
-      const kuponKod = temiz(g.kupon, 40).toUpperCase();
+      // İndirim kampanyaları (kuponla birlikte kullanılmaz; avantajlı olan uygulanır)
+      const kmp = kampanyaHesapla(kalemler, oku('cms.json', {}), { en: g.dil === 'en' });
+      let kampanyaBilgi = null;
+      let kuponKod = temiz(g.kupon, 40).toUpperCase();
+      if (kuponKod && kmp.indirim > 0) {
+        const cfg0 = oku('cms.json', {}); const s0 = kuponUygula(kuponBul(cfg0, kuponKod), kalemler, cfg0);
+        if (indirimSec(kmp, s0) === 'kampanya') kuponKod = ''; // kampanya daha avantajlı → kupon kullanılmaz (sayacı da artmaz)
+      }
+      if (!kuponKod && kmp.indirim > 0) {
+        indirim = kmp.indirim;
+        kampanyaBilgi = kmp.satirlar;
+        kalemler.forEach((k, i) => { if (kmp.kalemIndirim[i] > 0) k.kampanyaIndirim = kmp.kalemIndirim[i]; });
+      }
+      if (kmp.kargoBedava) kargoBedava = true;
       if (kuponKod) {
         const cfg = oku('cms.json', {});
         const kp = kuponBul(cfg, kuponKod);
@@ -2428,7 +2609,7 @@ const sunucu = http.createServer(async (req, res) => {
       // Üye indirimi (giriş yapmış üyeye sadakat seviyesi / özel indirim)
       let uyeIndirimTutar = 0, uyeIndirimOran = 0;
       const uyeB = uyeBul(req);
-      if (uyeB && !kuponTekBasina) { // birleştirilemeyen kupon varsa üye indirimi uygulanmaz
+      if (uyeB && !kuponTekBasina && !kampanyaBilgi) { // birleştirilemeyen kupon ya da kampanya varsa üye indirimi uygulanmaz
         uyeIndirimOran = uyeOran(uyeB.u);
         if (uyeIndirimOran > 0) {
           uyeIndirimTutar = Math.round((araToplam - indirim) * uyeIndirimOran) / 100;
@@ -2458,6 +2639,7 @@ const sunucu = http.createServer(async (req, res) => {
           ? { tip: 'kurumsal', unvan: temiz(g.fatura.unvan, 200), vkn: temiz(g.fatura.vkn, 11), vergiDairesi: temiz(g.fatura.vergiDairesi, 60) }
           : null,
         kalemler: kalemler, araToplam: araToplam, kupon: kuponBilgi, indirim: indirim,
+        kampanyalar: kampanyaBilgi || undefined, kargoKampanya: kmp.kargoKampanya || undefined,
         uyeIndirim: uyeIndirimTutar > 0 ? { oran: uyeIndirimOran, tutar: uyeIndirimTutar, eposta: uyeB.u.eposta } : null,
         kdvToplam: kdvToplam, kargo: kargo, toplam: toplam,
         iz: (g.iz && g.iz.rz) ? { rz: 1, fbp: temiz(g.iz.fbp, 120), fbc: temiz(g.iz.fbc, 200), ua: temiz(req.headers['user-agent'], 300), ip: String(req.headers['x-real-ip'] || '').split(',')[0].trim() } : undefined
@@ -3040,6 +3222,17 @@ const sunucu = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && yol === '/api/admin/saglik') {
       return json(res, 200, saglikRaporu());
+    }
+    /* Kampanya performansı: siparişlerden (iptal/başarısız hariç) */
+    if (req.method === 'GET' && yol === '/api/admin/kampanya-istatistik') {
+      const ist = {};
+      oku('siparisler.json', []).forEach(s => {
+        if (['iptal', 'odeme-basarisiz', 'odeme-bekliyor'].indexOf(s.durum) !== -1) return;
+        const ekle = (id, ind) => { const x = ist[id] = ist[id] || { siparis: 0, indirim: 0, ciro: 0 }; x.siparis++; x.indirim = Math.round((x.indirim + ind) * 100) / 100; x.ciro = Math.round((x.ciro + (Number(s.toplam) || 0)) * 100) / 100; };
+        (s.kampanyalar || []).forEach(x => ekle(x.id, Number(x.tutar) || 0));
+        if (s.kargoKampanya && s.kargoKampanya.id) ekle(s.kargoKampanya.id, 0);
+      });
+      return json(res, 200, ist);
     }
     if (req.method === 'GET' && yol === '/api/admin/config') {
       return json(res, 200, oku('cms.json', {}));

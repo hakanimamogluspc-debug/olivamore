@@ -9,6 +9,20 @@ if (window.OM_SUNUM === 'sepet') { try { if (!JSON.parse(localStorage.getItem('o
   { id: 'ces-mand', kod: 'ces-mand', ad: 'Bodrum Mandalinası Çeşnili Soğuk Sıkım Zeytinyağı', hacim: '250 ml', fiyat: 600, adet: 1, img: 'assets/img/cesnili-mandalina.jpg', kdv: 1 },
   { id: 'zey-yesil', kod: 'zey-yesil', ad: 'Ayvalık Doğal Salamura Yeşil Zeytin', hacim: '500 g', fiyat: 260, adet: 2, img: 'assets/img/zeytin-yesil.jpg', kdv: 1 }])); } catch (e) { } }
 if (window.OM_SUNUM) document.documentElement.classList.add('om-sunum' + (window.OM_SUNUM === 'menu' ? ' om-sunum-menu' : ''));
+/* İndirim kampanyaları: ürünü kapsayan güncel kampanyalar (rozet için; hesap sunucuda) */
+window.omKampanyaBul = function (p, cfg) {
+  if (!p || !cfg) return [];
+  var simdi = Date.now();
+  return (cfg.indirimKampanyalari || []).filter(function (k) {
+    if (!k || k.aktif === false) return false;
+    if (k.baslangic && Date.parse(String(k.baslangic).length <= 10 ? k.baslangic + 'T00:00:00+03:00' : k.baslangic) > simdi) return false;
+    if ((k.haric || []).indexOf(p.id) !== -1) return false;
+    if (k.indirimliHaric !== false && Number(p.eskiFiyat) > Number(p.price)) return false;
+    if (k.kapsam === 'rol') return (k.roller || []).indexOf(p.role) !== -1;
+    if (k.kapsam === 'urun') return (k.urunler || []).indexOf(p.id) !== -1;
+    return true;
+  });
+};
 /* Çerez / ölçüm onayı: 'tum' = ölçüm + reklam (Meta Pixel), 'gerekli' = yalnız zorunlu */
 window.omRiza = function () { try { return localStorage.getItem('om-cookie-ok') === 'tum'; } catch (e) { return false; } };
 window.omCerez = function (ad) { var m = document.cookie.match(new RegExp('(?:^|; )' + ad + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; };
@@ -997,8 +1011,10 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         : '';
     }
     const indOran = (Number(p.eskiFiyat) > Number(p.price) && p.price > 0) ? Math.round((1 - p.price / p.eskiFiyat) * 100) : 0;
+    const kmpL = (p.type === 'product' || !p.type) ? window.omKampanyaBul(p, C) : [];
+    if (kmpL.length && govdeIc) { const kt = String((EN ? (kmpL[0].rozetMetniEN || kmpL[0].rozetMetni) : kmpL[0].rozetMetni) || '').replace(/[&<>"]/g, ''); if (kt) govdeIc = govdeIc.replace(/<div class="fk-img"[^>]*>/, m => m + '<span class="fk-kampanya">' + kt + '</span>'); }
     if (indOran && govdeIc && govdeIc.indexOf('fk-indirim') === -1) govdeIc = govdeIc.replace('<div class="fk-img">', `<div class="fk-img"><span class="fk-indirim">%${indOran}</span>`);
-    return `<article class="card fig-kart" data-indirim="${indOran ? 1 : 0}" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">` +
+    return `<article class="card fig-kart" data-indirim="${indOran ? 1 : 0}" data-kampanya="${kmpL.length ? 1 : 0}" data-role="${p.role || 'all'}" data-pid="${p.id || ''}" data-code="${p.id || ''}" data-volume="${cleanProductUnit(unit)}" data-price="${Number(p.price) || 0}" data-img="${p.img || ''}">` +
       `<a class="fk-hit" href="${href}" aria-label="${name}" data-pid="${p.id || ''}"></a>` +
       govdeIc +
       `${roleHtml}<h3>${name}</h3>` +
@@ -1021,7 +1037,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
             // eski çapalar (#hediyelik) bozulmasın
             const capa = k.id === 'hediye' ? 'hediyelik' : k.id;
             return `<button class="chip" id="${capa}" data-role="${k.id}">${EN ? (k.adEN || k.adTR) : k.adTR}</button>`;
-          }).join('') + (C.products.some(p => p.visible !== false && Number(p.eskiFiyat) > Number(p.price) && p.price > 0) ? `<button class="chip chip-indirim" id="indirim" data-role="indirim">${EN ? 'On Sale' : 'İndirimdekiler'}</button>` : '') + `<button class="chip" data-role="all">${EN ? 'All' : 'Tümü'}</button>`;
+          }).join('') + (C.products.some(p => p.visible !== false && (p.type === 'product' || !p.type) && window.omKampanyaBul(p, C).length) ? `<button class="chip chip-indirim" id="kampanya" data-role="kampanya">${EN ? 'Offers' : 'Kampanyalı Ürünler'}</button>` : '') + (C.products.some(p => p.visible !== false && Number(p.eskiFiyat) > Number(p.price) && p.price > 0) ? `<button class="chip chip-indirim" id="indirim" data-role="indirim">${EN ? 'On Sale' : 'İndirimdekiler'}</button>` : '') + `<button class="chip" data-role="all">${EN ? 'All' : 'Tümü'}</button>`;
         window.OM_KAT_NOT = {};
         C.urunKategorileri.forEach(k => { const n = EN ? k.notEN : k.notTR; if (n) window.OM_KAT_NOT[k.id] = n; });
       }

@@ -67,6 +67,7 @@
         <div class="product-proof-line" id="dp-hasat" style="display:none;margin:-4px 0 14px;"></div>
         <p class="sub" id="dp-not" style="color:var(--ink-soft);line-height:1.7;margin-bottom:20px;"></p>
         <div style="margin-bottom:20px;"><span class="price" id="fiyat-tek" style="font-size:1.6rem;font-weight:700;"></span> <small id="dp-birim" style="color:var(--ink-soft);"></small></div>
+        <div class="pdp-kampanya" id="dp-kampanya" style="display:none;"></div>
         <button class="btn btn-dark" style="width:100%;" id="sepet-btn" data-add>Sepete Ekle</button>
         <span class="dp-yakinda" id="dp-yakinda" style="display:none;width:100%;text-align:center;">Fiyat yakında — çok yakında satışta</span>
         <p class="payment-note">KDV dahil · Ödeme: Kredi / banka kartı (3D Secure) veya Havale / EFT.</p>
@@ -281,6 +282,14 @@ document.addEventListener('DOMContentLoaded', function () {
         var f = p.price.toLocaleString('tr-TR');
         document.getElementById('fiyat-tek').innerHTML = (Number(p.eskiFiyat) > p.price ? '<s style="opacity:.5;font-weight:400;font-size:.8em;margin-right:8px;">₺' + Number(p.eskiFiyat).toLocaleString('tr-TR') + '</s>' : '') + '₺' + f;
         btn.textContent = 'Sepete Ekle · ₺' + f;
+        try {
+          var kL = window.omKampanyaBul ? window.omKampanyaBul(p, cfg) : [];
+          if (kL.length) {
+            var kd = document.getElementById('dp-kampanya'), tlb = function (d) { if (!d) return ''; var t = new Date(String(d).length <= 10 ? d + 'T00:00:00' : d); return t.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }); };
+            kd.innerHTML = kL.slice(0, 2).map(function (k) { var ad = String((k.ad || k.rozetMetni) || '').replace(/[<>&"]/g, ''); return '🏷 <b>' + ad + '</b>' + (k.bitis ? ' · son gün ' + tlb(k.bitis) : ''); }).join('<br>') + '<br><small>İndirim sepette otomatik uygulanır.</small>';
+            kd.style.display = 'inline-block';
+          }
+        } catch (e) { }
       } else {
         document.getElementById('fiyat-tek').textContent = '';
         btn.style.display = 'none';

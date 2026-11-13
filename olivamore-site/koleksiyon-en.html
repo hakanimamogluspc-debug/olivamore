@@ -165,7 +165,7 @@
           var m = norm(card.textContent + ' ' + Array.prototype.map.call(card.querySelectorAll('img[alt],a[aria-label]'), function (x) { return x.getAttribute('alt') || x.getAttribute('aria-label'); }).join(' '));
           gor = aranan.every(function (k) { return m.indexOf(k) >= 0; });
           if (gor) bulunan++;
-        } else gor = (role === 'all' || r === role || (role === 'indirim' && card.dataset.indirim === '1'));
+        } else gor = (role === 'all' || r === role || (role === 'indirim' && card.dataset.indirim === '1') || (role === 'kampanya' && card.dataset.kampanya === '1'));
         card.style.display = gor ? '' : 'none';
       });
       var bilgi = document.getElementById('kol-ara-bilgi');

@@ -67,6 +67,7 @@
         <div class="product-proof-line" id="dp-hasat" style="display:none;margin:-4px 0 14px;"></div>
         <p class="sub" id="dp-not" style="color:var(--ink-soft);line-height:1.7;margin-bottom:20px;"></p>
         <div style="margin-bottom:20px;"><span class="price" id="fiyat-tek" style="font-size:1.6rem;font-weight:700;"></span> <small id="dp-birim" style="color:var(--ink-soft);"></small></div>
+        <div class="pdp-kampanya" id="dp-kampanya" style="display:none;"></div>
         <button class="btn btn-dark" style="width:100%;" id="sepet-btn" data-add>Add to Bag</button>
         <span class="dp-yakinda" id="dp-yakinda" style="display:none;width:100%;text-align:center;">Price coming soon — available shortly</span>
         <p class="payment-note">VAT included · Pay by credit / debit card (3D Secure) or bank transfer · Delivery within Turkey.</p>
@@ -280,6 +281,14 @@ document.addEventListener('DOMContentLoaded', function () {
         var f = p.price.toLocaleString('tr-TR');
         document.getElementById('fiyat-tek').innerHTML = (Number(p.eskiFiyat) > p.price ? '<s style="opacity:.5;font-weight:400;font-size:.8em;margin-right:8px;">₺' + Number(p.eskiFiyat).toLocaleString('tr-TR') + '</s>' : '') + '₺' + f;
         btn.textContent = 'Add to Bag · ₺' + f;
+        try {
+          var kL = window.omKampanyaBul ? window.omKampanyaBul(p, cfg) : [];
+          if (kL.length) {
+            var kd = document.getElementById('dp-kampanya'), tlb = function (d) { if (!d) return ''; var t = new Date(String(d).length <= 10 ? d + 'T00:00:00' : d); return t.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
+            kd.innerHTML = kL.slice(0, 2).map(function (k) { var ad = String((k.rozetMetniEN || k.adEN || k.ad) || '').replace(/[<>&"]/g, ''); return '🏷 <b>' + ad + '</b>' + (k.bitis ? ' · ends ' + tlb(k.bitis) : ''); }).join('<br>') + '<br><small>Discount is applied automatically in your bag.</small>';
+            kd.style.display = 'inline-block';
+          }
+        } catch (e) { }
       } else {
         document.getElementById('fiyat-tek').textContent = '';
         btn.style.display = 'none';

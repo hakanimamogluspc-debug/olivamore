@@ -2643,3 +2643,9 @@ header.site{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;bo
 .om-sunum-menu .has-mega:first-child .mega{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .om-sunum-menu .nav-wrap.nav3 .has-mega:first-child .mega,.om-sunum-menu .has-mega:first-child .mega{transform:translateY(0)}
 .om-sunum .cookie-bar{display:none!important}
+
+/* İndirim kampanyası rozeti (panel > Kuponlar > Kampanyalar) */
+.fk-kampanya{position:absolute;left:8px;bottom:8px;z-index:2;background:#2f6b3a;color:#fff;font-family:'Poppins',sans-serif;font-size:.66rem;font-weight:600;letter-spacing:.04em;padding:5px 9px;border-radius:2px;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:600px){.fig-kart .fk-kampanya{font-size:.56rem;padding:3px 7px;left:6px;bottom:6px}}
+.pdp-kampanya{display:inline-block;margin:-8px 0 18px;background:#EEF5EF;border:1px solid #CFE3D3;color:#2f6b3a;font-size:.86rem;padding:8px 12px;border-radius:6px;line-height:1.45}
+.pdp-kampanya b{font-weight:600}
