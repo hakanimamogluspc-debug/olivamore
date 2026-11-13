@@ -243,6 +243,8 @@
     var h = location.hash.slice(1);
     var target = document.getElementById(h);
     if (target && target.classList.contains('chip')) target.click();
+    // Üst menüden aynı sayfada başka kategoriye geçiş (#cesnili vb.)
+    window.addEventListener('hashchange', function () { var t = document.getElementById(location.hash.slice(1)); if (t && t.classList.contains('chip')) { t.click(); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } });
   });
 </script>
 </body>

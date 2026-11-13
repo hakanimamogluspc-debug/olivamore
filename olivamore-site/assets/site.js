@@ -298,6 +298,28 @@ window.omMetaSatin = function (no, toplam, kalemler) {
     window.omPanelGorselUygula = uygula;
   };
 
+  /* ---------- Üst menü kategori kartları: panel > Ürünler > Kategoriler sırasıyla ----------
+     Görsel: o kategorideki ilk yayındaki ürünün panel görseli; yayında ürünü olmayan kategori menüde gösterilmez. "Tüm Ürünler" her zaman sonda. */
+  window.omMenuKategorileri = function (cfg) {
+    const katlar = Array.isArray(cfg.urunKategorileri) ? cfg.urunKategorileri : [];
+    const grid = document.querySelector('.mega-cats .mega-grid');
+    if (!grid || !katlar.length) return;
+    const urunler = (cfg.products || []).filter(p => p.visible !== false && p.img && (p.type === 'product' || !p.type));
+    const es = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const kart = (href, img, ad) => `<a class="cat-card" href="${href}"><span class="thumb"><img src="${es(img)}" alt="" loading="lazy"></span><span class="cc-ad">${es(ad)}</span></a>`;
+    const html = katlar.map(k => {
+      const p = urunler.find(u => u.role === k.id);
+      const img = p && p.img;
+      if (!img) return '';
+      const capa = k.id === 'hediye' ? 'hediyelik' : k.id;
+      return kart(P('koleksiyon.html') + '#' + encodeURIComponent(capa), img, EN ? (k.adEN || k.adTR) : k.adTR);
+    }).join('');
+    const tum = (urunler.find(u => u.id === 'ay500') || urunler[0] || {}).img || 'assets/img/kat-tum.png';
+    grid.innerHTML = html + kart(P('koleksiyon.html'), tum, EN ? 'All Products' : 'Tüm Ürünler');
+    const adet = grid.children.length; // 7–8 kart → 4 sütun, daha fazlası → 5 (menü çok uzamasın)
+    grid.style.gridTemplateColumns = adet > 8 ? 'repeat(5,1fr)' : adet > 6 ? 'repeat(4,1fr)' : '';
+  };
+
   /* ---------- Header ---------- */
   const header = `
   <div class="announce">${T.announce}</div>
@@ -1089,6 +1111,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         try { applyAdminOverrides(); } catch (e) { console.error('[olivamore] içerik uygulanamadı', e); }
         try { window.omKargoUygula((AC || cfg || {}).kargo); } catch (e) { }
         try { window.omPanelGorselleri(AC || cfg || {}); } catch (e) { }
+        try { window.omMenuKategorileri(AC || cfg || {}); } catch (e) { }
         try { window.omPuanUygula(MODS); } catch (e) { }
         statikAc();
         window.omPixelKur(AC || cfg || {});

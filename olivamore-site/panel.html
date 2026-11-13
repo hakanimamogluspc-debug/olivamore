@@ -378,9 +378,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       <div class="sg-pane" data-sg="kategori" hidden>
         <div class="panel" style="margin-top:22px;">
           <h2>Ürün Kategorileri</h2>
-          <div class="desc">Koleksiyon sayfasındaki filtre düğmeleri ve kartlardaki kategori etiketi bu listeden gelir. Ürünün kategorisini yukarıda her ürünün "Kategori" alanından seçersin; oradan da yeni kategori ekleyebilirsin. Sıra, filtre düğmelerinin sırasıdır.</div>
+          <div class="desc">Koleksiyon sayfasındaki filtre düğmeleri, üst menüdeki "Alışveriş" kategori kartları ve ürün kartlarındaki kategori etiketi bu listeden gelir. <b>Sıralamak için kartı soldaki ⋮⋮ tutamağından sürükle</b> ya da ↑ ↓ oklarını kullan; listedeki ilk kategori koleksiyon sayfasında varsayılan seçili gelir. Değişiklik "Kaydet ve Yayınla"dan sonra sitede görünür.</div>
+          <div class="row-actions" style="margin:0 0 12px;"><button class="btn btn-gold btn-sm" id="btn-add-urunkat" type="button">+ Yeni Kategori</button></div>
           <div id="urunkat-list"></div>
-          <button class="btn btn-outline btn-sm" id="btn-add-urunkat" type="button" style="margin-top:10px;">+ Yeni Kategori</button>
         </div>
       </div>
       <div class="sg-pane" data-sg="ek" hidden>
@@ -3747,7 +3747,9 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     var liste = urunKategorileri();
     el.innerHTML = liste.map(function (k, i) {
       var adet = (C.products || []).filter(function (p) { return p.role === k.id; }).length;
-      return '<div class="item uk-item" data-idx="' + i + '" style="padding:12px 16px;">' +
+      return '<div class="item uk-item" data-idx="' + i + '" style="padding:12px 16px 12px 44px;position:relative;">' +
+        '<span class="uk-tut" title="Sürükleyerek sırala" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);cursor:grab;font-size:20px;letter-spacing:-3px;color:#a49c8c;user-select:none;padding:8px 4px;">⋮⋮</span>' +
+        '<span style="position:absolute;left:14px;top:10px;font-size:.7rem;color:var(--soft);">' + (i + 1) + '</span>' +
         '<div class="grid3" style="align-items:end;">' +
         '<div class="field" style="margin:0;"><label>Ad (TR)</label><input type="text" class="uk-adTR" value="' + esc(k.adTR || '') + '"></div>' +
         '<div class="field" style="margin:0;"><label>Ad (EN)</label><input type="text" class="uk-adEN" value="' + esc(k.adEN || '') + '"></div>' +
@@ -3781,6 +3783,27 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
     urunKategoriEkle(ad, (prompt('İngilizce adı (boş bırakılabilir):', ad) || '').trim());
     renderUrunKategorileri(); renderProducts(); dirty();
   });
+  // Sürükle-bırak sıralama (yalnız ⋮⋮ tutamağından; inputlar normal çalışsın)
+  (function () {
+    var liste = document.getElementById('urunkat-list'), surukle = null;
+    liste.addEventListener('mousedown', function (e) { var t = e.target.closest('.uk-tut'); if (t) t.closest('.uk-item').draggable = true; });
+    liste.addEventListener('dragstart', function (e) { surukle = e.target.closest('.uk-item'); if (!surukle) return; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', surukle.dataset.idx); } catch (x) { } surukle.style.opacity = '.45'; });
+    liste.addEventListener('dragover', function (e) {
+      if (!surukle) return; e.preventDefault();
+      var hedef = e.target.closest('.uk-item'); if (!hedef || hedef === surukle) return;
+      var r = hedef.getBoundingClientRect();
+      liste.insertBefore(surukle, (e.clientY - r.top) > r.height / 2 ? hedef.nextSibling : hedef);
+    });
+    liste.addEventListener('dragend', function () {
+      if (!surukle) return; surukle.style.opacity = ''; surukle.draggable = false;
+      syncUrunKategorilerFromDOM();
+      var eski = urunKategorileri(), yeni = [].map.call(liste.querySelectorAll('.uk-item'), function (d) { return eski[+d.dataset.idx]; }).filter(Boolean);
+      var degisti = yeni.some(function (k, i) { return k !== eski[i]; });
+      surukle = null;
+      if (yeni.length === eski.length && degisti) { C.urunKategorileri = yeni; syncProductsFromDOM(); renderUrunKategorileri(); renderProducts(); dirty(); }
+      else renderUrunKategorileri();
+    });
+  })();
   document.getElementById('urunkat-list').addEventListener('click', function (e) {
     var d = e.target.closest('.uk-item'); if (!d) return;
     var i = +d.dataset.idx, liste = urunKategorileri();
