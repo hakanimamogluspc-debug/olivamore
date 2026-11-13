@@ -119,7 +119,7 @@
         <div style="margin:22px 0 10px;font-weight:700;font-size:.9rem;">Delivery Details</div>
         <div id="adres-secim" style="display:none;margin-bottom:14px;"></div>
         <label class="checkout-field" for="co-ad">Full name<input type="text" id="co-ad" name="name" autocomplete="name" required></label>
-        <label class="checkout-field" for="co-eposta">Email<input type="email" id="co-eposta" name="email" autocomplete="email" inputmode="email" required></label>
+        <label class="checkout-field" for="co-eposta">Email<input type="email" id="co-eposta" name="email" autocomplete="email" inputmode="email" required><span aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"><input type="text" id="co-website" name="om-hp" tabindex="-1" autocomplete="off"></span></label>
         <label class="checkout-field" for="co-tel">Phone<input type="tel" id="co-tel" name="tel" autocomplete="tel" inputmode="tel" required minlength="10" pattern="[+]?[0-9 ()-]{10,17}" placeholder="05XX XXX XX XX"></label>
         <div class="co-iki" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><label class="checkout-field" for="co-mahalle">Neighbourhood (Mahalle)<input type="text" id="co-mahalle" maxlength="80" required placeholder="e.g. Kazım Karabekir"></label><label class="checkout-field" for="co-cadde">Street / avenue<input type="text" id="co-cadde" maxlength="120" required placeholder="e.g. Atatürk Blv."></label></div><label class="checkout-field" for="co-adres">Building no, flat and directions<textarea id="co-adres" name="street-address" rows="2" autocomplete="street-address" required placeholder="e.g. No: 12 Flat: 4, next to the pharmacy"></textarea></label>
         <div class="checkout-grid">
@@ -536,7 +536,7 @@ omSepetHazir(function () {
     fetch('/api/siparis', {
       method: 'POST',
       headers: uyeToken ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uyeToken } : { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, fatura: faturaBilgi, iz: (window.omRiza && window.omRiza()) ? { rz: 1, fbp: window.omCerez('_fbp'), fbc: window.omCerez('_fbc') } : null, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
+      body: JSON.stringify({ sure: Math.round(performance.now()), website: (document.getElementById('co-website') || {}).value || '', musteri: m, odeme: odemeYolu, dil: 'en', kalemler: c, fatura: faturaBilgi, iz: (window.omRiza && window.omRiza()) ? { rz: 1, fbp: window.omCerez('_fbp'), fbc: window.omCerez('_fbc') } : null, kupon: (function () { try { return (JSON.parse(localStorage.getItem('om-kupon') || 'null') || {}).kod || ''; } catch (e) { return ''; } })() })
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (s) {

@@ -1035,19 +1035,53 @@ function adminYetkili(req) {
    Rastgele harf dizisi ad/mesaj, noktalarla bölünmüş gmail, tuzak alan, çok hızlı gönderim, doğrudan API çağrısı, IP başına sıklık */
 const iletisimIpGecmis = new Map();
 function rastgeleMi(t) {
-  t = String(t || '').trim();
-  if (t.length < 8 || /\s/.test(t)) {
-    if (t.length < 8) return false;
-  } else {
-    // boşluksuz uzun dizi: içte çok sayıda büyük harf veya sesli harf azlığı
-    const icBuyuk = (t.slice(1).match(/[A-ZÇĞİÖŞÜ]/g) || []).length;
-    const sesli = (t.match(/[aeıioöuüAEIİOÖUÜ]/g) || []).length / t.length;
-    if (icBuyuk >= 3 || sesli < 0.2) return true;
-  }
-  // boşluklu metinde kelimelerin çoğu rastgele ise
-  const k = t.split(/\s+/).filter(w => w.length >= 8);
-  return k.length > 0 && k.filter(w => (w.slice(1).match(/[A-ZÇĞİÖŞÜ]/g) || []).length >= 3).length / k.length > 0.5;
+  // Rastgele dizi: 8+ harflik kelimede küçük→BÜYÜK harf geçişi ≥3 (jFPxhcoyHTOhRhzz) ya da 12+ harf hiç sesli yok.
+  // "MEHMET YILMAZ", "McDonald", "Kurtuluşoğulları" gibi gerçek adlar yakalanmaz.
+  const k = String(t || '').trim().split(/\s+/).filter(w => w.length >= 8);
+  if (!k.length) return false;
+  const gecis = w => (w.match(/[a-zçğıöşü][A-ZÇĞİÖŞÜ]/g) || []).length;
+  const kotu = k.filter(w => gecis(w) >= 3 || (w.length >= 12 && !/[aeıioöuüAEIİOÖUÜ]/.test(w)));
+  return kotu.length / k.length > 0.5;
 }
+/* Sipariş / abonelik bot filtresi: rastgele ad, tuzak alan, çok hızlı gönderim, IP başına kart oturumu sıklığı */
+const odemeIpGecmis = new Map();
+function siparisBotMu(g, ad, eposta, ip, kart) {
+  let puan = 0; const n = [];
+  if (String(g.website || '').trim()) { puan += 5; n.push('tuzak-alan'); }
+  if (g.sure === undefined) { puan += 1; n.push('dogrudan-api'); }
+  else if (Number(g.sure) < 4000) { puan += 3; n.push('cok-hizli'); }
+  if (rastgeleMi(ad)) { puan += 3; n.push('rastgele-ad'); }
+  if (((String(eposta).split('@')[0] || '').match(/\./g) || []).length >= 3) { puan += 1; n.push('noktali-eposta'); }
+  if (kart) {
+    const simdi = Date.now(), l = (odemeIpGecmis.get(ip) || []).filter(t => simdi - t < 3600000);
+    if (l.length >= 5) { puan += 3; n.push('ip-sik-odeme'); }
+    if (puan < 3) { l.push(simdi); odemeIpGecmis.set(ip, l); }
+    if (odemeIpGecmis.size > 5000) odemeIpGecmis.clear();
+  }
+  if (puan >= 3) {
+    const kayit = { tarih: new Date().toISOString(), ip: ip, ad: ad, eposta: eposta, nedenler: n, uc: kart ? 'kart' : 'diger' };
+    yaz('siparis-spam.json', [kayit].concat(oku('siparis-spam.json', [])).slice(0, 1000));
+    console.warn('[bot] sipariş engellendi', ip, n.join(','));
+    return true;
+  }
+  return false;
+}
+/* Tamamlanmayan kart ödemeleri: 60 dk sonra "ödeme başarısız (terk)" + stok iade. Geç gelen onay yine kabul edilir (kartOdemesiTamam). */
+function odemeTerkTemizle() {
+  const liste = oku('siparisler.json', []); let degisti = false; const abIdler = [];
+  const sinir = Date.now() - 60 * 60000;
+  liste.forEach(s => {
+    if (s.durum !== 'odeme-bekliyor' || s.odeme !== 'kart' || !(Date.parse(s.tarih) < sinir)) return;
+    s.durum = 'odeme-basarisiz'; s.terk = true; stokGeriEkle(s); degisti = true;
+    s.gecmis = s.gecmis || []; s.gecmis.unshift({ tarih: new Date().toISOString(), islem: 'kart ödemesi 60 dk içinde tamamlanmadı — terk edildi, stok geri eklendi' });
+    if (s.abonelikId) abIdler.push(s.abonelikId);
+  });
+  if (!degisti) return;
+  yaz('siparisler.json', liste);
+  if (abIdler.length) { const ab = oku('abonelikler.json', []); ab.forEach(a => { if (abIdler.indexOf(a.id) !== -1 && a.durum === 'odeme-bekliyor') a.durum = 'odeme-basarisiz'; }); yaz('abonelikler.json', ab); }
+}
+setInterval(() => { try { odemeTerkTemizle(); } catch (e) { console.error('[terk]', e.message); } }, 10 * 60000);
+setTimeout(() => { try { odemeTerkTemizle(); } catch (e) { } }, 30000);
 function iletisimSpamPuan(g, k, ip) {
   let puan = 0; const n = [];
   if (String(g.website || '').trim()) { puan += 5; n.push('tuzak-alan'); }
@@ -1662,6 +1696,10 @@ function paratikaImzaDogru(p) {
 }
 // Kart ödemesi onaylandı (iyzico / Paratika ortak): sipariş + abonelik + bildirimler
 function kartOdemesiTamam(s, liste, odemeId, saglayici, ek) {
+  if (s.durum === 'odeme-basarisiz' && s.terk) { // 60 dk sonra terk sayılmıştı ama ödeme geldi: stoğu yeniden düş
+    stokDus(s.kalemler || []); delete s.terk; s.durum = 'odeme-bekliyor';
+    (s.gecmis = s.gecmis || []).unshift({ tarih: new Date().toISOString(), islem: 'terk sayılan siparişin ödemesi geç geldi — yeniden açıldı' });
+  }
   if (s.durum !== 'odeme-bekliyor') return;
   s.durum = 'yeni'; s.odendi = true; s.odemeId = odemeId || ''; s.odemeSaglayici = saglayici;
   if (ek) Object.assign(s, ek);
@@ -2116,6 +2154,7 @@ const sunucu = http.createServer(async (req, res) => {
       if (!ad || !epostaMi(eposta) || !telefon) return json(res, 400, { hata: en ? 'Name, email and phone are required.' : 'Ad, e-posta ve telefon zorunlu.' });
       if (!mahalle || !cadde || !adresDetay || !il || !ilce) return json(res, 400, { hata: en ? 'Neighbourhood, street, building no, province and district are required.' : 'Mahalle, cadde/sokak, bina no, il ve ilçe zorunlu.' });
       if (String(telefon).replace(/\D/g, '').replace(/^(90|0)/, '').length !== 10) return json(res, 400, { hata: en ? 'Please enter a valid 10-digit phone number.' : 'Geçerli bir telefon numarası gir (alan koduyla 10 hane).' });
+      if (siparisBotMu(g, ad, eposta, String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?'), true)) return json(res, 400, { hata: en ? 'Your request could not be processed. Please check your details or contact info@olivamore.com.' : 'Talebin işlenemedi. Bilgilerini kontrol et ya da info@olivamore.com adresine yaz.' });
       const adres = [/\b(mah\.?|mahallesi|mh\.?)$/i.test(mahalle) ? mahalle : mahalle + ' Mah.', cadde, adresDetay].join(' ');
       const oran = aboneOran(cfg);
       const istekler = (Array.isArray(g.kalemler) ? g.kalemler.slice(0, 10) : [])
@@ -2325,6 +2364,9 @@ const sunucu = http.createServer(async (req, res) => {
       }
       if (!Array.isArray(g.kalemler) || !g.kalemler.length || g.kalemler.length > 50) {
         return json(res, 400, { hata: 'Sepet boş.' });
+      }
+      if (siparisBotMu(g, temiz(m.ad, 120), temiz(m.eposta, 200), String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?'), g.odeme === 'kart')) {
+        return json(res, 400, { hata: g.dil === 'en' ? 'Your order could not be processed. Please check your details or contact info@olivamore.com.' : 'Siparişin işlenemedi. Bilgilerini kontrol et ya da info@olivamore.com adresine yaz.' });
       }
       const kalemler = g.kalemler.map(k => ({
         ad: temiz(k.ad, 200), fiyat: Math.max(0, parseInt(k.fiyat, 10) || 0),
