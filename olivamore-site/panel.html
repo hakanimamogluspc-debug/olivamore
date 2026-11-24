@@ -58,7 +58,7 @@ a{color:inherit;text-decoration:none}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
 label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);margin-bottom:5px}
-input[type=text],input[type=number],textarea,select{width:100%;border:1px solid var(--line);border-radius:2px;font-variant-numeric:tabular-nums;padding:10px 12px;font:inherit;font-size:.9rem;background:#fff;transition:border .2s}
+input[type=text],input[type=number],input[type=tel],input[type=email],textarea,select{width:100%;border:1px solid var(--line);border-radius:2px;font-variant-numeric:tabular-nums;padding:10px 12px;font:inherit;font-size:.9rem;background:#fff;transition:border .2s}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .field{margin-bottom:13px}
 
@@ -217,6 +217,11 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
 .tk-donem-bas{display:flex;align-items:center;gap:8px;font-size:.86rem;margin-bottom:10px}
 .pagecard h3{font-size:.92rem;font-weight:700;margin:2px 0 10px}
 textarea.json{font-family:monospace;font-size:.78rem;min-height:140px}
+.ms-oneri{position:absolute;left:0;right:0;top:100%;z-index:40;background:#fff;border:1px solid var(--gold);border-top:0;box-shadow:0 10px 24px rgba(30,28,25,.12);max-height:320px;overflow:auto}
+.ms-oneri-oge{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #f0ece3;background:#fff;padding:9px 12px;cursor:pointer;font:inherit;font-size:.86rem;line-height:1.35}
+.ms-oneri-oge:hover,.ms-oneri-oge.sec{background:#F7F3E8}
+.ms-oneri-oge span{color:#8a8377;font-size:.8rem}
+.ms-oneri-oge small{display:block;color:#6b665c;font-size:.76rem;margin-top:2px}
 </style>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Yönetim Paneli | Olivamore">
@@ -461,8 +466,8 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
         <div class="desc">WhatsApp, telefon, Instagram ya da mağazadan alınan siparişler. Kaydedince sipariş listesine düşer, <b>Green Ops'a otomatik gider</b>; ödeme alındıysa Green Ops'tan (veya buradan) tek tuşla kargo barkodu basılabilir.</div>
         <div class="grid3">
           <div class="field"><label>Kanal</label><select id="ms-kanal"><option value="whatsapp">WhatsApp</option><option value="telefon">Telefon</option><option value="instagram">Instagram</option><option value="magaza">Mağaza / elden</option><option value="e-posta">E-posta</option><option value="diger">Diğer</option></select></div>
-          <div class="field"><label>Müşteri adı soyadı *</label><input type="text" id="ms-ad" maxlength="120"></div>
-          <div class="field"><label>Telefon *</label><input type="tel" id="ms-tel" placeholder="05XX XXX XX XX"></div>
+          <div class="field" style="position:relative;"><label>Müşteri adı soyadı * <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--soft);">(yazınca önceki müşteriler çıkar)</span></label><input type="text" id="ms-ad" maxlength="120" autocomplete="off"><div id="ms-oneri" class="ms-oneri" hidden></div></div>
+          <div class="field"><label>Telefon *</label><input type="tel" id="ms-tel" placeholder="05XX XXX XX XX" autocomplete="off"></div>
           <div class="field"><label>E-posta</label><input type="email" id="ms-eposta" placeholder="isteğe bağlı"></div>
           <div class="field"><label>Mahalle *</label><input type="text" id="ms-mahalle" maxlength="80"></div>
           <div class="field"><label>Cadde / sokak *</label><input type="text" id="ms-cadde" maxlength="120"></div>
@@ -2290,6 +2295,45 @@ if (!localStorage.getItem('om-admin-jeton')) { document.documentElement.style.vi
       ozet();
     });
     panelEl.addEventListener('click', function (e) { if (e.target.classList.contains('ms-sil')) { e.target.closest('.ms-kalem').remove(); ozet(); } });
+    // Müşteri hatırlama: ad veya telefon yazınca önceki siparişler / üye adreslerinden öneri; seçince tüm alanlar dolar
+    (function () {
+      var kutu = document.getElementById('ms-oneri'), liste = [], secili = -1, z = null, sonQ = '';
+      function kapat() { kutu.hidden = true; secili = -1; }
+      function doldur(m) {
+        var set = function (id, v) { var el = document.getElementById(id); if (el && v != null) el.value = v; };
+        set('ms-ad', m.ad); set('ms-tel', m.telefon); set('ms-eposta', m.eposta || '');
+        set('ms-mahalle', m.mahalle || ''); set('ms-cadde', m.cadde || ''); set('ms-detay', m.adresDetay || (m.mahalle ? '' : m.adres || ''));
+        set('ms-il', m.il || ''); set('ms-ilce', m.ilce || ''); set('ms-posta', m.postaKodu || '');
+        kapat();
+        ['ms-ad', 'ms-tel', 'ms-mahalle', 'ms-cadde', 'ms-detay', 'ms-il', 'ms-ilce'].forEach(function (id) { var el = document.getElementById(id); if (el) { el.style.transition = 'background .6s'; el.style.background = '#F3EEDD'; setTimeout(function () { el.style.background = ''; }, 900); } });
+      }
+      function ciz() {
+        if (!liste.length) { kapat(); return; }
+        kutu.innerHTML = liste.map(function (m, i) {
+          var adres = [m.mahalle, m.cadde, m.adresDetay].filter(Boolean).join(' ') || m.adres || '';
+          return '<button type="button" class="ms-oneri-oge' + (i === secili ? ' sec' : '') + '" data-i="' + i + '"><b>' + esc(m.ad) + '</b> <span>' + esc(m.telefon || '') + (m.siparis ? ' · ' + m.siparis + ' sipariş' : ' · üye') + '</span><small>' + esc(adres.slice(0, 90)) + (m.ilce || m.il ? ' · ' + esc([m.ilce, m.il].filter(Boolean).join(' / ')) : '') + '</small></button>';
+        }).join('');
+        kutu.hidden = false;
+      }
+      function ara(q) {
+        q = String(q || '').trim(); if (q === sonQ) return; sonQ = q;
+        if (q.length < 2) { liste = []; kapat(); return; }
+        fetch('/api/admin/musteri-ara?q=' + encodeURIComponent(q)).then(function (r) { return r.ok ? r.json() : []; }).then(function (j) { if (q !== sonQ) return; liste = Array.isArray(j) ? j : []; secili = -1; ciz(); }).catch(function () { });
+      }
+      ['ms-ad', 'ms-tel'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.addEventListener('input', function () { clearTimeout(z); var v = el.value; z = setTimeout(function () { ara(v); }, 200); });
+        el.addEventListener('keydown', function (e) {
+          if (kutu.hidden) return;
+          if (e.key === 'ArrowDown') { e.preventDefault(); secili = Math.min(liste.length - 1, secili + 1); ciz(); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); secili = Math.max(0, secili - 1); ciz(); }
+          else if (e.key === 'Enter' && secili >= 0) { e.preventDefault(); doldur(liste[secili]); }
+          else if (e.key === 'Escape') kapat();
+        });
+        el.addEventListener('blur', function () { setTimeout(kapat, 180); });
+      });
+      kutu.addEventListener('mousedown', function (e) { var b = e.target.closest('.ms-oneri-oge'); if (b) { e.preventDefault(); doldur(liste[+b.dataset.i]); } });
+    })();
     // WhatsApp metninden ayıkla
     document.getElementById('ms-ayikla').addEventListener('click', function () {
       var m = document.getElementById('ms-yapistir').value.replace(/\s+/g, ' ').trim(); if (!m) return;

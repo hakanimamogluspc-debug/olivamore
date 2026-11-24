@@ -3223,6 +3223,33 @@ const sunucu = http.createServer(async (req, res) => {
     if (req.method === 'GET' && yol === '/api/admin/saglik') {
       return json(res, 200, saglikRaporu());
     }
+    /* Manuel sipariş: müşteri hatırlama — ad / telefon / e-posta ile önceki siparişler ve üye adreslerinden arar */
+    if (req.method === 'GET' && yol === '/api/admin/musteri-ara') {
+      const q = String(new URL(req.url, 'http://x').searchParams.get('q') || '').trim().slice(0, 60);
+      const norm = t => String(t || '').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/\s+/g, ' ').trim();
+      const telN = t => String(t || '').replace(/\D/g, '').replace(/^(90|0)/, '');
+      const nq = norm(q), tq = telN(q);
+      if (nq.length < 2 && tq.length < 3) return json(res, 200, []);
+      const kayitlar = {}; // anahtar: telefon (yoksa e-posta) → en güncel kayıt
+      const ekle = (m, tarih, kaynak) => {
+        if (!m || !m.ad) return;
+        const anahtar = telN(m.telefon) || String(m.eposta || '').toLowerCase() || norm(m.ad);
+        const eslesir = norm(m.ad).indexOf(nq) !== -1 || (tq.length >= 3 && telN(m.telefon).indexOf(tq) !== -1) || (nq.length >= 3 && String(m.eposta || '').toLowerCase().indexOf(nq) !== -1);
+        if (!eslesir) return;
+        const v = kayitlar[anahtar];
+        if (!v) kayitlar[anahtar] = { ad: m.ad, telefon: m.telefon || '', eposta: m.eposta || '', mahalle: m.mahalle || '', cadde: m.cadde || '', adresDetay: m.adresDetay || '', il: m.il || '', ilce: m.ilce || '', postaKodu: m.postaKodu || '', adres: m.adres || '', tarih: tarih || '', siparis: kaynak === 'siparis' ? 1 : 0 };
+        else {
+          if (kaynak === 'siparis') v.siparis++;
+          if (String(tarih) > String(v.tarih) && (m.mahalle || m.adres)) Object.assign(v, { ad: m.ad, mahalle: m.mahalle || '', cadde: m.cadde || '', adresDetay: m.adresDetay || '', il: m.il || v.il, ilce: m.ilce || v.ilce, postaKodu: m.postaKodu || '', adres: m.adres || '', tarih: tarih });
+          if (!v.eposta && m.eposta) v.eposta = m.eposta;
+          if (!v.telefon && m.telefon) v.telefon = m.telefon;
+        }
+      };
+      oku('siparisler.json', []).forEach(s => { if (s.musteri && s.durum !== 'odeme-basarisiz') ekle(s.musteri, s.tarih, 'siparis'); });
+      oku('uyeler.json', []).forEach(u => (u.adresler || []).forEach(a => ekle(Object.assign({ eposta: u.eposta }, a, { ad: a.ad || u.ad }), a.tarih || u.tarih || '', 'uye')));
+      const sonuc = Object.values(kayitlar).sort((a, b) => (b.siparis - a.siparis) || String(b.tarih).localeCompare(String(a.tarih))).slice(0, 8);
+      return json(res, 200, sonuc);
+    }
     /* Kampanya performansı: siparişlerden (iptal/başarısız hariç) */
     if (req.method === 'GET' && yol === '/api/admin/kampanya-istatistik') {
       const ist = {};
