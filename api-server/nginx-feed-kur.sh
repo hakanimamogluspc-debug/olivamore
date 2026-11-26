@@ -1,20 +1,30 @@
 #!/bin/bash
-# /feed/ yolunu Node API'ye yönlendirir (ürün XML feed'i için). Idempotent.
+# /feed/ yolunu Node API'ye yönlendirir (Meta/Google ürün XML feed'i). Idempotent.
+# "location ^~ /feed/" kullanılır: düzenli ifade (regex) bloklarından (ör. *.xml statik/önbellek kuralı) ÖNCE gelir.
 set -e
 CONF=$(grep -ls "proxy_pass http://127.0.0.1:3001" /etc/nginx/sites-enabled/* | grep -v yedek | head -1)
 if [ -z "$CONF" ]; then echo "API proxy'li conf bulunamadı"; exit 1; fi
-if grep -q "location /feed/" "$CONF"; then echo "feed zaten tanımlı: $CONF"; else
+cp "$CONF" "/root/nginx-feed-oncesi-$(date +%Y%m%d-%H%M%S).conf"
 python3 - "$CONF" <<'PY'
 import sys, re
 yol = sys.argv[1]
 s = open(yol).read()
-blok = "    location /feed/ {\n        proxy_pass http://127.0.0.1:3001;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n"
-m = re.search(r'([ \t]*)location\s+/api/?\s*\{', s)
-if not m: raise SystemExit('location /api bulunamadı')
-s = s[:m.start()] + blok + s[m.start():]
+# eski (öncelik sorunlu) /feed/ bloklarını kaldır
+s = re.sub(r'[ \t]*location\s+(\^~\s+)?/feed/\s*\{[^}]*\}\n?', '', s)
+blok = ("    location ^~ /feed/ {\n        proxy_pass http://127.0.0.1:3001;\n        proxy_set_header Host $host;\n"
+        "        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Proto $scheme;\n    }\n")
+# her server bloğunda /api konumundan önce ekle (http ve https blokları)
+parcalar = re.split(r'(?=[ \t]*location\s+/api/?\s*\{)', s)
+if len(parcalar) < 2: raise SystemExit('location /api bulunamadı')
+s = parcalar[0] + ''.join(blok + p for p in parcalar[1:])
 open(yol, 'w').write(s)
-print('feed bloğu eklendi:', yol)
+print('feed bloğu yazıldı:', yol, '·', s.count('location ^~ /feed/'), 'adet')
 PY
+if nginx -t; then systemctl reload nginx; else
+  echo "nginx testi başarısız — yedek geri yükleniyor"; cp "$(ls -t /root/nginx-feed-oncesi-*.conf | head -1)" "$CONF"; nginx -t && systemctl reload nginx; exit 1
 fi
-nginx -t && systemctl reload nginx
+sleep 1
+echo "API doğrudan: $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/feed/urunler.xml)"
+echo "Dışarıdan:    $(curl -s -o /dev/null -w '%{http_code}' https://olivamore.com/feed/urunler.xml)"
+echo "Ürün sayısı:  $(curl -s https://olivamore.com/feed/urunler.xml | grep -c '<item>')"
 echo "FEED-TAMAM"
