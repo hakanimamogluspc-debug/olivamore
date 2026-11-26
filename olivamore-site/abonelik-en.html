@@ -169,6 +169,7 @@ document.getElementById('ab-form').addEventListener('submit', function (e) {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       sure: Math.round(performance.now()), website: (document.getElementById('abf-website') || {}).value || '',
+      iz: (window.omRiza && window.omRiza()) ? { rz: 1, fbp: window.omCerez('_fbp'), fbc: window.omCerez('_fbc') } : null,
       ad: document.getElementById('abf-ad').value.trim(),
       eposta: document.getElementById('abf-eposta').value.trim(),
       telefon: document.getElementById('abf-telefon').value.trim(),
@@ -253,7 +254,7 @@ document.getElementById('abf-ekle').addEventListener('click', function () { setT
 (function () {
   var mesaj = document.getElementById('abf-mesaj');
   if (location.hash.indexOf('#odeme-ok') === 0) {
-    (function () { var no = (location.hash.match(/OM-\d+/) || [''])[0]; var dene = setInterval(function () { if (window.omIz) { clearInterval(dene); window.omIz('satin_al', { no: no, y: 1 }); } }, 100); setTimeout(function () { clearInterval(dene); }, 5000); })();
+    (function () { var mm = location.hash.match(/^#odeme-ok-((?:OM|AB)\d+|OM-\d+)(?:-([a-f0-9]{20}))?$/) || [], no = mm[1] || ''; var dene = setInterval(function () { if (window.omIz) { clearInterval(dene); window.omIz('satin_al', { no: no, y: 1 }); if (window.omMetaSatinDonus) window.omMetaSatinDonus(no, mm[2]); } }, 100); setTimeout(function () { clearInterval(dene); }, 5000); history.replaceState(null, '', location.pathname); })();
     mesaj.textContent = 'Payment received, your subscription is active ✓ Order confirmation and your next delivery date will arrive by email.';
     mesaj.className = 'ab-mesaj ok';
     mesaj.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -26,6 +26,16 @@ window.omKampanyaBul = function (p, cfg) {
 /* Çerez / ölçüm onayı: 'tum' = ölçüm + reklam (Meta Pixel), 'gerekli' = yalnız zorunlu */
 window.omRiza = function () { try { return localStorage.getItem('om-cookie-ok') === 'tum'; } catch (e) { return false; } };
 window.omCerez = function (ad) { var m = document.cookie.match(new RegExp('(?:^|; )' + ad + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+/* Meta Pixel olay kuyruğu: Pixel kimliği /api/config ile geç gelir. O ana kadar (izin varsa) olaylar burada bekler,
+   Pixel kurulunca sırayla gönderilir → sayfa açılır açılmaz tetiklenen InitiateCheckout / Purchase kaybolmaz. */
+window.__omFbqKuyruk = window.__omFbqKuyruk || [];
+window.omFbq = function () {
+  try {
+    if (!window.omRiza()) return; // izin yoksa hiçbir Meta olayı yok (KVKK)
+    if (window.__omPixel && window.fbq) window.fbq.apply(window, arguments);
+    else window.__omFbqKuyruk.push([].slice.call(arguments));
+  } catch (e) { }
+};
 /* Meta Pixel: yalnız onay verilince yüklenir. Kimlik panelden (Ayarlar → Reklam İzleme) gelir. */
 window.omPixelKur = function (cfg) {
   try {
@@ -38,6 +48,8 @@ window.omPixelKur = function (cfg) {
     !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
     window.fbq('init', id);
     window.fbq('track', 'PageView');
+    var q = window.__omFbqKuyruk.splice(0); // bekleyen olaylar (init'ten SONRA)
+    q.forEach(function (a) { window.fbq.apply(window, a); });
   } catch (e) { }
 };
 /* Satın alma (tarayıcı tarafı; sunucu da aynı event_id ile gönderir → Meta tek sayar) */
@@ -50,13 +62,32 @@ window.omHasatYazi = function (p, en) {
   var not = en ? (p.hasatNotEN || '') : (p.hasatNotTR || '');
   return (en ? EN[a - 1] + ' ' + y + ' harvest' : TR[a - 1] + ' ' + y + ' hasadı') + (not ? ' · ' + not : '');
 };
-window.omMetaSatin = function (no, toplam, kalemler) {
+/* Purchase: sipariş başına TEK sefer (yenileme / geri tuşu / ikinci sekme tekrar göndermez).
+   deger = ürün toplamı (indirimler sonrası, KARGO HARİÇ, TRY); kalemler = [{id, adet}] — id katalogdaki ürün kimliği (ay500…).
+   eventID = sipariş no → sunucu (Conversions API) aynı kimlikle gönderir, Meta tek sayar. */
+window.omMetaSatin = function (no, deger, kalemler) {
   try {
-    if (!window.fbq || !window.omRiza() || !no) return;
-    var d = { currency: 'TRY', content_type: 'product' };
-    if (toplam) d.value = Number(toplam);
-    if (kalemler && kalemler.length) { d.content_ids = kalemler.map(function (k) { return k.kod || k.id; }).filter(Boolean); d.num_items = kalemler.reduce(function (t, k) { return t + (k.adet || 1); }, 0); }
-    window.fbq('track', 'Purchase', d, { eventID: no });
+    if (!no || !window.omRiza()) return;
+    var gonderilen = []; try { gonderilen = JSON.parse(localStorage.getItem('om-meta-satin') || '[]'); } catch (e) { }
+    if (gonderilen.indexOf(no) !== -1) return;
+    var d = { currency: 'TRY', content_type: 'product', value: Math.round((Number(deger) || 0) * 100) / 100 };
+    if (kalemler && kalemler.length) {
+      d.content_ids = kalemler.map(function (k) { return k.id || k.kod; }).filter(Boolean);
+      d.contents = kalemler.filter(function (k) { return k.id || k.kod; }).map(function (k) { return { id: k.id || k.kod, quantity: k.adet || 1 }; });
+      d.num_items = kalemler.reduce(function (t, k) { return t + (k.adet || 1); }, 0);
+    }
+    window.omFbq('track', 'Purchase', d, { eventID: no });
+    gonderilen.push(no); try { localStorage.setItem('om-meta-satin', JSON.stringify(gonderilen.slice(-50))); } catch (e) { }
+  } catch (e) { }
+};
+/* Kartla ödeme dönüşü (#odeme-ok-NO-imza): tutar ve ürünler sunucudan, imzalı bağlantıyla alınır */
+window.omMetaSatinDonus = function (no, imza) {
+  try {
+    if (!no || !imza || !window.omRiza()) return;
+    fetch('/api/siparis-ozet?no=' + encodeURIComponent(no) + '&t=' + encodeURIComponent(imza), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.odendi && !j.yenileme) window.omMetaSatin(j.no, j.deger, j.kalemler); })
+      .catch(function () { });
   } catch (e) { }
 };
 (function () {
@@ -94,14 +125,12 @@ window.omMetaSatin = function (no, toplam, kalemler) {
       // Meta: onaylıysa tarayıcı Pixel'i + sunucu (CAPI) aynı event_id ile
       if (window.omRiza() && META[e]) {
         g.rz = 1; g.eid = e + '-' + rnd(); g.fbp = window.omCerez('_fbp'); g.fbc = window.omCerez('_fbc');
-        if (window.fbq) {
-          var md = { currency: 'TRY' };
-          if (g.u) { md.content_ids = [g.u]; md.content_type = 'product'; }
-          if (g.ad) md.content_name = g.ad;
-          if (g.d) md.value = Number(g.d);
-          if (g.a) md.num_items = Number(g.a);
-          window.fbq('track', META[e], md, { eventID: g.eid });
-        }
+        var md = { currency: 'TRY' };
+        if (g.u) { md.content_ids = [g.u]; md.content_type = 'product'; }
+        if (g.ad) md.content_name = g.ad;
+        if (g.d) md.value = Number(g.d);
+        if (g.a) md.num_items = Number(g.a);
+        window.omFbq('track', META[e], md, { eventID: g.eid }); // Pixel henüz kurulmadıysa kuyrukta bekler
       }
       try { ls.setItem('om-ot-son', String(Date.now())); } catch (er) { }
       var govde = JSON.stringify(g);
@@ -1146,7 +1175,7 @@ window.omMetaSatin = function (no, toplam, kalemler) {
         if (window.OM_SUNUM === 'ara' && window.omAraAc) window.omAraAc(new URLSearchParams(location.search).get('q') || 'teneke');
         if (window.OM_SUNUM && location.hash.length > 1) setTimeout(() => { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -96); } }, 2500);
       })
-      .catch(() => { try { applyAdminOverrides(); } catch (e) { console.error('[olivamore]', e); } statikAc(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); omPopupKur(); });
+      .catch(() => { try { window.omPixelKur({}); } catch (e) { } try { applyAdminOverrides(); } catch (e) { console.error('[olivamore]', e); } statikAc(); markSweep(); if (window.omBoySenkron) window.omBoySenkron(); urunOdakla(); omPopupKur(); });
 
     // Derin bağlantı: koleksiyon.html#p=<urunId> → o ürünün kartına kaydır ve vurgula
     function urunOdakla() {

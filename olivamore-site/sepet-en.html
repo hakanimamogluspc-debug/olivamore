@@ -585,7 +585,7 @@ omSepetHazir(function () {
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = s.j.no;
         try { omIbanGoster(s.j); } catch (e) { }
-        if (window.omMetaSatin) window.omMetaSatin(s.j.no, s.j.toplam, c);
+        if (window.omMetaSatin) window.omMetaSatin(s.j.no, s.j.meta ? s.j.meta.deger : 0, s.j.meta ? s.j.meta.kalemler : c.map(function (k) { return { id: k.kod || k.id, adet: k.adet }; }));
         if (window.omIz) window.omIz('satin_al', { no: s.j.no, d: s.j.toplam || 0 });
         document.getElementById('cart-wrap').style.display = 'none';
         document.getElementById('co-ok').style.display = 'block';
@@ -698,14 +698,14 @@ omSepetHazir(function () {
 
   // iyzico return: #odeme-ok-NO → thank you; #odeme-hata → warning
   (function () {
-    var mOk = location.hash.match(/^#odeme-ok-(OM-\d+)$/);
+    var mOk = location.hash.match(/^#odeme-ok-(OM-\d+)(?:-([a-f0-9]{20}))?$/);
     if (mOk) {
       var goster = function () {
         window.omCart.save([]);
         localStorage.removeItem('om-kupon');
         document.getElementById('co-no').textContent = mOk[1];
         document.getElementById('co-ok-msj').textContent = 'Your card payment was received and the order confirmation is on its way to your inbox. We\'ll let you know as soon as your order ships.';
-        if (window.omMetaSatin) window.omMetaSatin(mOk[1]);
+        if (window.omMetaSatinDonus) window.omMetaSatinDonus(mOk[1], mOk[2]); // tutar + ürünler sunucudan, tek sefer
         if (window.omIz) window.omIz('satin_al', { no: mOk[1] });
         document.getElementById('cart-wrap').style.display = 'none';
         document.getElementById('co-ok').style.display = 'block';

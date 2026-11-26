@@ -507,23 +507,36 @@ function metaGonder(olaylar) {
   istek.on('timeout', () => istek.destroy());
   istek.end(govdeStr);
 }
+/* Sipariş özeti bağlantısı imzası (ödeme dönüşünde tarayıcı Purchase verisini güvenle alır) */
+function siparisOzetImza(no) {
+  const env = oku('env.json', {});
+  if (!env.gizli) { env.gizli = crypto.randomBytes(16).toString('hex'); yaz('env.json', env); }
+  return crypto.createHmac('sha256', env.gizli).update('ozet|' + String(no)).digest('hex').slice(0, 20);
+}
+/* Meta için satış değeri: ürün toplamı, indirimler (kupon/kampanya/üyelik) sonrası, KARGO HARİÇ */
+function metaDeger(s) {
+  const uye = (s.uyeIndirim && Number(s.uyeIndirim.tutar)) || 0;
+  return Math.max(0, Math.round(((Number(s.araToplam) || 0) - (Number(s.indirim) || 0) - uye) * 100) / 100);
+}
+function metaKalemler(s) { return (s.kalemler || []).map(k => ({ id: k.kod || k.pid || '', adet: Number(k.adet) || 1 })).filter(k => k.id); }
 function metaTelefon(t) { let d = String(t || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '0') d = '9' + d; else if (d.length === 10) d = '90' + d; return d || undefined; }
 function metaSatinAlma(s, req) {
   try {
-    if (!s || !s.iz || !s.iz.rz || s.metaGonderildi) return;
+    // Yalnız "tümünü kabul" izni veren müşteri (KVKK) · sipariş başına tek sefer · abonelik YENİLEMELERİ gönderilmez
+    if (!s || !s.iz || !s.iz.rz || s.metaGonderildi || s.abonelikYenileme) return;
     const m = s.musteri || {}, ad = String(m.ad || '').trim().split(/\s+/);
     metaGonder([{
       event_name: 'Purchase', event_time: Math.floor(Date.now() / 1000), event_id: s.no, action_source: 'website',
-      event_source_url: SITE() + '/sepet',
+      event_source_url: SITE() + (s.abonelikId ? '/abonelik' : '/sepet'),
       user_data: {
         em: [sha(m.eposta)], ph: [sha(metaTelefon(m.telefon))], fn: [sha(ad[0])], ln: [sha(ad.length > 1 ? ad[ad.length - 1] : '')],
         ct: [sha(String(m.ilce || m.il || '').replace(/\s+/g, ''))], st: [sha(String(m.il || '').replace(/\s+/g, ''))], zp: [sha(m.postaKodu)], country: [sha('tr')],
         external_id: [sha(m.eposta)], client_ip_address: s.iz.ip || undefined, client_user_agent: s.iz.ua || undefined, fbp: s.iz.fbp || undefined, fbc: s.iz.fbc || undefined
       },
       custom_data: {
-        currency: 'TRY', value: Number(s.toplam) || 0, order_id: s.no, content_type: 'product',
-        content_ids: (s.kalemler || []).map(k => k.kod).filter(Boolean),
-        contents: (s.kalemler || []).map(k => ({ id: k.kod || k.ad, quantity: k.adet, item_price: k.fiyat })),
+        currency: 'TRY', value: metaDeger(s), order_id: s.no, content_type: 'product',
+        content_ids: metaKalemler(s).map(k => k.id),
+        contents: (s.kalemler || []).filter(k => k.kod || k.pid).map(k => ({ id: k.kod || k.pid, quantity: k.adet, item_price: k.fiyat })),
         num_items: (s.kalemler || []).reduce((t, k) => t + k.adet, 0)
       }
     }]);
@@ -1295,7 +1308,7 @@ async function abonelikTur() {
     const no = 'AB' + Date.now().toString().slice(-8);
     const siparis = {
       no: no, tarih: new Date().toISOString(),
-      durum: 'yeni', odeme: 'abonelik', abonelikId: a.id,
+      durum: 'yeni', odeme: 'abonelik', abonelikId: a.id, abonelikYenileme: true,
       musteri: { ad: a.ad || a.eposta, eposta: a.eposta, telefon: a.telefon || '', adres: a.adres || '', mahalle: a.mahalle || '', cadde: a.cadde || '', adresDetay: a.adresDetay || '', il: a.il || '', ilce: a.ilce || '' },
       kalemler: kalemler,
       araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: kdvToplam, toplam: toplam,
@@ -2345,7 +2358,8 @@ const sunucu = http.createServer(async (req, res) => {
         no: no, tarih: new Date().toISOString(),
         durum: 'odeme-bekliyor', odeme: 'kart', abonelikId: ab.id, dil: g.dil === 'en' ? 'en' : 'tr',
         musteri: { ad: ad, eposta: eposta, telefon: telefon, adres: adres, mahalle: mahalle, cadde: cadde, adresDetay: adresDetay, il: il, ilce: ilce, not: ab.not },
-        kalemler: kalemler.map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, listeFiyat: k.listeFiyat, kdv: k.kdv, img: k.img, pid: k.pid })),
+        kalemler: kalemler.map(k => ({ ad: k.ad, adet: k.adet, fiyat: k.fiyat, listeFiyat: k.listeFiyat, kdv: k.kdv, img: k.img, pid: k.pid, kod: k.pid })),
+        iz: (g.iz && g.iz.rz) ? { rz: 1, fbp: temiz(g.iz.fbp, 120), fbc: temiz(g.iz.fbc, 200), ua: temiz(req.headers['user-agent'], 300), ip: String(req.headers['x-real-ip'] || '').split(',')[0].trim() } : undefined,
         araToplam: toplam, indirim: 0, kargo: 0, kdvToplam: kdvToplam, toplam: toplam,
         abonelikIndirim: { oran: oran, tutar: Math.round(kalemler.reduce((t, k) => t + (k.listeFiyat - k.fiyat) * k.adet, 0) * 100) / 100 },
         gecmis: [{ tarih: new Date().toISOString(), islem: 'abonelik ilk siparişi (' + ab.id + ') — ödeme bekleniyor' }]
@@ -2473,6 +2487,15 @@ const sunucu = http.createServer(async (req, res) => {
       return res.end(govdeHtml('E-posta listemizden çıkarıldınız. Sizi yeniden aramızda görmek dileğiyle.'));
     }
 
+    /* Ödeme dönüşü için sipariş özeti (Meta Purchase verisi). İmza zorunlu: sipariş no tahmin edilerek bilgi çekilemez. Kişisel veri dönmez. */
+    if (req.method === 'GET' && yol === '/api/siparis-ozet') {
+      const u = new URL(req.url, 'http://x'), no = String(u.searchParams.get('no') || '').slice(0, 30), t = String(u.searchParams.get('t') || '');
+      const beklenen = siparisOzetImza(no);
+      if (!no || t.length !== beklenen.length || !crypto.timingSafeEqual(Buffer.from(t), Buffer.from(beklenen))) return json(res, 404, { hata: 'bulunamadı' });
+      const s = oku('siparisler.json', []).find(x => x.no === no);
+      if (!s) return json(res, 404, { hata: 'bulunamadı' });
+      return json(res, 200, { no: s.no, odendi: !!s.odendi || ['yeni', 'hazirlaniyor', 'kargolandı', 'teslim'].indexOf(s.durum) !== -1, yenileme: !!s.abonelikYenileme, deger: metaDeger(s), kalemler: metaKalemler(s) });
+    }
     /* Sepet özeti: kampanyalar + (varsa) kupon; ikisi birlikte kullanılmaz, avantajlı olan seçilir */
     if (req.method === 'POST' && yol === '/api/sepet-hesap') {
       const g = await govde(req, 1);
@@ -2704,7 +2727,8 @@ const sunucu = http.createServer(async (req, res) => {
         '\n\nMüşteri: ' + m.ad + ' / ' + m.telefon + ' / ' + m.eposta + '\nAdres: ' + m.adres + '\nÖdeme: ' + odemeYolu);
       { const yeniSip = oku('siparisler.json', []).find(x => x.no === no); if (yeniSip && odemeYolu === 'havale') { havaleOnayEpostasi(yeniSip); metaSatinAlma(yeniSip, req); } }
       const bk = bankaBilgi();
-      return json(res, 200, { tamam: true, no: no, toplam: toplam, banka: odemeYolu === 'havale' ? { unvan: bk.unvan, banka: bk.banka, iban: bk.iban, not: bk.not, sureGun: bk.sureGun } : undefined });
+      { const sx = oku('siparisler.json', []).find(x => x.no === no); if (sx) var metaVeri = { deger: metaDeger(sx), kalemler: metaKalemler(sx) }; }
+      return json(res, 200, { tamam: true, no: no, toplam: toplam, meta: typeof metaVeri !== 'undefined' ? metaVeri : undefined, banka: odemeYolu === 'havale' ? { unvan: bk.unvan, banka: bk.banka, iban: bk.iban, not: bk.not, sureGun: bk.sureGun } : undefined });
     }
 
     /* ---- üye uçları ---- */
@@ -2954,7 +2978,7 @@ const sunucu = http.createServer(async (req, res) => {
       const tutarOk = !!(s && (p.amount === undefined || Math.abs(parseFloat(p.amount) - Number(s.toplam)) < 0.01));
       if (s && p.responseCode === '00' && imzaOk && oturumOk && tutarOk) {
         kartOdemesiTamam(s, liste, p.pgTranId || '', 'paratika', { odemeTaksit: parseInt(p.installment, 10) || 1, odemeKart: p.paymentSystem || '' });
-        return yonlendir(sepetYolu + '#odeme-ok-' + s.no);
+        return yonlendir(sepetYolu + '#odeme-ok-' + s.no + '-' + siparisOzetImza(s.no));
       }
       if (s && p.responseCode === '00' && !(imzaOk && oturumOk && tutarOk)) {
         // Onay geldi ama doğrulanamadı: sipariş açık bırakılır, elle kontrol için bildirilir (para alınmış olabilir)
@@ -2992,7 +3016,7 @@ const sunucu = http.createServer(async (req, res) => {
       if (d.status === 'success' && d.paymentStatus === 'SUCCESS' && s) {
         kartOdemesiTamam(s, liste, d.paymentId || '', 'iyzico');
         const okHedef = s.abonelikId ? (s.dil === 'en' ? '/abonelik-en' : '/abonelik') : sepetYolu;
-        return yonlendir(okHedef + '#odeme-ok-' + s.no);
+        return yonlendir(okHedef + '#odeme-ok-' + s.no + '-' + siparisOzetImza(s.no));
       }
       if (s && s.durum === 'odeme-bekliyor') { s.durum = 'odeme-basarisiz'; stokGeriEkle(s); yaz('siparisler.json', liste); }
       const hataHedef = s && s.abonelikId ? (s.dil === 'en' ? '/abonelik-en' : '/abonelik') : sepetYolu;
@@ -3270,6 +3294,7 @@ const sunucu = http.createServer(async (req, res) => {
       const taban = SITE();
       function xml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
       const urunler = (cfg.products || []).filter(p => p.type === 'product' && p.visible !== false && Number(p.price) > 0);
+      const katAd = {}; (cfg.urunKategorileri || []).forEach(k => { if (k && k.id) katAd[k.id] = k.adTR || k.id; });
       const kalemler = urunler.map(p => {
         const href = String(p.href || ('p.html?id=' + p.id)).replace('.html', '');
         const stokYok = typeof p.stok === 'number' && p.stok <= 0;
@@ -3286,7 +3311,10 @@ const sunucu = http.createServer(async (req, res) => {
             : '<g:price>' + Number(p.price).toFixed(2) + ' TRY</g:price>') +
           '<g:brand>Olivamore</g:brand>' +
           '<g:condition>new</g:condition>' +
-          '<g:product_type>' + xml(p.role === 'zeytin' ? 'Zeytin' : (p.role === 'sirke' ? 'Sirke' : 'Zeytinyağı')) + '</g:product_type>' +
+          '<g:product_type>' + xml(katAd[p.role] || 'Diğer') + '</g:product_type>' +
+          '<g:custom_label_0>' + xml(p.role || 'diger') + '</g:custom_label_0>' +   // katalog ürün setleri için kategori kodu (serin, cesnili, hediye…)
+          (Number(p.eskiFiyat) > Number(p.price) ? '<g:custom_label_1>indirimli</g:custom_label_1>' : '') +
+          '<g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items &gt; Cooking &amp; Baking Ingredients &gt; Cooking Oils</g:google_product_category>' +
           '</item>';
       }).join('\n');
       const feed = '<?xml version="1.0" encoding="UTF-8"?>\n' +
