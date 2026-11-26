@@ -3296,12 +3296,13 @@ const sunucu = http.createServer(async (req, res) => {
       const urunler = (cfg.products || []).filter(p => p.type === 'product' && p.visible !== false && Number(p.price) > 0);
       const katAd = {}; (cfg.urunKategorileri || []).forEach(k => { if (k && k.id) katAd[k.id] = k.adTR || k.id; });
       const kalemler = urunler.map(p => {
-        const href = String(p.href || ('p.html?id=' + p.id)).replace('.html', '');
+        // Her ürünün kendi sayfası: /p?id=<id> (eski urun.html adresleri ürüne özgü değil, tek sayfaya gidiyordu)
+        const href = 'p?id=' + encodeURIComponent(p.id);
         const stokYok = typeof p.stok === 'number' && p.stok <= 0;
         const birim = String(p.unitTR || '').replace(/^\//, '').trim();
         return '<item>' +
           '<g:id>' + xml(p.id) + '</g:id>' +
-          '<g:title>' + xml('Olivamore ' + p.nameTR + (birim ? ' ' + birim : '')) + '</g:title>' +
+          '<g:title>' + xml('Olivamore ' + p.nameTR + (birim && String(p.nameTR).toLocaleLowerCase('tr').indexOf(birim.toLocaleLowerCase('tr')) === -1 ? ' ' + birim : '')) + '</g:title>' +
           '<g:description>' + xml(p.noteTR || p.nameTR) + '</g:description>' +
           '<g:link>' + xml(taban + '/' + href) + '</g:link>' +
           '<g:image_link>' + xml(taban + '/' + (p.img || '')) + '</g:image_link>' +
@@ -3314,7 +3315,7 @@ const sunucu = http.createServer(async (req, res) => {
           '<g:product_type>' + xml(katAd[p.role] || 'Diğer') + '</g:product_type>' +
           '<g:custom_label_0>' + xml(p.role || 'diger') + '</g:custom_label_0>' +   // katalog ürün setleri için kategori kodu (serin, cesnili, hediye…)
           (Number(p.eskiFiyat) > Number(p.price) ? '<g:custom_label_1>indirimli</g:custom_label_1>' : '') +
-          '<g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items &gt; Cooking &amp; Baking Ingredients &gt; Cooking Oils</g:google_product_category>' +
+          (['serin', 'ocak', 'cesnili-zeytinyaglari'].indexOf(p.role) !== -1 ? '<g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items &gt; Cooking &amp; Baking Ingredients &gt; Cooking Oils</g:google_product_category>' : '') +
           '</item>';
       }).join('\n');
       const feed = '<?xml version="1.0" encoding="UTF-8"?>\n' +
